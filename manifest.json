@@ -1,9 +1,9 @@
 {
-  "name": "I like fishes",
-  "short_name": "FishSite",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#333333",
-  "icons": []
+  "name":"I like fishes",
+  "short_name":"FishSite",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#ffffff",
+  "theme_color":"#333333",
+  "icons":[]
 }
