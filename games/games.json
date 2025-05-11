@@ -1,3 +1,7 @@
 [
-  { "name": "Example Game", "folder": "example-game" }
+  {
+    "name": "Pong",
+    "folder": "pong",
+    "icon": "example-game-icon.png"
+  }
 ]
