@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server — I like fishes _</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="assets/js/loco.js" defer></script>
+</head>
+<body data-scroll-container>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="games.html">Games</a></li>
+      <li><a href="server.html">Minecraft Server</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero" data-scroll-section>
+    <h1>I like fishes _</h1>
+  </section>
+
+  <section data-scroll-section>
+    <div class="box">
+      <label>Join Address</label>
+      <div class="copy-box">
+        <span id="address">ilikefish.space</span>
+        <button onclick="copyText('ilikefish.space')">Copy</button>
+      </div>
+      <label>Port</label>
+      <div class="copy-box">
+        <span id="port">19132</span>
+        <button onclick="copyText('19132')">Copy</button>
+      </div>
+    </div>
+    <canvas id="activityChart"></canvas>
+  </section>
+
+  <script src="assets/js/server.js" defer></script>
+  <script>window.addEventListener('load', loadStats);</script>
+</body>
+</html>
