@@ -1,56 +1,45 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
-}
-nav {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: rgba(255,255,255,0.8);
-}
-nav ul {
-  display: flex;
-  list-style: none;
-  padding: 1rem;
-  margin: 0;
-  justify-content: center;
-}
-nav a {
-  margin: 0 1rem;
-  text-decoration: none;
-  color: #333;
-}
+/* Base & nav */
+body { margin:0; font-family: sans-serif; overflow-x:hidden; }
+nav { position:fixed; top:0; width:100%; background:rgba(255,255,255,0.85); z-index:1000; }
+nav ul { display:flex; justify-content:center; list-style:none; padding:1rem; margin:0; }
+nav a { margin:0 1rem; color:#333; text-decoration:none; }
+
+/* Hero sections */
 .hero {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  background-size:cover; background-position:center;
 }
-#hero-title {
-  font-size: 3rem;
+
+/* Interactive sections */
+.section-interactive {
+  padding:5rem 2rem;
+  background-size:cover; background-position:center;
+  position:relative;
 }
-section {
-  padding: 5rem 2rem;
+
+/* Cards container */
+.cards-container { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; }
+.cards-container::-webkit-scrollbar { display:none; }
+.cards-container .game-card {
+  flex:0 0 300px; margin-right:2rem; scroll-snap-align:start;
+  position:relative; overflow:hidden; border-radius:1rem;
+  transition:transform .3s;
 }
-.game-card {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  margin: 1rem;
-  display: inline-block;
-}
-.box {
-  background: rgba(200,200,200,0.2);
-  padding: 1rem;
-  border-radius: 0.5rem;
-}
-.copy-box {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.copy-box span {
-  flex: 1;
-}
-.copy-box button {
-  margin-left: 1rem;
-}
+.cards-container .game-card:hover { transform:scale(1.05); }
+
+/* Card content */
+.game-card img { width:100%; height:auto; display:block; }
+.game-card .card-info { padding:1rem; background:rgba(0,0,0,0.5); color:white; position:absolute; bottom:0; width:100%; }
+
+/* Copy boxes & full screen */
+.box { background:rgba(200,200,200,0.3); padding:1rem; border-radius:.5rem; margin-bottom:2rem; }
+.copy-box { display:flex; align-items:center; margin:1rem 0; }
+.copy-box span { flex:1; }
+.copy-box button, #enter-fullscreen { margin-left:1rem; padding:.5rem 1rem; }
+
+/* Canvas container to allow full screen */
+#activityChart { max-width:100%; height:300px; }
+
+/* Typing header font */
+#hero-title { font-size:3rem; color:#333; }
