@@ -1,0 +1,56 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(255,255,255,0.8);
+}
+nav ul {
+  display: flex;
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+  justify-content: center;
+}
+nav a {
+  margin: 0 1rem;
+  text-decoration: none;
+  color: #333;
+}
+.hero {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#hero-title {
+  font-size: 3rem;
+}
+section {
+  padding: 5rem 2rem;
+}
+.game-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin: 1rem;
+  display: inline-block;
+}
+.box {
+  background: rgba(200,200,200,0.2);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+.copy-box {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.copy-box span {
+  flex: 1;
+}
+.copy-box button {
+  margin-left: 1rem;
+}
