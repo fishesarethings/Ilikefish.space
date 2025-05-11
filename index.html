@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I like fishes _</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
+  <script src="assets/js/typing.js" defer></script>
+  <script src="assets/js/loco.js" defer></script>
+  <script src="assets/js/sw-register.js" defer></script>
+</head>
+<body data-scroll-container>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="games.html">Games</a></li>
+      <li><a href="server.html">Minecraft Server</a></li>
+    </ul>
+  </nav>
+
+  <section class="hero" data-scroll-section>
+    <h1 id="hero-title"></h1>
+  </section>
+
+  <section data-scroll-section>
+    <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
+    <div id="featured-games"></div>
+  </section>
+
+  <section data-scroll-section>
+    <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
+    <p>Join us at ilikefish.space:19132</p>
+  </section>
+
+  <script src="assets/js/games-list.js"></script>
+</body>
+</html>
