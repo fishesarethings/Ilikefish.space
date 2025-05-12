@@ -1,0 +1,11 @@
+{
+  "name": "Pong",
+  "folder": "pong",
+  "icon": "icon.png",
+  "entry": "pong.html",
+  "touchInstructions": "Touch up/down to move.",
+  "controllerMapping": {
+    "buttons": { "0": "Pause" },
+    "axes":    { "1": "Move Paddle" }
+  }
+}

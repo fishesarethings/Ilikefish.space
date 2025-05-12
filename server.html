@@ -1,34 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <!-- head with Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script> <!--  -->
-  <script src="assets/js/typing.js" defer></script>
-  <script src="assets/js/loco.js" defer></script>
-  <script src="assets/js/server.js" defer></script>
-  <script src="assets/js/fullscreen.js" defer></script> <!-- Fullscreen API  -->
-</head>
-<body data-scroll-container>
-  <nav>…</nav>
-  <section class="hero" data-scroll-section style="background-image:url('assets/img/bg-server.jpg')">
-    <h1>I like fishes _</h1>
-  </section>
+  <!-- head as above; title: Minecraft Server — I like fishes _ -->
+  <body data-scroll-container>
+    <nav>…</nav>
+    <section class="hero" data-scroll-section>
+      <h1 id="hero-title" class="typewriter"></h1>
+    </section>
 
-  <section class="section-interactive" data-scroll-section>
-    <div class="box">
-      <label>Join Address</label>
-      <div class="copy-box">
-        <span id="address">ilikefish.space</span>
-        <button onclick="copyText('ilikefish.space')">Copy</button>
+    <section class="section-interactive" data-scroll-section>
+      <div class="box">
+        <label>Join Address</label>
+        <div class="copy-box">
+          <span id="address">ilikefish.space</span>
+          <button onclick="copyText('ilikefish.space')">Copy</button>
+        </div>
+        <label>Port</label>
+        <div class="copy-box">
+          <span id="port">19132</span>
+          <button onclick="copyText('19132')">Copy</button>
+        </div>
+        <button id="enter-fullscreen">Full Screen Stats</button>
       </div>
-      <label>Port</label>
-      <div class="copy-box">
-        <span id="port">19132</span>
-        <button onclick="copyText('19132')">Copy</button>
-      </div>
-      <button id="enter-fullscreen">Full Screen Server Stats</button>
-    </div>
-    <canvas id="activityChart"></canvas>
-  </section>
-</body>
+      <canvas id="activityChart"></canvas>
+    </section>
+
+    <script src="assets/js/server.js" defer></script>
+    <script src="assets/js/fullscreen.js" defer></script>
+  </body>
 </html>
