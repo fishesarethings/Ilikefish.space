@@ -1,27 +1,31 @@
-const gameFolders = ['pong' /*, add other slugs here */];
+// automatically picks up ANY folder under /games/
+async function fetchAllGames() {
+  // You’ll need a small JSON that lists subfolders:
+  const index = await fetch('games/index.json').then(r => r.json());
+  return await Promise.all(
+    index.folders.map(slug =>
+      fetch(`games/${slug}/config.json`).then(r => r.json())
+    )
+  );
+}
 
-Promise.all(
-  gameFolders.map(slug =>
-    fetch(`games/${slug}/config.json`).then(r => r.json())
-  )
-).then(games => {
-  const featured = document.getElementById('featured-games');
-  const all      = document.getElementById('games-container');
-
-  games.forEach((g, i) => {
-    const card = document.createElement('div');
-    card.className = 'game-card';
-    card.innerHTML = `
+fetchAllGames().then(games => {
+  const feat = document.getElementById('featured-games');
+  const all  = document.getElementById('games-container');
+  games.forEach((g,i) => {
+    const c = document.createElement('div');
+    c.className = 'game-card';
+    c.innerHTML = `
       <img src="games/${g.folder}/${g.icon}" alt="${g.name}">
       <div class="card-info">
         <h3>${g.name}</h3>
         <button onclick="launchGame('${g.folder}')">Play</button>
       </div>`;
-    if (i < 3) featured.append(card);
-    if (all)    all.append(card);
+    if (i<3) feat.append(c);
+    if (all)  all.append(c);
   });
 });
 
-function launchGame(folder) {
-  window.open(`games/${folder}/${folder}.html`, '_blank');
+function launchGame(slug) {
+  window.open(`games/${slug}/${slug}.html`, '_blank');
 }
