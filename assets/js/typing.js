@@ -1,17 +1,12 @@
-const text = 'I like fishes ';
-const cursor = '_';
-let i = 0;
-function type() {
-  if (i < text.length) {
-    document.getElementById('hero-title').textContent += text.charAt(i++);
-    setTimeout(type, 150);
-  } else { blink(); }
-}
-function blink() {
-  let show = true;
-  setInterval(() => {
-    document.getElementById('hero-title').textContent = text + (show ? cursor : '');
-    show = !show;
-  }, 500);
-}
-window.addEventListener('load', type);
+window.addEventListener('load', () => {
+  const text = 'I like fishes ';
+  const el = document.getElementById('hero-title');
+  let idx = 0;
+  function type() {
+    if (idx < text.length) {
+      el.textContent += text[idx++];
+      setTimeout(type, 150);
+    }
+  }
+  type();
+});

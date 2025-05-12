@@ -1,6 +1,0 @@
-const btn=document.getElementById('enter-fullscreen');
-btn.addEventListener('click',()=>{
-  const elem=document.getElementById('activityChart').parentNode;
-  if(elem.requestFullscreen) elem.requestFullscreen();
-  else if(elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-});
