@@ -1,45 +1,38 @@
 /* Base & nav */
-body { margin:0; font-family: sans-serif; overflow-x:hidden; }
+body { margin:0; font-family:sans-serif; overflow-x:hidden; }
 nav { position:fixed; top:0; width:100%; background:rgba(255,255,255,0.85); z-index:1000; }
 nav ul { display:flex; justify-content:center; list-style:none; padding:1rem; margin:0; }
-nav a { margin:0 1rem; color:#333; text-decoration:none; }
+nav a { margin:0 1rem; color:#555; text-decoration:none; }
 
-/* Hero sections */
-.hero {
-  height:100vh;
-  display:flex; align-items:center; justify-content:center;
-  background-size:cover; background-position:center;
+/* Typewriter */
+.typewriter {
+  overflow:hidden;
+  border-right:.15em solid #555;
+  white-space:nowrap;
+  animation: typing 2s steps(20,end), blink-caret .75s step-end infinite;
 }
+@keyframes typing { from { width:0 } to { width:12ch } }      /* Adjust ch to text length */ <!-- :contentReference[oaicite:3]{index=3} -->
+@keyframes blink-caret { 50% { border-color:transparent } }    <!-- :contentReference[oaicite:4]{index=4} -->
 
-/* Interactive sections */
-.section-interactive {
-  padding:5rem 2rem;
-  background-size:cover; background-position:center;
-  position:relative;
-}
+/* Hero */
+.hero { height:100vh; display:flex; align-items:center; justify-content:center; background-size:cover; background-position:center; }
 
-/* Cards container */
+/* Interactive */
+.section-interactive { padding:5rem 2rem; background-size:cover; background-position:center; }
+
+/* Cards */
 .cards-container { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; }
 .cards-container::-webkit-scrollbar { display:none; }
-.cards-container .game-card {
-  flex:0 0 300px; margin-right:2rem; scroll-snap-align:start;
-  position:relative; overflow:hidden; border-radius:1rem;
-  transition:transform .3s;
-}
-.cards-container .game-card:hover { transform:scale(1.05); }
+.game-card { flex:0 0 300px; margin-right:2rem; scroll-snap-align:start; position:relative; overflow:hidden; border-radius:1rem; transition:transform .3s; }
+.game-card:hover { transform:scale(1.05); }
+.game-card img { width:100%; display:block; }
+.card-info { padding:1rem; background:rgba(0,0,0,0.5); color:#fff; position:absolute; bottom:0; width:100%; }
 
-/* Card content */
-.game-card img { width:100%; height:auto; display:block; }
-.game-card .card-info { padding:1rem; background:rgba(0,0,0,0.5); color:white; position:absolute; bottom:0; width:100%; }
-
-/* Copy boxes & full screen */
+/* Copy & fullscreen */
 .box { background:rgba(200,200,200,0.3); padding:1rem; border-radius:.5rem; margin-bottom:2rem; }
 .copy-box { display:flex; align-items:center; margin:1rem 0; }
 .copy-box span { flex:1; }
 .copy-box button, #enter-fullscreen { margin-left:1rem; padding:.5rem 1rem; }
 
-/* Canvas container to allow full screen */
+/* Chart */
 #activityChart { max-width:100%; height:300px; }
-
-/* Typing header font */
-#hero-title { font-size:3rem; color:#333; }
