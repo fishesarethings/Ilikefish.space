@@ -1,82 +1,71 @@
 # I like fishes _ – Game Developer Guide
 
-## Overview
-Each game folder under `games/` is auto-discovered and cached offline. This guide shows how to add games with:
-- **Multiplayer vs. local** (WASD vs. arrows)
-- **Controller** support for two gamepads
-- **Touch** controls
-- **Single-player** AI with Easy/Medium/Hard
-- **Scorekeeping** with browser storage
-- **High-score** saving and reset option
+## Overview  
+This guide explains how to add and configure new HTML5 games for the **I like fishes _** site. Games are discovered automatically, cached offline, and displayed with Apple-style scroll/zoom animations.
 
-## Folder Structure
-my-site/
-└─ games/
-└─ pong/
-├─ pong.html
-├─ pong.css
-├─ pong.js
-├─ icon.png
-└─ config.json
+## Prerequisites  
+- Basic HTML5/CSS/JavaScript  
+- A static file server (e.g., `http-server`) for local testing
 
-pgsql
-Copy
-Edit
+## Folder Structure  
+```  
+my-site/  
+└─ games/  
+   └─ <game-slug>/  
+      ├─ index.html  
+      ├─ assets.css/.js  
+      ├─ icon.png  
+      └─ config.json  
+```
 
-## Adding a New Game
-1. **Create** `games/<slug>/`.
-2. **Include**:
-   - `<slug>.html` entry.
-   - CSS/JS assets.
-   - `icon.png` (300×300px).
-   - `config.json`.
-3. **Configure** in `config.json`:
-   ```json
-   {
-     "name":"Title",
-     "folder":"slug",
-     "icon":"icon.png",
-     "entry":"slug.html",
-     "touchInstructions":"…",
-     "controllerMapping": { "axes":{/*…*/},"buttons":{/*…*/} }
-   }
-Controls & Modes: Implement WASD, ArrowKeys, Gamepad, Touch in your JS.
+## Adding a New Game  
+1. **Create** `games/<game-slug>/`.  
+2. **Include**:  
+   - `index.html` (canvas or iframe entry).  
+   - Game assets (CSS/JS).  
+   - `icon.png` (300×300px).  
+   - `config.json`.  
+3. **Test** locally:  
+   ```bash  
+   npx http-server . -p 8080  
+   open http://localhost:8080/games/<game-slug>/index.html  
+   ```  
+4. Service Worker auto-discovers `config.json` and caches assets.
 
-Score Persistence:
+## config.json Format  
+```json  
+{  
+  "name": "Game Title",  
+  "folder": "<game-slug>",  
+  "icon": "icon.png",  
+  "entry": "index.html",  
+  "touchInstructions": "Tap or swipe to move.",  
+  "controllerMapping": {  
+    "buttons": { "0": "Jump", "1": "Shoot" },  
+    "axes":    { "0": "Move X", "1": "Move Y" }  
+  }  
+}  
+```
 
-js
-Copy
-Edit
-// Save
-localStorage.setItem('gameScores', JSON.stringify(scores));
-// Load
-const scores = JSON.parse(localStorage.getItem('gameScores') || '{}');
-Test Locally:
+## Input Support  
+- **Touch**: use pointer events.  
+- **Controller**: use Gamepad API (`navigator.getGamepads()`).
 
-bash
-Copy
-Edit
-npx http-server . -p 8080
-open http://localhost:8080/games/pong/pong.html
-Deploy: Commit, push; Service Worker caches automatically.
+## Offline Caching  
+Games are cached on install for offline play.
 
-Input Support
-Touch: pointer events for mobile.
+## Score Persistence  
+Use browser localStorage to save and load scores:
 
-Controller: gamepadconnected + navigator.getGamepads().
+```js  
+// Save scores  
+localStorage.setItem('pongScores', JSON.stringify(scores));  
+// Load scores  
+const scores = JSON.parse(localStorage.getItem('pongScores') || '{}');  
+```
 
-Keyboard: keydown events for WASD/Arrows.
+## No Copyright  
+Use only original or public-domain assets.
 
-Caching & Offline
-Service Worker will cache core pages and runtime-cache all assets/games on first load.
-
-Contributing
-Fork, add your game folder and config.json, open a PR.
-
-yaml
-Copy
-Edit
-
----
-
-With these updates, your Pong game now supports two-player, single-player AI, multiple control schemes, and persistent scoring. Your README explains exactly how to replicate for new games.
+## Contributing  
+Submit a PR with your game folder and `config.json`.  
