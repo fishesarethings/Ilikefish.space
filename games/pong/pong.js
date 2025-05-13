@@ -1,124 +1,146 @@
-// Constants
+// Canvas setup
 const canvas = document.getElementById('pongCanvas'),
-      ctx    = canvas.getContext('2d'),
-      MODE_SELECT = document.getElementById('mode-select'),
-      DIFF_SELECT = document.getElementById('difficulty-select'),
-      RESET_BTN   = document.getElementById('reset-scores'),
-      TOUCH_UP    = document.getElementById('up-btn'),
-      TOUCH_DOWN  = document.getElementById('down-btn');
+      ctx    = canvas.getContext('2d');
 
-// Game state
-let mode = 'single', difficulty = 'easy';
-let scores = { left:0, right:0, high:0 };
+const modeSelect    = document.getElementById('mode-select'),
+      controlSelect = document.getElementById('control-select'),
+      sensSlider    = document.getElementById('sensitivity'),
+      fsBtn         = document.getElementById('fullscreen-btn');
 
-// Load scores
-if (localStorage.getItem('pongScores')) {
-  scores = JSON.parse(localStorage.getItem('pongScores'));
-}
+// State
+let mode = 'single',
+    control = 'keyboard',
+    sens = parseInt(sensSlider.value);
 
-// UI updates
-function updateScores() {
-  const scoreText = `${scores.left} – ${scores.right}`;
-  document.title = `Pong (${scoreText})`;
-  if (scores.left > scores.high || scores.right > scores.high) {
-    scores.high = Math.max(scores.left, scores.right);
-    saveScores();
-  }
-}
-function saveScores() {
-  localStorage.setItem('pongScores', JSON.stringify(scores));
-}
+modeSelect.onchange    = () => mode = modeSelect.value;
+controlSelect.onchange = () => control = controlSelect.value;
+sensSlider.oninput     = () => sens = parseInt(sensSlider.value);
 
-// Reset action
-RESET_BTN.onclick = () => {
-  scores = { left:0, right:0, high: scores.high };
-  saveScores(); updateScores();
+// Fullscreen
+fsBtn.onclick = () => {
+  if (!document.fullscreenElement) canvas.requestFullscreen();
+  else document.exitFullscreen();
 };
 
-// Mode & difficulty listeners
-MODE_SELECT.onchange = () => {
-  mode = MODE_SELECT.value;
-  document.getElementById('difficulty-label').style.display = (mode==='single'? 'block':'none');
-};
-DIFF_SELECT.onchange = () => difficulty = DIFF_SELECT.value;
-
-// Touch controls
-let touchY=null;
-TOUCH_UP.onpointerdown = () => touchY = -1;
-TOUCH_DOWN.onpointerdown = () => touchY = 1;
-window.addEventListener('pointerup', ()=> touchY=null);
-
-// Paddle state
-let leftY = canvas.height/2 - 40, rightY = leftY;
-const paddleH=80, paddleW=10;
+// Paddles
+const PADDLE_H = 100, PADDLE_W = 12;
+let leftY = (canvas.height - PADDLE_H)/2,
+    rightY = leftY;
 
 // Ball
-let ball = { x:300, y:200, dx:4, dy:4, r:10 };
+let ball = { x: canvas.width/2, y: canvas.height/2, r:12, dx:5, dy:5 };
 
-// Game loop
-function loop(){
+// Scores
+let scores = { left:0, right:0 };
+const saveScores = () => localStorage.setItem('pongScores', JSON.stringify(scores));
+const loadScores = () => {
+  const s = JSON.parse(localStorage.getItem('pongScores') || '{}');
+  scores = { left: s.left||0, right: s.right||0 };
+};
+loadScores();
+
+// Input trackers
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup',   e => keys[e.key] = false);
+
+// Gamepad
+let gamepads = {};
+window.addEventListener('gamepadconnected', e => {
+  gamepads[e.gamepad.index] = e.gamepad;
+});
+window.addEventListener('gamepaddisconnected', e => {
+  delete gamepads[e.gamepad.index];
+});
+
+// Touch
+let touchDir = 0;
+canvas.addEventListener('pointermove', e => {
+  if (control !== 'touch') return;
+  const rect = canvas.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  // Left half controls left paddle
+  if (e.clientX - rect.left < canvas.width/2) {
+    leftY = y - PADDLE_H/2;
+  }
+});
+
+// Draw frame
+function draw() {
   // Clear
-  ctx.clearRect(0,0,600,400);
+  ctx.fillStyle = '#222';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   // Draw paddles
-  ctx.fillStyle='white';
-  ctx.fillRect(0,leftY,paddleW,paddleH);
-  ctx.fillRect(590,rightY,paddleW,paddleH);
+  ctx.fillStyle = '#eee';
+  ctx.fillRect(0,leftY,PADDLE_W,PADDLE_H);
+  ctx.fillRect(canvas.width - PADDLE_W,rightY,PADDLE_W,PADDLE_H);
 
   // Draw ball
   ctx.beginPath();
-  ctx.arc(ball.x,ball.y,ball.r,0,2*Math.PI); ctx.fill();
+  ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+  ctx.fill();
 
   // Move ball
-  ball.x+=ball.dx; ball.y+=ball.dy;
-  if(ball.y<ball.r||ball.y>400-ball.r) ball.dy*=-1;
+  ball.x += ball.dx; ball.y += ball.dy;
+  if (ball.y < ball.r || ball.y > canvas.height - ball.r) ball.dy = -ball.dy;
 
   // Collisions
-  if(ball.x - ball.r < paddleW && ball.y > leftY && ball.y < leftY+paddleH){
-    ball.dx = -ball.dx;
-  }
-  if(ball.x + ball.r > 600-paddleW && ball.y > rightY && ball.y < rightY+paddleH){
-    ball.dx = -ball.dx;
-  }
+  if (
+    ball.x - ball.r < PADDLE_W &&
+    ball.y > leftY && ball.y < leftY + PADDLE_H
+  ) ball.dx = -ball.dx;
 
-  // Scoring
-  if(ball.x < 0 || ball.x > 600){
-    if(ball.x<0) scores.right++;
+  if (
+    ball.x + ball.r > canvas.width - PADDLE_W &&
+    ball.y > rightY && ball.y < rightY + PADDLE_H
+  ) ball.dx = -ball.dx;
+
+  // Score
+  if (ball.x < 0 || ball.x > canvas.width) {
+    if (ball.x < 0) scores.right++;
     else scores.left++;
-    saveScores(); updateScores();
-    ball.x=300; ball.y=200; ball.dx = -ball.dx;
+    saveScores();
+    ball.x = canvas.width/2; ball.y = canvas.height/2;
+    ball.dx = -ball.dx;
+  }
+}
+
+// Update paddles
+function updatePaddles() {
+  // Keyboard
+  if (control === 'keyboard' || control === 'both') {
+    if (keys.w) leftY -= sens;
+    if (keys.s) leftY += sens;
+    if (keys.ArrowUp) rightY -= sens;
+    if (keys.ArrowDown) rightY += sens;
   }
 
-  // Control paddles
-  // Two-player
-  if(mode==='two'){
-    document.onkeydown = e=>{
-      if(e.key==='w') leftY-=8;
-      if(e.key==='s') leftY+=8;
-      if(e.key==='ArrowUp') rightY-=8;
-      if(e.key==='ArrowDown') rightY+=8;
-    };
-  } else {
-    // Single: AI right paddle
-    const speed = difficulty==='hard'? 5 : difficulty==='medium'? 3 : 2;
-    rightY += (ball.y - (rightY+paddleH/2)) * 0.05 * speed;
-    // Player via WASD/touch
-    document.onkeydown = e=>{
-      if(e.key==='w'||e.key==='ArrowUp') leftY-=8;
-      if(e.key==='s'||e.key==='ArrowDown') leftY+=8;
-    };
-    if(touchY) leftY += touchY*5;
+  // Gamepad
+  if (control === 'gamepad') {
+    const gp = navigator.getGamepads()[0];
+    if (gp) {
+      leftY += gp.axes[1] * sens * 2;
+      rightY += gp.axes[3] * sens * 2;
+    }
+  }
+
+  // Single player AI
+  if (mode === 'single') {
+    rightY += (ball.y - (rightY + PADDLE_H/2)) * 0.05 * sens;
   }
 
   // Bounds
-  leftY = Math.max(0,Math.min(400-paddleH,leftY));
-  rightY= Math.max(0,Math.min(400-paddleH,rightY));
+  leftY  = Math.max(0, Math.min(canvas.height - PADDLE_H, leftY));
+  rightY = Math.max(0, Math.min(canvas.height - PADDLE_H, rightY));
+}
 
+// Main loop
+function loop() {
+  draw();
+  updatePaddles();
   requestAnimationFrame(loop);
 }
 
-// Init
-window.onload = () => {
-  updateScores();
-  loop();
-};
+// Start
+loop();

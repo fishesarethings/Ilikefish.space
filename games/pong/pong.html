@@ -8,7 +8,7 @@
 </head>
 <body>
   <div id="game-container">
-    <canvas id="pongCanvas" width="600" height="400"></canvas>
+    <canvas id="pongCanvas" width="800" height="500"></canvas>
     <div id="ui-bar">
       <label>Mode:
         <select id="mode-select">
@@ -16,18 +16,17 @@
           <option value="two">Two Player</option>
         </select>
       </label>
-      <label id="difficulty-label">Difficulty:
-        <select id="difficulty-select">
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
+      <label>Controls:
+        <select id="control-select">
+          <option value="keyboard">Keyboard (WASD & Arrows)</option>
+          <option value="gamepad">Gamepad</option>
+          <option value="touch">Touch</option>
         </select>
       </label>
-      <button id="reset-scores">Reset Scores</button>
-    </div>
-    <div id="touch-controls">
-      <button id="up-btn">▲</button>
-      <button id="down-btn">▼</button>
+      <label>Sensitivity:
+        <input type="range" id="sensitivity" min="1" max="20" value="8">
+      </label>
+      <button id="fullscreen-btn">⛶ Fullscreen</button>
     </div>
   </div>
   <script src="pong.js"></script>
