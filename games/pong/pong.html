@@ -3,8 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Pong — I like fishes _</title>
+  <title>Pong v1.2.0 — I like fishes _</title>
   <link rel="stylesheet" href="pong.css">
+  <script>
+    // On load, clear old cookies/localStorage if version changed
+    const CUR_VER = '1.2.0';
+    if (localStorage.getItem('pongVersion') !== CUR_VER) {
+      localStorage.clear();
+      localStorage.setItem('pongVersion', CUR_VER);
+      location.reload(true);
+    }
+  </script>
 </head>
 <body>
   <div id="game-container">
@@ -18,7 +27,7 @@
       </label>
       <label>Controls:
         <select id="control-select">
-          <option value="keyboard">Keyboard (WASD & Arrows)</option>
+          <option value="keyboard">Keyboard</option>
           <option value="gamepad">Gamepad</option>
           <option value="touch">Touch</option>
         </select>
@@ -26,7 +35,20 @@
       <label>Sensitivity:
         <input type="range" id="sensitivity" min="1" max="20" value="8">
       </label>
+      <label>Version:
+        <select id="version-select">
+          <option value="1.2.0">1.2.0</option>
+          <option value="1.1.0">1.1.0</option>
+          <option value="1.0.0">1.0.0</option>
+        </select>
+      </label>
+      <button id="start-btn">Start Match</button>
       <button id="fullscreen-btn">⛶ Fullscreen</button>
+    </div>
+    <div id="score-bar">
+      <span id="current-score">0 – 0</span>
+      <span id="high-score">High: 0</span>
+      <button id="reset-scores">Reset High Score</button>
     </div>
   </div>
   <script src="pong.js"></script>
