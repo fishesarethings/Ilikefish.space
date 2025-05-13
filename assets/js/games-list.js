@@ -1,31 +1,33 @@
-// automatically picks up ANY folder under /games/
-async function fetchAllGames() {
-  // You’ll need a small JSON that lists subfolders:
-  const index = await fetch('games/index.json').then(r => r.json());
-  return await Promise.all(
-    index.folders.map(slug =>
-      fetch(`games/${slug}/config.json`).then(r => r.json())
-    )
-  );
+// Dynamically load all games listed in games/index.json
+fetch('games/index.json')
+  .then(r => r.json())
+  .then(data => data.folders.forEach(addGameCard));
+
+function addGameCard(slug) {
+  fetch(`games/${slug}/config.json`)
+    .then(r => r.json())
+    .then(game => {
+      const card = document.createElement('div');
+      card.className = 'game-card';
+      card.innerHTML = `
+        <img src="games/${game.folder}/${game.icon}" alt="${game.name}">
+        <div class="card-info">
+          <h3>${game.name}</h3>
+          <button onclick="launchGame('${game.folder}')">Play</button>
+        </div>`;
+      // Featured on index
+      const featured = document.getElementById('featured-games');
+      if (featured && featured.children.length < 3) {
+        featured.append(card.cloneNode(true));
+      }
+      // All games on games.html
+      const container = document.getElementById('games-container');
+      if (container) {
+        container.append(card);
+      }
+    });
 }
 
-fetchAllGames().then(games => {
-  const feat = document.getElementById('featured-games');
-  const all  = document.getElementById('games-container');
-  games.forEach((g,i) => {
-    const c = document.createElement('div');
-    c.className = 'game-card';
-    c.innerHTML = `
-      <img src="games/${g.folder}/${g.icon}" alt="${g.name}">
-      <div class="card-info">
-        <h3>${g.name}</h3>
-        <button onclick="launchGame('${g.folder}')">Play</button>
-      </div>`;
-    if (i<3) feat.append(c);
-    if (all)  all.append(c);
-  });
-});
-
-function launchGame(slug) {
-  window.open(`games/${slug}/${slug}.html`, '_blank');
+function launchGame(folder) {
+  window.open(`games/${folder}/${folder}.html`, '_blank');
 }

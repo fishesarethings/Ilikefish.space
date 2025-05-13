@@ -4,28 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Pong — I like fishes _</title>
-  <link rel="stylesheet" href="../assets/css/styles.css">
   <style>
-    body { margin:0; background:#000; display:flex; align-items:center; justify-content:center; }
-    canvas { background:#111; }
+    body { margin:0; background:#000; display:flex; align-items:center; justify-content:center; height:100vh; }
+    #pongCanvas { background:#111; border:2px solid #555; }
   </style>
 </head>
 <body>
   <canvas id="pongCanvas" width="600" height="400"></canvas>
-  <script>
-    // Simple pong
-    const c=document.getElementById('pongCanvas'), ctx=c.getContext('2d');
-    let x=300,y=200,dx=3,dy=3,r=10;
-    function draw(){
-      ctx.clearRect(0,0,600,400);
-      ctx.fillStyle='white';
-      ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI); ctx.fill();
-      x+=dx; y+=dy;
-      if(y<r||y>400-r) dy=-dy;
-      if(x<r||x>600-r) dx=-dx;
-      requestAnimationFrame(draw);
-    }
-    draw();
-  </script>
+  <script src="pong.js"></script>
 </body>
 </html>

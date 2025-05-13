@@ -1,2 +1,13 @@
-body { margin:0; display:flex; justify-content:center; align-items:center; height:100vh; background:#000; }
-canvas { background:#222; }
+/* If you want separation, otherwise keep inline in pong.html */
+body {
+  margin: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+#pongCanvas {
+  background: #111;
+  border: 2px solid #555;
+}
