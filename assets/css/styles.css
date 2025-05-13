@@ -10,15 +10,19 @@ nav {
 nav ul { display: flex; justify-content: center; list-style: none; padding: 1rem; margin: 0; }
 nav a { margin: 0 1rem; color: #555; text-decoration: none; }
 
-/* Typewriter */
+/* Typewriter container: just for cursor blinking */
 .typewriter {
-  overflow: hidden;              /* hides overflow during typing */              /* :contentReference[oaicite:0]{index=0} */
-  border-right: .15em solid #555;/* cursor line */                              /* :contentReference[oaicite:1]{index=1} */
-  white-space: nowrap;            /* keeps text on one line */                 /* :contentReference[oaicite:2]{index=2} */
-  animation:
-    typing 2s steps(12,end) forwards,  /* types each character */              /* :contentReference[oaicite:3]{index=3} */
-    blink-caret .75s step-end infinite;/* blink underscore */                  /* :contentReference[oaicite:4]{index=4} */
+  display: inline-block;
+  border-right: .15em solid #555;      /* the “cursor” */
+  white-space: nowrap;
+  animation: blink-cursor .75s step-end infinite;
 }
+
+/* Only blink the border, no width animation */
+@keyframes blink-cursor {
+  50% { border-color: transparent; }
+}
+
 
 /* Keyframes */
 @keyframes typing {
