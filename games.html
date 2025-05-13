@@ -1,16 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZV53VVVSK3');
+  </script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Games — I like fishes _</title>
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
-  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
+  <link rel="stylesheet"
+        href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js"
+          defer></script>
   <script src="assets/js/typing.js" defer></script>
   <script src="assets/js/loco.js" defer></script>
   <script src="assets/js/sw-register.js" defer></script>
+
+  <script>
+    // Versioning & cache-bust
+    const PAGE_VER = '1.2.0';
+    if (localStorage.getItem('siteVersion') !== PAGE_VER) {
+      localStorage.clear();
+      localStorage.setItem('siteVersion', PAGE_VER);
+      location.reload(true);
+    }
+  </script>
 </head>
 <body data-scroll-container>
 
@@ -22,7 +43,8 @@
     </ul>
   </nav>
 
-  <section class="hero" data-scroll-section style="background-image:url('assets/img/bg-games.jpg')">
+  <section class="hero" data-scroll-section
+           style="background-image:url('assets/img/bg-games.jpg')">
     <h1 id="hero-title" class="typewriter"></h1>
   </section>
 
@@ -32,5 +54,17 @@
   </section>
 
   <script src="assets/js/games-list.js" defer></script>
+
+  <!-- Combined Version + Unlicense Footer -->
+  <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
+    <p>Site Version: 1.2.0</p>
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">
+        Unlicense
+      </a>.<br>
+      © 2025 fishesarethings — No rights reserved.
+    </p>
+  </footer>
 </body>
 </html>
