@@ -1,5 +1,9 @@
 /* Base & nav */
-body { margin: 0; font-family: sans-serif; overflow-x: hidden; }
+body {
+  margin: 0;
+  font-family: sans-serif;
+  overflow-x: hidden;
+}
 nav {
   position: fixed;
   top: 0;
@@ -7,69 +11,104 @@ nav {
   background: rgba(255,255,255,0.85);
   z-index: 1000;
 }
-nav ul { display: flex; justify-content: center; list-style: none; padding: 1rem; margin: 0; }
-nav a { margin: 0 1rem; color: #555; text-decoration: none; }
+nav ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+}
+nav a {
+  margin: 0 1rem;
+  color: #555;
+  text-decoration: none;
+}
 
-/* Typewriter container: just for cursor blinking */
+/* Typewriter cursor only */
 .typewriter {
   display: inline-block;
-  border-right: .15em solid #555;      /* the “cursor” */
+  border-right: .15em solid #555;      /* blinking underscore */
+  padding-right: .05em;
   white-space: nowrap;
   animation: blink-cursor .75s step-end infinite;
 }
-
-/* Only blink the border, no width animation */
 @keyframes blink-cursor {
-  50% { border-color: transparent; }
+  0%, 50%   { border-color: #555; }
+  50.01%,100% { border-color: transparent; }
 }
 
-
-/* Keyframes */
-@keyframes typing {
-  from { width: 0; }
-  to   { width: 12ch; } /* matches “I like fishes _” length */                /* :contentReference[oaicite:5]{index=5} */
-}
-@keyframes blink-caret {
-  50% { border-color: transparent; }
-}
-
-/* Hero */
+/* Hero section */
 .hero {
   height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-  background-size: cover; background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
 }
 
 /* Interactive sections */
 .section-interactive {
   padding: 5rem 2rem;
-  background-size: cover; background-position: center;
+  background-size: cover;
+  background-position: center;
 }
 
 /* Cards container */
 .cards-container {
-  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
 }
 .cards-container::-webkit-scrollbar { display: none; }
 .game-card {
-  flex: 0 0 300px; margin-right: 2rem; scroll-snap-align: start;
-  position: relative; overflow: hidden; border-radius: 1rem;
+  flex: 0 0 300px;
+  margin-right: 2rem;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
   transition: transform .3s;
 }
-.game-card:hover { transform: scale(1.05); }
-
-/* Card content */
-.game-card img { width: 100%; display: block; }
+.game-card:hover {
+  transform: scale(1.05);
+}
+.game-card img {
+  width: 100%;
+  display: block;
+}
 .card-info {
-  padding: 1rem; background: rgba(0,0,0,0.5); color: #fff;
-  position: absolute; bottom: 0; width: 100%;
+  padding: 1rem;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 /* Copy & fullscreen */
-.box { background: rgba(200,200,200,0.3); padding: 1rem; border-radius: .5rem; margin-bottom: 2rem; }
-.copy-box { display: flex; align-items: center; margin: 1rem 0; }
-.copy-box span { flex: 1; }
-.copy-box button, #enter-fullscreen { margin-left: 1rem; padding: .5rem 1rem; }
+.box {
+  background: rgba(200,200,200,0.3);
+  padding: 1rem;
+  border-radius: .5rem;
+  margin-bottom: 2rem;
+}
+.copy-box {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+}
+.copy-box span {
+  flex: 1;
+}
+.copy-box button,
+#enter-fullscreen {
+  margin-left: 1rem;
+  padding: .5rem 1rem;
+}
 
 /* Chart */
-#activityChart { max-width: 100%; height: 300px; }
+#activityChart {
+  max-width: 100%;
+  height: 300px;
+}
