@@ -3,9 +3,9 @@
   "folder": "pong",
   "icon": "icon.png",
   "entry": "pong.html",
-  "touchInstructions": "Touch on the top or bottom of the screen to move your paddle.",
+  "touchInstructions": "Use the on-screen arrows to move your paddle.",
   "controllerMapping": {
-    "buttons": { "0": "Pause" },
-    "axes":    { "1": "Move Paddle" }
+    "axes": { "1": "Paddle Movement" },
+    "buttons": { "0": "Pause/Unpause" }
   }
 }

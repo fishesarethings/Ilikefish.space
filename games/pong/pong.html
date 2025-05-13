@@ -4,13 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Pong — I like fishes _</title>
-  <style>
-    body { margin:0; background:#000; display:flex; align-items:center; justify-content:center; height:100vh; }
-    #pongCanvas { background:#111; border:2px solid #555; }
-  </style>
+  <link rel="stylesheet" href="pong.css">
 </head>
 <body>
-  <canvas id="pongCanvas" width="600" height="400"></canvas>
+  <div id="game-container">
+    <canvas id="pongCanvas" width="600" height="400"></canvas>
+    <div id="ui-bar">
+      <label>Mode:
+        <select id="mode-select">
+          <option value="single">Single Player</option>
+          <option value="two">Two Player</option>
+        </select>
+      </label>
+      <label id="difficulty-label">Difficulty:
+        <select id="difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
+      <button id="reset-scores">Reset Scores</button>
+    </div>
+    <div id="touch-controls">
+      <button id="up-btn">▲</button>
+      <button id="down-btn">▼</button>
+    </div>
+  </div>
   <script src="pong.js"></script>
 </body>
 </html>
