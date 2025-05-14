@@ -16,7 +16,7 @@ const wrongSnd   = new Audio('assets/sounds/wrong.mp3');
 const bgm        = new Audio('assets/sounds/bgm.mp3'); bgm.loop = true;
 
 // State & Persistence
-let balloons = [], lives, score, questionCount, fallTime, diff, paused = false;
+let balloons = [], lives, score, questionCount, fallTime, diff, paused;
 const saved      = JSON.parse(localStorage.getItem('timestableScores') || '{}');
 const highScores = { easy:0, medium:0, hard:0, ...saved };
 
@@ -48,6 +48,9 @@ document.querySelectorAll('.difficulty-btn').forEach(btn => {
 
 // Initialize / Reset
 function initGame() {
+  paused = false;               // <— ensure game is un-paused
+  resizeCanvas();               // <— recalc canvas now that UI is visible
+
   lives         = diff === 'hard' ? 3 : 5;
   score         = 0;
   questionCount = 0;
@@ -98,7 +101,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// Highlight active balloon & question bar
+// Highlight & question
 function highlightActive() {
   if (!balloons.length) {
     questionEl.textContent = '?';
@@ -135,7 +138,7 @@ function handleAnswer() {
   updateUI();
 }
 
-// Lives & UI update
+// Lives & UI
 function loseLife() {
   lives--;
   updateUI();
@@ -147,18 +150,16 @@ function updateUI() {
   currentBar.textContent  = `Current: ${score}`;
 }
 
-// Pause button
+// Pause & sound
 pauseBtn.addEventListener('click', () => {
   paused = !paused;
   pauseBtn.textContent = paused ? '▶️' : '⏸️';
 });
-
-// Sound button — FIXED: toggle a class on the menu
 soundBtn.addEventListener('click', () => {
   audioMenu.classList.toggle('visible');
 });
-musicVol.addEventListener('input', e => bgm.volume = e.target.value);
-fxVol.addEventListener('input', e => popSnd.volume = wrongSnd.volume = e.target.value);
+musicVol?.addEventListener('input', e => bgm.volume = e.target.value);
+fxVol?.addEventListener('input', e => popSnd.volume = wrongSnd.volume = e.target.value);
 
 // End & persistence
 function endGame() {
@@ -172,14 +173,11 @@ function endGame() {
   location.reload();
 }
 
-// Keypad handling
+// Keypad
 document.querySelectorAll('.key').forEach(k => {
   k.addEventListener('click', () => {
-    if (k.id === 'key-delete') {
-      answerInput.value = answerInput.value.slice(0, -1);
-    } else {
-      answerInput.value += k.textContent;
-    }
+    if (k.id === 'key-delete') answerInput.value = answerInput.value.slice(0, -1);
+    else answerInput.value += k.textContent;
     answerInput.focus();
   });
 });
