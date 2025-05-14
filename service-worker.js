@@ -20,6 +20,17 @@ self.addEventListener('install', event => {
   );
 });
 
+// In your install handler, after CORE_PAGES:
+caches.open(STATIC_CACHE).then(cache => 
+  cache.addAll([
+    '/games/timestable-balloons/timestable-balloons.html',
+    '/games/timestable-balloons/timestable-balloons.css',
+    '/games/timestable-balloons/timestable-balloons.js',
+    '/games/timestable-balloons/icon.png'
+  ])
+);
+
+
 // Activate: take control immediately
 self.addEventListener('activate', event => {
   event.waitUntil(self.clients.claim());
