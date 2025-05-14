@@ -1,8 +1,8 @@
 {
-  "name": "Times Table Balloons",         // Display name
-  "folder": "timestable-balloons",        // Matches your folder
-  "icon": "icon.png",                     // Your icon file
-  "entry": "timestable-balloons.html",    // Your main HTML
+  "name": "Times Table Balloons",         
+  "folder": "timestable-balloons",        
+  "icon": "icon.png",                     
+  "entry": "timestable-balloons.html",
   "touchInstructions": "Tap numbers to answer before the balloon hits the bottom.",
   "controllerMapping": { "axes": {}, "buttons": {} }
 }
