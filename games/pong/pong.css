@@ -1,30 +1,61 @@
-html, body {
-  margin:0; padding:0; background:#000; height:100%; overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: Arial, sans-serif; }
+
+/* Start Screen */
+#start-screen {
+  position: absolute; inset: 0;
+  background: url('assets/background.jpg') center/cover no-repeat;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: white; text-shadow: 2px 2px 4px black;
 }
+.difficulty-btn {
+  margin: 10px; padding: 12px 24px; font-size: 1.5rem; cursor: pointer;
+}
+
+/* Game Container & Background */
 #game-container {
-  position:relative; background:#111; padding:10px;
-  border:2px solid #444; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.7);
+  position: relative; width: 100%; height: 100%;
+  background: url('assets/background.jpg') center/cover no-repeat;
 }
-#pongCanvas {
-  display:block; background:#222; border-radius:4px;
+
+/* Canvas */
+#game-canvas {
+  position: absolute; top: 50px; left: 0; right: 0; bottom: 90px;
+  width: 100%; height: auto; background: transparent; z-index: 1;
 }
-#ui-bar, #score-bar {
-  display:flex; gap:1rem; margin-top:10px;
-  font-family:sans-serif; color:#eee;
-  align-items:center;
+
+/* Top Bar */
+#top-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 50px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(255,255,255,0.9); padding: 0 10px; z-index: 10;
 }
-#score-bar {
-  justify-content: space-between;
+#top-controls { display: flex; gap: 10px; }
+#top-controls button { font-size: 1.2rem; cursor: pointer; }
+#score-bar, #current-bar { font-weight: bold; font-size: 1.1rem; }
+
+/* Bottom Answer Bar */
+#answer-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(255,255,255,0.9); padding: 10px; z-index: 10;
 }
-#ui-bar label, #score-bar span {
-  display:flex; align-items:center; gap:0.3rem;
+#question-text { font-size: 1.2rem; min-width: 120px; text-align: center; }
+#answer-input {
+  width: 80px; font-size: 1.2rem; text-align: center;
+  border: 2px solid #aaa; border-radius: 5px; padding: 4px;
 }
-#ui-bar select, #ui-bar input, #ui-bar button,
-#score-bar button {
-  background:#333; color:#eee; border:1px solid #555;
-  border-radius:4px; padding:5px;
+#submit-answer {
+  padding: 6px 12px; font-size: 1.1rem; background: #8f8; border: none; border-radius: 5px; cursor: pointer;
 }
-#ui-bar button:hover, #score-bar button:hover {
-  background:#555; cursor:pointer;
+#lives { margin-left: auto; font-size: 1.5rem; color: red; }
+
+/* Keypad */
+#keypad {
+  position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+  display: none; grid-template-columns: repeat(3, 60px);
+  gap: 5px; padding: 10px; background: rgba(255,255,255,0.8); border-radius: 8px; z-index: 10;
+  display: grid;
 }
+.key { font-size: 1.2rem; width: 60px; height: 40px; cursor: pointer; }

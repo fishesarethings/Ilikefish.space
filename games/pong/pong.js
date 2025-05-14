@@ -1,102 +1,185 @@
-// Version and State
-const CUR_VER = '1.2.0';
-let mode='single', control='keyboard', sens=8, started=false;
-let scores={left:0,right:0,high:0};
-const canvas=document.getElementById('pongCanvas'),
-      ctx=canvas.getContext('2d'),
-      modeSel=document.getElementById('mode-select'),
-      ctrlSel=document.getElementById('control-select'),
-      verSel=document.getElementById('version-select'),
-      sensSlider=document.getElementById('sensitivity'),
-      startBtn=document.getElementById('start-btn'),
-      fsBtn=document.getElementById('fullscreen-btn'),
-      scoreSpan=document.getElementById('current-score'),
-      highSpan=document.getElementById('high-score'),
-      resetBtn=document.getElementById('reset-scores');
-
-// Load saved
-const saved=JSON.parse(localStorage.getItem('pongScores')||'{}');
-scores.left=saved.left||0; scores.right=saved.right||0; scores.high=saved.high||0;
-updateScoreUI();
-
-// Handlers
-modeSel.onchange=()=>mode=modeSel.value;
-ctrlSel.onchange=()=>control=ctrlSel.value;
-sensSlider.oninput=()=>sens=+sensSlider.value;
-verSel.onchange=()=>location.href=`../versions/${verSel.value}/pong.html`;
-startBtn.onclick=()=>started=true;
-fsBtn.onclick=()=>!document.fullscreenElement? canvas.requestFullscreen():document.exitFullscreen();
-resetBtn.onclick=()=>{
-  scores.high=0; saveScores(); updateScoreUI();
-};
-
-// Save/load
-function saveScores(){
-  localStorage.setItem('pongScores',JSON.stringify(scores));
+// Canvas setup
+const canvas = document.getElementById('game-canvas');
+const ctx    = canvas.getContext('2d');
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight - (50 + 90);
 }
-function updateScoreUI(){
-  scoreSpan.textContent=`${scores.left} – ${scores.right}`;
-  highSpan.textContent=`High: ${scores.high}`;
-}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
-// Game elements
-const PADDLE_H=100,PADDLE_W=12;
-let leftY=(canvas.height-PADDLE_H)/2, rightY=leftY;
-let ball={x:canvas.width/2,y:canvas.height/2,r:12,dx:5,dy:5};
-const keys={};
+// Assets & Audio
+const bgImg      = new Image(); bgImg.src      = 'assets/background.jpg';
+const balloonImg = new Image(); balloonImg.src = 'assets/balloon.png';
+const popSnd     = new Audio('assets/sounds/pop.mp3');
+const wrongSnd   = new Audio('assets/sounds/wrong.mp3');
+const bgm        = new Audio('assets/sounds/bgm.mp3'); bgm.loop = true;
 
-// Input
-window.addEventListener('keydown',e=>keys[e.key]=true);
-window.addEventListener('keyup',e=>keys[e.key]=false);
-canvas.addEventListener('pointermove',e=>{
-  if(control!=='touch') return;
-  let y=e.clientY-canvas.getBoundingClientRect().top;
-  if(e.clientX<canvas.width/2) leftY=y-PADDLE_H/2;
+// State & Persistence
+let balloons = [], lives, score, questionCount, fallTime, diff, paused = false;
+const saved      = JSON.parse(localStorage.getItem('timestableScores') || '{}');
+const highScores = { easy:0, medium:0, hard:0, ...saved };
+
+// UI Elements
+const startScreen   = document.getElementById('start-screen');
+const gameContainer = document.getElementById('game-container');
+const livesDiv      = document.getElementById('lives');
+const scoreBar      = document.getElementById('score-bar');
+const currentBar    = document.getElementById('current-bar');
+const questionEl    = document.getElementById('question-text');
+const answerInput   = document.getElementById('answer-input');
+const submitBtn     = document.getElementById('submit-answer');
+const pauseBtn      = document.getElementById('pause-btn');
+const soundBtn      = document.getElementById('sound-btn');
+const audioMenu     = document.getElementById('sound-menu');
+const musicVol      = document.getElementById('music-volume');
+const fxVol         = document.getElementById('effects-volume');
+const keypad        = document.getElementById('keypad');
+
+// Difficulty Selection
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    diff = btn.dataset.difficulty;
+    startScreen.style.display   = 'none';
+    gameContainer.style.display = 'block';
+    initGame();
+  });
 });
 
-// Draw
-function draw(){
-  ctx.fillStyle='#222'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#eee';
-  ctx.fillRect(0,leftY,PADDLE_W,PADDLE_H);
-  ctx.fillRect(canvas.width-PADDLE_W,rightY,PADDLE_W,PADDLE_H);
-  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,2*Math.PI); ctx.fill();
+// Initialize / Reset
+function initGame() {
+  lives         = diff === 'hard' ? 3 : 5;
+  score         = 0;
+  questionCount = 0;
+  fallTime      = 30000;
+  balloons      = [];
+  bgm.volume    = musicVol.value = 0.5;
+  popSnd.volume = wrongSnd.volume = fxVol.value = 1;
+  bgm.play();
+  updateUI();
+  spawnBalloon();
+  requestAnimationFrame(gameLoop);
 }
 
-// Update
-function update(){
-  if(!started) return;
-  // Move ball
-  ball.x+=ball.dx; ball.y+=ball.dy;
-  if(ball.y<ball.r||ball.y>canvas.height-ball.r) ball.dy*=-1;
-  // Collide paddles
-  if(ball.x< PADDLE_W+ball.r && ball.y>leftY && ball.y<leftY+PADDLE_H) ball.dx*=-1;
-  if(ball.x>canvas.width-PADDLE_W-ball.r && ball.y>rightY && ball.y<rightY+PADDLE_H) ball.dx*=-1;
-  // Score
-  if(ball.x<0||ball.x>canvas.width){
-    ball.x=canvas.width/2; ball.y=canvas.height/2;
-    if(ball.x<0) scores.right++; else scores.left++;
-    scores.high=Math.max(scores.high,scores.left,scores.right);
-    saveScores(); updateScoreUI();
-    ball.dx*=-1;
-  }
-  // Paddles
-  let sp = (mode==='single'? sens : sens);
-  if(control==='keyboard'||control==='both'){
-    if(keys.w) leftY-=sp; if(keys.s) leftY+=sp;
-    if(mode==='two'){ if(keys.ArrowUp) rightY-=sp; if(keys.ArrowDown) rightY+=sp; }
-  }
-  if(mode==='single'){
-    rightY+=(ball.y-(rightY+PADDLE_H/2))*0.1;
-  }
-  // Bounds
-  leftY=Math.max(0,Math.min(canvas.height-PADDLE_H,leftY));
-  rightY=Math.max(0,Math.min(canvas.height-PADDLE_H,rightY));
+// Spawn logic
+function spawnBalloon() {
+  if (paused) return;
+  const a = Math.ceil(Math.random() * 12),
+        b = Math.ceil(Math.random() * 12);
+  const speed = canvas.height / (fallTime / 1000 * 60);
+  balloons.push({ x: Math.random() * (canvas.width - 100), y: 0, a, b, speed });
+  setTimeout(spawnBalloon, diff === 'easy' ? 2000 : diff === 'medium' ? 1500 : 1000);
 }
 
-// Main loop
-function loop(){
-  draw(); update();
-  requestAnimationFrame(loop);
+// Main Loop
+function gameLoop() {
+  if (!paused) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+    balloons.forEach((b, i) => {
+      b.y += b.speed;
+      ctx.drawImage(balloonImg, b.x, b.y, 100, 100);
+
+      ctx.fillStyle    = 'black';
+      ctx.font         = '18px Arial';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${b.a}×${b.b}`, b.x + 50, b.y + 50);
+
+      if (b.y > canvas.height) {
+        balloons.splice(i, 1);
+        loseLife();
+      }
+    });
+
+    highlightActive();
+  }
+  requestAnimationFrame(gameLoop);
 }
-loop();
+
+// Highlight active balloon & question bar
+function highlightActive() {
+  if (!balloons.length) {
+    questionEl.textContent = '?';
+    return;
+  }
+  let active = balloons.reduce((p, c) => (c.y > p.y ? c : p), balloons[0]);
+  ctx.strokeStyle = 'yellow';
+  ctx.lineWidth   = 3;
+  ctx.strokeRect(active.x, active.y, 100, 100);
+  questionEl.textContent = `What is: ${active.a} × ${active.b} =`;
+}
+
+// Answer handling
+submitBtn.addEventListener('click', handleAnswer);
+answerInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleAnswer();
+});
+function handleAnswer() {
+  if (paused || !balloons.length) return;
+  let active = balloons.reduce((p, c) => (c.y > p.y ? c : p), balloons[0]);
+  const val = parseInt(answerInput.value);
+  answerInput.value = '';
+  if (val === active.a * active.b) {
+    popSnd.play();
+    balloons = balloons.filter(b => b !== active);
+    score++; questionCount++;
+    if (questionCount % 5 === 0) {
+      fallTime = Math.max(5000, fallTime - 5000);
+    }
+  } else {
+    wrongSnd.play();
+    loseLife();
+  }
+  updateUI();
+}
+
+// Lives & UI update
+function loseLife() {
+  lives--;
+  updateUI();
+  if (lives <= 0) endGame();
+}
+function updateUI() {
+  livesDiv.textContent    = '❤️'.repeat(lives);
+  scoreBar.textContent    = `🏆 High Score: ${highScores[diff] || 0}`;
+  currentBar.textContent  = `Current: ${score}`;
+}
+
+// Pause button
+pauseBtn.addEventListener('click', () => {
+  paused = !paused;
+  pauseBtn.textContent = paused ? '▶️' : '⏸️';
+});
+
+// Sound button — FIXED: toggle a class on the menu
+soundBtn.addEventListener('click', () => {
+  audioMenu.classList.toggle('visible');
+});
+musicVol.addEventListener('input', e => bgm.volume = e.target.value);
+fxVol.addEventListener('input', e => popSnd.volume = wrongSnd.volume = e.target.value);
+
+// End & persistence
+function endGame() {
+  paused = true;
+  bgm.pause();
+  if (score > (highScores[diff] || 0)) {
+    highScores[diff] = score;
+    localStorage.setItem('timestableScores', JSON.stringify(highScores));
+  }
+  alert(`Game Over! Your score: ${score}`);
+  location.reload();
+}
+
+// Keypad handling
+document.querySelectorAll('.key').forEach(k => {
+  k.addEventListener('click', () => {
+    if (k.id === 'key-delete') {
+      answerInput.value = answerInput.value.slice(0, -1);
+    } else {
+      answerInput.value += k.textContent;
+    }
+    answerInput.focus();
+  });
+});
