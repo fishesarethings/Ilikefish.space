@@ -8,7 +8,7 @@
 [
   {
     "name": "timestable balloons",
-    "folder": "potimestable-balloonsng",
-    "icon": "icon.png"
+    "folder": "timestable-balloons",
+    "icon": "example-game-icon.png"
   }
 ]
