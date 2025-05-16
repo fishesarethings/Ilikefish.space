@@ -88,8 +88,4 @@ I want an HTML5 game called **[Your Game Title]**.
 Wrap each file in a separate code block labeled with its filename so I can copy & paste.
 ```
 
-## Quick Checklist
-
-*
-
 Happy building!
