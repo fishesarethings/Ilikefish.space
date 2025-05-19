@@ -1,1 +1,7 @@
-{ "folders": ["pong"] }
+{
+  "folders": [
+    "pong",
+    "timestable-balloons",
+    "why-chicken-crossed"
+  ]
+}
