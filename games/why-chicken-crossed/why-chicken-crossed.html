@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Why on Earth Is the Chicken Crossing the Road</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87ceeb;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #gameCanvas {
+      border: 3px solid #444;
+      margin-top: 10px;
+      touch-action: none;
+    }
+    #ui {
+      width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+    #leftButtons button,
+    #leftButtons select,
+    #scoreBoard span {
+      margin-right: 8px;
+      font-size: 1rem;
+    }
+    #powerupIcon {
+      animation: flash 0.5s infinite alternate;
+    }
+    @keyframes flash { from { opacity:1 } to { opacity:0.3 } }
+    button, select {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    /* Touch arrow pad */
+    #touchControls {
+      position: absolute;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      width: 240px; height: 240px;
+      display: grid;
+      grid-template:
+        "ul u  ur" 80px
+        "l  .  r"  80px
+        "dl d  dr" 80px / 80px 80px 80px;
+      gap: 5px;
+    }
+    #touchControls.hidden {
+      display: none;
+    }
+    #touchControls .arrow {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+      border-radius: 8px;
+      transition: transform 0.1s, background 0.1s;
+    }
+    /* Active: slightly larger and gray */
+    #touchControls .arrow.active {
+      transform: scale(1.2);
+      background: rgba(128,128,128,0.7);
+    }
+
+    /* Overlays */
+    .overlay {
+      position: absolute; top:0; left:0;
+      width:100%; height:100%;
+      background: rgba(0,0,0,0.6);
+      display:flex; justify-content:center; align-items:center;
+    }
+    .hidden { display: none; }
+    .box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 400px;
+    }
+    .box h1 { margin: 0 0 10px; color: #c0392b; }
+    .box p  { margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600" tabindex="0"></canvas>
+
+  <div id="ui">
+    <div id="leftButtons">
+      <button id="homeButton">Home</button>
+      <button id="infoButton">I</button>
+      <button id="pauseButton">⏸</button>
+      <label for="controlMode">Controls:</label>
+      <select id="controlMode">
+        <option value="keyboard">Keyboard</option>
+        <option value="touch">Touch</option>
+        <option value="gamepad">Gamepad</option>
+      </select>
+    </div>
+    <div id="scoreBoard">
+      <span id="score">Score: 0</span>
+      <span id="highScore">High: 0</span>
+      <span id="powerupIcon" class="hidden">🔨</span>
+    </div>
+  </div>
+
+  <!-- On-screen arrows for touch -->
+  <div id="touchControls" class="hidden">
+    <div class="arrow up-left"    data-dx="-1" data-dy="-1">↖</div>
+    <div class="arrow up"         data-dx=" 0" data-dy="-1">↑</div>
+    <div class="arrow up-right"   data-dx=" 1" data-dy="-1">↗</div>
+    <div class="arrow left"       data-dx="-1" data-dy=" 0">←</div>
+    <div class="arrow down-left"  data-dx="-1" data-dy=" 1">↙</div>
+    <div class="arrow down"       data-dx=" 0" data-dy=" 1">↓</div>
+    <div class="arrow down-right" data-dx=" 1" data-dy=" 1">↘</div>
+    <div class="arrow right"      data-dx=" 1" data-dy=" 0">→</div>
+  </div>
+
+  <!-- Info Overlay -->
+  <div id="infoOverlay" class="overlay hidden">
+    <div class="box">
+      <h2>How to Play</h2>
+      <ul>
+        <li>Use WASD/Arrows, on-screen arrows, or gamepad to move.</li>
+        <li>Avoid 🚗 cars and 🚂 trains (they kill on contact).</li>
+        <li>Collect 👢 boots (speed), 🪽 wings (jump), 🔨 hammer.</li>
+        <li>Press Space/A(Button 0) to use hammer—destroys nearest car.</li>
+        <li>Pause with “⏸”; restart/reset on Game Over.</li>
+      </ul>
+      <button id="closeInfo">Close</button>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div id="gameOverOverlay" class="overlay hidden">
+    <div class="box">
+      <h1>Game Over</h1>
+      <p id="finalScore">Your score: 0</p>
+      <button id="restartButton">Restart</button>
+      <button id="resetHSButton">Reset High Score</button>
+    </div>
+  </div>
+
+  <script>
+    // Elements 
+    const canvas = document.getElementById('gameCanvas'),
+          ctx    = canvas.getContext('2d');
+    const ui = {
+      home:        document.getElementById('homeButton'),
+      pause:       document.getElementById('pauseButton'),
+      mode:        document.getElementById('controlMode'),
+      score:       document.getElementById('score'),
+      high:        document.getElementById('highScore'),
+      pUpIcon:     document.getElementById('powerupIcon'),
+      touchPad:    document.getElementById('touchControls'),
+      arrows:      Array.from(document.querySelectorAll('#touchControls .arrow')),
+      infoO:       document.getElementById('infoOverlay'),
+      closeI:      document.getElementById('closeInfo'),
+      gameO:       document.getElementById('gameOverOverlay'),
+      final:       document.getElementById('finalScore'),
+      restart:     document.getElementById('restartButton'),
+      resetHS:     document.getElementById('resetHSButton'),
+      infoBtn:     document.getElementById('infoButton')
+    };
+
+    // Constants
+    const W = canvas.width, H = canvas.height;
+    const LANE = 40, VIS = Math.ceil(H/ LANE) + 2, C_SZ = 30;
+
+    // State
+    let state, paused = false, raf;
+
+    function init() {
+      state = {
+        x: W/2, y: 0, speed: 3,
+        score: 0,
+        high: +localStorage.getItem('high') || 0,
+        cars: [], pUps: [], keys: {},
+        hasHammer: false, hammerCD: 0,
+        gpIndex: null, mode: 'keyboard',
+        touchActive: false
+      };
+      ui.score.textContent = 'Score: 0';
+      ui.high.textContent  = 'High: ' + state.high;
+      ui.pUpIcon.classList.add('hidden');
+      ui.touchPad.classList.add('hidden');
+      ui.mode.value = 'keyboard';
+      paused = false;
+      // clear any active arrow highlights
+      ui.arrows.forEach(a => a.classList.remove('active'));
+    }
+
+    // Convert world Y to screen Y
+    function w2sY(y) {
+      return H/2 - C_SZ/2 - (y - state.y);
+    }
+
+    // Hammer use
+    function useHammer() {
+      if (!state.hasHammer || state.hammerCD > 0) return;
+      let idx = -1, best = Infinity;
+      state.cars.forEach((c,i) => {
+        const d = Math.hypot(c.x - state.x, c.lane*LANE - state.y);
+        if (d < 100 && d < best) { best = d; idx = i; }
+      });
+      if (idx >= 0) state.cars.splice(idx,1);
+      state.hasHammer = false;
+      state.hammerCD = 100;
+      ui.pUpIcon.classList.add('hidden');
+    }
+
+    // KEYBOARD & ARROW HIGHLIGHT
+    const keyToArrow = {
+      'ArrowUp':    {dx:0, dy:-1},
+      'ArrowDown':  {dx:0, dy:1},
+      'ArrowLeft':  {dx:-1, dy:0},
+      'ArrowRight': {dx:1, dy:0},
+    };
+    window.addEventListener('keydown', e => {
+      if (state.mode !== 'keyboard') return;
+      if (!state.keys[e.key]) {
+        // highlight on-screen arrow if in touch pad
+        highlightArrow(e.key, true);
+      }
+      state.keys[e.key] = true;
+      if (e.key === ' ') useHammer();
+    });
+    window.addEventListener('keyup', e => {
+      if (state.mode !== 'keyboard') return;
+      state.keys[e.key] = false;
+      highlightArrow(e.key, false);
+    });
+    function highlightArrow(key, on) {
+      const m = keyToArrow[key];
+      if (!m) return;
+      ui.arrows.forEach(div => {
+        if (+div.dataset.dx === m.dx && +div.dataset.dy === m.dy) {
+          div.classList.toggle('active', on);
+        }
+      });
+    }
+
+    // Touch swipe on canvas
+    canvas.addEventListener('touchstart', e => {
+      if (state.mode !== 'touch') return;
+      state.touchActive = true;
+    });
+    canvas.addEventListener('touchend', e => {
+      if (state.mode !== 'touch') return;
+      state.touchActive = false;
+      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
+        state.keys[k]=false;
+        highlightArrow(k, false);
+      });
+      useHammer();
+    });
+
+    // On-screen arrows
+    ui.arrows.forEach(div => {
+      const dx = +div.dataset.dx, dy = +div.dataset.dy;
+      div.addEventListener('touchstart', e => {
+        if (state.mode !== 'touch') return;
+        ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
+          state.keys[k]=false;
+          highlightArrow(k, false);
+        });
+        if (dx <  0) { state.keys['ArrowLeft']=true; highlightArrow('ArrowLeft', true); }
+        if (dx >  0) { state.keys['ArrowRight']=true; highlightArrow('ArrowRight', true); }
+        if (dy <  0) { state.keys['ArrowUp']=true; highlightArrow('ArrowUp', true); }
+        if (dy >  0) { state.keys['ArrowDown']=true; highlightArrow('ArrowDown', true); }
+        div.classList.add('active');
+        e.preventDefault();
+      });
+      div.addEventListener('touchend', e => {
+        if (state.mode !== 'touch') return;
+        ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
+          state.keys[k]=false;
+          highlightArrow(k, false);
+        });
+        div.classList.remove('active');
+        e.preventDefault();
+      });
+    });
+
+    // Gamepad
+    window.addEventListener('gamepadconnected', e => {
+      state.gpIndex = e.gamepad.index;
+    });
+    function pollGamepad() {
+      if (state.mode !== 'gamepad' || state.gpIndex === null) return;
+      const gp = navigator.getGamepads()[state.gpIndex];
+      if (!gp) return;
+      // reset highlights
+      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=>{
+        highlightArrow(k, false);
+      });
+      const left  = gp.axes[0] < -0.3;
+      const right = gp.axes[0] >  0.3;
+      const up    = gp.axes[1] < -0.3;
+      const down  = gp.axes[1] >  0.3;
+      state.keys['ArrowLeft']  = left;  highlightArrow('ArrowLeft', left);
+      state.keys['ArrowRight'] = right; highlightArrow('ArrowRight', right);
+      state.keys['ArrowUp']    = up;    highlightArrow('ArrowUp', up);
+      state.keys['ArrowDown']  = down;  highlightArrow('ArrowDown', down);
+      if (gp.buttons[0].pressed) useHammer();
+    }
+
+    // Control mode switch
+    ui.mode.addEventListener('change', () => {
+      state.mode = ui.mode.value;
+      ui.touchPad.classList.toggle('hidden', state.mode !== 'touch');
+      // clear highlights when switching
+      ui.arrows.forEach(a => a.classList.remove('active'));
+    });
+
+    // UI buttons
+    ui.pause.onclick = () => {
+      paused = !paused;
+      ui.pause.textContent = paused ? '▶' : '⏸';
+      if (!paused) loop(); else cancelAnimationFrame(raf);
+    };
+    ui.restart.onclick = () => {
+      ui.gameO.classList.add('hidden');
+      paused = false;
+      init();
+      loop();
+    };
+    ui.resetHS.onclick = () => {
+      localStorage.setItem('high', '0');
+      ui.gameO.classList.add('hidden');
+      paused = false;
+      init();
+      loop();
+    };
+    ui.infoBtn.onclick = () => ui.infoO.classList.remove('hidden');
+    ui.closeI.onclick  = () => ui.infoO.classList.add('hidden');
+    ui.home.onclick    = () => location.href = '/';
+
+    // Spawn cars and power-ups
+    function spawn() {
+      if (Math.random() < 0.03) {
+        const cl   = state.y / LANE;
+        const lane = Math.floor(cl - VIS/2 + Math.random()*VIS);
+        if (lane % 5 !== 0) {
+          const dir = Math.random()<.5 ? 1 : -1;
+          state.cars.push({ x: dir>0 ? -50 : W+50, lane, sp: 2 + state.score/50, dir });
+        }
+      }
+      if (Math.random() < 0.01) {
+        const cl   = state.y / LANE;
+        const lane = Math.floor(cl - VIS/2 + Math.random()*VIS);
+        if (lane % 5 !== 0) {
+          const types = ['boots','wings','hammer'];
+          state.pUps.push({ x: Math.random()*(W-20), lane, type: types[Math.floor(Math.random()*3)] });
+        }
+      }
+    }
+
+    // Game over
+    function die() {
+      if (state.score > state.high) {
+        state.high = state.score;
+        localStorage.setItem('high', state.high);
+        ui.high.textContent = 'High: ' + state.high;
+      }
+      ui.final.textContent = 'Your score: ' + state.score;
+      ui.gameO.classList.remove('hidden');
+      cancelAnimationFrame(raf);
+    }
+
+    // Update loop
+    function update() {
+      pollGamepad();
+
+      if (state.keys['w']||state.keys['ArrowUp'])    state.y += state.speed;
+      if (state.keys['s']||state.keys['ArrowDown'])  state.y -= state.speed;
+      if (state.keys['a']||state.keys['ArrowLeft'])  state.x -= state.speed;
+      if (state.keys['d']||state.keys['ArrowRight']) state.x += state.speed;
+      state.x = Math.max(0, Math.min(W, state.x));
+
+      const sc = Math.max(0, Math.floor(state.y / LANE));
+      if (sc > state.score) {
+        state.score = sc;
+        ui.score.textContent = 'Score: ' + sc;
+      }
+
+      spawn();
+
+      state.cars = state.cars.filter(c => {
+        c.x += c.sp * c.dir;
+        return c.x > -100 && c.x < W + 100;
+      });
+      state.cars.forEach(c => {
+        if (Math.abs(c.lane*LANE - state.y) < 20 && Math.abs(c.x - state.x) < 30) die();
+      });
+
+      const cl = Math.floor(state.y / LANE);
+      if (cl % 10 === 0) {
+        const tx = (Date.now()/5) % (W+100) - 100;
+        if (Math.abs(tx - state.x) < 30) die();
+      }
+
+      state.pUps = state.pUps.filter(p => {
+        if (p.lane === cl && Math.abs(p.x - state.x) < 20) {
+          if (p.type==='boots')  state.speed = 6;
+          if (p.type==='wings')  state.y += LANE*2;
+          if (p.type==='hammer') { state.hasHammer = true; ui.pUpIcon.classList.remove('hidden'); }
+          return false;
+        }
+        return true;
+      });
+
+      if (state.hammerCD > 0) state.hammerCD--;
+    }
+
+    // Draw loop
+    function draw() {
+      ctx.clearRect(0,0,W,H);
+      const cl    = state.y / LANE;
+      const start = Math.floor(cl - VIS/2);
+      for (let i = 0; i < VIS; i++) {
+        const lane = start + i;
+        const y    = w2sY(lane*LANE);
+        if (lane % 10 === 0) {
+          ctx.fillStyle = '#aaa'; ctx.fillRect(0,y,W,LANE);
+          ctx.font='28px sans-serif';
+          const tx = (Date.now()/5)%(W+100)-100;
+          ctx.fillText('🚂', tx, y+30);
+        } else if (lane % 5 === 0) {
+          ctx.fillStyle='#6b8e23'; ctx.fillRect(0,y,W,LANE);
+          ctx.fillStyle='#7cbf2c'; ctx.fillRect(0,y+LANE/2,W,LANE/2);
+        } else {
+          ctx.fillStyle = lane%2?'#444':'#555';
+          ctx.fillRect(0,y,W,LANE);
+          ctx.strokeStyle='#f1c232'; ctx.lineWidth=4; ctx.setLineDash([20,20]);
+          ctx.beginPath(); ctx.moveTo(0,y+LANE/2); ctx.lineTo(W,y+LANE/2); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      ctx.font='28px sans-serif';
+      state.cars.forEach(c=>{
+        const y = w2sY(c.lane*LANE);
+        ctx.fillText('🚗', c.x, y+30);
+      });
+
+      ctx.font='24px serif';
+      state.pUps.forEach(p=>{
+        const y = w2sY(p.lane*LANE);
+        let ic='🔨';
+        if (p.type==='boots') ic='👢';
+        if (p.type==='wings') ic='🪽';
+        ctx.fillText(ic, p.x, y+30);
+      });
+
+      const cy = w2sY(state.y);
+      ctx.font='30px serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='bottom';
+      ctx.fillText('🐔', state.x, cy+30);
+    }
+
+    // Main loop
+    function loop() {
+      if (paused) return;
+      update();
+      draw();
+      raf = requestAnimationFrame(loop);
+    }
+
+    // Start
+    init();
+    loop();
+  </script>
+</body>
+</html>
