@@ -1,7 +1,21 @@
-{
-  "folders": [
-    "pong",
-    "timestable-balloons",
-    "why-chicken-crossed"
-  ]
-}
+name: Update Games Index
+on:
+  push:
+    paths:
+      - 'games/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate index.json
+        run: |
+          cd games
+          jq -n '{folders: [ inputs.slugs[] ]}' \
+            --argjson inputs "$(ls -d */ | sed 's#/##' | jq -R . | jq -s .)" \
+            > index.json
+      - name: Commit & Push
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'chore: auto-update games/index.json'
+          file_pattern: 'games/index.json'
