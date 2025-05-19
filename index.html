@@ -5,7 +5,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-ZV53VVVSK3');
   </script>
@@ -13,23 +13,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>I like fishes _</title>
-  <!--Icon for website -->
+
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/assets/img/ilikefishes.ico">
 
+  <!-- Core CSS & PWA manifest -->
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="manifest" href="/manifest.json">
 
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="manifest" href="manifest.json">
+  <!-- Locomotive Scroll CSS (optional) -->
   <link rel="stylesheet"
         href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
 
+  <!-- AOS for scroll animations (optional) -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+
+  <!-- Locomotive & AOS scripts -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js"
           defer></script>
-  <script src="assets/js/typing.js" defer></script>
-  <script src="assets/js/loco.js" defer></script>
-  <script src="assets/js/sw-register.js" defer></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
 
+  <!-- Typing animation, scroll init, service worker register -->
+  <script src="/assets/js/typing.js" defer></script>
+  <script src="/assets/js/loco.js" defer></script>
+  <script src="/assets/js/sw-register.js" defer></script>
+
+  <!-- Versioning & cache-bust -->
   <script>
-    // Versioning & cache-bust
     const PAGE_VER = '1.2.0';
     if (localStorage.getItem('siteVersion') !== PAGE_VER) {
       localStorage.clear();
@@ -40,34 +50,43 @@
 </head>
 <body data-scroll-container>
 
-  <!-- Elfsight Cookie Consent | I like fish -->
-<script src="https://static.elfsight.com/platform/platform.js" async></script>
-<div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
+  <!-- Initialize AOS -->
+  <script>
+    window.addEventListener('load', () => {
+      AOS.init({ duration: 800, once: true });
+    });
+  </script>
 
-  <nav>
+  <!-- Elfsight Cookie Consent -->
+  <script src="https://static.elfsight.com/platform/platform.js" async></script>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
+       data-elfsight-app-lazy></div>
+
+  <!-- Navigation -->
+  <nav data-aos="fade-down">
     <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="games.html">Games</a></li>
-      <li><a href="server.html">Minecraft Server</a></li>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/games.html">Games</a></li>
+      <li><a href="/server.html">Server</a></li>
     </ul>
   </nav>
 
-  <!-- Hero -->
-  <section class="hero" data-scroll-section
-           style="background-image:url('assets/img/bg-home.jpg')">
+  <!-- Hero Section -->
+  <section class="hero" data-scroll-section data-aos="fade-up"
+           style="background-image:url('/assets/img/bg-home.jpg')">
     <h1 id="hero-title" class="typewriter"></h1>
   </section>
 
   <!-- Featured Games -->
-  <section class="section-interactive" data-scroll-section
-           style="background-image:url('assets/img/bg-games.jpg')">
+  <section class="section-interactive" data-scroll-section data-aos="fade-up"
+           style="background-image:url('/assets/img/bg-games.jpg')">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
   </section>
 
   <!-- Server Teaser -->
-  <section class="section-interactive" data-scroll-section
-           style="background-image:url('assets/img/bg-server.jpg')">
+  <section class="section-interactive" data-scroll-section data-aos="fade-up"
+           style="background-image:url('/assets/img/bg-server.jpg')">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
     <div class="box">
       <label>Join Address</label>
@@ -85,20 +104,11 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <script src="assets/js/games-list.js" defer></script>
-  <script src="assets/js/server.js" defer></script>
-  <script src="assets/js/fullscreen.js" defer></script>
+  <!-- Populate Featured Games -->
+  <script src="/assets/js/games-list.js" defer></script>
 
-  <!-- Combined Version + Unlicense Footer -->
-  <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
-    <p>Site Version: 1.2.0</p>
-    <p>
-      Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank" rel="noopener">
-        Unlicense
-      </a>.<br>
-      © 2025 fishesarethings — No rights reserved.
-    </p>
-  </footer>
+  <!-- Server chart & fullscreen -->
+  <script src="/assets/js/server.js" defer></script>
+  <script src="/assets/js/full-screen.js" defer></script>
 </body>
 </html>

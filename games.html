@@ -4,80 +4,62 @@
   <meta charset="UTF-8">
   <title>All Games</title>
 
-  <!-- 1. Load the precache manifest as JS, it defines self.__WB_MANIFEST -->
-  <script src="/precache-manifest.js"></script>
+  <!-- Core CSS + optional animations -->
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
-  <!-- 2. Your game-loader logic -->
-  <script>
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Once the manifest script has run, __WB_MANIFEST is an Array of paths:
-      const files = self.__WB_MANIFEST || [];
-
-      // Grab every slug that has a config.json
-      const slugs = Array.from(new Set(
-        files
-          .filter(f => f.startsWith('/games/') && f.endsWith('/config.json'))
-          .map(f => f.split('/')[2])
-      ));
-
-      for (const slug of slugs) {
-        try {
-          const resp = await fetch(`/games/${slug}/config.json`);
-          if (!resp.ok) throw new Error(`Unable to load config for ${slug}`);
-          const game = await resp.json();
-          renderGameCard(game);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    });
-
-    function renderGameCard(game) {
-      const card = document.createElement('div');
-      card.className = 'game-card';
-      card.innerHTML = `
-        <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
-        <div class="card-info">
-          <h3>${game.name}</h3>
-          <button onclick="window.open('/games/${game.folder}/${game.folder}.html','_blank')">
-            Play
-          </button>
-        </div>`;
-      // Featured (up to 3)
-      const featured = document.getElementById('featured-games');
-      if (featured && featured.children.length < 3) featured.append(card.cloneNode(true));
-      // All games
-      const all = document.getElementById('games-container');
-      if (all) all.append(card);
-    }
-  </script>
-
-  <!-- 3. Enforce 300×300 squares via CSS -->
   <style>
-    .game-card {
-      display: inline-block;
-      width: 300px;
-      margin: 0.5em;
-    }
-    .game-card img {
-      width: 300px;
-      height: 300px;
-      object-fit: contain;
-      background: #f0f0f0;
-      border: 1px solid #ddd;
-      display: block;
-    }
-    .game-card .card-info {
-      text-align: center;
+    /* Search box */
+    #search-box {
+      width: 90%; max-width: 400px;
       padding: 0.5em;
+      margin: 1em auto;
+      display: block;
+      font-size: 1rem;
+    }
+    /* Game grid */
+    .game-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
     }
   </style>
 </head>
-<body>
-  <h1>Featured Games</h1>
-  <div id="featured-games"></div>
+<body data-aos="fade-up">
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/games.html">Games</a></li>
+      <li><a href="/server.html">Server</a></li>
+    </ul>
+  </nav>
 
   <h1>All Games</h1>
-  <div id="games-container"></div>
+  <input type="text" id="search-box" placeholder="Search games…" />
+
+  <div id="games-container" class="game-grid"></div>
+
+  <!-- AOS & games-list -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+  <script>
+    window.addEventListener('load', () => AOS.init({ duration: 600 }));
+  </script>
+
+  <!-- Discover & render games -->
+  <script src="/assets/js/games-list.js" defer></script>
+  <script>
+    // After games-list.js has appended all .game-card:
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('search-box').addEventListener('input', e => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.game-card').forEach(card => {
+          const name = card.querySelector('h3').textContent.toLowerCase();
+          card.style.display = name.includes(term) ? '' : 'none';
+        });
+      });
+    });
+  </script>
 </body>
 </html>
