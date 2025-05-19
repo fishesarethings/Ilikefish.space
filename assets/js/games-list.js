@@ -1,38 +1,33 @@
-// assets/js/games-list.js
+// Dynamically load all games listed in games/index.json
+fetch('games/index.json')
+  .then(r => r.json())
+  .then(data => data.folders.forEach(addGameCard));
 
-(async () => {
-  // 1. fetch the auto-generated slug list
-  const slugs = await fetch('games/games.json').then(r => r.json());
-
-  const featured = document.getElementById('featured-games');
-  const all      = document.getElementById('games-container');
-
-  for (let i = 0; i < slugs.length; i++) {
-    const slug = slugs[i];
-    try {
-      // 2. fetch each game's config.json
-      const cfg = await fetch(`games/${slug}/config.json`).then(r => r.json());
+function addGameCard(slug) {
+  fetch(`games/${slug}/config.json`)
+    .then(r => r.json())
+    .then(game => {
       const card = document.createElement('div');
       card.className = 'game-card';
       card.innerHTML = `
-        <img src="games/${slug}/${cfg.icon}" alt="${cfg.name}">
+        <img src="games/${game.folder}/${game.icon}" alt="${game.name}">
         <div class="card-info">
-          <h3>${cfg.name}</h3>
-          <button onclick="launchGame('${slug}')">Play</button>
-        </div>
-      `;
-      // 3a. featured = first 3
-      if (i < 3 && featured) featured.append(card);
-      // 3b. all games
-      if (all) all.append(card);
+          <h3>${game.name}</h3>
+          <button onclick="launchGame('${game.folder}')">Play</button>
+        </div>`;
+      // Featured on index
+      const featured = document.getElementById('featured-games');
+      if (featured && featured.children.length < 3) {
+        featured.append(card.cloneNode(true));
+      }
+      // All games on games.html
+      const container = document.getElementById('games-container');
+      if (container) {
+        container.append(card);
+      }
+    });
+}
 
-    } catch (err) {
-      console.error(`Failed loading games/${slug}/config.json`, err);
-    }
-  }
-})();
-
-// opens the game's HTML entry in a new tab/window
-function launchGame(slug) {
-  window.open(`games/${slug}/${slug}.html`, '_blank');
+function launchGame(folder) {
+  window.open(`games/${folder}/${folder}.html`, '_blank');
 }
