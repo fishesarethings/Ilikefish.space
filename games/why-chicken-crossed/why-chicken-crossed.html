@@ -189,7 +189,8 @@
         cars: [], pUps: [], keys: {},
         hasHammer: false, hammerCD: 0,
         gpIndex: null, mode: 'keyboard',
-        touchActive: false
+        touchActive: false,
+        gameOver: false      // ← added
       };
       ui.score.textContent = 'Score: 0';
       ui.high.textContent  = 'High: ' + state.high;
@@ -197,7 +198,6 @@
       ui.touchPad.classList.add('hidden');
       ui.mode.value = 'keyboard';
       paused = false;
-      // clear any active arrow highlights
       ui.arrows.forEach(a => a.classList.remove('active'));
     }
 
@@ -208,6 +208,7 @@
 
     // Hammer use
     function useHammer() {
+      if (state.gameOver) return;    // ← guard
       if (!state.hasHammer || state.hammerCD > 0) return;
       let idx = -1, best = Infinity;
       state.cars.forEach((c,i) => {
@@ -228,16 +229,13 @@
       'ArrowRight': {dx:1, dy:0},
     };
     window.addEventListener('keydown', e => {
-      if (state.mode !== 'keyboard') return;
-      if (!state.keys[e.key]) {
-        // highlight on-screen arrow if in touch pad
-        highlightArrow(e.key, true);
-      }
+      if (state.gameOver || state.mode !== 'keyboard') return;  // ← guard
+      if (!state.keys[e.key]) highlightArrow(e.key, true);
       state.keys[e.key] = true;
       if (e.key === ' ') useHammer();
     });
     window.addEventListener('keyup', e => {
-      if (state.mode !== 'keyboard') return;
+      if (state.gameOver || state.mode !== 'keyboard') return;  // ← guard
       state.keys[e.key] = false;
       highlightArrow(e.key, false);
     });
@@ -253,11 +251,11 @@
 
     // Touch swipe on canvas
     canvas.addEventListener('touchstart', e => {
-      if (state.mode !== 'touch') return;
+      if (state.gameOver || state.mode !== 'touch') return;    // ← guard
       state.touchActive = true;
     });
     canvas.addEventListener('touchend', e => {
-      if (state.mode !== 'touch') return;
+      if (state.gameOver || state.mode !== 'touch') return;    // ← guard
       state.touchActive = false;
       ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
         state.keys[k]=false;
@@ -270,23 +268,21 @@
     ui.arrows.forEach(div => {
       const dx = +div.dataset.dx, dy = +div.dataset.dy;
       div.addEventListener('touchstart', e => {
-        if (state.mode !== 'touch') return;
+        if (state.gameOver || state.mode !== 'touch') return;  // ← guard
         ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
-          state.keys[k]=false;
-          highlightArrow(k, false);
+          state.keys[k]=false; highlightArrow(k, false);
         });
-        if (dx <  0) { state.keys['ArrowLeft']=true; highlightArrow('ArrowLeft', true); }
+        if (dx <  0) { state.keys['ArrowLeft']=true;  highlightArrow('ArrowLeft', true); }
         if (dx >  0) { state.keys['ArrowRight']=true; highlightArrow('ArrowRight', true); }
-        if (dy <  0) { state.keys['ArrowUp']=true; highlightArrow('ArrowUp', true); }
-        if (dy >  0) { state.keys['ArrowDown']=true; highlightArrow('ArrowDown', true); }
+        if (dy <  0) { state.keys['ArrowUp']=true;    highlightArrow('ArrowUp', true); }
+        if (dy >  0) { state.keys['ArrowDown']=true;  highlightArrow('ArrowDown', true); }
         div.classList.add('active');
         e.preventDefault();
       });
       div.addEventListener('touchend', e => {
-        if (state.mode !== 'touch') return;
+        if (state.gameOver || state.mode !== 'touch') return;  // ← guard
         ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> {
-          state.keys[k]=false;
-          highlightArrow(k, false);
+          state.keys[k]=false; highlightArrow(k, false);
         });
         div.classList.remove('active');
         e.preventDefault();
@@ -295,16 +291,13 @@
 
     // Gamepad
     window.addEventListener('gamepadconnected', e => {
-      state.gpIndex = e.gamepad.index;
+      if (!state.gameOver) state.gpIndex = e.gamepad.index;  // ← guard
     });
     function pollGamepad() {
-      if (state.mode !== 'gamepad' || state.gpIndex === null) return;
+      if (state.gameOver || state.mode !== 'gamepad' || state.gpIndex === null) return;  // ← guard
       const gp = navigator.getGamepads()[state.gpIndex];
       if (!gp) return;
-      // reset highlights
-      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=>{
-        highlightArrow(k, false);
-      });
+      ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=> highlightArrow(k, false));
       const left  = gp.axes[0] < -0.3;
       const right = gp.axes[0] >  0.3;
       const up    = gp.axes[1] < -0.3;
@@ -318,14 +311,15 @@
 
     // Control mode switch
     ui.mode.addEventListener('change', () => {
+      if (state.gameOver) return;        // ← guard
       state.mode = ui.mode.value;
       ui.touchPad.classList.toggle('hidden', state.mode !== 'touch');
-      // clear highlights when switching
       ui.arrows.forEach(a => a.classList.remove('active'));
     });
 
     // UI buttons
     ui.pause.onclick = () => {
+      if (state.gameOver) return;        // ← guard
       paused = !paused;
       ui.pause.textContent = paused ? '▶' : '⏸';
       if (!paused) loop(); else cancelAnimationFrame(raf);
@@ -349,6 +343,7 @@
 
     // Spawn cars and power-ups
     function spawn() {
+      if (state.gameOver) return;         // ← guard
       if (Math.random() < 0.03) {
         const cl   = state.y / LANE;
         const lane = Math.floor(cl - VIS/2 + Math.random()*VIS);
@@ -376,11 +371,13 @@
       }
       ui.final.textContent = 'Your score: ' + state.score;
       ui.gameO.classList.remove('hidden');
+      state.gameOver = true;              // ← added
       cancelAnimationFrame(raf);
     }
 
     // Update loop
     function update() {
+      if (state.gameOver) return;         // ← guard
       pollGamepad();
 
       if (state.keys['w']||state.keys['ArrowUp'])    state.y += state.speed;
