@@ -1,5 +1,22 @@
 // service-worker.js
 
+// Inside your install handler, before caching each resource:
+const total = self.__WB_MANIFEST.length;
+let count = 0;
+
+self.__WB_MANIFEST.forEach(url => {
+  caches.open(STATIC_CACHE)
+    .then(cache => cache.add(url))
+    .then(() => {
+      count++;
+      const percent = Math.round((count / total) * 100);
+      self.clients.matchAll().then(clients =>
+        clients.forEach(c => c.postMessage({ type: 'PRECACHE_PROGRESS', percent }))
+      );
+    });
+});
+
+
 // 1. Import the manifest you already generate (self.__WB_MANIFEST is an array of all your URLs)
 importScripts('/precache-manifest.js');
 

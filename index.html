@@ -53,6 +53,28 @@
       gap: 1rem;
       padding: 1rem;
     }
+
+    /* Download progress bar */
+    #download-progress {
+      position: fixed;
+      bottom: 2.5rem; /* just above footer */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 6px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      font-size: 0;
+      display: none;
+      z-index: 1001;
+    }
+    #download-progress .bar {
+      height: 100%;
+      width: 0%;
+      background: #007aff;
+      transition: width 0.2s ease;
+    }
   </style>
 </head>
 <body data-scroll-container>
@@ -97,6 +119,30 @@
 
   <!-- Load & render games -->
   <script src="/assets/js/games-list.js" defer></script>
+
+  <!-- Download Progress Indicator -->
+  <div id="download-progress">
+    <div class="bar"></div>
+  </div>
+  <script>
+    // Show a tiny progress bar as service-worker precaches
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        const progressEl = document.getElementById('download-progress');
+        const barEl = progressEl.querySelector('.bar');
+        // Listen for messages from your SW (you'll need to postMessage progress there)
+        navigator.serviceWorker.addEventListener('message', evt => {
+          if (evt.data && evt.data.type === 'PRECACHE_PROGRESS') {
+            progressEl.style.display = 'block';
+            barEl.style.width = evt.data.percent + '%';
+            if (evt.data.percent >= 100) {
+              setTimeout(() => progressEl.style.display = 'none', 500);
+            }
+          }
+        });
+      });
+    }
+  </script>
 
   <!-- Server Teaser -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up"
