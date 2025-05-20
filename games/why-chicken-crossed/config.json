@@ -1,4 +1,3 @@
-// /games/why-chicken-crossed/config.json
 {
   "name": "Why on Earth Is the Chicken Crossing the Road",
   "folder": "why-chicken-crossed",
@@ -6,12 +5,7 @@
   "entry": "why-chicken-crossed.html",
   "touchInstructions": "Tap the on-screen arrows to move the chicken.",
   "controllerMapping": {
-    "buttons": {
-      "0": "useHammer"
-    },
-    "axes": {
-      "0": "moveLeftRight",
-      "1": "moveUpDown"
-    }
+    "buttons": { "0": "useHammer" },
+    "axes":    { "0": "moveLeftRight", "1": "moveUpDown" }
   }
 }

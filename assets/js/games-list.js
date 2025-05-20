@@ -1,10 +1,12 @@
 window.addEventListener('DOMContentLoaded', async () => {
   try {
-    // 1. Load the list of game slugs
-    const { folders } = await fetch('/games/index.json').then(r => r.json()); // :contentReference[oaicite:0]{index=0}
+    const manifestText = await fetch('/precache-manifest.js').then(r => r.text());
+    const slugs = [...new Set(
+      [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
+        .map(m => m[1])
+    )];
 
-    for (const slug of folders) {
-      // 2. Fetch each game’s config and render
+    for (const slug of slugs) {
       const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
       renderGameCard(game);
     }
@@ -24,5 +26,16 @@ function renderGameCard(game) {
         Play
       </button>
     </div>`;
-  document.getElementById('games-container').append(card);
+
+  // Featured
+  const featured = document.getElementById('featured-games');
+  if (featured && featured.children.length < 3) featured.append(card.cloneNode(true));
+
+  // All on index
+  const allIndex = document.getElementById('all-games');
+  if (allIndex) allIndex.append(card.cloneNode(true));
+
+  // All on games.html
+  const allPage = document.getElementById('games-container');
+  if (allPage) allPage.append(card);
 }
