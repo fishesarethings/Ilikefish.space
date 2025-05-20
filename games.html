@@ -1,23 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>All Games</title>
 
-  <!-- Core CSS + optional animations -->
-  <link rel="stylesheet" href="/assets/css/styles.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-ZV53VVVSK3');
+  </script>
+
+  <!-- Core CSS + AOS -->
+  <link rel="stylesheet" href="/assets/css/styles.css" />
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
   <style>
-    /* Search box */
+    /* Move search down */
     #search-box {
+      margin: 2rem auto 1rem;
+      display: block;
       width: 90%; max-width: 400px;
       padding: 0.5em;
-      margin: 1em auto;
-      display: block;
       font-size: 1rem;
     }
-    /* Game grid */
     .game-grid {
       display: flex;
       flex-wrap: wrap;
@@ -26,6 +34,7 @@
   </style>
 </head>
 <body data-aos="fade-up">
+  <script>window.addEventListener('load', ()=>AOS.init({ duration:600 }));</script>
 
   <!-- Navigation -->
   <nav>
@@ -36,29 +45,24 @@
     </ul>
   </nav>
 
- 
+  <!-- Search -->
   <input type="text" id="search-box" placeholder="Search games…" />
 
+  <!-- Game cards -->
   <div id="games-container" class="game-grid"></div>
 
-  <!-- AOS & games-list -->
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
-  <script>
-    window.addEventListener('load', () => AOS.init({ duration: 600 }));
-  </script>
-
-  <!-- Discover & render games -->
+  <!-- Load games & filter -->
   <script src="/assets/js/games-list.js" defer></script>
   <script>
-    // After games-list.js has appended all .game-card:
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('search-box').addEventListener('input', e => {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.game-card').forEach(card => {
-          const name = card.querySelector('h3').textContent.toLowerCase();
-          card.style.display = name.includes(term) ? '' : 'none';
+      document.getElementById('search-box')
+        .addEventListener('input', e => {
+          const term = e.target.value.toLowerCase();
+          document.querySelectorAll('.game-card').forEach(card => {
+            const name = card.querySelector('h3').textContent.toLowerCase();
+            card.style.display = name.includes(term) ? '' : 'none';
+          });
         });
-      });
     });
   </script>
 </body>
