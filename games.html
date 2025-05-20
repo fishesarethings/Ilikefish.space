@@ -18,11 +18,11 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
   <style>
-    /* NAV BAR STICKS TO TOP */
+    /* Sticky nav */
     nav {
       position: sticky;
       top: 0;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.95);
       z-index: 1000;
     }
     nav ul {
@@ -34,24 +34,24 @@
     }
     nav a {
       margin: 0 1rem;
-      text-decoration: none;
       color: #333;
+      text-decoration: none;
       font-weight: bold;
     }
 
-    /* SEARCH BOX */
+    /* Search box */
     #search-box {
-      margin: 1rem auto 2rem;
       display: block;
       width: 90%;
       max-width: 400px;
-      padding: 0.5em;
+      margin: 1.5rem auto;
+      padding: 0.5rem;
       font-size: 1rem;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
 
-    /* GAME GRID */
+    /* Game grid */
     .game-grid {
       display: flex;
       flex-wrap: wrap;
@@ -64,11 +64,11 @@
 <body data-aos="fade-up">
 
   <script>
-    // Initialize AOS on load
+    // Initialize AOS after load
     window.addEventListener('load', () => AOS.init({ duration: 600, once: true }));
   </script>
 
-  <!-- NAVIGATION -->
+  <!-- Navigation -->
   <nav data-aos="fade-down">
     <ul>
       <li><a href="/index.html">Home</a></li>
@@ -77,7 +77,7 @@
     </ul>
   </nav>
 
-  <!-- SEARCH BOX -->
+  <!-- Search -->
   <input
     type="text"
     id="search-box"
@@ -85,20 +85,20 @@
     data-aos="fade-up"
   />
 
-  <!-- GAME CARDS CONTAINER -->
+  <!-- Cards Container -->
   <div id="games-container" class="game-grid"></div>
 
-  <!-- DISCOVER & RENDER GAMES -->
+  <!-- AOS library & our game-loader -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="/assets/js/games-list.js" defer></script>
 
-  <!-- SEARCH FILTER LOGIC -->
+  <!-- Client-side filter -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const searchBox = document.getElementById('search-box');
-      searchBox.addEventListener('input', e => {
+      document.getElementById('search-box').addEventListener('input', e => {
         const term = e.target.value.toLowerCase();
         document.querySelectorAll('.game-card').forEach(card => {
-          const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+          const name = card.querySelector('h3').textContent.toLowerCase();
           card.style.display = name.includes(term) ? 'flex' : 'none';
         });
       });
