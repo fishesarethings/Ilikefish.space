@@ -1,17 +1,27 @@
+// assets/js/games-list.js
 window.addEventListener('DOMContentLoaded', async () => {
+  let manifestText;
   try {
-    const manifestText = await fetch('/precache-manifest.js').then(r => r.text());
-    const slugs = [...new Set(
-      [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
-        .map(m => m[1])
-    )];
-
-    for (const slug of slugs) {
-      const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
-      renderGameCard(game);
-    }
+    manifestText = await fetch('/precache-manifest.js').then(r => r.text());
   } catch (err) {
-    console.error('Failed to load games:', err);
+    return console.error('Could not load precache‐manifest:', err);
+  }
+
+  // Pull every slug that has a config.json
+  const slugs = Array.from(new Set(
+    [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
+      .map(m => m[1])
+  ));
+
+  for (const slug of slugs) {
+    try {
+      const resp = await fetch(`/games/${slug}/config.json`);
+      if (!resp.ok) throw new Error(resp.statusText);
+      const game = await resp.json();
+      renderGameCard(game);
+    } catch (err) {
+      console.error(`Failed to load game '${slug}':`, err);
+    }
   }
 });
 
@@ -27,15 +37,21 @@ function renderGameCard(game) {
       </button>
     </div>`;
 
-  // Featured
-  const featured = document.getElementById('featured-games');
-  if (featured && featured.children.length < 3) featured.append(card.cloneNode(true));
+  // Featured on index.html (max 3)
+  const feat = document.getElementById('featured-games');
+  if (feat && feat.children.length < 3) {
+    feat.append(card.cloneNode(true));
+  }
 
-  // All on index
-  const allIndex = document.getElementById('all-games');
-  if (allIndex) allIndex.append(card.cloneNode(true));
+  // All on index.html
+  const allIdx = document.getElementById('all-games');
+  if (allIdx) {
+    allIdx.append(card.cloneNode(true));
+  }
 
   // All on games.html
   const allPage = document.getElementById('games-container');
-  if (allPage) allPage.append(card);
+  if (allPage) {
+    allPage.append(card);
+  }
 }
