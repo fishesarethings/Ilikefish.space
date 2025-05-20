@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>All Games</title>
+  <title>All Games — I like fishes _</title>
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
@@ -18,26 +18,58 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
   <style>
-    /* Move search down */
+    /* NAV BAR STICKS TO TOP */
+    nav {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.9);
+      z-index: 1000;
+    }
+    nav ul {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      padding: 1rem;
+      margin: 0;
+    }
+    nav a {
+      margin: 0 1rem;
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+    }
+
+    /* SEARCH BOX */
     #search-box {
-      margin: 2rem auto 1rem;
+      margin: 1rem auto 2rem;
       display: block;
-      width: 90%; max-width: 400px;
+      width: 90%;
+      max-width: 400px;
       padding: 0.5em;
       font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
+
+    /* GAME GRID */
     .game-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
+      gap: 1rem;
+      padding: 0 1rem 2rem;
     }
   </style>
 </head>
 <body data-aos="fade-up">
-  <script>window.addEventListener('load', ()=>AOS.init({ duration:600 }));</script>
 
-  <!-- Navigation -->
-  <nav>
+  <script>
+    // Initialize AOS on load
+    window.addEventListener('load', () => AOS.init({ duration: 600, once: true }));
+  </script>
+
+  <!-- NAVIGATION -->
+  <nav data-aos="fade-down">
     <ul>
       <li><a href="/index.html">Home</a></li>
       <li><a href="/games.html">Games</a></li>
@@ -45,24 +77,31 @@
     </ul>
   </nav>
 
-  <!-- Search -->
-  <input type="text" id="search-box" placeholder="Search games…" />
+  <!-- SEARCH BOX -->
+  <input
+    type="text"
+    id="search-box"
+    placeholder="Search games…"
+    data-aos="fade-up"
+  />
 
-  <!-- Game cards -->
+  <!-- GAME CARDS CONTAINER -->
   <div id="games-container" class="game-grid"></div>
 
-  <!-- Load games & filter -->
+  <!-- DISCOVER & RENDER GAMES -->
   <script src="/assets/js/games-list.js" defer></script>
+
+  <!-- SEARCH FILTER LOGIC -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('search-box')
-        .addEventListener('input', e => {
-          const term = e.target.value.toLowerCase();
-          document.querySelectorAll('.game-card').forEach(card => {
-            const name = card.querySelector('h3').textContent.toLowerCase();
-            card.style.display = name.includes(term) ? '' : 'none';
-          });
+      const searchBox = document.getElementById('search-box');
+      searchBox.addEventListener('input', e => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.game-card').forEach(card => {
+          const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+          card.style.display = name.includes(term) ? 'flex' : 'none';
         });
+      });
     });
   </script>
 </body>

@@ -17,28 +17,26 @@
   <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/assets/img/ilikefishes.ico">
 
-  <!-- Core CSS & PWA manifest -->
+  <!-- Core CSS & Manifest -->
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="manifest" href="/manifest.json">
 
-  <!-- Locomotive Scroll CSS (optional) -->
-  <link rel="stylesheet"
-        href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <!-- Locomotive Scroll -->
+  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
 
-  <!-- AOS for scroll animations (optional) -->
+  <!-- AOS Animation -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 
-  <!-- Locomotive & AOS scripts -->
-  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js"
-          defer></script>
+  <!-- JS Libraries -->
+  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
 
-  <!-- Typing animation, scroll init, service worker register -->
+  <!-- Custom Scripts -->
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
-  <!-- Versioning & cache-bust -->
+  <!-- Cache busting -->
   <script>
     const PAGE_VER = '1.2.0';
     if (localStorage.getItem('siteVersion') !== PAGE_VER) {
@@ -49,8 +47,6 @@
   </script>
 </head>
 <body data-scroll-container>
-
-  <!-- Initialize AOS -->
   <script>
     window.addEventListener('load', () => {
       AOS.init({ duration: 800, once: true });
@@ -59,8 +55,7 @@
 
   <!-- Elfsight Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
-       data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -77,7 +72,7 @@
     <h1 id="hero-title" class="typewriter"></h1>
   </section>
 
-  <  <!-- Featured Games -->
+  <!-- Featured Games -->
   <section class="section-interactive" data-scroll-section
            style="background-image:url('/assets/img/bg-games.jpg')">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
@@ -91,10 +86,8 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <!-- Populate -->
+  <!-- Load Game Data -->
   <script src="/assets/js/games-list.js" defer></script>
-
-
 
   <!-- Server Teaser -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up"
@@ -116,10 +109,7 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <!-- Populate Featured Games -->
-  <script src="/assets/js/games-list.js" defer></script>
-
-  <!-- Server chart & fullscreen -->
+  <!-- Server Scripts -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/full-screen.js" defer></script>
 </body>
