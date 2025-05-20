@@ -1,42 +1,60 @@
-const CACHE_NAME = 'static-v1';
-// During install, cache core pages
+// service-worker.js
+
+// 1. Import the manifest you already generate (self.__WB_MANIFEST is an array of all your URLs)
+importScripts('/precache-manifest.js');
+
+const STATIC_CACHE = 'static-v1';
+const RUNTIME_CACHE = 'runtime-v1';
+
+// 2. Install: precache all files in __WB_MANIFEST
 self.addEventListener('install', evt => {
   evt.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll([
-        '/', '/index.html', '/games.html', '/server.html'
-      ]))
+    caches.open(STATIC_CACHE)
+      .then(cache => cache.addAll(self.__WB_MANIFEST))
       .then(() => self.skipWaiting())
   );
 });
 
-// Activate immediately
+// 3. Activate: take control immediately
 self.addEventListener('activate', evt => {
   evt.waitUntil(self.clients.claim());
 });
 
-// On fetch, serve from cache first for core pages, then network(→cache) for everything else
+// 4. Fetch:
+//    - First try cache (precache) for anything we precached.
+//    - Otherwise network‐first, falling back to cache if offline.
 self.addEventListener('fetch', evt => {
   const url = new URL(evt.request.url);
 
-  // Core pages: cache‐first
-  if (url.origin === location.origin &&
-      ['/', '/index.html', '/games.html', '/server.html'].includes(url.pathname)) {
-    evt.respondWith(
-      caches.match(evt.request).then(c => c || fetch(evt.request))
-    );
+  // Only handle same-origin requests here; leave third-party alone.
+  if (url.origin !== location.origin) {
     return;
   }
 
-  // Everything else (assets, games): network‐first then cache
   evt.respondWith(
-    fetch(evt.request)
-      .then(resp => {
-        if (resp.ok) {
-          caches.open(CACHE_NAME).then(cache => cache.put(evt.request, resp.clone()));
-        }
-        return resp;
-      })
-      .catch(() => caches.match(evt.request))
+    caches.match(evt.request).then(cached => {
+      if (cached) {
+        // If we precached it, serve from cache.
+        return cached;
+      }
+
+      // Otherwise, try network and cache the result.
+      return fetch(evt.request)
+        .then(resp => {
+          if (resp.ok) {
+            return caches.open(RUNTIME_CACHE).then(cache => {
+              cache.put(evt.request, resp.clone());
+              return resp;
+            });
+          }
+          return resp;
+        })
+        .catch(() => {
+          // Optional: serve a default offline page for navigation requests
+          if (evt.request.mode === 'navigate') {
+            return caches.match('/offline.html');
+          }
+        });
+    })
   );
 });
