@@ -11,8 +11,9 @@
   </script>
 
   <!-- AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
-     crossorigin="anonymous"></script>
+  <script async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
+    crossorigin="anonymous"></script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -26,8 +27,10 @@
   <link rel="manifest" href="/manifest.json">
 
   <!-- Locomotive Scroll & AOS CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
-  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet"
+        href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <link rel="stylesheet"
+        href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <!-- JS libraries -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
@@ -49,7 +52,7 @@
   </script>
 
   <style>
-    /* Cards container reuse */
+    /* Reusable cards container */
     .cards-container {
       display: flex;
       flex-wrap: wrap;
@@ -57,6 +60,7 @@
       gap: 1rem;
       padding: 1rem;
     }
+
     /* Download progress bar */
     #download-progress {
       position: fixed;
@@ -77,6 +81,7 @@
       background: #007aff;
       transition: width 0.2s ease;
     }
+
     /* "Download complete" message */
     #download-complete {
       position: fixed;
@@ -94,6 +99,7 @@
   </style>
 </head>
 <body data-scroll-container>
+
   <script>
     window.addEventListener('load', () => {
       AOS.init({ duration: 800, once: true });
@@ -102,7 +108,8 @@
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
+       data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -114,21 +121,18 @@
   </nav>
 
   <!-- Hero Section (white background) -->
-  <section class="hero" data-scroll-section data-aos="fade-up"
-           style="background: #fff;">
-    <h1 id="hero-title" class="typewriter"></h1>
+  <section class="hero" data-scroll-section data-aos="fade-up" style="background: #fff;">
+    <h1 id="hero-title" class="typewriter">I like fishes _</h1>
   </section>
 
   <!-- Featured Games -->
-  <section class="section-interactive" data-scroll-section
-           style="background-image:url('/assets/img/bg-games.jpg')">
+  <section class="section-interactive" data-scroll-section>
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
   </section>
 
   <!-- All Games -->
-  <section class="section-interactive" data-scroll-section
-           style="background-image:url('/assets/img/bg-games.jpg')">
+  <section class="section-interactive" data-scroll-section>
     <h2 data-scroll data-scroll-speed="1">All Games</h2>
     <div id="all-games" class="cards-container"></div>
   </section>
@@ -143,16 +147,16 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(() => {
         const prog = document.getElementById('download-progress');
-        const bar = prog.querySelector('.bar');
-        const doneMsg = document.getElementById('download-complete');
+        const bar  = prog.querySelector('.bar');
+        const done = document.getElementById('download-complete');
         navigator.serviceWorker.addEventListener('message', evt => {
           if (evt.data?.type === 'PRECACHE_PROGRESS') {
             prog.style.display = 'block';
             bar.style.width = evt.data.percent + '%';
             if (evt.data.percent >= 100) {
               prog.style.display = 'none';
-              doneMsg.style.display = 'block';
-              setTimeout(() => doneMsg.style.display = 'none', 2000);
+              done.style.display = 'block';
+              setTimeout(() => done.style.display = 'none', 2000);
             }
           }
         });
@@ -161,8 +165,7 @@
   </script>
 
   <!-- Server Teaser -->
-  <section class="section-interactive" data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-server.jpg')">
+  <section class="section-interactive" data-scroll-section data-aos="fade-up">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
     <div class="box">
       <label>Join Address</label>
@@ -180,14 +183,12 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <!-- Unlicense + Footer -->
+  <!-- Footer + Unlicense -->
   <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
     <p>Site Version: 1.2.0</p>
     <p>
       Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank" rel="noopener">
-        Unlicense
-      </a>.<br>
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">Unlicense</a>.<br>
       © 2025 fishesarethings — No rights reserved.
     </p>
   </footer>
