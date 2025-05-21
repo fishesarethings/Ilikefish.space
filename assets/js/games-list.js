@@ -1,53 +1,47 @@
-// assets/js/games-list.js
 window.addEventListener('DOMContentLoaded', async () => {
-  let folders = [];
+  let manifestText;
   try {
-    // 1) grab the list of game folder names
-    const idx = await fetch('/games/index.json').then(r => r.json());
-    folders = idx.folders || [];
-  } catch (err) {
-    return console.error('Failed to load /games/index.json:', err);
+    manifestText = await fetch('/precache-manifest.js').then(r=>r.text());
+  } catch (e) {
+    return console.error('Could not load precache manifest', e);
   }
 
-  // 2) load each config.json and render it
-  for (const slug of folders) {
+  const slugs = [...new Set(
+    [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
+      .map(m=>m[1])
+  )];
+
+  for (const slug of slugs) {
     try {
-      const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
+      const resp = await fetch(`/games/${slug}/config.json`);
+      const game = await resp.json();
       renderGameCard(game);
-    } catch (err) {
-      console.error(`Failed to load /games/${slug}/config.json:`, err);
+    } catch(err) {
+      console.error(`Failed to load ${slug}`, err);
     }
   }
 });
 
-function renderGameCard(game) {
-  // build the card
+function renderGameCard(game){
   const card = document.createElement('div');
   card.className = 'game-card';
   card.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">
-        Play
-      </button>
-    </div>`;
+      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">Play</button>
+    </div>
+  `;
 
-  // append to Featured (max 3)
+  // Featured on home
   const feat = document.getElementById('featured-games');
-  if (feat && feat.children.length < 3) {
-    feat.appendChild(card.cloneNode(true));
-  }
+  if (feat && feat.children.length<3) feat.append(card.cloneNode(true));
 
-  // append to All on index page
-  const allIdx = document.getElementById('all-games');
-  if (allIdx) {
-    allIdx.appendChild(card.cloneNode(true));
-  }
+  // All on home
+  const allHome = document.getElementById('all-games');
+  if (allHome) allHome.append(card.cloneNode(true));
 
-  // append to games.html page
+  // All on games.html
   const allPage = document.getElementById('games-container');
-  if (allPage) {
-    allPage.appendChild(card);
-  }
+  if (allPage) allPage.append(card);
 }
