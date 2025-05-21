@@ -10,6 +10,10 @@
     gtag('config', 'G-ZV53VVVSK3');
   </script>
 
+  <!-- AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
+     crossorigin="anonymous"></script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>I like fishes _</title>
@@ -56,7 +60,7 @@
     /* Download progress bar */
     #download-progress {
       position: fixed;
-      bottom: 3.5rem;  /* slightly above the footer */
+      bottom: 3.5rem;
       left: 50%;
       transform: translateX(-50%);
       width: 220px;
@@ -90,7 +94,6 @@
   </style>
 </head>
 <body data-scroll-container>
-
   <script>
     window.addEventListener('load', () => {
       AOS.init({ duration: 800, once: true });
@@ -99,8 +102,7 @@
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
-       data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -111,9 +113,9 @@
     </ul>
   </nav>
 
-  <!-- Hero Section -->
+  <!-- Hero Section (white background) -->
   <section class="hero" data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-home.png')">
+           style="background: #fff;">
     <h1 id="hero-title" class="typewriter"></h1>
   </section>
 
@@ -137,14 +139,12 @@
   <!-- Progress indicators -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
-
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(reg => {
+      navigator.serviceWorker.ready.then(() => {
         const prog = document.getElementById('download-progress');
         const bar = prog.querySelector('.bar');
         const doneMsg = document.getElementById('download-complete');
-
         navigator.serviceWorker.addEventListener('message', evt => {
           if (evt.data?.type === 'PRECACHE_PROGRESS') {
             prog.style.display = 'block';
