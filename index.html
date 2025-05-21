@@ -31,7 +31,7 @@
 
   <!-- Custom scripts -->
   <script src="/assets/js/typing.js" defer></script>
-  <script src="/assets/js/loco.js" defer></script>
+  <script src="/assets/js/loco.js" type="module" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
   <!-- Cache-bust -->
@@ -53,19 +53,17 @@
       gap: 1rem;
       padding: 1rem;
     }
-
     /* Download progress bar */
     #download-progress {
       position: fixed;
-      bottom: 2.5rem; /* just above footer */
+      bottom: 3.5rem;  /* slightly above the footer */
       left: 50%;
       transform: translateX(-50%);
-      width: 200px;
+      width: 220px;
       height: 6px;
       background: rgba(0,0,0,0.1);
       border-radius: 3px;
       overflow: hidden;
-      font-size: 0;
       display: none;
       z-index: 1001;
     }
@@ -75,9 +73,24 @@
       background: #007aff;
       transition: width 0.2s ease;
     }
+    /* "Download complete" message */
+    #download-complete {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      display: none;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body data-scroll-container>
+
   <script>
     window.addEventListener('load', () => {
       AOS.init({ duration: 800, once: true });
@@ -86,7 +99,8 @@
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
+       data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -97,9 +111,9 @@
     </ul>
   </nav>
 
-  <!-- Hero -->
+  <!-- Hero Section -->
   <section class="hero" data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-home.jpg')">
+           style="background-image:url('/assets/img/bg-home.png')">
     <h1 id="hero-title" class="typewriter"></h1>
   </section>
 
@@ -120,23 +134,25 @@
   <!-- Load & render games -->
   <script src="/assets/js/games-list.js" defer></script>
 
-  <!-- Download Progress Indicator -->
-  <div id="download-progress">
-    <div class="bar"></div>
-  </div>
+  <!-- Progress indicators -->
+  <div id="download-progress"><div class="bar"></div></div>
+  <div id="download-complete">Download complete!</div>
+
   <script>
-    // Show a tiny progress bar as service-worker precaches
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then(reg => {
-        const progressEl = document.getElementById('download-progress');
-        const barEl = progressEl.querySelector('.bar');
-        // Listen for messages from your SW (you'll need to postMessage progress there)
+        const prog = document.getElementById('download-progress');
+        const bar = prog.querySelector('.bar');
+        const doneMsg = document.getElementById('download-complete');
+
         navigator.serviceWorker.addEventListener('message', evt => {
-          if (evt.data && evt.data.type === 'PRECACHE_PROGRESS') {
-            progressEl.style.display = 'block';
-            barEl.style.width = evt.data.percent + '%';
+          if (evt.data?.type === 'PRECACHE_PROGRESS') {
+            prog.style.display = 'block';
+            bar.style.width = evt.data.percent + '%';
             if (evt.data.percent >= 100) {
-              setTimeout(() => progressEl.style.display = 'none', 500);
+              prog.style.display = 'none';
+              doneMsg.style.display = 'block';
+              setTimeout(() => doneMsg.style.display = 'none', 2000);
             }
           }
         });
@@ -164,8 +180,20 @@
     <canvas id="activityChart"></canvas>
   </section>
 
+  <!-- Unlicense + Footer -->
+  <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
+    <p>Site Version: 1.2.0</p>
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">
+        Unlicense
+      </a>.<br>
+      © 2025 fishesarethings — No rights reserved.
+    </p>
+  </footer>
+
   <!-- Server scripts -->
-  <script src="/assets/js/server.js" defer></script>
-  <script src="/assets/js/full-screen.js" defer></script>
+  <script src="/assets/js/server.js" type="module" defer></script>
+  <script src="/assets/js/fullscreen.js" defer></script>
 </body>
 </html>
