@@ -346,7 +346,7 @@
       if (state.gameOver) return;
 
       // 5× base car rate plus increasing with score
-      const baseCarRate   = 0.03 * 5;          // 0.15
+      const baseCarRate   = 0.01 * 2;          // 0.15
       const extraPerScore = state.score / 200; // +0.005 per point
       const carChance     = Math.min(0.8, baseCarRate + extraPerScore);
       if (Math.random() < carChance) {
