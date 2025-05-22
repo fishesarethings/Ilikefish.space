@@ -1,22 +1,19 @@
 // assets/js/games-list.js
 
 window.addEventListener('DOMContentLoaded', async () => {
-  let data;
   try {
-    // Grab the folders list from games/index.json
-    const res = await fetch('/games/index.json');
-    data = await res.json();
-  } catch (err) {
-    return console.error('Failed to load games/index.json', err);
-  }
-
-  for (const slug of data.folders) {
-    try {
-      const cfg = await fetch(`/games/${slug}/config.json`).then(r => r.json());
-      renderGameCard(cfg);
-    } catch (err) {
-      console.error(`Failed to load /games/${slug}/config.json`, err);
+    // fetch the list of all game folders
+    const { folders } = await fetch('/games/index.json').then(r => r.json());
+    for (const slug of folders) {
+      try {
+        const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
+        renderGameCard(game);
+      } catch (e) {
+        console.error(`Failed to load config for ${slug}`, e);
+      }
     }
+  } catch (e) {
+    console.error('Could not load /games/index.json', e);
   }
 });
 
@@ -30,18 +27,17 @@ function renderGameCard(game) {
       <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">
         Play
       </button>
-    </div>
-  `;
+    </div>`;
 
-  // -- Home page featured
+  // Featured (home)
   const feat = document.getElementById('featured-games');
   if (feat && feat.children.length < 3) feat.append(card.cloneNode(true));
 
-  // -- Home page "all"
+  // All (home)
   const allHome = document.getElementById('all-games');
   if (allHome) allHome.append(card.cloneNode(true));
 
-  // -- games.html
+  // All (games.html)
   const allPage = document.getElementById('games-container');
   if (allPage) allPage.append(card);
 }

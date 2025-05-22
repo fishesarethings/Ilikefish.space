@@ -1,46 +1,39 @@
-// service-worker.js
-
-// bring in your precache manifest (generated at build time)
 importScripts('/precache-manifest.js');
-// bring in Workbox runtime
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
 
-const { precaching, routing, strategies } = workbox;
+const STATIC_CACHE = 'static-v1';
+const RUNTIME_CACHE = 'runtime-v1';
 
-// 1) precache everything in __WB_MANIFEST
-precaching.precacheAndRoute(self.__WB_MANIFEST || []);
-
-// 2) send progress updates during install
-self.addEventListener('install', event => {
-  const manifest = self.__WB_MANIFEST || [];
-  const total = manifest.length;
-  let count = 0;
-
-  event.waitUntil(
-    Promise.all(
-      manifest.map(url =>
-        caches.open(workbox.core.cacheNames.precache).then(cache =>
-          cache.add(url).then(() => {
-            count++;
-            const percent = Math.round((count / total) * 100);
-            self.clients.matchAll().then(clients =>
-              clients.forEach(c =>
-                c.postMessage({ type: 'PRECACHE_PROGRESS', percent })
-              )
-            );
-          })
-        )
-      )
-    ).then(() => self.skipWaiting())
+self.addEventListener('install', evt => {
+  evt.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => {
+      let done=0, total=self.__WB_MANIFEST.length;
+      return Promise.all(self.__WB_MANIFEST.map(url =>
+        cache.add(url).then(()=>{
+          done++;
+          const pct=Math.round(done/total*100);
+          self.clients.matchAll().then(clients=>
+            clients.forEach(c=>c.postMessage({type:'PRECACHE_PROGRESS',percent:pct}))
+          );
+        })
+      ));
+    }).then(()=>self.skipWaiting())
   );
 });
 
-// 3) network-first for all same-origin navigation & assets not precached
-routing.registerRoute(
-  ({request, url}) =>
-    url.origin === self.location.origin,
-  new strategies.NetworkFirst({
-    cacheName: 'runtime-cache',
-    plugins: [new workbox.expiration.ExpirationPlugin({ maxEntries: 200 })]
-  })
+self.addEventListener('activate', evt=>
+  evt.waitUntil(self.clients.claim())
 );
+
+self.addEventListener('fetch', evt=>{
+  const url=new URL(evt.request.url);
+  if(url.origin!==location.origin) return;
+  evt.respondWith(
+    caches.match(evt.request).then(cached=>cached||fetch(evt.request).then(resp=>{
+      if(resp.ok){
+        caches.open(RUNTIME_CACHE)
+          .then(cache=>cache.put(evt.request,resp.clone()));
+      }
+      return resp;
+    }).catch(()=>{}))
+  );
+});
