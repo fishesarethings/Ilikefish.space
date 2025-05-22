@@ -1,58 +1,46 @@
 // service-worker.js
 
-// 1. Pull in your generated manifest
+// bring in your precache manifest (generated at build time)
 importScripts('/precache-manifest.js');
+// bring in Workbox runtime
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
 
-const STATIC_CACHE = 'static-v1';
-const RUNTIME_CACHE = 'runtime-v1';
+const { precaching, routing, strategies } = workbox;
 
-self.addEventListener('install', evt => {
-  evt.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => {
-        const total = self.__WB_MANIFEST.length;
-        let count = 0;
-        return Promise.all(self.__WB_MANIFEST.map(url =>
+// 1) precache everything in __WB_MANIFEST
+precaching.precacheAndRoute(self.__WB_MANIFEST || []);
+
+// 2) send progress updates during install
+self.addEventListener('install', event => {
+  const manifest = self.__WB_MANIFEST || [];
+  const total = manifest.length;
+  let count = 0;
+
+  event.waitUntil(
+    Promise.all(
+      manifest.map(url =>
+        caches.open(workbox.core.cacheNames.precache).then(cache =>
           cache.add(url).then(() => {
             count++;
-            const pct = Math.round((count / total) * 100);
+            const percent = Math.round((count / total) * 100);
             self.clients.matchAll().then(clients =>
               clients.forEach(c =>
-                c.postMessage({ type: 'PRECACHE_PROGRESS', percent: pct })
+                c.postMessage({ type: 'PRECACHE_PROGRESS', percent })
               )
             );
           })
-        ));
-      })
-      .then(() => self.skipWaiting())
+        )
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', evt =>
-  evt.waitUntil(self.clients.claim())
+// 3) network-first for all same-origin navigation & assets not precached
+routing.registerRoute(
+  ({request, url}) =>
+    url.origin === self.location.origin,
+  new strategies.NetworkFirst({
+    cacheName: 'runtime-cache',
+    plugins: [new workbox.expiration.ExpirationPlugin({ maxEntries: 200 })]
+  })
 );
-
-self.addEventListener('fetch', evt => {
-  const url = new URL(evt.request.url);
-  if (url.origin !== location.origin) return;
-
-  evt.respondWith(
-    caches.match(evt.request).then(cached => {
-      if (cached) return cached;
-      return fetch(evt.request)
-        .then(resp => {
-          if (resp.ok) {
-            caches.open(RUNTIME_CACHE).then(cache =>
-              cache.put(evt.request, resp.clone())
-            );
-          }
-          return resp;
-        })
-        .catch(() => {
-          if (evt.request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-        });
-    })
-  );
-});

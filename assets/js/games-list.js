@@ -1,14 +1,15 @@
+// assets/js/games-list.js
 window.addEventListener('DOMContentLoaded', async () => {
   let manifestText;
   try {
-    manifestText = await fetch('/precache-manifest.js').then(r=>r.text());
+    manifestText = await fetch('/precache-manifest.js').then(r => r.text());
   } catch (e) {
     return console.error('Could not load precache manifest', e);
   }
-
+  // extract unique slugs
   const slugs = [...new Set(
     [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
-      .map(m=>m[1])
+      .map(m => m[1])
   )];
 
   for (const slug of slugs) {
@@ -16,13 +17,13 @@ window.addEventListener('DOMContentLoaded', async () => {
       const resp = await fetch(`/games/${slug}/config.json`);
       const game = await resp.json();
       renderGameCard(game);
-    } catch(err) {
+    } catch (err) {
       console.error(`Failed to load ${slug}`, err);
     }
   }
 });
 
-function renderGameCard(game){
+function renderGameCard(game) {
   const card = document.createElement('div');
   card.className = 'game-card';
   card.innerHTML = `
@@ -33,15 +34,15 @@ function renderGameCard(game){
     </div>
   `;
 
-  // Featured on home
+  // featured (home, max 3)
   const feat = document.getElementById('featured-games');
-  if (feat && feat.children.length<3) feat.append(card.cloneNode(true));
+  if (feat && feat.children.length < 3) feat.append(card.cloneNode(true));
 
-  // All on home
+  // all on home
   const allHome = document.getElementById('all-games');
   if (allHome) allHome.append(card.cloneNode(true));
 
-  // All on games.html
+  // all on games.html
   const allPage = document.getElementById('games-container');
   if (allPage) allPage.append(card);
 }

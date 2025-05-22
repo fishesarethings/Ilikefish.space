@@ -1,22 +1,23 @@
 // assets/js/server.js
-import Chart from 'chart.js/auto';
 
-window.copyText = txt => navigator.clipboard.writeText(txt)
-  .then(()=> alert('Copied!'));
+// Chart is loaded as a global by the CDN script tag
+window.copyText = text =>
+  navigator.clipboard.writeText(text).then(() => alert('Copied!'));
 
 window.addEventListener('load', async () => {
+  const ctx = document.getElementById('activityChart');
+  if (!ctx) return;
   try {
-    const r = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
-    const d = await r.json();
-    new Chart(document.getElementById('activityChart'), {
-      type:'line',
-      data:{
-        labels:['Now'],
-        datasets:[{label:'Players Online',data:[d.players.online]}]
+    const res = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
+    const data = await res.json();
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Now'],
+        datasets: [{ label: 'Players Online', data: [data.players.online] }]
       }
     });
   } catch {
-    document.getElementById('activityChart')
-      .parentNode.innerHTML = '<p>Offline</p>';
+    ctx.parentNode.innerHTML = '<p>Offline</p>';
   }
 });
