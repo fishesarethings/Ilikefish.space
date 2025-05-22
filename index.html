@@ -4,10 +4,10 @@
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
-    window.dataLayer = window.dataLayer||[];
-    function gtag(){dataLayer.push(arguments);}
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config','G-ZV53VVVSK3');
+    gtag('config', 'G-ZV53VVVSK3');
   </script>
 
   <!-- AdSense -->
@@ -18,6 +18,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>I like fishes _</title>
+
+  <!-- Favicon -->
   <link rel="icon" href="/assets/img/ilikefishes.ico">
 
   <!-- Core CSS & Manifest -->
@@ -30,17 +32,16 @@
   <link rel="stylesheet"
         href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
-  <!-- Chart.js UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Locomotive & AOS UMD -->
+  <!-- JS libraries -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
 
-  <!-- Typing animation & SW register -->
+  <!-- Custom scripts -->
   <script src="/assets/js/typing.js" defer></script>
+  <script src="/assets/js/loco.js" type="module" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
-  <!-- Versioning & cache-bust -->
+  <!-- Cache-bust -->
   <script>
     const PAGE_VER = '1.2.0';
     if (localStorage.getItem('siteVersion') !== PAGE_VER) {
@@ -51,45 +52,64 @@
   </script>
 
   <style>
+    /* Reusable cards container */
     .cards-container {
-      display:flex; flex-wrap:wrap;
-      justify-content:center; gap:1rem;
-      padding:1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
     }
-    /* Hero first section white */
-    .hero[data-first] { background:#fff !important; }
 
-    /* Download progress */
+    /* Download progress bar */
     #download-progress {
-      position:fixed; bottom:3.5rem;
-      left:50%; transform:translateX(-50%);
-      width:220px; height:6px;
-      background:rgba(0,0,0,0.1);
-      border-radius:3px; overflow:hidden;
-      display:none; z-index:1001;
+      position: fixed;
+      bottom: 3.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 6px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      display: none;
+      z-index: 1001;
     }
     #download-progress .bar {
-      height:100%; width:0; background:#007aff;
-      transition:width .2s ease;
+      height: 100%;
+      width: 0%;
+      background: #007aff;
+      transition: width 0.2s ease;
     }
+
+    /* "Download complete" message */
     #download-complete {
-      position:fixed; bottom:2rem;
-      left:50%; transform:translateX(-50%);
-      background:rgba(0,0,0,0.7);
-      color:#fff; padding:.3rem .6rem;
-      border-radius:4px; font-size:.85rem;
-      display:none; z-index:1001;
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      display: none;
+      z-index: 1001;
     }
   </style>
 </head>
 <body data-scroll-container>
+
   <script>
-    window.addEventListener('load',()=>AOS.init({duration:800,once:true}));
+    window.addEventListener('load', () => {
+      AOS.init({ duration: 800, once: true });
+    });
   </script>
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
+       data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -100,46 +120,46 @@
     </ul>
   </nav>
 
-  <!-- Hero (first white) -->
-  <section class="hero" data-first data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-home.jpg')">
-    <h1 id="hero-title" class="typewriter"></h1>
+  <!-- Hero Section (white background only) -->
+  <section class="hero" data-scroll-section data-aos="fade-up"
+           style="background: #fff;">
+    <h1 id="hero-title" class="typewriter">I like fishes _</h1>
   </section>
 
-  <!-- Featured Games -->
+  <!-- Featured Games (with bg image) -->
   <section class="section-interactive" data-scroll-section
-           style="background-image:url('/assets/img/bg-games.jpg')">
+           style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
   </section>
 
-  <!-- All Games -->
+  <!-- All Games (with same bg) -->
   <section class="section-interactive" data-scroll-section
-           style="background-image:url('/assets/img/bg-games.jpg')">
+           style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="1">All Games</h2>
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <!-- Render games -->
+  <!-- Load & render games -->
   <script src="/assets/js/games-list.js" defer></script>
 
   <!-- Progress indicators -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
   <script>
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.ready.then(()=>{
-        const prog=document.getElementById('download-progress');
-        const bar=prog.querySelector('.bar');
-        const done=document.getElementById('download-complete');
-        navigator.serviceWorker.addEventListener('message',evt=>{
-          if(evt.data?.type==='PRECACHE_PROGRESS'){
-            prog.style.display='block';
-            bar.style.width=evt.data.percent+'%';
-            if(evt.data.percent>=100){
-              prog.style.display='none';
-              done.style.display='block';
-              setTimeout(()=>done.style.display='none',2000);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        const prog = document.getElementById('download-progress');
+        const bar  = prog.querySelector('.bar');
+        const done = document.getElementById('download-complete');
+        navigator.serviceWorker.addEventListener('message', evt => {
+          if (evt.data?.type === 'PRECACHE_PROGRESS') {
+            prog.style.display = 'block';
+            bar.style.width = evt.data.percent + '%';
+            if (evt.data.percent >= 100) {
+              prog.style.display = 'none';
+              done.style.display = 'block';
+              setTimeout(() => done.style.display = 'none', 2000);
             }
           }
         });
@@ -147,9 +167,9 @@
     }
   </script>
 
-  <!-- Minecraft Server -->
+  <!-- Server Teaser (with its own bg) -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-server.jpg')">
+           style="background-image:url('/assets/img/bg-server.jpg');">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
     <div class="box">
       <label>Join Address</label>
@@ -167,15 +187,18 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <!-- Footer -->
-  <footer style="text-align:center;padding:1rem;color:#666;font-size:0.8rem">
+  <!-- Footer + Unlicense -->
+  <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
     <p>Site Version: 1.2.0</p>
-    <p>Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>© 2025 fishesarethings — No rights reserved.</p>
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">Unlicense</a>.<br>
+      © 2025 fishesarethings — No rights reserved.
+    </p>
   </footer>
 
-  <!-- Server & fullscreen scripts -->
-  <script src="/assets/js/server.js" defer></script>
+  <!-- Server scripts -->
+  <script src="/assets/js/server.js" type="module" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 </body>
 </html>
