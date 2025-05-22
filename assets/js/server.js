@@ -1,12 +1,12 @@
 // assets/js/server.js
 
-// Chart is loaded as a global by the CDN script tag
-window.copyText = text =>
-  navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+// copyText utility
+window.copyText = txt => navigator.clipboard.writeText(txt)
+  .then(()=> alert('Copied!'));
 
+// On load, render the chart but never destroy the join box
 window.addEventListener('load', async () => {
   const ctx = document.getElementById('activityChart');
-  if (!ctx) return;
   try {
     const res = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
     const data = await res.json();
@@ -14,10 +14,19 @@ window.addEventListener('load', async () => {
       type: 'line',
       data: {
         labels: ['Now'],
-        datasets: [{ label: 'Players Online', data: [data.players.online] }]
+        datasets: [{
+          label: 'Players Online',
+          data: [data.players.online]
+        }]
+      },
+      options: {
+        animation: false,
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
       }
     });
-  } catch {
-    ctx.parentNode.innerHTML = '<p>Offline</p>';
+  } catch (err) {
+    // Only replace the canvas itself
+    ctx.replaceWith(document.createElement('p')).textContent = 'Server status unavailable.';
   }
 });

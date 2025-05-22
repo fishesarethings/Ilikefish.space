@@ -24,16 +24,18 @@
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="manifest" href="/manifest.json">
 
-  <!-- Locomotive Scroll & AOS -->
+  <!-- Locomotive Scroll & AOS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
-  <!-- Chart.js -->
+  <!-- Chart.js (global) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-  <!-- Locomotive, AOS, then your scripts -->
+  <!-- Locomotive & AOS scripts -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
+
+  <!-- Your site scripts -->
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
@@ -76,19 +78,16 @@
       padding: .3rem .6rem; border-radius: 4px;
       font-size: .85rem; display: none; z-index: 1001;
     }
-    /* Force white hero bg on first section */
     .hero.first { background: #fff !important; }
   </style>
 </head>
 <body data-scroll-container>
-  <script>
-    window.addEventListener('load', () => AOS.init({ duration:800, once:true }));
-  </script>
+
+  <script>window.addEventListener('load',()=>AOS.init({duration:800,once:true}));</script>
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a"
-       data-elfsight-app-lazy></div>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -119,7 +118,7 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <!-- Load & render games -->
+  <!-- Discover & render games -->
   <script src="/assets/js/games-list.js" defer></script>
 
   <!-- Progress indicators -->
@@ -138,7 +137,7 @@
             if (ev.data.percent >= 100) {
               p.style.display = 'none';
               d.style.display = 'block';
-              setTimeout(() => d.style.display = 'none', 2000);
+              setTimeout(()=> d.style.display='none', 2000);
             }
           }
         });
@@ -163,7 +162,7 @@
       </div>
       <button id="enter-fullscreen">Full Screen Stats</button>
     </div>
-    <canvas id="activityChart"></canvas>
+    <canvas id="activityChart" style="max-width:100%; height:200px;"></canvas>
   </section>
 
   <!-- Footer + Unlicense -->
@@ -176,7 +175,7 @@
     </p>
   </footer>
 
-  <!-- Server scripts -->
+  <!-- Server scripts (plain script, no ES-imports!) -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 </body>
