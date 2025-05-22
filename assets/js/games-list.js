@@ -1,24 +1,21 @@
 // assets/js/games-list.js
-window.addEventListener('DOMContentLoaded', async () => {
-  let manifestText;
-  try {
-    manifestText = await fetch('/precache-manifest.js').then(r => r.text());
-  } catch (e) {
-    return console.error('Could not load precache manifest', e);
-  }
-  // extract unique slugs
-  const slugs = [...new Set(
-    [...manifestText.matchAll(/["']\/games\/([^\/]+)\/config\.json["']/g)]
-      .map(m => m[1])
-  )];
 
-  for (const slug of slugs) {
+window.addEventListener('DOMContentLoaded', async () => {
+  let data;
+  try {
+    // Grab the folders list from games/index.json
+    const res = await fetch('/games/index.json');
+    data = await res.json();
+  } catch (err) {
+    return console.error('Failed to load games/index.json', err);
+  }
+
+  for (const slug of data.folders) {
     try {
-      const resp = await fetch(`/games/${slug}/config.json`);
-      const game = await resp.json();
-      renderGameCard(game);
+      const cfg = await fetch(`/games/${slug}/config.json`).then(r => r.json());
+      renderGameCard(cfg);
     } catch (err) {
-      console.error(`Failed to load ${slug}`, err);
+      console.error(`Failed to load /games/${slug}/config.json`, err);
     }
   }
 });
@@ -30,19 +27,21 @@ function renderGameCard(game) {
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">Play</button>
+      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">
+        Play
+      </button>
     </div>
   `;
 
-  // featured (home, max 3)
+  // -- Home page featured
   const feat = document.getElementById('featured-games');
   if (feat && feat.children.length < 3) feat.append(card.cloneNode(true));
 
-  // all on home
+  // -- Home page "all"
   const allHome = document.getElementById('all-games');
   if (allHome) allHome.append(card.cloneNode(true));
 
-  // all on games.html
+  // -- games.html
   const allPage = document.getElementById('games-container');
   if (allPage) allPage.append(card);
 }

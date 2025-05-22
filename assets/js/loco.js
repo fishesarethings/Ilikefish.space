@@ -1,8 +1,10 @@
 // assets/js/loco.js
-import LocomotiveScroll from 'locomotive-scroll';
 
-new LocomotiveScroll({
-  el: document.querySelector('[data-scroll-container]'),
-  smooth: true,
-  multiplier: 1.2
+// LocomotiveScroll must be loaded by the CDN script tag before this runs
+window.addEventListener('load', () => {
+  new LocomotiveScroll({
+    el: document.querySelector('[data-scroll-container]'),
+    smooth: true,
+    multiplier: 1.2
+  });
 });
