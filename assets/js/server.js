@@ -1,37 +1,48 @@
 // assets/js/server.js
 
-// simple copy helper
+console.log('[server] script loaded');
+
 window.copyText = txt =>
   navigator.clipboard.writeText(txt)
-    .then(() => alert('Copied!'))
-    .catch(() => { /* noop */ });
+    .then(() => console.log('[server] copied:', txt))
+    .catch(err => console.error('[server] copy failed:', err));
 
-// wait for DOM so #address and #port exist
 window.addEventListener('DOMContentLoaded', async () => {
-  // always show the join info
+  console.log('[server] DOMContentLoaded');
   const addressEl = document.getElementById('address');
   const portEl    = document.getElementById('port');
-  if (addressEl) addressEl.textContent = 'ilikefish.space';
-  if (portEl)    portEl.textContent    = '19132';
 
-  // draw chart (Chart.js loaded via CDN)
+  if (!addressEl || !portEl) {
+    return console.error('[server] ❌ #address and/or #port element not found');
+  }
+
+  console.log('[server] writing join info');
+  addressEl.textContent = 'ilikefish.space';
+  portEl.textContent    = '19132';
+
   const ctx = document.getElementById('activityChart');
-  if (!ctx) return;
+  if (!ctx) {
+    return console.warn('[server] #activityChart canvas not found, skipping chart');
+  }
 
   try {
+    console.log('[server] fetching server stats…');
     const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    console.log('[server] got server stats:', data);
+
     new Chart(ctx, {
       type: 'line',
       data: {
         labels: ['Now'],
-        datasets: [
-          { label: 'Players Online', data: [data.players.online] }
-        ]
+        datasets: [{ label: 'Players Online', data: [data.players?.online ?? 0] }]
       },
       options: { responsive: true }
     });
-  } catch {
-    ctx.parentNode.innerHTML = '<p>Server stats unavailable</p>';
+  } catch (err) {
+    console.error('[server] ❌ failed to fetch or render chart:', err);
+    const parent = ctx.parentNode;
+    parent.innerHTML = '<p>Server stats unavailable</p>';
   }
 });
