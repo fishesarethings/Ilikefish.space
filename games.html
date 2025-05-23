@@ -1,3 +1,4 @@
+<!-- games.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,11 +19,16 @@
     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
     crossorigin="anonymous"></script>
 
-  <!-- Core CSS + AOS -->
-  <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
+  <!-- Merged styles.css (only nav/game-grid relevant parts) + inline -->
   <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow-x: hidden;
+    }
     nav {
       position: sticky; top: 0;
       background: rgba(255,255,255,0.95);
@@ -74,30 +80,55 @@
   </nav>
 
   <!-- Search -->
-  <input
-    id="search-box"
-    type="text"
-    placeholder="Search games…"
-    data-aos="fade-up"
-  />
+  <input id="search-box" type="text" placeholder="Search games…" data-aos="fade-up" />
 
   <!-- Games grid -->
   <div id="games-container" class="game-grid"></div>
 
-  <!-- AOS & loader -->
+  <!-- Inlined AOS & games-list.js -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
-  <script src="/assets/js/games-list.js" defer></script>
-
-  <!-- Client-side filter -->
   <script>
-    document.getElementById('search-box')
-      .addEventListener('input', e => {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.game-card').forEach(c => {
-          const name = c.querySelector('h3').textContent.toLowerCase();
-          c.style.display = name.includes(term) ? 'flex' : 'none';
+    window.addEventListener('load', () => AOS.init({ duration:600, once:true }));
+    window.addEventListener('DOMContentLoaded', async () => {
+      let index;
+      try {
+        index = await fetch('/games/index.json').then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
         });
+      } catch (err) {
+        return console.error('Failed to load /games/index.json:', err);
+      }
+      for (const slug of index.folders) {
+        try {
+          const resp = await fetch(`/games/${slug}/config.json`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const game = await resp.json();
+          renderGameCard(game);
+        } catch (e) {
+          console.error(`Failed for "${slug}":`, e);
+        }
+      }
+    });
+    function renderGameCard(game) {
+      if (!game.folder||!game.icon||!game.entry||!game.name) return;
+      const card = document.createElement('div');
+      card.className = 'game-card';
+      card.innerHTML = `
+        <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
+        <div class="card-info">
+          <h3>${game.name}</h3>
+          <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">Play</button>
+        </div>`;
+      document.getElementById('games-container').append(card);
+    }
+    document.getElementById('search-box').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('.game-card').forEach(c => {
+        c.style.display = c.querySelector('h3').textContent.toLowerCase().includes(term)
+                          ? 'flex' : 'none';
       });
+    });
   </script>
 </body>
 </html>

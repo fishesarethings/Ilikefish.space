@@ -1,3 +1,4 @@
+<!-- server.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,31 +6,75 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'G-ZV53VVVSK3');
   </script>
 
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Minecraft Server — I like fishes _</title>
-   <!--Icon for website -->
-  <link rel="icon" type="image/x-icon" href="/assets/img/ilikefishes.ico">
-  
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet"
-        href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <link rel="icon" href="/assets/img/ilikefishes.ico">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
 
-  <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js"
-          defer></script>
-  <script src="assets/js/typing.js" defer></script>
-  <script src="assets/js/loco.js" defer></script>
-  <script src="assets/js/sw-register.js" defer></script>
+  <!-- Merged styles.css nav + box + chart -->
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow-x: hidden;
+    }
+    nav ul {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      padding: 1rem;
+      margin: 0;
+    }
+    nav a {
+      margin: 0 1rem;
+      color: #555;
+      text-decoration: none;
+    }
+    .hero {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-size: cover;
+      background-position: center;
+    }
+    .section-interactive {
+      padding: 5rem 2rem;
+    }
+    .box {
+      background: rgba(200,200,200,0.3);
+      padding: 1rem;
+      border-radius: .5rem;
+      margin-bottom: 2rem;
+    }
+    .copy-box {
+      display: flex;
+      align-items: center;
+      margin: 1rem 0;
+    }
+    .copy-box span {
+      flex: 1;
+    }
+    .copy-box button,
+    #enter-fullscreen {
+      margin-left: 1rem;
+      padding: .5rem 1rem;
+    }
+    #activityChart {
+      max-width: 100%;
+      height: 300px;
+    }
+  </style>
 
+  <!-- Cache-bust -->
   <script>
-    // Versioning & cache-bust
     const PAGE_VER = '1.2.0';
     if (localStorage.getItem('siteVersion') !== PAGE_VER) {
       localStorage.clear();
@@ -40,23 +85,22 @@
 </head>
 <body data-scroll-container>
 
-<!-- Elfsight Cookie Consent | Untitled Cookie Consent -->
-<script src="https://static.elfsight.com/platform/platform.js" async></script>
-<div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
+  <!-- Cookie Consent -->
+  <script src="https://static.elfsight.com/platform/platform.js" async></script>
+  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
 
-
+  <!-- Navigation -->
   <nav>
     <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="games.html">Games</a></li>
-      <li><a href="server.html">Minecraft Server</a></li>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/games.html">Games</a></li>
+      <li><a href="/server.html">Server</a></li>
     </ul>
   </nav>
 
   <!-- Hero -->
-  <section class="hero" data-scroll-section
-           style="background-image:url('assets/img/bg-server.jpg')">
-    <h1 id="hero-title" class="typewriter"></h1>
+  <section class="hero" data-scroll-section style="background-image:url('/assets/img/bg-server.jpg')">
+    <h1 id="hero-title" class="typewriter">I like fishes _</h1>
   </section>
 
   <!-- Server Details -->
@@ -77,17 +121,91 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <script src="assets/js/server.js" defer></script>
-  <script src="assets/js/fullscreen.js" defer></script>
+  <!-- Inlined server.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script>
+    console.log('[server] script loaded');
+    window.copyText = txt =>
+      navigator.clipboard.writeText(txt)
+        .then(()=>console.log('[server] copied:',txt))
+        .catch(err=>console.error('[server] copy failed:',err));
 
-  <!-- Combined Version + Unlicense Footer -->
-  <footer style="text-align:center; padding:1rem; color:#666; font-size:0.8rem;">
+    window.addEventListener('DOMContentLoaded', async () => {
+      const addressEl = document.getElementById('address');
+      const portEl = document.getElementById('port');
+      if (!addressEl||!portEl) return;
+      addressEl.textContent='ilikefish.space';
+      portEl.textContent='19132';
+      const ctx = document.getElementById('activityChart');
+      if (!ctx) return;
+      try {
+        const res = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        new Chart(ctx, {
+          type:'line',
+          data:{ labels:['Now'], datasets:[{label:'Players Online',data:[data.players?.online||0]}] },
+          options:{responsive:true}
+        });
+      } catch {
+        ctx.parentNode.innerHTML='<p>Server stats unavailable</p>';
+      }
+    });
+  </script>
+
+  <!-- Inlined typing.js -->
+  <script>
+    window.addEventListener('load', () => {
+      const TEXT = 'I like fishes ';
+      const el = document.getElementById('hero-title');
+      let idx = 0;
+      el.textContent = '';
+      (function typeChar(){
+        if(idx<TEXT.length){
+          el.textContent+=TEXT.charAt(idx++);
+          setTimeout(typeChar,150);
+        }
+      })();
+    });
+  </script>
+
+  <!-- Inlined loco.js -->
+  <script>
+    window.addEventListener('load', () => {
+      new LocomotiveScroll({
+        el: document.querySelector('[data-scroll-container]'),
+        smooth: true,
+        multiplier: 1.2
+      });
+    });
+  </script>
+
+  <!-- Inlined sw-register.js -->
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg=>console.log('SW registered:',reg.scope))
+          .catch(err=>console.error('SW registration failed:',err));
+      });
+    }
+  </script>
+
+  <!-- Inlined fullscreen.js -->
+  <script>
+    document.getElementById('enter-fullscreen')
+      .addEventListener('click', () => {
+        const elem = document.getElementById('activityChart').parentNode;
+        (elem.requestFullscreen||elem.webkitRequestFullscreen).call(elem);
+      });
+  </script>
+
+  <!-- Footer -->
+  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
     <p>Site Version: 1.2.0</p>
     <p>
       Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank" rel="noopener">
-        Unlicense
-      </a>.<br>
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">Unlicense</a>.<br>
       © 2025 fishesarethings — No rights reserved.
     </p>
   </footer>
