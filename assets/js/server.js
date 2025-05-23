@@ -1,32 +1,37 @@
 // assets/js/server.js
 
-// copyText utility
-window.copyText = txt => navigator.clipboard.writeText(txt)
-  .then(()=> alert('Copied!'));
+// simple copy helper
+window.copyText = txt =>
+  navigator.clipboard.writeText(txt)
+    .then(() => alert('Copied!'))
+    .catch(() => { /* noop */ });
 
-// On load, render the chart but never destroy the join box
-window.addEventListener('load', async () => {
+// wait for DOM so #address and #port exist
+window.addEventListener('DOMContentLoaded', async () => {
+  // always show the join info
+  const addressEl = document.getElementById('address');
+  const portEl    = document.getElementById('port');
+  if (addressEl) addressEl.textContent = 'ilikefish.space';
+  if (portEl)    portEl.textContent    = '19132';
+
+  // draw chart (Chart.js loaded via CDN)
   const ctx = document.getElementById('activityChart');
+  if (!ctx) return;
+
   try {
-    const res = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
+    const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
     const data = await res.json();
     new Chart(ctx, {
       type: 'line',
       data: {
         labels: ['Now'],
-        datasets: [{
-          label: 'Players Online',
-          data: [data.players.online]
-        }]
+        datasets: [
+          { label: 'Players Online', data: [data.players.online] }
+        ]
       },
-      options: {
-        animation: false,
-        responsive: true,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive: true }
     });
-  } catch (err) {
-    // Only replace the canvas itself
-    ctx.replaceWith(document.createElement('p')).textContent = 'Server status unavailable.';
+  } catch {
+    ctx.parentNode.innerHTML = '<p>Server stats unavailable</p>';
   }
 });
