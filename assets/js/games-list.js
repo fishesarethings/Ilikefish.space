@@ -1,19 +1,18 @@
 // assets/js/games-list.js
-
 window.addEventListener('DOMContentLoaded', async () => {
+  let idx;
   try {
-    // fetch the list of all game folders
-    const { folders } = await fetch('/games/index.json').then(r => r.json());
-    for (const slug of folders) {
-      try {
-        const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
-        renderGameCard(game);
-      } catch (e) {
-        console.error(`Failed to load config for ${slug}`, e);
-      }
-    }
+    idx = await fetch('/games/index.json').then(r => r.json());
   } catch (e) {
-    console.error('Could not load /games/index.json', e);
+    return console.error('Could not load games index.json', e);
+  }
+  for (const slug of idx.folders) {
+    try {
+      const game = await fetch(`/games/${slug}/config.json`).then(r => r.json());
+      renderGameCard(game);
+    } catch (e) {
+      console.error('Failed to load game', slug, e);
+    }
   }
 });
 
@@ -24,20 +23,16 @@ function renderGameCard(game) {
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">
-        Play
-      </button>
+      <button onclick="window.open('/games/${game.folder}/${game.entry}','_blank')">Play</button>
     </div>`;
 
-  // Featured (home)
+  // home page: featured (max 3) + all
   const feat = document.getElementById('featured-games');
   if (feat && feat.children.length < 3) feat.append(card.cloneNode(true));
-
-  // All (home)
   const allHome = document.getElementById('all-games');
   if (allHome) allHome.append(card.cloneNode(true));
 
-  // All (games.html)
+  // games.html: all
   const allPage = document.getElementById('games-container');
   if (allPage) allPage.append(card);
 }

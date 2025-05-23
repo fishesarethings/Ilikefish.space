@@ -5,9 +5,9 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config','G-ZV53VVVSK3');
+    gtag('config', 'G-ZV53VVVSK3');
   </script>
 
   <!-- AdSense -->
@@ -31,40 +31,59 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
-  <!-- Locomotive & AOS scripts -->
+  <!-- Locomotive, AOS, then your scripts -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
-
-  <!-- Site scripts -->
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
   <!-- Cache-bust -->
   <script>
-    const PAGE_VER='1.2.0';
-    if(localStorage.getItem('siteVersion')!==PAGE_VER){
+    const PAGE_VER = '1.2.0';
+    if (localStorage.getItem('siteVersion') !== PAGE_VER) {
       localStorage.clear();
-      localStorage.setItem('siteVersion',PAGE_VER);
+      localStorage.setItem('siteVersion', PAGE_VER);
       location.reload(true);
     }
   </script>
 
   <style>
     .cards-container {
-      display:flex; flex-wrap:wrap; justify-content:center;
-      gap:1rem; padding:1rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
     }
-    .hero.first { background:#fff!important; }
-    /* download progress */
-    #download-progress{width:200px;height:6px;margin:1rem auto;
-      background:rgba(0,0,0,0.1);overflow:hidden;display:none;}
-    #download-progress .bar{width:0;height:100%;background:#007aff;transition:width .2s;}
-    #download-complete{text-align:center;font-size:.9rem;color:#333;display:none;margin-bottom:1rem;}
+    /* Progress bar */
+    #download-progress {
+      position: fixed; bottom: 3.5rem; left: 50%;
+      transform: translateX(-50%);
+      width: 220px; height: 6px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 3px; overflow: hidden;
+      display: none; z-index: 1001;
+    }
+    #download-progress .bar {
+      height: 100%; width: 0%; background: #007aff;
+      transition: width .2s ease;
+    }
+    #download-complete {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7); color: #fff;
+      padding: .3rem .6rem; border-radius: 4px;
+      font-size: .85rem; display: none; z-index: 1001;
+    }
+    /* Force white hero bg on first section */
+    .hero.first { background: #fff !important; }
   </style>
 </head>
 <body data-scroll-container>
-  <script>window.addEventListener('load',()=>AOS.init({duration:800,once:true}));</script>
+  <script>
+    window.addEventListener('load', () => AOS.init({ duration:800, once:true }));
+  </script>
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
@@ -80,7 +99,7 @@
     </ul>
   </nav>
 
-  <!-- Hero (white) -->
+  <!-- Hero (white background) -->
   <section class="hero first" data-scroll-section data-aos="fade-up"
            style="background-image:url('/assets/img/bg-home.jpg');">
     <h1 id="hero-title" class="typewriter">I like fishes _</h1>
@@ -100,10 +119,34 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <!-- load & render games -->
+  <!-- Load & render games -->
   <script src="/assets/js/games-list.js" defer></script>
 
-  <!-- Minecraft teaser -->
+  <!-- Progress indicators -->
+  <div id="download-progress"><div class="bar"></div></div>
+  <div id="download-complete">Download complete!</div>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        const p = document.getElementById('download-progress');
+        const b = p.querySelector('.bar');
+        const d = document.getElementById('download-complete');
+        navigator.serviceWorker.addEventListener('message', ev => {
+          if (ev.data?.type === 'PRECACHE_PROGRESS') {
+            p.style.display = 'block';
+            b.style.width = ev.data.percent + '%';
+            if (ev.data.percent >= 100) {
+              p.style.display = 'none';
+              d.style.display = 'block';
+              setTimeout(() => d.style.display = 'none', 2000);
+            }
+          }
+        });
+      });
+    }
+  </script>
+
+  <!-- Minecraft Server teaser (always show join info) -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up"
            style="background-image:url('/assets/img/bg-server.jpg');">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
@@ -120,23 +163,20 @@
       </div>
       <button id="enter-fullscreen">Full Screen Stats</button>
     </div>
-    <canvas id="activityChart" style="max-width:300px;height:150px;"></canvas>
-
-    <!-- download progress -->
-    <div id="download-progress"><div class="bar"></div></div>
-    <div id="download-complete">All content cached offline!</div>
+    <canvas id="activityChart"></canvas>
   </section>
 
   <!-- Footer + Unlicense -->
-  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
+  <footer style="text-align:center; padding:1rem; color:#666; font-size:.8rem;">
     <p>Site Version: 1.2.0</p>
-    <p>Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank" rel="noopener">Unlicense</a>.<br>
       © 2025 fishesarethings — No rights reserved.
     </p>
   </footer>
 
-  <!-- server scripts -->
+  <!-- Server scripts -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 </body>

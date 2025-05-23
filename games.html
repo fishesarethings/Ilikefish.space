@@ -4,34 +4,67 @@
   <meta charset="UTF-8">
   <title>All Games — I like fishes _</title>
 
-  <!-- Analytics & AdSense -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
-    window.dataLayer=window.dataLayer||[];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js',new Date());
-    gtag('config','G-ZV53VVVSK3');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-ZV53VVVSK3');
   </script>
+
+  <!-- AdSense -->
   <script async
     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
     crossorigin="anonymous"></script>
 
-  <!-- CSS + AOS -->
+  <!-- Core CSS + AOS -->
   <link rel="stylesheet" href="/assets/css/styles.css">
-  <link rel="stylesheet"
-        href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <style>
-    nav{position:sticky;top:0;background:rgba(255,255,255,0.95);z-index:1000}
-    nav ul{display:flex;justify-content:center;list-style:none;padding:1rem;margin:0}
-    nav a{margin:0 1rem;color:#333;text-decoration:none;font-weight:bold}
-    #search-box{display:block;width:90%;max-width:400px;margin:1.5rem auto;padding:.5rem;border:1px solid #ccc;border-radius:4px}
-    .game-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;padding:0 1rem 2rem}
+    nav {
+      position: sticky; top: 0;
+      background: rgba(255,255,255,0.95);
+      z-index: 1000;
+    }
+    nav ul {
+      display: flex;
+      justify-content: center;
+      list-style: none;
+      padding: 1rem;
+      margin: 0;
+    }
+    nav a {
+      margin: 0 1rem;
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #search-box {
+      display: block;
+      width: 90%; max-width: 400px;
+      margin: 1.5rem auto;
+      padding: .5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .game-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1rem 2rem;
+    }
   </style>
 </head>
 <body data-aos="fade-up">
-  <script>window.addEventListener('load',()=>AOS.init({duration:600,once:true}));</script>
+  <script>
+    window.addEventListener('load', () => AOS.init({ duration:600, once:true }));
+  </script>
 
+  <!-- Navigation -->
   <nav data-aos="fade-down">
     <ul>
       <li><a href="/index.html">Home</a></li>
@@ -40,22 +73,31 @@
     </ul>
   </nav>
 
-  <input id="search-box" type="text" placeholder="Search games…" data-aos="fade-up">
+  <!-- Search -->
+  <input
+    id="search-box"
+    type="text"
+    placeholder="Search games…"
+    data-aos="fade-up"
+  />
 
+  <!-- Games grid -->
   <div id="games-container" class="game-grid"></div>
 
-  <!-- AOS + loader -->
+  <!-- AOS & loader -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="/assets/js/games-list.js" defer></script>
 
+  <!-- Client-side filter -->
   <script>
-    document.getElementById('search-box').addEventListener('input', e => {
-      const term = e.target.value.toLowerCase();
-      document.querySelectorAll('.game-card').forEach(c => {
-        c.style.display = c.querySelector('h3').textContent.toLowerCase().includes(term)
-          ? 'flex' : 'none';
+    document.getElementById('search-box')
+      .addEventListener('input', e => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.game-card').forEach(c => {
+          const name = c.querySelector('h3').textContent.toLowerCase();
+          c.style.display = name.includes(term) ? 'flex' : 'none';
+        });
       });
-    });
   </script>
 </body>
 </html>
