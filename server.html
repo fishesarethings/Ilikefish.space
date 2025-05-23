@@ -1,8 +1,7 @@
-<!-- server.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -18,67 +17,26 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
 
-  <!-- Merged styles.css nav + box + chart -->
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      overflow-x: hidden;
-    }
-    nav ul {
-      display: flex;
-      justify-content: center;
-      list-style: none;
-      padding: 1rem;
-      margin: 0;
-    }
-    nav a {
-      margin: 0 1rem;
-      color: #555;
-      text-decoration: none;
-    }
-    .hero {
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-size: cover;
-      background-position: center;
-    }
-    .section-interactive {
-      padding: 5rem 2rem;
-    }
-    .box {
-      background: rgba(200,200,200,0.3);
-      padding: 1rem;
-      border-radius: .5rem;
-      margin-bottom: 2rem;
-    }
-    .copy-box {
-      display: flex;
-      align-items: center;
-      margin: 1rem 0;
-    }
-    .copy-box span {
-      flex: 1;
-    }
-    .copy-box button,
-    #enter-fullscreen {
-      margin-left: 1rem;
-      padding: .5rem 1rem;
-    }
-    #activityChart {
-      max-width: 100%;
-      height: 300px;
-    }
+    body { margin:0; font-family:sans-serif; overflow-x:hidden; }
+    nav ul { display:flex; justify-content:center; list-style:none; padding:1rem; margin:0; }
+    nav a { margin:0 1rem; color:#555; text-decoration:none; }
+    .hero { height:100vh; display:flex; align-items:center; justify-content:center;
+            background-size:cover; background-position:center; }
+    .section-interactive { padding:5rem 2rem; }
+    .box { background:rgba(200,200,200,0.3); padding:1rem; border-radius:.5rem; margin-bottom:2rem; }
+    .copy-box { display:flex; align-items:center; margin:1rem 0; }
+    .copy-box span { flex:1; }
+    .copy-box button, #enter-fullscreen { margin-left:1rem; padding:.5rem 1rem; }
+    #activityChart { max-width:100%; height:300px; }
   </style>
 
   <!-- Cache-bust -->
   <script>
-    const PAGE_VER = '1.2.0';
-    if (localStorage.getItem('siteVersion') !== PAGE_VER) {
+    const PAGE_VER='1.2.0';
+    if(localStorage.getItem('siteVersion')!==PAGE_VER){
       localStorage.clear();
-      localStorage.setItem('siteVersion', PAGE_VER);
+      localStorage.setItem('siteVersion',PAGE_VER);
       location.reload(true);
     }
   </script>
@@ -108,12 +66,12 @@
     <div class="box">
       <label>Join Address</label>
       <div class="copy-box">
-        <span id="address">ilikefish.space</span>
+        <span id="address"></span>
         <button onclick="copyText('ilikefish.space')">Copy</button>
       </div>
       <label>Port</label>
       <div class="copy-box">
-        <span id="port">19132</span>
+        <span id="port"></span>
         <button onclick="copyText('19132')">Copy</button>
       </div>
       <button id="enter-fullscreen">Full Screen Stats</button>
@@ -121,91 +79,22 @@
     <canvas id="activityChart"></canvas>
   </section>
 
-  <!-- Inlined server.js -->
+  <!-- Core Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-  <script>
-    console.log('[server] script loaded');
-    window.copyText = txt =>
-      navigator.clipboard.writeText(txt)
-        .then(()=>console.log('[server] copied:',txt))
-        .catch(err=>console.error('[server] copy failed:',err));
+  <script src="/assets/js/server.js" defer></script>
+  <script src="/assets/js/fullscreen.js" defer></script>
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      const addressEl = document.getElementById('address');
-      const portEl = document.getElementById('port');
-      if (!addressEl||!portEl) return;
-      addressEl.textContent='ilikefish.space';
-      portEl.textContent='19132';
-      const ctx = document.getElementById('activityChart');
-      if (!ctx) return;
-      try {
-        const res = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        new Chart(ctx, {
-          type:'line',
-          data:{ labels:['Now'], datasets:[{label:'Players Online',data:[data.players?.online||0]}] },
-          options:{responsive:true}
-        });
-      } catch {
-        ctx.parentNode.innerHTML='<p>Server stats unavailable</p>';
-      }
-    });
-  </script>
-
-  <!-- Inlined typing.js -->
-  <script>
-    window.addEventListener('load', () => {
-      const TEXT = 'I like fishes ';
-      const el = document.getElementById('hero-title');
-      let idx = 0;
-      el.textContent = '';
-      (function typeChar(){
-        if(idx<TEXT.length){
-          el.textContent+=TEXT.charAt(idx++);
-          setTimeout(typeChar,150);
-        }
-      })();
-    });
-  </script>
-
-  <!-- Inlined loco.js -->
-  <script>
-    window.addEventListener('load', () => {
-      new LocomotiveScroll({
-        el: document.querySelector('[data-scroll-container]'),
-        smooth: true,
-        multiplier: 1.2
-      });
-    });
-  </script>
-
-  <!-- Inlined sw-register.js -->
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(reg=>console.log('SW registered:',reg.scope))
-          .catch(err=>console.error('SW registration failed:',err));
-      });
-    }
-  </script>
-
-  <!-- Inlined fullscreen.js -->
-  <script>
-    document.getElementById('enter-fullscreen')
-      .addEventListener('click', () => {
-        const elem = document.getElementById('activityChart').parentNode;
-        (elem.requestFullscreen||elem.webkitRequestFullscreen).call(elem);
-      });
-  </script>
+  <!-- Typing & Locomotive & SW-register -->
+  <script src="/assets/js/typing.js" defer></script>
+  <script src="/assets/js/loco.js" defer></script>
+  <script src="/assets/js/sw-register.js" defer></script>
 
   <!-- Footer -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
     <p>Site Version: 1.2.0</p>
     <p>
       Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank" rel="noopener">Unlicense</a>.<br>
+      <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
       © 2025 fishesarethings — No rights reserved.
     </p>
   </footer>
