@@ -2,11 +2,9 @@
 
 const STATIC_CACHE = 'static-v1';
 
-// List every file you want offline
+// Manually list every URL you need offline:
 const PRECACHE_URLS = [
   '/', '/index.html', '/games.html', '/server.html', '/manifest.json',
-
-  // Core CSS & JS
   '/assets/css/styles.css',
   '/assets/js/typing.js',
   '/assets/js/loco.js',
@@ -14,21 +12,15 @@ const PRECACHE_URLS = [
   '/assets/js/games-list.js',
   '/assets/js/server.js',
   '/assets/js/fullscreen.js',
-
-  // Background images & icon
   '/assets/img/bg-home.jpg',
   '/assets/img/bg-games.jpg',
   '/assets/img/bg-server.jpg',
   '/assets/img/ilikefishes.ico',
-
-  // Games: Pong
   '/games/pong/config.json',
   '/games/pong/icon.png',
   '/games/pong/pong.html',
   '/games/pong/pong.css',
   '/games/pong/pong.js',
-
-  // Games: Times Table Balloons
   '/games/timestable-balloons/config.json',
   '/games/timestable-balloons/icon.png',
   '/games/timestable-balloons/timestable-balloons.html',
@@ -39,19 +31,23 @@ const PRECACHE_URLS = [
   '/games/timestable-balloons/assets/sounds/bgm.mp3',
   '/games/timestable-balloons/assets/sounds/pop.mp3',
   '/games/timestable-balloons/assets/sounds/wrong.mp3',
-
-  // Games: Why Chicken Crossed
   '/games/why-chicken-crossed/config.json',
   '/games/why-chicken-crossed/icon.png',
   '/games/why-chicken-crossed/why-chicken-crossed.html',
 ];
 
 self.addEventListener('install', evt => {
-  evt.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-  );
+  evt.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    for (const url of PRECACHE_URLS) {
+      try {
+        await cache.add(url);
+      } catch (err) {
+        console.warn('SW install: failed to cache', url, err);
+      }
+    }
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', evt => {
@@ -59,21 +55,31 @@ self.addEventListener('activate', evt => {
 });
 
 self.addEventListener('fetch', evt => {
-  const url = new URL(evt.request.url);
-  if (url.origin !== location.origin || evt.request.method !== 'GET') return;
+  const req = evt.request;
+  const url = new URL(req.url);
 
-  evt.respondWith(
-    caches.match(evt.request).then(cached =>
-      cached ||
-      fetch(evt.request).then(res => {
-        if (res.ok) {
-          caches.open(STATIC_CACHE)
-            .then(cache => cache.put(evt.request, res.clone()));
-        }
-        return res;
-      })
-    ).catch(() => {
-      // optionally return a fallback page here
-    })
-  );
+  // Only handle same-origin GET requests
+  if (url.origin !== location.origin || req.method !== 'GET') return;
+
+  evt.respondWith((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    const cached = await cache.match(req);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const response = await fetch(req);
+      // Clone BEFORE consuming response
+      const responseClone = response.clone();
+      if (response.ok) {
+        cache.put(req, responseClone);
+      }
+      return response;
+    } catch (err) {
+      console.warn('SW fetch failed:', req.url, err);
+      // Optionally return a fallback here
+      return cached || Response.error();
+    }
+  })());
 });
