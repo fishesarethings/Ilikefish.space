@@ -2,7 +2,7 @@
 body {
   margin: 0;
   font-family: sans-serif;
-  /* overflow-x: hidden;  you can keep this to prevent horizontal scrollbars */
+  /* overflow-x: hidden; you can keep this to prevent horizontal scrollbars */
 }
 nav {
   position: fixed;
@@ -33,8 +33,8 @@ nav a {
   animation: blink-cursor .75s step-end infinite;
 }
 @keyframes blink-cursor {
-  0%, 50%        { border-color: #555; }
-  50.01%, 100%  { border-color: transparent; }
+  0%, 50%       { border-color: #555; }
+  50.01%, 100% { border-color: transparent; }
 }
 
 /* Hero section */
