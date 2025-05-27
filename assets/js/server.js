@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   console.log('[server] writing join info');
-  addressEl.textContent = 'ilikefish.space';
+  addressEl.textContent = 'mc.ilikefish.space';
   portEl.textContent    = '19132';
 
   const ctx = document.getElementById('activityChart');
@@ -27,7 +27,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   try {
     console.log('[server] fetching server stats…');
-    const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/ilikefish.space:19132');
+    const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:19132');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     console.log('[server] got server stats:', data);
