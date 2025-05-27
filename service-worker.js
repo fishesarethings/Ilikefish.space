@@ -2,101 +2,56 @@
 
 const STATIC_CACHE = 'static-v1';
 
+// List every file you want offline
+const PRECACHE_URLS = [
+  '/', '/index.html', '/games.html', '/server.html', '/manifest.json',
+
+  // Core CSS & JS
+  '/assets/css/styles.css',
+  '/assets/js/typing.js',
+  '/assets/js/loco.js',
+  '/assets/js/sw-register.js',
+  '/assets/js/games-list.js',
+  '/assets/js/server.js',
+  '/assets/js/fullscreen.js',
+
+  // Background images & icon
+  '/assets/img/bg-home.jpg',
+  '/assets/img/bg-games.jpg',
+  '/assets/img/bg-server.jpg',
+  '/assets/img/ilikefishes.ico',
+
+  // Games: Pong
+  '/games/pong/config.json',
+  '/games/pong/icon.png',
+  '/games/pong/pong.html',
+  '/games/pong/pong.css',
+  '/games/pong/pong.js',
+
+  // Games: Times Table Balloons
+  '/games/timestable-balloons/config.json',
+  '/games/timestable-balloons/icon.png',
+  '/games/timestable-balloons/timestable-balloons.html',
+  '/games/timestable-balloons/timestable-balloons.css',
+  '/games/timestable-balloons/timestable-balloons.js',
+  '/games/timestable-balloons/assets/background.jpg',
+  '/games/timestable-balloons/assets/balloon.png',
+  '/games/timestable-balloons/assets/sounds/bgm.mp3',
+  '/games/timestable-balloons/assets/sounds/pop.mp3',
+  '/games/timestable-balloons/assets/sounds/wrong.mp3',
+
+  // Games: Why Chicken Crossed
+  '/games/why-chicken-crossed/config.json',
+  '/games/why-chicken-crossed/icon.png',
+  '/games/why-chicken-crossed/why-chicken-crossed.html',
+];
+
 self.addEventListener('install', evt => {
-  evt.waitUntil((async () => {
-    const cache = await caches.open(STATIC_CACHE);
-    const toCache = new Set([
-      '/', 
-      '/index.html', 
-      '/games.html', 
-      '/server.html', 
-      '/manifest.json'
-    ]);
-
-    // helper: fetch & scrape an HTML page for allowed local src/href
-    async function fetchAndScrape(path) {
-      try {
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        for (const [, u] of text.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
-          try {
-            const url = new URL(u, location);
-            if (url.origin === location.origin) {
-              const p = url.pathname;
-              // only cache:
-              //  • anything under /assets/
-              //  • anything under /games/
-              //  • the HTML pages themselves
-              //  • the root /
-              if (
-                p.startsWith('/assets/') ||
-                p.startsWith('/games/') ||
-                p === '/' ||
-                p.endsWith('.html') ||
-                p === '/manifest.json'
-              ) {
-                toCache.add(p);
-              }
-            }
-          } catch {}
-        }
-      } catch (e) {
-        console.warn('SW install: failed to fetch/scrape', path, e);
-      }
-    }
-
-    // 1) crawl main pages
-    await Promise.all([
-      fetchAndScrape('/index.html'),
-      fetchAndScrape('/games.html'),
-      fetchAndScrape('/server.html'),
-    ]);
-
-    // 2) crawl games list + each game entry
-    try {
-      const idx = await fetch('/games/index.json').then(r => r.json());
-      for (const slug of idx.folders || []) {
-        const cfgPath = `/games/${slug}/config.json`;
-        try {
-          const cfg = await fetch(cfgPath).then(r => r.json());
-          toCache.add(cfgPath);
-
-          const entry = `/games/${slug}/${cfg.entry}`;
-          const icon  = `/games/${slug}/${cfg.icon}`;
-
-          toCache.add(entry);
-          toCache.add(icon);
-
-          // scrape each game HTML for additional assets under /games/
-          await fetchAndScrape(entry);
-        } catch (e) {
-          console.warn('SW install: failed game', slug, e);
-        }
-      }
-    } catch (e) {
-      console.warn('SW install: failed to load /games/index.json', e);
-    }
-
-    // 3) actually cache everything, one by one, reporting progress
-    const urls = Array.from(toCache);
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i];
-      try {
-        await cache.add(url);
-      } catch (e) {
-        console.warn('SW install: cache failed', url, e);
-      }
-      // post progress to all clients
-      const pct = Math.round((i + 1) / urls.length * 100);
-      const clients = await self.clients.matchAll();
-      for (const client of clients) {
-        client.postMessage({ type: 'PRECACHE_PROGRESS', percent: pct });
-      }
-    }
-
-    await self.skipWaiting();
-  })());
+  evt.waitUntil(
+    caches.open(STATIC_CACHE)
+      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', evt => {
@@ -105,7 +60,6 @@ self.addEventListener('activate', evt => {
 
 self.addEventListener('fetch', evt => {
   const url = new URL(evt.request.url);
-  // only handle same-origin GETs
   if (url.origin !== location.origin || evt.request.method !== 'GET') return;
 
   evt.respondWith(
@@ -118,6 +72,8 @@ self.addEventListener('fetch', evt => {
         }
         return res;
       })
-    ).catch(() => null)
+    ).catch(() => {
+      // optionally return a fallback page here
+    })
   );
 });

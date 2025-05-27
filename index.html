@@ -117,25 +117,25 @@
     }
   </script>
 
-  <!-- Minecraft Server teaser -->
-  <section class="section-interactive" data-scroll-section data-aos="fade-up"
-           style="background-image:url('/assets/img/bg-server.jpg');">
-    <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
-    <div class="box">
-      <label>Join Address</label>
-      <div class="copy-box">
-        <span id="address"></span>
-        <button onclick="copyText('mc.ilikefish.space')">Copy</button>
+  <!-- in the Minecraft Server teaser section -->
+    <section class="section-interactive" ...>
+      <h2 ...>Our Minecraft Server</h2>
+      <div class="box">
+        <label>Join Address</label>
+        <div class="copy-box">
+          <span id="address">mc.ilikefish.space</span>
+          <button onclick="copyText('mc.ilikefish.space')">Copy</button>
+        </div>
+        <label>Port</label>
+        <div class="copy-box">
+          <span id="port">19132</span>
+          <button onclick="copyText('19132')">Copy</button>
+        </div>
+        <button id="enter-fullscreen">Full Screen Stats</button>
       </div>
-      <label>Port</label>
-      <div class="copy-box">
-        <span id="port"></span>
-        <button onclick="copyText('19132')">Copy</button>
-      </div>
-      <button id="enter-fullscreen">Full Screen Stats</button>
-    </div>
-    <canvas id="activityChart"></canvas>
-  </section>
+      <canvas id="activityChart"></canvas>
+    </section>
+
 
   <!-- Footer + Unlicense -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">

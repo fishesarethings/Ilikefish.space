@@ -61,23 +61,25 @@
     <h1 id="hero-title" class="typewriter">I like fishes _</h1>
   </section>
 
-  <!-- Server Details -->
-  <section class="section-interactive" data-scroll-section>
-    <div class="box">
-      <label>Join Address</label>
-      <div class="copy-box">
-        <span id="address"></span>
-        <button onclick="copyText('mc.ilikefish.space')">Copy</button>
-      </div>
-      <label>Port</label>
-      <div class="copy-box">
-        <span id="port"></span>
-        <button onclick="copyText('19132')">Copy</button>
-      </div>
-      <button id="enter-fullscreen">Full Screen Stats</button>
+  <!-- in the Minecraft Server teaser section -->
+<section class="section-interactive" ...>
+  <h2 ...>Our Minecraft Server</h2>
+  <div class="box">
+    <label>Join Address</label>
+    <div class="copy-box">
+      <span id="address">mc.ilikefish.space</span>
+      <button onclick="copyText('mc.ilikefish.space')">Copy</button>
     </div>
-    <canvas id="activityChart"></canvas>
-  </section>
+    <label>Port</label>
+    <div class="copy-box">
+      <span id="port">19132</span>
+      <button onclick="copyText('19132')">Copy</button>
+    </div>
+    <button id="enter-fullscreen">Full Screen Stats</button>
+  </div>
+  <canvas id="activityChart"></canvas>
+</section>
+
 
   <!-- Core Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
