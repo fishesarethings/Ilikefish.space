@@ -18,7 +18,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   console.log('[server] writing join info');
   addressEl.textContent = 'mc.ilikefish.space';
-  portEl.textContent    = '19132';
+  portEl.textContent    = '65167';
 
   const ctx = document.getElementById('activityChart');
   if (!ctx) {
@@ -27,10 +27,18 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   try {
     console.log('[server] fetching server stats…');
-    const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:19132');
+    const url = 'https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167';
+    const t0 = performance.now();
+    const res = await fetch(url);
+    const t1 = performance.now();
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     console.log('[server] got server stats:', data);
+
+    // show ping
+    const pingEl = document.getElementById('ping');
+    if (pingEl) pingEl.textContent = Math.round(t1 - t0) + ' ms';
 
     new Chart(ctx, {
       type: 'line',
@@ -45,4 +53,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     const parent = ctx.parentNode;
     parent.innerHTML = '<p>Server stats unavailable</p>';
   }
+});
+
+// refresh ping on button click
+document.getElementById('refresh-ping')?.addEventListener('click', () => {
+  window.dispatchEvent(new Event('DOMContentLoaded'));
 });
