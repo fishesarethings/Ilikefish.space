@@ -2,7 +2,6 @@
 body {
   margin: 0;
   font-family: sans-serif;
-  /* overflow-x: hidden; you can keep this to prevent horizontal scrollbars */
 }
 nav {
   position: fixed;
@@ -24,17 +23,17 @@ nav a {
   text-decoration: none;
 }
 
-/* Typewriter cursor only */
+/* Typewriter cursor */
 .typewriter {
   display: inline-block;
-  border-right: .15em solid #555;      /* blinking underscore */
+  border-right: .15em solid #555;
   padding-right: .05em;
   white-space: nowrap;
   animation: blink-cursor .75s step-end infinite;
 }
 @keyframes blink-cursor {
   0%, 50%       { border-color: #555; }
-  50.01%, 100% { border-color: transparent; }
+  50.01%,100%   { border-color: transparent; }
 }
 
 /* Hero section */
@@ -54,14 +53,13 @@ nav a {
   background-position: center;
 }
 
-/* Cards container (no scroll snapping) */
+/* Cards container */
 .cards-container {
   display: flex;
-  flex-wrap: wrap;        /* wrap to multiple rows if needed */
+  flex-wrap: wrap;
   justify-content: center;
   gap: 1rem;
   padding: 1rem;
-  /* removed overflow-x:auto and scroll-snap */
 }
 .game-card {
   width: 300px;
@@ -88,7 +86,7 @@ nav a {
 
 /* Copy & fullscreen box */
 .box {
-  background: rgba(200,200,200,0.3);
+  background: rgba(255,255,255,0.9) !important;
   padding: 1rem;
   border-radius: .5rem;
   margin-bottom: 2rem;
@@ -145,6 +143,37 @@ nav a {
   font-size: .85rem;
   display: none;
   z-index: 1001;
+}
+
+/* Ring + dot ping indicator */
+.ring-container {
+  position: relative;
+  width: 40px; height: 40px;
+}
+.circle {
+  width: 15px;
+  height: 15px;
+  background-color: #62bd19;
+  border-radius: 50%;
+  position: absolute;
+  top: 12.5px;
+  left: 12.5px;
+}
+.ringring {
+  border: 3px solid #62bd19;
+  border-radius: 30px;
+  height: 25px;
+  width: 25px;
+  position: absolute;
+  left: 7.5px;
+  top: 7.5px;
+  animation: pulsate 1s ease-out infinite;
+  opacity: 0;
+}
+@keyframes pulsate {
+  0%   { transform: scale(0.1); opacity: 0; }
+  50%  { opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
 }
 
 /* Force white hero bg on first section */

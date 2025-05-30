@@ -9,10 +9,10 @@ window.copyText = txt =>
 
 async function updatePing() {
   const pingEl = document.getElementById('ping');
-  const dotEl  = document.getElementById('ping-dot');
+  const dotEl  = document.querySelector('.ring-container');
   if (!pingEl || !dotEl) return;
 
-  dotEl.style.visibility = 'hidden';
+  dotEl.style.opacity = 0;
   pingEl.textContent = '…';
 
   try {
@@ -24,37 +24,28 @@ async function updatePing() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const ms = Math.round(t1 - t0);
     pingEl.textContent = `${ms} ms`;
-    dotEl.style.visibility = 'visible';
+    dotEl.style.opacity = 1;
   } catch (err) {
     console.error('[server] ❌ ping failed:', err);
     pingEl.textContent = 'Unavailable';
-    dotEl.style.visibility = 'hidden';
+    dotEl.style.opacity = 0;
   }
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  console.log('[server] DOMContentLoaded');
-
   // join info
-  const addressEl = document.getElementById('address');
-  const portEl    = document.getElementById('port');
-  addressEl.textContent = 'mc.ilikefish.space';
-  portEl.textContent    = '65167';
+  document.getElementById('address').textContent = 'mc.ilikefish.space';
+  document.getElementById('port').textContent    = '65167';
 
-  // chart (unchanged)
+  // chart
   const ctx = document.getElementById('activityChart');
   if (ctx) {
     try {
-      console.log('[server] fetching server stats…');
-      const res = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167');
+      const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167');
       const data = await res.json();
-      console.log('[server] got server stats:', data);
       new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels:['Now'],
-          datasets:[{ label:'Players Online', data:[data.players?.online||0] }]
-        },
+        type:'line',
+        data:{ labels:['Now'], datasets:[{ label:'Players Online', data:[data.players?.online||0] }] },
         options:{responsive:true}
       });
     } catch {
@@ -62,8 +53,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // ping first time, then every 30s
-  updatePing();
+  // ping first time & every 30s
+  await updatePing();
   setInterval(updatePing, 30000);
 });
 
