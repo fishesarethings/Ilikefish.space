@@ -7,55 +7,65 @@ window.copyText = txt =>
     .then(() => console.log('[server] copied:', txt))
     .catch(err => console.error('[server] copy failed:', err));
 
-window.addEventListener('DOMContentLoaded', async () => {
-  console.log('[server] DOMContentLoaded');
-  const addressEl = document.getElementById('address');
-  const portEl    = document.getElementById('port');
+async function updatePing() {
+  const pingEl = document.getElementById('ping');
+  const dotEl  = document.getElementById('ping-dot');
+  if (!pingEl || !dotEl) return;
 
-  if (!addressEl || !portEl) {
-    return console.error('[server] ❌ #address and/or #port element not found');
-  }
-
-  console.log('[server] writing join info');
-  addressEl.textContent = 'mc.ilikefish.space';
-  portEl.textContent    = '65167';
-
-  const ctx = document.getElementById('activityChart');
-  if (!ctx) {
-    return console.warn('[server] #activityChart canvas not found, skipping chart');
-  }
+  dotEl.style.visibility = 'hidden';
+  pingEl.textContent = '…';
 
   try {
-    console.log('[server] fetching server stats…');
     const url = 'https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167';
     const t0 = performance.now();
     const res = await fetch(url);
     const t1 = performance.now();
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    console.log('[server] got server stats:', data);
-
-    // show ping
-    const pingEl = document.getElementById('ping');
-    if (pingEl) pingEl.textContent = Math.round(t1 - t0) + ' ms';
-
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Now'],
-        datasets: [{ label: 'Players Online', data: [data.players?.online ?? 0] }]
-      },
-      options: { responsive: true }
-    });
+    const ms = Math.round(t1 - t0);
+    pingEl.textContent = `${ms} ms`;
+    dotEl.style.visibility = 'visible';
   } catch (err) {
-    console.error('[server] ❌ failed to fetch or render chart:', err);
-    const parent = ctx.parentNode;
-    parent.innerHTML = '<p>Server stats unavailable</p>';
+    console.error('[server] ❌ ping failed:', err);
+    pingEl.textContent = 'Unavailable';
+    dotEl.style.visibility = 'hidden';
   }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  console.log('[server] DOMContentLoaded');
+
+  // join info
+  const addressEl = document.getElementById('address');
+  const portEl    = document.getElementById('port');
+  addressEl.textContent = 'mc.ilikefish.space';
+  portEl.textContent    = '65167';
+
+  // chart (unchanged)
+  const ctx = document.getElementById('activityChart');
+  if (ctx) {
+    try {
+      console.log('[server] fetching server stats…');
+      const res = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167');
+      const data = await res.json();
+      console.log('[server] got server stats:', data);
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels:['Now'],
+          datasets:[{ label:'Players Online', data:[data.players?.online||0] }]
+        },
+        options:{responsive:true}
+      });
+    } catch {
+      ctx.parentNode.innerHTML = '<p>Server stats unavailable</p>';
+    }
+  }
+
+  // ping first time, then every 30s
+  updatePing();
+  setInterval(updatePing, 30000);
 });
 
-// refresh ping on button click
-document.getElementById('refresh-ping')?.addEventListener('click', () => {
-  window.dispatchEvent(new Event('DOMContentLoaded'));
-});
+// manual refresh
+document.getElementById('refresh-ping')?.addEventListener('click', updatePing);
