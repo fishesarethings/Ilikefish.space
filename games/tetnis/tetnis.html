@@ -126,10 +126,9 @@
     /* Pointer Emoji 🫲 */
     #pointerEmoji {
       position:absolute;
-      top:0;
-      left:0;
+      top:0; left:0;
       z-index:10;
-      font-size:1rem; /* will be overridden by JS */
+      font-size:1rem; /* overwritten by JS */
       pointer-events:none;
     }
 
@@ -771,8 +770,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
     paused   = true;
     lastScore = score;
     highScore = Math.max(highScore, score);
+
+    // ⬅ Explicitly store both values right away
+    localStorage.setItem(HIGH_KEY, highScore);
+    localStorage.setItem(LAST_KEY, lastScore);
+
     saveState();
     updateHUD();
+
     pauseTitle.textContent = deathMessages[
       Math.floor(Math.random() * deathMessages.length)
     ];
