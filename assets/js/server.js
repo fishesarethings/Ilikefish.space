@@ -163,7 +163,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderChart(msWindow);
   });
 
-  // 6) Render initial chart using default “Last 24 Hours”
+  // 6) “Update Graph” button – explicitly re-render chart
+  document.getElementById('update-graph')?.addEventListener('click', () => {
+    const msWindow = parseInt(selectEl.value, 10);
+    renderChart(msWindow);
+  });
+
+  // 7) Render initial chart using default “Last 24 Hours”
   const initialWindow = parseInt(selectEl.value, 10);
   renderChart(initialWindow);
 });
