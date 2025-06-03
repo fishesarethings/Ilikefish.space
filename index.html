@@ -74,14 +74,7 @@
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
   </section>
-  <amp-ad width="100vw" height="320"
-      type="adsense"
-      data-ad-client="ca-pub-9929753961924881"
-      data-ad-slot="4520901140"
-      data-auto-format="rspv"
-      data-full-width="">
-   <div overflow=""></div>
-  </amp-ad>
+
   <!-- All Games -->
   <section class="section-interactive" data-scroll-section
            style="background-image:url('/assets/img/bg-games.jpg');">
@@ -115,14 +108,7 @@
       });
     }
   </script>
-  <amp-ad width="100vw" height="320"
-      type="adsense"
-      data-ad-client="ca-pub-9929753961924881"
-      data-ad-slot="4520901140"
-       data-auto-format="rspv"
-       data-full-width="">
-    <div overflow=""></div>
-  </amp-ad>
+
   <!-- Minecraft Server teaser -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up"
            style="background-image:url('/assets/img/bg-server.jpg');">
@@ -148,6 +134,17 @@
         </div>
         <span id="ping">-- ms</span>
         <button id="refresh-ping">↻</button>
+      </div>
+
+      <label>Timeframe</label>
+      <div class="copy-box">
+        <select id="range-select">
+          <option value="3600000">Last 1 Hour</option>
+          <option value="86400000" selected>Last 24 Hours</option>
+          <option value="604800000">Last 1 Week</option>
+          <option value="2592000000">Last 1 Month</option>
+          <option value="31536000000">Last 1 Year</option>
+        </select>
       </div>
 
       <button id="enter-fullscreen">Full Screen Stats</button>
