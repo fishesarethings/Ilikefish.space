@@ -123,6 +123,16 @@
       100% { opacity:1; }
     }
 
+    /* Pointer Emoji 🫲 */
+    #pointerEmoji {
+      position:absolute;
+      top:0;
+      left:0;
+      z-index:10;
+      font-size:1rem; /* will be overridden by JS */
+      pointer-events:none;
+    }
+
     /* History thumbnails */
     #historyList {
       display:flex;
@@ -224,6 +234,7 @@
       <div>Score: <span id="score">0</span></div>
     </div>
     <canvas id="gameCanvas"></canvas>
+    <div id="pointerEmoji">🫲</div>
     <button id="btnRotate" title="Rotate">⟳</button>
     <button id="btnSoftDrop" title="Soft Drop">↓</button>
     <div id="touchArea"></div>
@@ -331,7 +342,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
         btnSoftDrop    = byId('btnSoftDrop'),
         touchArea      = byId('touchArea'),
         handEl         = byId('hand'),
-        startOverlay   = byId('startOverlay');
+        startOverlay   = byId('startOverlay'),
+        pointerEmoji   = byId('pointerEmoji');
 
   // --- Load from Storage ---
   let keys      = JSON.parse(localStorage.getItem(KEYS_KEY))    || defaultKeys;
@@ -344,7 +356,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   let dropCounter, dropInterval = 800, lastTime, block;
   const COLS = 10, ROWS = 20;
 
-  // --- Resize Canvas & Position Hand ---
+  // --- Resize Canvas & Position Hand & Pointer Emoji ---
   function resizeCanvas(){
     const maxW = window.innerWidth * 0.9;
     const maxH = window.innerHeight * 0.9;
@@ -352,10 +364,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
     canvas.width  = size * COLS;
     canvas.height = size * ROWS;
     block = size;
+    document.documentElement.style.setProperty('--block', `${block}px`);
+
     // Hand sits just above row 0
     handEl.style.width  = `${size*2}px`;
     handEl.style.height = `${size*2}px`;
     handEl.style.top    = `calc(50% - ${canvas.height/2 + size}px)`;
+
+    // Place the 🫲 emoji at the top‐right of the canvas
+    pointerEmoji.style.fontSize = `${Math.floor(size * 1.2)}px`;
+    pointerEmoji.style.left     = `${canvas.width + 5}px`;
+    pointerEmoji.style.top      = `0px`;
+
     draw();
   }
   window.addEventListener('resize', resizeCanvas);
@@ -489,7 +509,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   };
   btnBackCtrl.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
   btnBackHist.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
-  btnContinue.onclick = ()=>{ 
+  btnContinue.onclick = ()=>{
     if(!gameOver){
       paused = false;
       hideMenus();
@@ -518,7 +538,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(started && !gameOver && !waitingToStart){
       paused = true;
       pauseTitle.textContent = 'Paused';
-      btnContinue.disabled = false; 
+      btnContinue.disabled = false;
       pauseMenu.classList.remove('hidden');
       saveState();
     }
@@ -962,7 +982,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   };
   btnBackCtrl.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
   btnBackHist.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
-  btnContinue.onclick = ()=>{ 
+  btnContinue.onclick = ()=>{
     if(!gameOver){
       paused = false;
       hideMenus();
@@ -990,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(started && !gameOver && !waitingToStart){
       paused = true;
       pauseTitle.textContent = 'Paused';
-      btnContinue.disabled = false; 
+      btnContinue.disabled = false;
       pauseMenu.classList.remove('hidden');
       saveState();
     }
