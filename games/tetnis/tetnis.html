@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tetnis</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      color: #fff;
+      height:100vh; width:100vw;
+      overflow:hidden;
+      position:relative;
+    }
+    button, .key-box { user-select: none; }
+
+    /* Overlay Menus */
+    .overlay {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center;
+      z-index:100;
+    }
+    .overlay.hidden { display:none; }
+    .menu-box {
+      background:#1a1a2e; padding:1.5em; border-radius:12px;
+      text-align:center; width:90vw; max-width:360px;
+      box-shadow:0 0 20px rgba(0,0,0,0.6);
+    }
+    .menu-box h1 { margin-bottom:0.5em; color:#00f0ff; }
+    .menu-box p { margin-bottom:1em; font-size:0.9rem; color:#ddd; }
+    .menu-box button {
+      width:100%; padding:0.75em; margin:0.5em 0;
+      border:none; border-radius:6px; background:#00adb5;
+      font-size:1rem; cursor:pointer; transition:background 0.2s;
+    }
+    .menu-box button:hover:not(:disabled) { background:#007b80; }
+    .menu-box button:disabled { background:#444; cursor:not-allowed; }
+    .menu-box label {
+      display:flex; justify-content:space-between; align-items:center;
+      margin:0.5em 0;
+    }
+    .menu-box .key-box {
+      width:45%; padding:0.5em;
+      background:#222; border:1px solid #555; border-radius:4px;
+      text-align:center; cursor:pointer;
+    }
+
+    /* Game Container & HUD */
+    #game-container {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+    }
+    #gameCanvas {
+      display:block; background:#000;
+      image-rendering:pixelated;
+      border:4px solid #333; box-shadow:0 0 10px #000;
+    }
+    #hud {
+      display:flex; justify-content:space-around;
+      margin-bottom:0.5em; font-size:1rem;
+    }
+    #hud div {
+      background:rgba(0,0,0,0.6);
+      padding:0.3em 0.6em; border-radius:4px;
+    }
+
+    /* Home & Pause Buttons */
+    #homeBtn, #pauseBtn {
+      position:absolute; top:10px; width:36px; height:36px;
+      background:#ff2e63; border:none; border-radius:50%;
+      color:#fff; font-size:1.2rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      z-index:50;
+    }
+    #homeBtn { left:10px; }
+    #pauseBtn { right:10px; }
+
+    /* On-screen Buttons */
+    #btnRotate, #btnSoftDrop {
+      position:absolute; bottom:10px; width:60px; height:60px;
+      border:none; border-radius:50%; background:rgba(0,173,181,0.8);
+      color:#fff; font-size:1.5rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      z-index:40; transition:background 0.2s;
+    }
+    #btnRotate:hover, #btnSoftDrop:hover { background:rgba(0,173,181,1); }
+    #btnRotate { left:10px; }
+    #btnSoftDrop { right:10px; }
+
+    /* Touch overlay */
+    #touchArea {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%; z-index:10;
+    }
+
+    /* Hand at the Top */
+    #hand {
+      position:absolute;
+      top:0; left:50%;
+      width:calc(var(--block)*2);
+      height:calc(var(--block)*2);
+      background: url('https://i.imgur.com/xfsvy7T.png') no-repeat center/contain;
+      transform:translateX(-50%) translateY(-50%);
+      pointer-events:none;
+      z-index:5;
+    }
+
+    /* “Press Down to Start” Overlay */
+    #startOverlay {
+      position:absolute;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      font-size:2rem; color:#00f0ff;
+      animation: fadePulse 1.5s infinite;
+      z-index: 20;
+      text-align:center;
+    }
+    @keyframes fadePulse {
+      0% { opacity:1; }
+      50% { opacity:0.2; }
+      100% { opacity:1; }
+    }
+
+    /* History thumbnails */
+    #historyList {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    .history-item {
+      background:#222;
+      border-radius:8px;
+      padding:1em;
+      margin:0.5em 0;
+      width:80%;
+      max-width:400px;
+      text-align:center;
+    }
+    .history-item h4 {
+      margin-bottom:0.5em;
+      font-size:1rem;
+      color:#00f0ff;
+    }
+    .history-item canvas {
+      border:1px solid #666;
+      display:block;
+      margin:0 auto 0.5em auto;
+    }
+    .history-resume-container {
+      margin-top:0.5em;
+      text-align:center;
+    }
+    .history-resume-container button {
+      padding:0.4em 0.8em;
+      border:none; border-radius:4px;
+      background:#00adb5; color:#fff; cursor:pointer;
+      transition:background 0.2s;
+    }
+    .history-resume-container button:hover {
+      background:#007b80;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hand of Tetanus -->
+  <div id="hand"></div>
+
+  <!-- “Press Down to Start” Overlay -->
+  <div id="startOverlay">Press Down to Start</div>
+
+  <!-- Home & Pause -->
+  <button id="homeBtn" title="Home">←</button>
+  <button id="pauseBtn" title="Pause">Ⅱ</button>
+
+  <!-- Main Menu -->
+  <div class="overlay" id="mainMenu">
+    <div class="menu-box">
+      <h1>Tetnis</h1>
+      <p>If you encounter bugs or errors, please reload the page.</p>
+      <button id="btnStart">Start Game</button>
+      <button id="btnControls">Controls</button>
+      <button id="btnHistory">History</button>
+      <button id="btnResetAll">Reset All</button>
+    </div>
+  </div>
+
+  <!-- Controls Menu -->
+  <div class="overlay hidden" id="controlsMenu">
+    <div class="menu-box">
+      <h1>Controls</h1>
+      <small>Click a box then press any key</small>
+      <div id="bindings"></div>
+      <button id="btnBackFromControls">Back</button>
+    </div>
+  </div>
+
+  <!-- History Menu -->
+  <div class="overlay hidden" id="historyMenu">
+    <div class="menu-box" style="max-width:90vw;overflow-y:auto;max-height:80vh;">
+      <h1>History</h1>
+      <div id="historyList"></div>
+      <button id="btnBackFromHistory">Back</button>
+    </div>
+  </div>
+
+  <!-- Pause / Game Over Menu -->
+  <div class="overlay hidden" id="pauseMenu">
+    <div class="menu-box">
+      <h1 id="pauseTitle">Paused</h1>
+      <button id="btnContinue">Continue</button>
+      <button id="btnExit">Exit to Menu</button>
+      <button id="btnResetPause">Reset All</button>
+    </div>
+  </div>
+
+  <!-- Game + HUD -->
+  <div id="game-container">
+    <div id="hud">
+      <div>Last: <span id="lastScore">0</span></div>
+      <div>High: <span id="highScore">0</span></div>
+      <div>Score: <span id="score">0</span></div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <button id="btnRotate" title="Rotate">⟳</button>
+    <button id="btnSoftDrop" title="Soft Drop">↓</button>
+    <div id="touchArea"></div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+
+  // --- Storage Keys ---
+  const STATE_KEY    = 'tetnis-state';
+  const KEYS_KEY     = 'tetnis-keys';
+  const HIGH_KEY     = 'tetnis-high';
+  const LAST_KEY     = 'tetnis-last';
+  const HISTORY_KEY  = 'tetnis-history';
+
+  // --- Default Controls ---
+  const defaultKeys = {
+    left: ['ArrowLeft','KeyA'],  right: ['ArrowRight','KeyD'],
+    down: ['ArrowDown','KeyS'],  rotate: ['ArrowUp','KeyW'],
+    drop: ['Space','ShiftLeft']
+  };
+
+  // --- Tetromino Definitions ---
+  const tetrominoes = [
+    { m:[[1,1,1],[0,1,0]],    color:"#A52A2A" },
+    { m:[[0,2,2],[2,2,0]],    color:"#556B2F" },
+    { m:[[3,3,0],[0,3,3]],    color:"#8B4513" },
+    { m:[[4,4],[4,4]],        color:"#7F7F7F" },
+    { m:[[0,0,5],[5,5,5]],    color:"#DAA520" },
+    { m:[[6,0,0],[6,6,6]],    color:"#CD5C5C" },
+    { m:[[0,7,0],[7,7,7]],    color:"#B22222" }
+  ];
+  // 40 rare death messages
+  const deathMessages = [
+    "You caught tetnis from the rusty bolt!",
+    "Ouch! That metal was not clean...",
+    "Rust never sleeps—you get tetnis.",
+    "Game over: Rust found its way in.",
+    "TETNIS! Time for a tetanus shot.",
+    "Those rusty blocks got you.",
+    "Gnarly tetnis strike!",
+    "Rust never quits. Neither do I now.",
+    "The hand has claimed you—tetnis.",
+    "Bolt failure: you got tetnis.",
+    "Tetanus: game over.",
+    "Rusty demise! Try again.",
+    "Your iron luck ran out—tetnis.",
+    "Tetanus tango: you lost.",
+    "Metal hazard: tetnis.",
+    "Rust marks declare defeat.",
+    "Hand of ruin: tetnis.",
+    "Tetanus embraces you.",
+    "Rust warrior falls—tetnis.",
+    "Bolt betrayal: game over.",
+    "The iron grip: tetnis.",
+    "Rustic downfall: tetnis.",
+    "Locked in iron—tetnis.",
+    "Iron fate sealed—tetnis.",
+    "Rusty residue kills.",
+    "Tetanus triumphs.",
+    "Rust-crusted demise.",
+    "Bolt-borne defeat: tetnis.",
+    "Tetanus talons caught you.",
+    "Rust reaper: tetnis.",
+    "Rust never sleeps; you didn't either.",
+    "Tetanus trophy awarded.",
+    "Rusty ruin is your destiny.",
+    "Tetanus: the silent killer.",
+    "Iron claws got you—tetnis.",
+    "Rusty crescendo: game over.",
+    "Tetanus strikes again.",
+    "Rust reclaims its victim.",
+    "Steel and rust, your downfall.",
+    "Tetanus toll: you lost.",
+    "Rusty retribution: tetnis.",
+    "Iron’s wrath: tetnis."
+  ];
+
+  // --- DOM References ---
+  const byId           = id => document.getElementById(id);
+  const mainMenu       = byId('mainMenu'),
+        controlsMenu   = byId('controlsMenu'),
+        historyMenu    = byId('historyMenu'),
+        pauseMenu      = byId('pauseMenu'),
+        pauseTitle     = byId('pauseTitle'),
+        btnStart       = byId('btnStart'),
+        btnControls    = byId('btnControls'),
+        btnHistory     = byId('btnHistory'),
+        btnResetAll    = byId('btnResetAll'),
+        btnBackCtrl    = byId('btnBackFromControls'),
+        btnBackHist    = byId('btnBackFromHistory'),
+        btnContinue    = byId('btnContinue'),
+        btnExit        = byId('btnExit'),
+        btnResetPause  = byId('btnResetPause'),
+        homeBtn        = byId('homeBtn'),
+        pauseBtn       = byId('pauseBtn'),
+        lastScoreEl    = byId('lastScore'),
+        highScoreEl    = byId('highScore'),
+        scoreEl        = byId('score'),
+        bindingsDiv    = byId('bindings'),
+        historyList    = byId('historyList'),
+        canvas         = byId('gameCanvas'),
+        ctx            = canvas.getContext('2d'),
+        btnRotate      = byId('btnRotate'),
+        btnSoftDrop    = byId('btnSoftDrop'),
+        touchArea      = byId('touchArea'),
+        handEl         = byId('hand'),
+        startOverlay   = byId('startOverlay');
+
+  // --- Load from Storage ---
+  let keys      = JSON.parse(localStorage.getItem(KEYS_KEY))    || defaultKeys;
+  let highScore = +localStorage.getItem(HIGH_KEY)              || 0;
+  let lastScore = +localStorage.getItem(LAST_KEY)              || 0;
+  let history   = JSON.parse(localStorage.getItem(HISTORY_KEY))|| [];
+
+  // --- Game State Variables ---
+  let gridData, current, next, score, gameOver, paused, bindingAction, started, waitingToStart;
+  let dropCounter, dropInterval = 800, lastTime, block;
+  const COLS = 10, ROWS = 20;
+
+  // --- Resize Canvas & Position Hand ---
+  function resizeCanvas(){
+    const maxW = window.innerWidth * 0.9;
+    const maxH = window.innerHeight * 0.9;
+    const size = Math.floor(Math.min(maxW/COLS, maxH/ROWS));
+    canvas.width  = size * COLS;
+    canvas.height = size * ROWS;
+    block = size;
+    // Hand sits just above row 0
+    handEl.style.width  = `${size*2}px`;
+    handEl.style.height = `${size*2}px`;
+    handEl.style.top    = `calc(50% - ${canvas.height/2 + size}px)`;
+    draw();
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  // --- Save / Load Entire Game State ---
+  function saveState(){
+    if(started && !gameOver){
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        gridData, current, next, score, dropCounter, paused
+      }));
+    } else {
+      localStorage.removeItem(STATE_KEY);
+    }
+    localStorage.setItem(HIGH_KEY, highScore);
+    localStorage.setItem(LAST_KEY, lastScore);
+    localStorage.setItem(KEYS_KEY, JSON.stringify(keys));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+  function loadState(){
+    const stored = JSON.parse(localStorage.getItem(STATE_KEY));
+    if(stored){
+      gridData    = stored.gridData;
+      current     = stored.current;
+      next        = stored.next;
+      score       = stored.score;
+      dropCounter = stored.dropCounter;
+      paused      = stored.paused;
+      started     = true;
+      return true;
+    }
+    return false;
+  }
+
+  // --- Record History Snapshot ---
+  function recordHistory(entry){
+    history.unshift(entry);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+  function showHistory(){
+    historyList.innerHTML = '';
+    history.forEach((rec, idx)=>{
+      const div = document.createElement('div');
+      div.className = 'history-item';
+
+      // Label: timestamp + status
+      const h4 = document.createElement('h4');
+      const ts = new Date(rec.time).toLocaleString();
+      h4.textContent = rec.inProgress ? `In‐Progress: ${ts}` : `Finished: ${ts}`;
+      div.append(h4);
+
+      // Canvas snapshot
+      const c = document.createElement('canvas');
+      const sz = Math.floor(Math.min(200/COLS, 400/ROWS));
+      c.width  = COLS * sz;
+      c.height = ROWS * sz;
+      const cx = c.getContext('2d');
+      rec.grid.forEach((row,y)=>{
+        row.forEach((cell,x)=>{
+          cx.strokeStyle = '#333';
+          cx.strokeRect(x*sz, y*sz, sz, sz);
+          if(cell){
+            cx.fillStyle = tetrominoes[cell.idx].color;
+            cx.fillRect(x*sz, y*sz, sz, sz);
+          }
+        });
+      });
+      div.append(c);
+
+      // If inProgress, add a Resume button centered below
+      if(rec.inProgress){
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'history-resume-container';
+        const rbtn = document.createElement('button');
+        rbtn.textContent = 'Resume';
+        rbtn.onclick = ()=>{
+          gridData    = rec.state.gridData;
+          current     = rec.state.current;
+          next        = rec.state.next;
+          score       = rec.state.score;
+          dropCounter = rec.state.dropCounter;
+          paused      = rec.state.paused;
+          started     = true;
+          waitingToStart = false;
+          saveState();
+          hideMenus();
+          paused = false;
+          startOverlay.style.display = 'none';
+          update(0);
+        };
+        btnContainer.append(rbtn);
+        div.append(btnContainer);
+      }
+
+      historyList.append(div);
+    });
+  }
+
+  // --- Helpers ---
+  function hideMenus(){
+    [mainMenu, controlsMenu, historyMenu, pauseMenu].forEach(m=>m.classList.add('hidden'));
+  }
+
+  // --- Menu Button Wiring ---
+  btnStart.onclick  = ()=>{
+    // If an in-progress state exists, push it into History first
+    const stored = JSON.parse(localStorage.getItem(STATE_KEY));
+    if(stored && !gameOver){
+      recordHistory({
+        time: Date.now(),
+        grid: JSON.parse(JSON.stringify(stored.gridData)),
+        state: stored,
+        inProgress: true
+      });
+    }
+    started = true;
+    waitingToStart = true;
+    hideMenus();
+    initGame();
+    draw(); // show initial board
+    startOverlay.style.display = 'block';
+    // Pause until “down” is pressed
+    paused = true;
+  };
+  btnControls.onclick = ()=>{ hideMenus(); controlsMenu.classList.remove('hidden'); };
+  btnHistory.onclick  = ()=>{ hideMenus(); showHistory(); historyMenu.classList.remove('hidden'); };
+  btnResetAll.onclick = ()=>{
+    if(confirm('Reset all?')){
+      localStorage.clear();
+      location.reload();
+    }
+  };
+  btnBackCtrl.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
+  btnBackHist.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
+  btnContinue.onclick = ()=>{ 
+    if(!gameOver){
+      paused = false;
+      hideMenus();
+      update(0);
+    }
+  };
+  btnExit.onclick     = ()=>{
+    // Save current in-progress state to History before exiting
+    if(started && !gameOver && !waitingToStart){
+      recordHistory({
+        time: Date.now(),
+        grid: JSON.parse(JSON.stringify(gridData)),
+        state: {
+          gridData, current, next, score, dropCounter, paused
+        },
+        inProgress: true
+      });
+    }
+    gameOver = true;
+    hideMenus();
+    mainMenu.classList.remove('hidden');
+  };
+  btnResetPause.onclick = btnResetAll;
+  homeBtn.onclick        = ()=> location.href = 'https://ilikefish.space';
+  pauseBtn.onclick       = ()=>{
+    if(started && !gameOver && !waitingToStart){
+      paused = true;
+      pauseTitle.textContent = 'Paused';
+      btnContinue.disabled = false; 
+      pauseMenu.classList.remove('hidden');
+      saveState();
+    }
+  };
+
+  // --- Controls Rebinding ---
+  function renderBindings(){
+    bindingsDiv.innerHTML = '';
+    ['left','right','down','rotate','drop'].forEach(act=>{
+      const lbl = document.createElement('label');
+      lbl.textContent = act.charAt(0).toUpperCase() + act.slice(1);
+      keys[act].forEach((c, i)=>{
+        const b = document.createElement('div');
+        b.className='key-box';
+        b.textContent = c;
+        b.onclick = ()=>{
+          bindingAction = { act, i };
+          b.textContent = '…';
+        };
+        lbl.append(b);
+      });
+      bindingsDiv.append(lbl);
+    });
+  }
+  renderBindings();
+  window.addEventListener('keydown', e=>{
+    if(bindingAction){
+      keys[bindingAction.act][bindingAction.i] = e.code;
+      bindingAction = null;
+      renderBindings();
+      saveState();
+      return;
+    }
+    if(waitingToStart){
+      // Only proceed when “down” key is pressed
+      if(keys.down.includes(e.code)){
+        waitingToStart = false;
+        startOverlay.style.display = 'none';
+        paused = false;
+        update(0);
+      }
+      return;
+    }
+    if(paused || gameOver) return;
+    handleKey(e.code);
+  });
+  window.addEventListener('keyup', e=>{
+    if(keys.down.includes(e.code)){
+      clearInterval(softDropInterval);
+      softDropInterval = null;
+    }
+  });
+
+  // --- Initialize or Reset Game ---
+  function initGame(){
+    if(!loadState()){
+      gridData = Array.from({ length: ROWS }, ()=>Array(COLS).fill(null));
+      current  = createPiece();
+      next     = createPiece();
+      score    = 0; gameOver = false; paused = false; dropCounter = 0;
+      saveState();
+    }
+    lastScore = +localStorage.getItem(LAST_KEY) || 0;
+    highScore = +localStorage.getItem(HIGH_KEY) || 0;
+    updateHUD();
+    resizeCanvas();
+  }
+
+  // --- Update HUD ---
+  function updateHUD(){
+    lastScoreEl.textContent = lastScore;
+    highScoreEl.textContent = highScore;
+    scoreEl.textContent     = score;
+    saveState();
+  }
+
+  // --- Create a New Piece ---
+  function createPiece(){
+    const idx = Math.floor(Math.random() * tetrominoes.length);
+    const base = tetrominoes[idx];
+    return {
+      matrix: JSON.parse(JSON.stringify(base.m)),
+      color: base.color,
+      idx,
+      pos: { x: Math.floor((COLS - base.m[0].length)/2), y: 0 }
+    };
+  }
+
+  // --- Draw Everything ---
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Draw landed blocks (preserving their rusty color & bolts)
+    for(let y=0; y<ROWS; y++){
+      for(let x=0; x<COLS; x++){
+        const cell = gridData[y][x];
+        ctx.strokeStyle = '#333';
+        ctx.strokeRect(x*block, y*block, block, block);
+        if(cell){
+          // Fill with stored color
+          ctx.fillStyle = cell.color;
+          ctx.fillRect(x*block, y*block, block, block);
+          // Draw bolts on landed block
+          [[4,4],[block-6,4],[4,block-6],[block-6,block-6]].forEach(([bx,by])=>{
+            ctx.beginPath();
+            ctx.arc(x*block + bx, y*block + by, 3, 0, 2*Math.PI);
+            ctx.fillStyle = '#666';
+            ctx.fill();
+          });
+          // Random rust spots
+          if(Math.random() > 0.85){
+            ctx.fillStyle = '#893f45';
+            ctx.fillRect(x*block+4, y*block+4, block-8, block-8);
+          }
+        }
+      }
+    }
+
+    // Draw current piece with a smooth vertical offset
+    const smoothY = Math.min(dropCounter/dropInterval, 1);
+    current.matrix.forEach((row, ry)=>{
+      row.forEach((v, rx)=>{
+        if(v){
+          const px = (current.pos.x + rx)*block;
+          const py = (current.pos.y + ry + smoothY)*block;
+          ctx.fillStyle = current.color;
+          ctx.fillRect(px, py, block, block);
+          ctx.strokeStyle='#333'; ctx.lineWidth=2;
+          ctx.strokeRect(px, py, block, block);
+          // Bolts on the falling piece
+          [[4,4],[block-6,4],[4,block-6],[block-6,block-6]].forEach(([bx,by])=>{
+            ctx.beginPath();
+            ctx.arc(px + bx, py + by, 3, 0, 2*Math.PI);
+            ctx.fillStyle = '#666';
+            ctx.fill();
+          });
+          // Rust patches on falling piece
+          if(Math.random() > 0.8){
+            ctx.fillStyle = '#893f45';
+            ctx.fillRect(px+4, py+4, block-8, block-8);
+          }
+        }
+      });
+    });
+  }
+
+  // --- Collision / Merge / Sweep ---
+  function collide(piece, dy=0, dx=0){
+    return piece.matrix.some((row, ry)=>{
+      return row.some((v, rx)=>{
+        if(!v) return false;
+        const nx = piece.pos.x + rx + dx;
+        const ny = piece.pos.y + ry + dy;
+        return (
+          nx < 0 ||
+          nx >= COLS ||
+          ny >= ROWS ||
+          (ny >= 0 && gridData[ny][nx] !== null)
+        );
+      });
+    });
+  }
+
+  function mergePiece(){
+    current.matrix.forEach((row, ry)=>{
+      row.forEach((v, rx)=>{
+        if(v){
+          gridData[current.pos.y + ry][current.pos.x + rx] = {
+            color: current.color,
+            idx:   current.idx
+          };
+        }
+      });
+    });
+  }
+
+  function sweep(){
+    let lines = 0;
+    for(let y=ROWS-1; y>=0; y--){
+      if(gridData[y].every(cell => cell !== null)){
+        gridData.splice(y, 1);
+        gridData.unshift(Array(COLS).fill(null));
+        lines++;
+        y++;
+      }
+    }
+    if(lines){
+      score += 10 * lines;
+      updateHUD();
+    }
+  }
+
+  // --- Game Loop & End ---
+  function drop(){
+    dropCounter = 0;
+    current.pos.y++;
+    if(collide(current)){
+      current.pos.y--;
+      mergePiece();
+      sweep();
+      // If collision happened at top row → game over
+      if(current.pos.y === 0){
+        recordHistory({
+          time: Date.now(),
+          grid: JSON.parse(JSON.stringify(gridData)),
+          inProgress: false
+        });
+        return endGame();
+      }
+      current = next;
+      next    = createPiece();
+    }
+    saveState(); // Always save after a lock
+  }
+
+  function update(time=0){
+    if(gameOver || paused) return;
+    const dt = time - lastTime;
+    lastTime = time;
+    dropCounter += dt;
+    if(dropCounter > dropInterval){
+      drop();
+    }
+    draw();
+    requestAnimationFrame(update);
+  }
+
+  function endGame(){
+    gameOver = true;
+    paused   = true;
+    lastScore = score;
+    highScore = Math.max(highScore, score);
+    saveState();
+    updateHUD();
+    pauseTitle.textContent = deathMessages[
+      Math.floor(Math.random() * deathMessages.length)
+    ];
+    btnContinue.disabled = true;
+    pauseMenu.classList.remove('hidden');
+  }
+
+  // --- Input Handling ---
+  let softDropInterval;
+  function handleKey(code){
+    let moved = false;
+    if(keys.left.includes(code) && !collide(current, 0, -1)) {
+      current.pos.x--;
+      moved = true;
+    }
+    if(keys.right.includes(code) && !collide(current, 0, 1)) {
+      current.pos.x++;
+      moved = true;
+    }
+    if(keys.down.includes(code)) {
+      // If waiting to start, clear overlay
+      if(waitingToStart){
+        waitingToStart = false;
+        startOverlay.style.display = 'none';
+        paused = false;
+        update(0);
+        return;
+      }
+      // Start soft-drop if not already running
+      if(!softDropInterval && !paused && !gameOver){
+        drop();  // immediate drop once
+        softDropInterval = setInterval(()=>{
+          drop();
+        }, 100);
+      }
+      moved = true;
+    }
+    if(keys.rotate.includes(code) && !paused && !gameOver) {
+      const orig = JSON.parse(JSON.stringify(current.matrix));
+      current.matrix = current.matrix[0].map((_, i)=>current.matrix.map(r=>r[i])).reverse();
+      if(collide(current)){
+        current.matrix = orig;
+      } else {
+        moved = true;
+      }
+    }
+    if(keys.drop.includes(code)) {
+      drop();
+      moved = true;
+    }
+    if(moved) saveState();
+  }
+
+  window.addEventListener('keyup', e=>{
+    if(keys.down.includes(e.code)){
+      clearInterval(softDropInterval);
+      softDropInterval = null;
+    }
+  });
+
+  // --- On-Screen Buttons ---
+  btnRotate.onclick = ()=>{ 
+    if(!paused && !gameOver){
+      const orig = JSON.parse(JSON.stringify(current.matrix));
+      current.matrix = current.matrix[0].map((_, i)=>current.matrix.map(r=>r[i])).reverse();
+      if(collide(current)){
+        current.matrix = orig;
+      } else {
+        saveState();
+      }
+    }
+  };
+  btnSoftDrop.onmousedown = ()=>{
+    if(!paused && !gameOver){
+      drop();
+      softDropInterval = setInterval(()=>{
+        drop();
+      }, 100);
+    }
+  };
+  btnSoftDrop.onmouseup    = ()=>{ clearInterval(softDropInterval); softDropInterval = null; };
+  btnSoftDrop.onmouseleave = ()=>{ clearInterval(softDropInterval); softDropInterval = null; };
+
+  // --- Touch Support ---
+  let tsX = 0, tsY = 0, lastTap = 0;
+  touchArea.addEventListener('touchstart', e=>{
+    const t = e.touches[0];
+    tsX = t.clientX; tsY = t.clientY;
+    const now = Date.now();
+    if(now - lastTap < 300){
+      // Double-tap → rotate
+      if(!paused && !gameOver && !waitingToStart){
+        const orig = JSON.parse(JSON.stringify(current.matrix));
+        current.matrix = current.matrix[0].map((_, i)=>current.matrix.map(r=>r[i])).reverse();
+        if(collide(current)){
+          current.matrix = orig;
+        } else {
+          saveState();
+        }
+      }
+    }
+    if(waitingToStart){
+      if(now - lastTap < 300){
+        waitingToStart = false;
+        startOverlay.style.display = 'none';
+        paused = false;
+        update(0);
+      }
+    }
+    lastTap = now;
+  });
+  touchArea.addEventListener('touchmove', e=>{
+    const t = e.touches[0];
+    const dx = t.clientX - tsX, dy = t.clientY - tsY;
+    if(Math.abs(dx) > block){
+      handleKey(dx > 0 ? keys.right[0] : keys.left[0]);
+      tsX = t.clientX;
+    }
+    if(dy > block){
+      handleKey(keys.down[0]);
+      tsY = t.clientY;
+    }
+  });
+
+  // --- Render Control Bindings ---
+  function renderBindings(){
+    bindingsDiv.innerHTML = '';
+    ['left','right','down','rotate','drop'].forEach(act=>{
+      const lbl = document.createElement('label');
+      lbl.textContent = act.charAt(0).toUpperCase() + act.slice(1);
+      keys[act].forEach((c, i)=>{
+        const b = document.createElement('div');
+        b.className='key-box';
+        b.textContent = c;
+        b.onclick = ()=>{
+          bindingAction = { act, i };
+          b.textContent = '…';
+        };
+        lbl.append(b);
+      });
+      bindingsDiv.append(lbl);
+    });
+  }
+  renderBindings();
+
+  // --- Initialize or Reset Game ---
+  function initGame(){
+    if(!loadState()){
+      gridData = Array.from({ length: ROWS }, ()=>Array(COLS).fill(null));
+      current  = createPiece();
+      next     = createPiece();
+      score    = 0; gameOver = false; paused = false; dropCounter = 0;
+      saveState();
+    }
+    lastScore = +localStorage.getItem(LAST_KEY) || 0;
+    highScore = +localStorage.getItem(HIGH_KEY) || 0;
+    updateHUD();
+    resizeCanvas();
+  }
+
+  // --- Update HUD ---
+  function updateHUD(){
+    lastScoreEl.textContent = lastScore;
+    highScoreEl.textContent = highScore;
+    scoreEl.textContent     = score;
+    saveState();
+  }
+
+  // --- Create a New Piece ---
+  function createPiece(){
+    const idx = Math.floor(Math.random() * tetrominoes.length);
+    const base = tetrominoes[idx];
+    return {
+      matrix: JSON.parse(JSON.stringify(base.m)),
+      color: base.color,
+      idx,
+      pos: { x: Math.floor((COLS - base.m[0].length)/2), y: 0 }
+    };
+  }
+
+  // --- Wiring UI Buttons ---
+  btnStart.onclick  = ()=>{
+    const stored = JSON.parse(localStorage.getItem(STATE_KEY));
+    if(stored && !gameOver){
+      recordHistory({
+        time: Date.now(),
+        grid: JSON.parse(JSON.stringify(stored.gridData)),
+        state: stored,
+        inProgress: true
+      });
+    }
+    started = true;
+    waitingToStart = true;
+    hideMenus();
+    initGame();
+    draw();
+    startOverlay.style.display = 'block';
+    paused = true;
+  };
+  btnControls.onclick = ()=>{ hideMenus(); controlsMenu.classList.remove('hidden'); };
+  btnHistory.onclick  = ()=>{ hideMenus(); showHistory(); historyMenu.classList.remove('hidden'); };
+  btnResetAll.onclick = ()=>{
+    if(confirm('Reset all?')){
+      localStorage.clear();
+      location.reload();
+    }
+  };
+  btnBackCtrl.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
+  btnBackHist.onclick = ()=>{ hideMenus(); mainMenu.classList.remove('hidden'); };
+  btnContinue.onclick = ()=>{ 
+    if(!gameOver){
+      paused = false;
+      hideMenus();
+      update(0);
+    }
+  };
+  btnExit.onclick     = ()=>{
+    if(started && !gameOver && !waitingToStart){
+      recordHistory({
+        time: Date.now(),
+        grid: JSON.parse(JSON.stringify(gridData)),
+        state: {
+          gridData, current, next, score, dropCounter, paused
+        },
+        inProgress: true
+      });
+    }
+    gameOver = true;
+    hideMenus();
+    mainMenu.classList.remove('hidden');
+  };
+  btnResetPause.onclick = btnResetAll;
+  homeBtn.onclick        = ()=> location.href = 'https://ilikefish.space';
+  pauseBtn.onclick       = ()=>{
+    if(started && !gameOver && !waitingToStart){
+      paused = true;
+      pauseTitle.textContent = 'Paused';
+      btnContinue.disabled = false; 
+      pauseMenu.classList.remove('hidden');
+      saveState();
+    }
+  };
+
+  // --- Final Initialization ---
+  updateHUD();
+  resizeCanvas();
+  mainMenu.classList.remove('hidden');
+});
+</script>
+</body>
+</html>

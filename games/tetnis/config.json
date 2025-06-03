@@ -1,0 +1,11 @@
+{
+  "name": "Tetnis",
+  "folder": "tetnis",
+  "icon": "icon.png",
+  "entry": "tetnis.html",
+  "touchInstructions": "Tap or swipe to move and rotate.",
+  "controllerMapping": {
+    "buttons": {},
+    "axes": {}
+  }
+}
