@@ -34,6 +34,9 @@ const PRECACHE_URLS = [
   '/games/why-chicken-crossed/config.json',
   '/games/why-chicken-crossed/icon.png',
   '/games/why-chicken-crossed/why-chicken-crossed.html',
+  '/games/tetnis/icon.png',
+  '/games/tetnis/config.json',
+  '/games/tetnis/tetnis.html'
 ];
 
 self.addEventListener('install', evt => {
