@@ -68,7 +68,7 @@ async function updatePing() {
   pingEl.textContent = '…';
 
   try {
-    const url = 'https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167';
+    const url = 'https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:5850';
     const t0 = performance.now();
     const res = await fetch(url);
     const t1 = performance.now();
@@ -91,7 +91,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // 1) Write join info
   document.getElementById('address').textContent = 'mc.ilikefish.space';
-  document.getElementById('port').textContent    = '65167';
+  document.getElementById('port').textContent    = '5850';
 
   // 2) Fetch current “players online” for chart and store in history
   const ctx = document.getElementById('activityChart');
@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (ctx) {
     try {
       console.log('[server] fetching server stats…');
-      const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:65167');
+      const res  = await fetch('https://api.mcsrvstat.us/bedrock/2/mc.ilikefish.space:5850');
       const data = await res.json();
       currentCount = data.players?.online ?? 0;
       console.log('[server] got server stats:', data);
