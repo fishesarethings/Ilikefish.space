@@ -1,0 +1,7 @@
+{
+  "name": "Lawn Mower Simulator",
+  "folder": "lawnmower",
+  "icon": "icon.png",
+  "entry": "lawnmower.html",
+  "touchInstructions": "Use arrow keys or WASD to move; mow grass for coins."
+}

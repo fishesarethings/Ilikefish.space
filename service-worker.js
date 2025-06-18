@@ -37,6 +37,16 @@ const PRECACHE_URLS = [
   '/games/tetnis/icon.png',
   '/games/tetnis/config.json',
   '/games/tetnis/tetnis.html'
+  '/games/chess/chess.html',
+  '/games/chess/chess.css',
+  '/games/chess/chess.js',
+  '/games/chess/icon.png',
+  '/games/lawnmower-simulator/background.mp3',
+  '/games/lawnmower-simulator/config.json',
+  '/games/lawnmower-simulator/grass.png',
+  '/games/lawnmower-simulator/icon.png',
+  '/games/lawnmower-simulator/lawnmower.html',
+  '/games/lawnmower-simulator/mower.png'
 ];
 
 self.addEventListener('install', evt => {
