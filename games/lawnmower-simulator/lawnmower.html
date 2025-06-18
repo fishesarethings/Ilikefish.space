@@ -5,215 +5,252 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Lawn Mower</title>
   <style>
-    /* Reset & layout */
     * { margin:0; padding:0; box-sizing:border-box; }
-    body, html { width:100%; height:100%; overflow:hidden; }
+    html, body { width:100%; height:100%; overflow:hidden; font-family:sans-serif; }
     canvas { display:block; background:#4CAF50; }
 
-    /* UI styling */
-    #ui { position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:8px; font-family:sans-serif; }
-    .btn { background:white; border:none; border-radius:8px; padding:8px 12px; font-size:16px; display:flex; align-items:center; cursor:pointer; }
+    #ui {
+      position:absolute; top:10px; left:10px; display:flex; flex-direction:column;
+      gap:8px; z-index:2;
+    }
+
+    .btn {
+      background:white; border:none; border-radius:8px; padding:8px 12px;
+      font-size:16px; display:flex; align-items:center; cursor:pointer;
+    }
     .btn:disabled { opacity:0.5; cursor:not-allowed; }
     .btn span { margin-left:6px; }
     .btn.tog { width:44px; justify-content:center; }
 
-    #time { background:rgba(255,255,255,0.8); border-radius:8px; padding:8px; font-size:16px; display:flex; align-items:center; }
-    #time span { margin-left:6px; }
+    #time {
+      background:rgba(255,255,255,0.8); border-radius:8px;
+      padding:8px; font-size:16px; display:flex; align-items:center;
+    }
 
     #level {
       position:absolute; top:10px; left:50%; transform:translateX(-50%);
       background:rgba(255,255,255,0.9); padding:6px 12px; border-radius:8px;
       font-size:18px; font-weight:bold; display:flex; align-items:center; gap:4px;
+      z-index:2;
+    }
+
+    #controls {
+      position:absolute;
+      bottom:20px; left:50%;
+      transform:translateX(-50%);
+      display:grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(3, 60px);
+      gap:8px;
+      justify-items:center;
+      align-items:center;
+      z-index:2;
+    }
+
+    .arrow {
+      font-size:24px;
+      background:#fff;
+      border-radius:50%;
+      width:60px;
+      height:60px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    }
+    .arrow:active {
+      transform:scale(0.95);
+      background:#ddd;
     }
   </style>
 </head>
 <body>
-  <!-- Background music -->
-  <audio id="bgm" loop src="background.mp3"></audio>
+<audio id="bgm" loop src="background.mp3"></audio>
+<canvas id="game"></canvas>
 
-  <!-- Canvas for game rendering -->
-  <canvas id="game"></canvas>
+<div id="ui">
+  <button id="reset" class="btn">🔄<span>Reset All</span></button>
+  <button id="coins" class="btn">🪙<span>0</span></button>
+  <button id="total" class="btn">🌱<span>0</span></button>
+  <button id="upgrade" class="btn" disabled>📈<span>Upgrade</span></button>
+  <div id="time">🕝<span>0d 0h 0m 0s</span></div>
+  <button id="music" class="btn tog">🔊</button>
+</div>
+<div id="level">⭐ Level: 0</div>
 
-  <!-- UI Controls -->
-  <div id="ui">
-    <button id="reset" class="btn">🔄<span>Reset All</span></button>
-    <button id="coins" class="btn">🪙<span>0</span></button>
-    <button id="total" class="btn">🌱<span>0</span></button>
-    <button id="upgrade" class="btn" disabled>📈<span>Upgrade</span></button>
-    <div id="time">🕝<span>0d 0h 0m 0s</span></div>
-    <button id="music" class="btn tog">🔊</button>
-  </div>
-  <div id="level">⭐ Level: 0</div>
+<!-- Directional Controls -->
+<div id="controls">
+  <div class="arrow" data-dir="↖️">↖️</div>
+  <div class="arrow" data-dir="⬆️">⬆️</div>
+  <div class="arrow" data-dir="↗️">↗️</div>
+  <div class="arrow" data-dir="⬅️">⬅️</div>
+  <div class="arrow" data-dir="🛑">🛑</div>
+  <div class="arrow" data-dir="➡️">➡️</div>
+  <div class="arrow" data-dir="↙️">↙️</div>
+  <div class="arrow" data-dir="⬇️">⬇️</div>
+  <div class="arrow" data-dir="↘️">↘️</div>
+</div>
 
-  <script>
-    // Canvas & Context Initialization
-    const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
-    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resize); resize();
+<script>
+  const canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
 
-    // Constants & state
-    const cell = 16;
-    const baseSpeed = 2;
-    const initialZoom = 2;
-    const zoomStep = 0.05;  // smaller step for gentler zoom
-    const minZoom = 0.5;    // minimum zoom out
+  const cell = 16, baseSpeed = 2, initialZoom = 2, zoomStep = 0.05, minZoom = 0.5;
+  let zoom = initialZoom;
+  let coins = 0, total = 0, level = 0;
+  let mowed = new Set();
+  const startTime = Date.now();
+  let targetAngle = 0, currentAngle = 0;
+  const mower = { x:0, y:0 };
+  let upgrading = false;
 
-    let zoom = initialZoom;
-    let coins = 0, total = 0, level = 0;
-    let mowed = new Set();
-    const startTime = Date.now();
-    let targetAngle = 0, currentAngle = 0;
-    const mower = { x:0, y:0 };
-    let upgrading = false;
+  const grassImg = new Image(); grassImg.src = 'grass.png';
+  const mowerImg = new Image(); mowerImg.src = 'mower.png';
+  const bgm = document.getElementById('bgm');
 
-    // Assets
-    const grassImg = new Image(); grassImg.src = 'grass.png';
-    const mowerImg = new Image(); mowerImg.src = 'mower.png';
-    const bgm = document.getElementById('bgm');
+  const btnCoins = document.getElementById('coins');
+  const btnTotal = document.getElementById('total');
+  const btnUpgrade = document.getElementById('upgrade');
+  const btnReset = document.getElementById('reset');
+  const btnMusic = document.getElementById('music');
+  const elTime = document.querySelector('#time span');
+  const elLevel = document.getElementById('level');
 
-    // UI refs
-    const btnCoins = document.getElementById('coins');
-    const btnTotal = document.getElementById('total');
-    const btnUpgrade = document.getElementById('upgrade');
-    const btnReset = document.getElementById('reset');
-    const btnMusic = document.getElementById('music');
-    const elTime = document.querySelector('#time span');
-    const elLevel = document.getElementById('level');
+  const saved = JSON.parse(localStorage.getItem('lm_state')||'{}');
+  if (saved.coins!=null) {
+    coins = saved.coins; total = saved.total; level = saved.level;
+    (saved.mowed||[]).forEach(k=>mowed.add(k));
+  }
+  zoom = Math.max(minZoom, initialZoom - level * zoomStep);
+  if (localStorage.getItem('lm_music')==='on') bgm.play(); else bgm.pause();
+  btnMusic.textContent = bgm.paused?'🔇':'🔊';
 
-    // Load state
-    const saved = JSON.parse(localStorage.getItem('lm_state')||'{}');
-    if (saved.coins!=null) {
-      coins = saved.coins;
-      total = saved.total;
-      level = saved.level;
-      (saved.mowed||[]).forEach(k=>mowed.add(k));
-    }
-    // Compute zoom: linear decrease
+  function saveState(){
+    localStorage.setItem('lm_state', JSON.stringify({ coins, total, level, mowed: Array.from(mowed) }));
+  }
+
+  function updateUI(){
+    btnCoins.querySelector('span').textContent = coins;
+    btnTotal.querySelector('span').textContent = total;
+    elLevel.textContent = `⭐ Level: ${level}`;
+    const cost = Math.floor(10 * Math.pow(1.1, level));
+    btnUpgrade.querySelector('span').textContent = `Upgrade (${cost})`;
+    btnUpgrade.disabled = coins < cost;
+    const elapsed = Date.now() - startTime;
+    const s = Math.floor(elapsed/1000)%60;
+    const m = Math.floor(elapsed/60000)%60;
+    const h = Math.floor(elapsed/3600000)%24;
+    const d = Math.floor(elapsed/86400000);
+    elTime.textContent = `${d}d ${h}h ${m}m ${s}s`;
+  }
+
+  btnReset.addEventListener('click', ()=>{
+    let c=5; btnReset.textContent=`Are you sure? ${c}`;
+    const iv = setInterval(()=>{
+      if(--c<=0){ clearInterval(iv); btnReset.textContent='🔄 Reset All'; }
+      else btnReset.textContent=`Are you sure? ${c}`;
+    },1000);
+    btnReset.onclick = ()=>{ clearInterval(iv); localStorage.clear(); location.reload(); };
+  });
+
+  btnUpgrade.addEventListener('click', ()=>{
+    const cost = Math.floor(10 * Math.pow(1.1, level));
+    if (coins < cost) return;
+    coins -= cost; level++;
     zoom = Math.max(minZoom, initialZoom - level * zoomStep);
-    // Music preference
-    if (localStorage.getItem('lm_music')==='on') bgm.play(); else bgm.pause();
-    btnMusic.textContent = bgm.paused?'🔇':'🔊';
+    upgrading = true;
+    setTimeout(()=>{ upgrading=false; }, 500);
+    saveState(); updateUI();
+  });
 
-    // Helpers: save & update UI
-    function saveState(){
-      localStorage.setItem('lm_state', JSON.stringify({ coins, total, level, mowed: Array.from(mowed) }));
-    }
-    function updateUI(){
-      btnCoins.querySelector('span').textContent = coins;
-      btnTotal.querySelector('span').textContent = total;
-      elLevel.textContent = `⭐ Level: ${level}`;
-      const cost = Math.floor(10 * Math.pow(1.1, level));
-      btnUpgrade.querySelector('span').textContent = `Upgrade (${cost})`;
-      btnUpgrade.disabled = coins < cost;
-      const elapsed = Date.now() - startTime;
-      const s = Math.floor(elapsed/1000)%60;
-      const m = Math.floor(elapsed/60000)%60;
-      const h = Math.floor(elapsed/3600000)%24;
-      const d = Math.floor(elapsed/86400000);
-      elTime.textContent = `${d}d ${h}h ${m}m ${s}s`;
-    }
+  btnMusic.addEventListener('click', ()=>{
+    if (bgm.paused) { bgm.play(); btnMusic.textContent='🔊'; localStorage.setItem('lm_music','on'); }
+    else          { bgm.pause(); btnMusic.textContent='🔇'; localStorage.setItem('lm_music','off'); }
+  });
 
-    // Reset logic
-    btnReset.addEventListener('click', ()=>{
-      let c=5; btnReset.textContent=`Are you sure? ${c}`;
-      const iv = setInterval(()=>{
-        if(--c<=0){ clearInterval(iv); btnReset.textContent='🔄 Reset All'; }
-        else btnReset.textContent=`Are you sure? ${c}`;
-      },1000);
-      btnReset.onclick = ()=>{ clearInterval(iv); localStorage.clear(); location.reload(); };
-    });
+  const keys = {};
+  window.addEventListener('keydown', e => keys[e.key] = true);
+  window.addEventListener('keyup', e => keys[e.key] = false);
 
-    // Upgrade: speed boost & zoom adjustment
-    btnUpgrade.addEventListener('click', ()=>{
-      const cost = Math.floor(10 * Math.pow(1.1, level));
-      if (coins < cost) return;
-      coins -= cost; level++;
-      zoom = Math.max(minZoom, initialZoom - level * zoomStep);
-      upgrading = true;
-      setTimeout(()=>{ upgrading=false; }, 500);
+  let joyDelta = { x:0, y:0 };
+  canvas.addEventListener('mousedown', mowCell);
+
+  function mowCell(){
+    if (upgrading) return false;
+    const cx = Math.floor(mower.x/cell), cy = Math.floor(mower.y/cell);
+    const key = `${cx},${cy}`;
+    if (!mowed.has(key)) {
+      mowed.add(key); coins++; total++;
       saveState(); updateUI();
-    });
-
-    // Music toggle
-    btnMusic.addEventListener('click', ()=>{
-      if (bgm.paused) { bgm.play(); btnMusic.textContent='🔊'; localStorage.setItem('lm_music','on'); }
-      else          { bgm.pause(); btnMusic.textContent='🔇'; localStorage.setItem('lm_music','off'); }
-    });
-
-    // Input handling
-    const keys = {};
-    window.addEventListener('keydown', e=>keys[e.key]=true);
-    window.addEventListener('keyup', e=>keys[e.key]=false);
-    let touchStart=null;
-    window.addEventListener('touchstart', e=>{ touchStart = e.touches[0]; });
-    window.addEventListener('touchmove', e=>{
-      const t = e.touches[0];
-      mower.x += (t.clientX - touchStart.clientX)*0.1;
-      mower.y += (t.clientY - touchStart.clientY)*0.1;
-      touchStart = t;
-    });
-    canvas.addEventListener('mousedown', mowCell);
-
-    // Mow single cell under mower
-    function mowCell(){
-      if (upgrading) return false;
-      const cx = Math.floor(mower.x/cell);
-      const cy = Math.floor(mower.y/cell);
-      const key = `${cx},${cy}`;
-      if (!mowed.has(key)) {
-        mowed.add(key);
-        coins++; total++;
-        saveState(); updateUI();
-        return true;
-      }
-      return false;
+      return true;
     }
+    return false;
+  }
 
-    // Main game loop
-    function loop(){
-      let sp = baseSpeed * (1 + 0.2*level);
-      let dx=0, dy=0;
-      if (!upgrading) {
-        if (keys['ArrowUp']||keys['w'])    dy = -sp;
-        if (keys['ArrowDown']||keys['s'])  dy = sp;
-        if (keys['ArrowLeft']||keys['a'])  dx = -sp;
-        if (keys['ArrowRight']||keys['d']) dx = sp;
-      }
-      if (dx||dy) {
-        mower.x += dx;
-        mower.y += dy;
-        targetAngle = Math.atan2(dy, dx);
+  // Directional button logic
+  const controlMap = {
+    '⬆️': {x:0, y:-1}, '⬇️':{x:0, y:1}, '⬅️':{x:-1, y:0}, '➡️':{x:1, y:0},
+    '↖️': {x:-1, y:-1}, '↗️': {x:1, y:-1}, '↘️':{x:1, y:1}, '↙️':{x:-1, y:1}
+  };
+
+  document.querySelectorAll('.arrow').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dir = btn.dataset.dir;
+      if (dir === '🛑') {
+        Object.keys(keys).forEach(k => keys[k] = false);
+        joyDelta = { x: 0, y: 0 };
+      } else if (controlMap[dir]) {
+        const sp = baseSpeed * (1 + 0.2*level);
+        mower.x += controlMap[dir].x * sp;
+        mower.y += controlMap[dir].y * sp;
+        targetAngle = Math.atan2(controlMap[dir].y, controlMap[dir].x);
         mowCell();
       }
-      // Draw grass field
-      ctx.setTransform(zoom,0,0,zoom, canvas.width/2 - mower.x*zoom, canvas.height/2 - mower.y*zoom);
-      ctx.clearRect(mower.x-canvas.width/2/zoom-cell, mower.y-canvas.height/2/zoom-cell, canvas.width/zoom+cell*2, canvas.height/zoom+cell*2);
-      const cols = Math.ceil(canvas.width/zoom/cell)+2;
-      const rows = Math.ceil(canvas.height/zoom/cell)+2;
-      const baseX = Math.floor(mower.x/cell);
-      const baseY = Math.floor(mower.y/cell);
-      for(let i=-cols;i<=cols;i++){
-        for(let j=-rows;j<=rows;j++){
-          const gx = baseX+i, gy = baseY+j;
-          const px = gx*cell, py = gy*cell;
-          const k = `${gx},${gy}`;
-          if (!mowed.has(k)) {
-            ctx.drawImage(grassImg, px-8, py-8, cell+16, cell+16);
-            ctx.drawImage(grassImg, px, py, cell, cell);
-          } else {
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(px, py, cell, cell);
-          }
+    });
+  });
+
+  function loop(){
+    let sp = baseSpeed * (1 + 0.2*level), dx=0, dy=0;
+    if (!upgrading) {
+      if (keys['ArrowUp']||keys['w']) dy = -sp;
+      if (keys['ArrowDown']||keys['s']) dy = sp;
+      if (keys['ArrowLeft']||keys['a']) dx = -sp;
+      if (keys['ArrowRight']||keys['d']) dx = sp;
+    }
+    if (dx||dy) {
+      mower.x += dx; mower.y += dy;
+      targetAngle = Math.atan2(dy, dx);
+      mowCell();
+    }
+
+    ctx.setTransform(zoom,0,0,zoom, canvas.width/2 - mower.x*zoom, canvas.height/2 - mower.y*zoom);
+    ctx.clearRect(mower.x-canvas.width/2/zoom-cell, mower.y-canvas.height/2/zoom-cell, canvas.width/zoom+cell*2, canvas.height/zoom+cell*2);
+    const cols = Math.ceil(canvas.width/zoom/cell)+2, rows = Math.ceil(canvas.height/zoom/cell)+2;
+    const baseX = Math.floor(mower.x/cell), baseY = Math.floor(mower.y/cell);
+    for(let i=-cols;i<=cols;i++){
+      for(let j=-rows;j<=rows;j++){
+        const gx = baseX+i, gy = baseY+j, px = gx*cell, py = gy*cell, k = `${gx},${gy}`;
+        if (!mowed.has(k)) {
+          ctx.drawImage(grassImg, px-8, py-8, cell+16, cell+16);
+          ctx.drawImage(grassImg, px, py, cell, cell);
+        } else {
+          ctx.fillStyle = '#4CAF50';
+          ctx.fillRect(px, py, cell, cell);
         }
       }
-      // Draw mower sprite
-      currentAngle += (targetAngle-currentAngle)*0.1;
-      const size = 40+level*4;
-      ctx.save(); ctx.translate(mower.x,mower.y); ctx.rotate(currentAngle+Math.PI/2);
-      ctx.drawImage(mowerImg,-size/2,-size/2,size,size); ctx.restore();
-      updateUI(); requestAnimationFrame(loop);
     }
-    updateUI(); loop();
-  </script>
+
+    currentAngle += (targetAngle-currentAngle)*0.1;
+    const size = 40+level*4;
+    ctx.save(); ctx.translate(mower.x,mower.y); ctx.rotate(currentAngle+Math.PI/2);
+    ctx.drawImage(mowerImg,-size/2,-size/2,size,size); ctx.restore();
+    updateUI(); requestAnimationFrame(loop);
+  }
+
+  updateUI(); loop();
+</script>
 </body>
 </html>
