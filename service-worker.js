@@ -36,10 +36,7 @@ const PRECACHE_URLS = [
   '/games/why-chicken-crossed/why-chicken-crossed.html',
   '/games/tetnis/icon.png',
   '/games/tetnis/config.json',
-  '/games/tetnis/tetnis.html'
-  '/games/chess/chess.html',
-  '/games/chess/chess.css',
-  '/games/chess/chess.js',
+  '/games/tetnis/tetnis.html',
   '/games/chess/icon.png',
   '/games/lawnmower-simulator/background.mp3',
   '/games/lawnmower-simulator/config.json',
