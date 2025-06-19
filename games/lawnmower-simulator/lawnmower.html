@@ -175,7 +175,21 @@
   window.addEventListener('keydown', e => keys[e.key] = true);
   window.addEventListener('keyup', e => keys[e.key] = false);
 
-  let joyDelta = { x:0, y:0 };
+  const controlMap = {
+    '⬆️': {x:0, y:-1}, '⬇️':{x:0, y:1}, '⬅️':{x:-1, y:0}, '➡️':{x:1, y:0},
+    '↖️': {x:-1, y:-1}, '↗️': {x:1, y:-1}, '↘️':{x:1, y:1}, '↙️':{x:-1, y:1}
+  };
+
+  const arrowState = {};
+  document.querySelectorAll('.arrow').forEach(btn => {
+    const dir = btn.dataset.dir;
+    btn.addEventListener('mousedown', ()=> arrowState[dir]=true);
+    btn.addEventListener('mouseup', ()=> arrowState[dir]=false);
+    btn.addEventListener('mouseleave', ()=> arrowState[dir]=false);
+    btn.addEventListener('touchstart', e=>{ e.preventDefault(); arrowState[dir]=true; },{passive:false});
+    btn.addEventListener('touchend',   e=>{ e.preventDefault(); arrowState[dir]=false; },{passive:false});
+  });
+
   canvas.addEventListener('mousedown', mowCell);
 
   function mowCell(){
@@ -190,38 +204,23 @@
     return false;
   }
 
-  // Directional button logic
-  const controlMap = {
-    '⬆️': {x:0, y:-1}, '⬇️':{x:0, y:1}, '⬅️':{x:-1, y:0}, '➡️':{x:1, y:0},
-    '↖️': {x:-1, y:-1}, '↗️': {x:1, y:-1}, '↘️':{x:1, y:1}, '↙️':{x:-1, y:1}
-  };
-
-  document.querySelectorAll('.arrow').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const dir = btn.dataset.dir;
-      if (dir === '🛑') {
-        Object.keys(keys).forEach(k => keys[k] = false);
-        joyDelta = { x: 0, y: 0 };
-      } else if (controlMap[dir]) {
-        const sp = baseSpeed * (1 + 0.2*level);
-        mower.x += controlMap[dir].x * sp;
-        mower.y += controlMap[dir].y * sp;
-        targetAngle = Math.atan2(controlMap[dir].y, controlMap[dir].x);
-        mowCell();
-      }
-    });
-  });
-
   function loop(){
     let sp = baseSpeed * (1 + 0.2*level), dx=0, dy=0;
     if (!upgrading) {
-      if (keys['ArrowUp']||keys['w']) dy = -sp;
-      if (keys['ArrowDown']||keys['s']) dy = sp;
-      if (keys['ArrowLeft']||keys['a']) dx = -sp;
-      if (keys['ArrowRight']||keys['d']) dx = sp;
+      if (keys['ArrowUp']||keys['w'])    dy -= sp;
+      if (keys['ArrowDown']||keys['s'])  dy += sp;
+      if (keys['ArrowLeft']||keys['a'])  dx -= sp;
+      if (keys['ArrowRight']||keys['d']) dx += sp;
+      for (let dir in arrowState) {
+        if (arrowState[dir] && controlMap[dir]) {
+          dx += controlMap[dir].x * sp;
+          dy += controlMap[dir].y * sp;
+        }
+      }
     }
     if (dx||dy) {
-      mower.x += dx; mower.y += dy;
+      mower.x += dx;
+      mower.y += dy;
       targetAngle = Math.atan2(dy, dx);
       mowCell();
     }
