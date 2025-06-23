@@ -43,7 +43,11 @@ const PRECACHE_URLS = [
   '/games/lawnmower-simulator/grass.png',
   '/games/lawnmower-simulator/icon.png',
   '/games/lawnmower-simulator/lawnmower.html',
-  '/games/lawnmower-simulator/mower.png'
+  '/games/lawnmower-simulator/mower.png',
+  '/games/Block bang/block-bang.html',
+  '/games/Block bang/config.json',
+  '/games/Block bang/explosion.mp4',
+  '/games/Block bang/icon.png'
 ];
 
 self.addEventListener('install', evt => {

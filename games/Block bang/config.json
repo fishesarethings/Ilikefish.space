@@ -1,0 +1,7 @@
+{
+  "name":"Block Bang",
+  "folder":"block-bang",
+  "icon":"icon.png",
+  "entry":"block-bang.html",
+  "touchInstructions":"Tap to play."
+}

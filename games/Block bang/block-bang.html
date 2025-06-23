@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Block Bang Puzzle</title>
+  <style>
+    :root {
+      --grid-size: min(90vw, 400px);
+      --gap: 4px;
+      --cell-size: calc((var(--grid-size) - (7 * var(--gap))) / 8);
+    }
+    body {
+      background: #121212;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { margin-bottom: 10px; }
+    #scores { margin-bottom: 20px; display: flex; gap: 20px; font-size: 18px; }
+    #game-container {
+      border: 2px solid #444;
+      display: grid;
+      width: var(--grid-size);
+      height: var(--grid-size);
+      grid-template-rows: repeat(8, 1fr);
+      grid-template-columns: repeat(8, 1fr);
+      gap: var(--gap);
+    }
+    .cell {
+      background: #2a2a2a;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s;
+    }
+    .cell.preview { background: rgba(255,255,255,0.3); }
+    .cell.invalid { background: rgba(255,0,0,0.3); }
+    #shapes {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .shape {
+      cursor: grab;
+      user-select: none;
+      display: inline-grid;
+      gap: var(--gap);
+      background: transparent;
+    }
+    .shape.dragging { opacity: 0.5; }
+    .shape .block {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 4px;
+    }
+    #game-over {
+      display: none;
+      position: fixed;
+      top:50%; left:50%; transform:translate(-50%,-50%);
+      background:#333; padding:30px; border-radius:8px;
+      text-align:center; box-shadow:0 0 15px rgba(0,0,0,0.7);
+      z-index:10;
+    }
+    #game-over button {
+      margin-top:10px; padding:8px 12px;
+      border:none; background:#4caf50; color:#fff;
+      border-radius:4px; cursor:pointer;
+    }
+    video.explosion {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <h1>Block Bang</h1>
+  <div id="scores">
+    <div>Score: <span id="score">0</span></div>
+    <div>High: <span id="highscore">0</span></div>
+  </div>
+  <div id="game-container"></div>
+  <div id="shapes"></div>
+  <div id="game-over">
+    <h2>Game Over</h2>
+    <button id="restart">Restart</button>
+  </div>
+  <video id="explosionVideo" src="explosion.mp4" preload="auto" style="display:none"></video>
+<script>
+  const ROWS=8, COLS=8;
+  const COLORS=['#e74c3c','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e67e22'];
+  const patterns=[
+    {p:[[1,1]],w:2,h:1},{p:[[1,1,1]],w:3,h:1},{p:[[1,1,1,1]],w:4,h:1},{p:[[1,1,1,1,1]],w:5,h:1},
+    {p:[[1],[1]],w:1,h:2},{p:[[1],[1],[1]],w:1,h:3},{p:[[1],[1],[1],[1]],w:1,h:4},{p:[[1],[1],[1],[1],[1]],w:1,h:5},
+    {p:[[1,1],[1,1]],w:2,h:2},{p:[[1,1,1],[1,1,1],[1,1,1]],w:3,h:3},
+    {p:[[1,0],[1,1]],w:2,h:2},{p:[[1,0,0],[1,1,1]],w:3,h:2},{p:[[1,0,0],[1,0,0],[1,1,1]],w:3,h:3},
+    {p:[[1,1,1],[0,1,0]],w:3,h:2},{p:[[1,1,1],[1,1,1]],w:3,h:2},{p:[[0,1,1],[1,1,0]],w:3,h:2}
+  ];
+  let grid, score=0, high=0, shapes, dragIdx;
+  const container=document.getElementById('game-container'), shapesDiv=document.getElementById('shapes');
+
+  function init(){
+    high = +localStorage.getItem('bb-high')||0;
+    document.getElementById('highscore').textContent=high;
+    score = 0; updateDisplay();
+    grid = Array.from({length:ROWS},()=>Array(COLS).fill(0));
+    container.innerHTML = '';
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const cell = document.createElement('div');
+        cell.className='cell'; cell.dataset.r=r; cell.dataset.c=c;
+        cell.addEventListener('dragover',e=>{e.preventDefault(); preview(r,c);});
+        cell.addEventListener('dragleave',clearPreview);
+        cell.addEventListener('drop',onDrop);
+        container.append(cell);
+      }
+    }
+    newShapes(); renderShapes(); hideGameOver();
+  }
+
+  function updateDisplay(){
+    document.getElementById('score').textContent=score;
+    if(score>high){
+      high=score;
+      localStorage.setItem('bb-high', high);
+      document.getElementById('highscore').textContent=high;
+    }
+  }
+
+  function newShapes(){
+    shapes = Array.from({length:3},()=>{
+      const o = patterns[Math.floor(Math.random()*patterns.length)];
+      return {p:o.p,w:o.w,h:o.h,color:COLORS[Math.floor(Math.random()*COLORS.length)]};
+    });
+  }
+
+  function renderShapes(){
+    shapesDiv.innerHTML = '';
+    shapes.forEach((s,i)=>{
+      const div = document.createElement('div'); div.className='shape'; div.draggable=true; div.dataset.idx=i;
+      div.style.gridTemplateRows = `repeat(${s.h}, var(--cell-size))`;
+      div.style.gridTemplateColumns = `repeat(${s.w}, var(--cell-size))`;
+      div.addEventListener('dragstart',e=>{dragIdx=i; div.classList.add('dragging'); e.dataTransfer.setDragImage(div,0,0);});
+      div.addEventListener('dragend',()=>{clearPreview(); div.classList.remove('dragging');});
+      s.p.forEach(row=> row.forEach(cell=>{
+        const b=document.createElement('div'); b.className='block'; b.style.background=s.color;
+        if(!cell) b.style.visibility='hidden'; div.append(b);
+      }));
+      shapesDiv.append(div);
+    });
+  }
+
+  function preview(r,c){
+    clearPreview(); const s=shapes[dragIdx]; if(!s) return;
+    for(let i=0;i<s.h;i++) for(let j=0;j<s.w;j++){
+      const rr=r+i, cc=c+j;
+      if(rr>=0&&rr<ROWS&&cc>=0&&cc<COLS){
+        container.children[rr*COLS+cc].classList.add(grid[rr][cc]?'invalid':'preview');
+      }
+    }
+  }
+
+  function clearPreview(){
+    container.querySelectorAll('.cell.preview,.cell.invalid').forEach(c=>c.classList.remove('preview','invalid'));
+  }
+
+  function onDrop(e){
+    clearPreview(); const s=shapes[dragIdx]; const r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
+    if(!canPlace(s,r,c)) return;
+    placeShape(s,r,c);
+    shapes.splice(dragIdx,1);
+    score += s.p.flat().filter(x=>x).length; updateDisplay();
+    explodeLines(); renderShapes();
+    if(shapes.length===0){newShapes(); renderShapes();}
+    if(!canAny()) endGame();
+  }
+
+  function canPlace(s,r,c){
+    return s.p.every((row,i)=> row.every((cell,j)=>{
+      const rr=r+i, cc=c+j;
+      return !cell || (rr>=0&&rr<ROWS&&cc>=0&&cc<COLS && !grid[rr][cc]);
+    }));
+  }
+
+  function placeShape(s,r,c){
+    for(let i=0;i<s.h;i++) for(let j=0;j<s.w;j++) if(s.p[i][j]){
+      grid[r+i][c+j]=1;
+      container.children[(r+i)*COLS+(c+j)].style.background=s.color;
+    }
+  }
+
+  function explodeLines(){
+    const rows=[], cols=[];
+    for(let r=0;r<ROWS;r++) if(grid[r].every(x=>x)) rows.push(r);
+    for(let c=0;c<COLS;c++) if(grid.every(row=>row[c])) cols.push(c);
+    const toClear = Array.from(new Set([
+      ...rows.flatMap(r=>Array.from({length:COLS},(_,c)=>`${r},${c}`)),
+      ...cols.flatMap(c=>Array.from({length:ROWS},(_,r)=>`${r},${c}`))
+    ]));
+    toClear.forEach((k,i)=>{
+      setTimeout(()=>{
+        const [rr,cc]=k.split(',').map(Number); grid[rr][cc]=0;
+        const cell=container.children[rr*COLS+cc];
+        const vid = document.getElementById('explosionVideo').cloneNode();
+        vid.className='explosion'; vid.style.display='block'; cell.append(vid);
+        vid.play(); vid.onended=()=>{ vid.remove(); cell.style.background='#2a2a2a'; };
+      }, i*75);
+    });
+    score += toClear.length*2; updateDisplay();
+  }
+
+  function canAny(){ return shapes.some(s=>{for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(canPlace(s,r,c)) return true; return false;}); }
+
+  function endGame(){ document.getElementById('game-over').style.display='block'; }
+  function hideGameOver(){ document.getElementById('game-over').style.display='none'; }
+
+  document.getElementById('restart').addEventListener('click',init);
+  init();
+</script>
+</body>
+</html>
