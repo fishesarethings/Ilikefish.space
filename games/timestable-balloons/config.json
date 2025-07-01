@@ -1,0 +1,8 @@
+{
+  "name": "Times Table Balloons",
+  "folder": "timestable-balloons",
+  "icon": "icon.png",
+  "entry": "timestable-balloons.html",
+  "touchInstructions": "Tap numbers to answer before the balloon hits the bottom.",
+  "controllerMapping": { "axes": {}, "buttons": {} }
+}
