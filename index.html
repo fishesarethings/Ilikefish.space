@@ -46,7 +46,7 @@
       location.reload(true);
     }
   </script>
-<link rel="canonical” href="https://ilikefish.space/index.html">
+  <link rel="canonical" href="https://ilikefish.space/index.html">
 </head>
 <body data-scroll-container>
   <script>window.addEventListener('load',()=>AOS.init({duration:800,once:true}));</script>
@@ -124,8 +124,8 @@
 
       <label>Port</label>
       <div class="copy-box">
-        <span id="port">65167</span>
-        <button onclick="copyText('65167')">Copy</button>
+        <span id="port">5850</span>
+        <button onclick="copyText('5850')">Copy</button>
       </div>
 
       <label>Ping</label>
@@ -147,13 +147,27 @@
           <option value="2592000000">Last 1 Month</option>
           <option value="31536000000">Last 1 Year</option>
         </select>
-        <!-- Added “Update Graph” button right next to the select -->
+        <!-- “Update Graph” button right next to the select -->
         <button id="update-graph">Update Graph</button>
       </div>
 
       <button id="enter-fullscreen">Full Screen Stats</button>
     </div>
 
+    <!-- Quick‑Join Element (below graph inputs) -->
+    <div class="quick-join" style="margin:1.5em auto; max-width:400px; text-align:center; background:rgba(255,255,255,0.1); padding:1em; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+      <p style="color:#eee; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
+         (Server name: <strong>mc.ilikefish.space</strong>)</p>
+      <a
+        class="join-button"
+        href="minecraft://?addExternalServer=mc.ilikefish.space|mc.ilikefish.space:5850"
+        style="display:inline-block;padding:0.75em 1.5em;border-radius:8px;font-size:1em;text-decoration:none;background:#4CAF50;color:#fff;transition:background 0.3s;"
+        onmouseover="this.style.background='#45a049';"
+        onmouseout="this.style.background='#4CAF50';"
+      >🎮 Join mc.ilikefish.space</a>
+    </div>
+
+    <!-- Chart Canvas -->
     <canvas id="activityChart"></canvas>
   </section>
 
@@ -170,5 +184,17 @@
   <!-- Server & fullscreen scripts -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
+
+  <!-- Basic Chart.js init to “fix the graph” -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('activityChart').getContext('2d');
+      window.activityChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Activity', data: [] }] },
+        options: { responsive: true, scales: { x: { display: true }, y: { beginAtZero: true } } }
+      });
+    });
+  </script>
 </body>
 </html>
