@@ -47,6 +47,25 @@
     }
   </script>
   <link rel="canonical" href="https://ilikefish.space/index.html">
+
+  <style>
+    /* Modal styles */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff; color: #000; padding: 1.5rem; border-radius: 8px;
+      max-width: 400px; width: 90%; position: relative; text-align: center;
+    }
+    .modal h2 { margin-top: 0; }
+    .modal .close {
+      position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 1.2rem; cursor: pointer;
+    }
+    .modal button { margin: 0.5rem; padding: 0.5rem 1rem; }
+    .countdown { font-weight: bold; }
+  </style>
 </head>
 <body data-scroll-container>
   <script>window.addEventListener('load',()=>AOS.init({duration:800,once:true}));</script>
@@ -147,7 +166,6 @@
           <option value="2592000000">Last 1 Month</option>
           <option value="31536000000">Last 1 Year</option>
         </select>
-        <!-- “Update Graph” button right next to the select -->
         <button id="update-graph">Update Graph</button>
       </div>
 
@@ -172,8 +190,8 @@
   </section>
 
   <!-- Footer + Unlicense -->
-  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
-    <p>Site Version: 1.3.3</p>
+  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
+    <p>Site Version: 1.3.3 <button id="check-update" style="margin-left:.5rem;padding:.2rem .5rem;font-size:.9em;">🔄 Refresh</button></p>
     <p>
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
@@ -181,11 +199,26 @@
     </p>
   </footer>
 
-  <!-- Server & fullscreen scripts -->
+  <!-- Modal Markup -->
+  <div id="modal-backdrop" class="modal-backdrop">
+    <div class="modal" id="modal">
+      <button class="close" id="modal-close">&times;</button>
+      <h2 id="modal-title"></h2>
+      <p id="modal-message"></p>
+      <div id="modal-buttons"></div>
+    </div>
+  </div>
+
+  <!-- Core Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
+  <!-- Typing & Locomotive & SW-register -->
+  <script src="/assets/js/typing.js" defer></script>
+  <script src="/assets/js/loco.js" defer></script>
+  <script src="/assets/js/sw-register.js" defer></script>
 
-  <!-- Basic Chart.js init to “fix the graph” -->
+  <!-- Basic Chart.js init -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const ctx = document.getElementById('activityChart').getContext('2d');
@@ -194,6 +227,80 @@
         data: { labels: [], datasets: [{ label: 'Activity', data: [] }] },
         options: { responsive: true, scales: { x: { display: true }, y: { beginAtZero: true } } }
       });
+    });
+  </script>
+
+  <!-- Update-Check & Modal Logic -->
+  <script>
+    async function fetchLatestVersion() {
+      try {
+        const res = await fetch('/version.json', {cache: 'no-store'});
+        const json = await res.json();
+        return json.version;
+      } catch {
+        return null;
+      }
+    }
+
+    function showModal(title, message, buttonsHtml) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').innerHTML = message;
+      document.getElementById('modal-buttons').innerHTML = buttonsHtml;
+      document.getElementById('modal-backdrop').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('modal-backdrop').style.display = 'none';
+    }
+    document.getElementById('modal-close').onclick = closeModal;
+
+    document.getElementById('check-update').addEventListener('click', async () => {
+      const latest = await fetchLatestVersion();
+      if (!latest || latest === PAGE_VER) {
+        alert('You already have the latest version.');
+        return;
+      }
+      // Step 1 confirmation
+      let countdown = 5;
+      const msg1 = `Warning: all game data will be erased.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`;
+      showModal('Confirm Refresh', msg1,
+        `<button id="confirm1">Confirm</button><button onclick="closeModal()">Cancel</button>`
+      );
+      const interval1 = setInterval(() => {
+        countdown--;
+        document.getElementById('cd1').textContent = countdown;
+        if (countdown <= 0) {
+          clearInterval(interval1);
+          document.getElementById('confirm1').disabled = false;
+        }
+      }, 1000);
+      document.getElementById('confirm1').disabled = true;
+      document.getElementById('confirm1').onclick = () => {
+        clearInterval(interval1);
+        // Step 2 confirmation
+        let cd2 = 15;
+        const msg2 = `Are you sure?<br>Proceed in <span class="countdown" id="cd2">${cd2}</span>s.`;
+        showModal('Are You Sure?', msg2,
+          `<button id="confirm2">Yes, I am sure and aware all game data may be erased</button>` +
+          `<button onclick="closeModal()">No, cancel</button>`
+        );
+        const interval2 = setInterval(() => {
+          cd2--;
+          document.getElementById('cd2').textContent = cd2;
+          if (cd2 <= 0) {
+            clearInterval(interval2);
+            document.getElementById('confirm2').disabled = false;
+          }
+        }, 1000);
+        document.getElementById('confirm2').disabled = true;
+        document.getElementById('confirm2').onclick = () => {
+          clearInterval(interval2);
+          closeModal();
+          // Erase site data
+          localStorage.clear();
+          sessionStorage.clear();
+          location.reload(true);
+        };
+      };
     });
   </script>
 </body>
