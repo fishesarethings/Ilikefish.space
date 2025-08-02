@@ -226,7 +226,7 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // Spawn logic
+        // Spawn logic
     function spawnBalloon() {
       if (paused) return;
       const a     = Math.ceil(Math.random()*12),
@@ -238,6 +238,17 @@
     }
 
     // Main Loop
+    function gameLoop() {
+      if (!paused) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(bgImg,0,0,canvas.width,canvas.height);
+
+        let active = balloons.reduce((p,c)=>c.y>p.y?c:p, balloons[0]||null);
+        balloons.filter(b=>b!==active).forEach(b=>drawBalloon(b,false));
+        if (active) drawBalloon(active,true);
+      }
+      requestAnimationFrame(gameLoop);
+    }
     function gameLoop() {
       if (!paused) {
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -345,7 +356,7 @@
         if (k.id==='key-delete') answerInput.value = answerInput.value.slice(0,-1);
         else answerInput.value += k.textContent;
         answerInput.focus();
-      });
+        });
     });
   </script>
 </body>
