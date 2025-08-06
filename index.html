@@ -230,93 +230,93 @@
     });
   </script>
 
- <!-- Update-Check & Modal Logic -->
-<script>
-  async function fetchLatestVersion() {
-    try {
-      const res = await fetch('/version.json', { cache: 'no-store' });
-      const json = await res.json();
-      return json.version;
-    } catch {
-      return null;
-    }
-  }
-
-  function showModal(title, message, buttonsHtml) {
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-message').innerHTML = message;
-    document.getElementById('modal-buttons').innerHTML = buttonsHtml;
-    document.getElementById('modal-backdrop').style.display = 'flex';
-  }
-
-  function closeModal() {
-    document.getElementById('modal-backdrop').style.display = 'none';
-  }
-
-  document.getElementById('modal-close').onclick = closeModal;
-
-  // Initialize version from version.json
-  const versionFromJson = fetchLatestVersion();
-
-  // Check for updates on page load
-  document.getElementById('check-update').addEventListener('click', async () => {
-    const latest = await versionFromJson; // fetch version dynamically
-    const storedVersion = localStorage.getItem('siteVersion');
-
-    if (!latest || latest === storedVersion) {
-      alert('You already have the latest version.');
-      return;
-    }
-
-    // Step 1 confirmation
-    let countdown = 5;
-    const msg1 = `Warning: all game data will be erased.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`;
-    showModal('Confirm Refresh', msg1,
-      `<button id="confirm1">Confirm</button><button onclick="closeModal()">Cancel</button>`
-    );
-
-    const interval1 = setInterval(() => {
-      countdown--;
-      document.getElementById('cd1').textContent = countdown;
-      if (countdown <= 0) {
-        clearInterval(interval1);
-        document.getElementById('confirm1').disabled = false;
+  <!-- Update-Check & Modal Logic -->
+  <script>
+    async function fetchLatestVersion() {
+      try {
+        const res = await fetch('/version.json', { cache: 'no-store' });
+        const json = await res.json();
+        return json.version;
+      } catch {
+        return null;
       }
-    }, 1000);
+    }
 
-    document.getElementById('confirm1').disabled = true;
-    document.getElementById('confirm1').onclick = () => {
-      clearInterval(interval1);
-      // Step 2 confirmation
-      let cd2 = 15;
-      const msg2 = `Are you sure?<br>Proceed in <span class="countdown" id="cd2">${cd2}</span>s.`;
-      showModal('Are You Sure?', msg2,
-        `<button id="confirm2">Yes, I am sure and aware all game data may be erased</button>` +
-        `<button onclick="closeModal()">No, cancel</button>`
+    function showModal(title, message, buttonsHtml) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').innerHTML = message;
+      document.getElementById('modal-buttons').innerHTML = buttonsHtml;
+      document.getElementById('modal-backdrop').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').style.display = 'none';
+    }
+
+    document.getElementById('modal-close').onclick = closeModal;
+
+    // Initialize version from version.json
+    const versionFromJson = fetchLatestVersion();
+
+    // Check for updates on page load
+    document.getElementById('check-update').addEventListener('click', async () => {
+      const latest = await versionFromJson; // fetch version dynamically
+      const storedVersion = localStorage.getItem('siteVersion');
+
+      if (!latest || latest === storedVersion) {
+        alert('No updates available.');
+        return;
+      }
+
+      // Proceed with the version update confirmation as before
+      let countdown = 5;
+      const msg1 = `Warning: all game data will be erased.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`;
+      showModal('Confirm Refresh', msg1,
+        `<button id="confirm1">Confirm</button><button onclick="closeModal()">Cancel</button>`
       );
 
-      const interval2 = setInterval(() => {
-        cd2--;
-        document.getElementById('cd2').textContent = cd2;
-        if (cd2 <= 0) {
-          clearInterval(interval2);
-          document.getElementById('confirm2').disabled = false;
+      const interval1 = setInterval(() => {
+        countdown--;
+        document.getElementById('cd1').textContent = countdown;
+        if (countdown <= 0) {
+          clearInterval(interval1);
+          document.getElementById('confirm1').disabled = false;
         }
       }, 1000);
 
-      document.getElementById('confirm2').disabled = true;
-      document.getElementById('confirm2').onclick = () => {
-        clearInterval(interval2);
-        closeModal();
-        // Erase site data
-        localStorage.clear();
-        sessionStorage.clear();
-        // Update the version in localStorage and reload the page
-        localStorage.setItem('siteVersion', latest);
-        location.reload(true);
+      document.getElementById('confirm1').disabled = true;
+      document.getElementById('confirm1').onclick = () => {
+        clearInterval(interval1);
+        // Step 2 confirmation
+        let cd2 = 15;
+        const msg2 = `Are you sure?<br>Proceed in <span class="countdown" id="cd2">${cd2}</span>s.`;
+        showModal('Are You Sure?', msg2,
+          `<button id="confirm2">Yes, I am sure and aware all game data may be erased</button>` +
+          `<button onclick="closeModal()">No, cancel</button>`
+        );
+
+        const interval2 = setInterval(() => {
+          cd2--;
+          document.getElementById('cd2').textContent = cd2;
+          if (cd2 <= 0) {
+            clearInterval(interval2);
+            document.getElementById('confirm2').disabled = false;
+          }
+        }, 1000);
+
+        document.getElementById('confirm2').disabled = true;
+        document.getElementById('confirm2').onclick = () => {
+          clearInterval(interval2);
+          closeModal();
+          // Erase site data
+          localStorage.clear();
+          sessionStorage.clear();
+          // Update the version in localStorage and reload the page
+          localStorage.setItem('siteVersion', latest);
+          location.reload(true);
+        };
       };
-    };
-  });
-</script>
+    });
+  </script>
 </body>
 </html>
