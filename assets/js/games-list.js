@@ -39,14 +39,40 @@ function renderGameCard(game) {
 
   const card = document.createElement('div');
   card.className = 'game-card';
-  card.innerHTML = `
+  
+  // Create anchor tag to wrap the image and button for the "Play" action
+  const playLink = document.createElement('a');
+  playLink.href = `/games/${game.folder}/${game.entry}`;
+  playLink.target = '_blank'; // Open in a new tab
+
+  // Create the image and button within the link
+  playLink.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button onclick="window.open('/games/${game.folder}/${game.entry}', '_blank')">
-        Play
-      </button>
-    </div>`;
+      <button>Play</button>
+    </div>
+  `;
+
+  card.append(playLink); // Append the anchor tag (with the play link) to the card
+
+  // Featured (home)
+  const feat = document.getElementById('featured-games');
+  if (feat) {
+    console.log('[games-list] appending featured:', game.name);
+    if (feat.children.length < 3) feat.append(card.cloneNode(true));
+  } else {
+    console.warn('[games-list] featured-games container not found');
+  }
+
+  // All on home
+  const allHome = document.getElementById('all-games');
+  if (allHome) {
+    console.log('[games-list] appending to all-home:', game.name);
+    allHome.append(card.cloneNode(true));
+  } else {
+    console.warn('[games-list] all-games container not found');
+  }
 
   // All on games.html
   const allPage = document.getElementById('games-container');
