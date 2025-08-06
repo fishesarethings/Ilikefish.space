@@ -48,24 +48,6 @@ function renderGameCard(game) {
       </button>
     </div>`;
 
-  // Featured (home)
-  const feat = document.getElementById('featured-games');
-  if (feat) {
-    console.log('[games-list] appending featured:', game.name);
-    if (feat.children.length < 3) feat.append(card.cloneNode(true));
-  } else {
-    console.warn('[games-list] featured-games container not found');
-  }
-
-  // All on home
-  const allHome = document.getElementById('all-games');
-  if (allHome) {
-    console.log('[games-list] appending to all-home:', game.name);
-    allHome.append(card.cloneNode(true));
-  } else {
-    console.warn('[games-list] all-games container not found');
-  }
-
   // All on games.html
   const allPage = document.getElementById('games-container');
   if (allPage) {
