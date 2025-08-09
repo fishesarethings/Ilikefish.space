@@ -33,16 +33,20 @@
   <!-- Locomotive, AOS, then your scripts -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
-  <script src="/assets/js/typing.js" defer></script>
+
+  <!-- NOTE: Removed duplicate typing.js include here (it was causing letters to be typed twice) -->
+
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
-  <!-- Cache-bust -->
+  <!-- Cache-bust (preserve game data) -->
   <script>
+    // When rolling a new page version we update the stored version and reload,
+    // but do NOT clear localStorage - preserves game data.
     const PAGE_VER = '1.6.0';
     if (localStorage.getItem('siteVersion') !== PAGE_VER) {
-      localStorage.clear();
       localStorage.setItem('siteVersion', PAGE_VER);
+      // reload to ensure new assets are picked up (true forces reload from server)
       location.reload(true);
     }
   </script>
@@ -172,7 +176,7 @@
       <button id="enter-fullscreen">Full Screen Stats</button>
     </div>
 
-    <!-- Quick‑Join Element (below graph inputs) -->
+    <!-- Quick-Join Element (below graph inputs) -->
     <div class="quick-join" style="margin:1.5em auto; max-width:400px; text-align:center; background:rgba(255,255,255,0.1); padding:1em; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
       <p style="color:#eee; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
          (Server name: <strong>mc.ilikefish.space</strong>)</p>
@@ -270,7 +274,7 @@
 
       // Proceed with the version update confirmation as before
       let countdown = 5;
-      const msg1 = `Warning: all game data will be erased.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`;
+      const msg1 = `Warning: proceeding will reload the site.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`;
       showModal('Confirm Refresh', msg1,
         `<button id="confirm1">Confirm</button><button onclick="closeModal()">Cancel</button>`
       );
@@ -291,7 +295,7 @@
         let cd2 = 15;
         const msg2 = `Are you sure?<br>Proceed in <span class="countdown" id="cd2">${cd2}</span>s.`;
         showModal('Are You Sure?', msg2,
-          `<button id="confirm2">Yes, I am sure and aware all game data may be erased</button>` +
+          `<button id="confirm2">Yes, proceed (game data will be preserved)</button>` +
           `<button onclick="closeModal()">No, cancel</button>`
         );
 
@@ -308,10 +312,8 @@
         document.getElementById('confirm2').onclick = () => {
           clearInterval(interval2);
           closeModal();
-          // Erase site data
-          localStorage.clear();
-          sessionStorage.clear();
-          // Update the version in localStorage and reload the page
+          // IMPORTANT: preserve game data stored in localStorage/sessionStorage.
+          // Update the version in localStorage and reload the page to fetch new assets.
           localStorage.setItem('siteVersion', latest);
           location.reload(true);
         };
