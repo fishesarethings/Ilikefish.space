@@ -20,9 +20,9 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <style>
-    /* small local overrides */
-    .hero { background-image: url('/assets/img/bg-server.jpg'); background-size: cover; background-position: center; min-height:60vh; display:flex; align-items:center; justify-content:center; }
-    .btn-disabled { opacity:.5; pointer-events:none; }
+    .hero { background-image:url('/assets/img/bg-server.jpg'); background-size:cover; background-position:center; min-height:60vh; display:flex; align-items:center; justify-content:center; }
+    #check-update { margin-left:.5rem; padding:.18rem .5rem; font-size:.9em; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
+    #check-update.btn-disabled { opacity:.5; pointer-events:none; }
   </style>
 
   <!-- Chart.js and local scripts -->
@@ -32,15 +32,11 @@
   <script src="/assets/js/sw-register.js" defer></script>
 
   <!-- centralised version check & graphs -->
-  <script src="/assets/js/version-check.js" defer></script>
   <script src="/assets/js/graphs.js" defer></script>
+  <script src="/assets/js/version-check.js" defer></script>
 </head>
 <body data-scroll-container>
   <script>window.addEventListener('load',()=>AOS.init({duration:600,once:true}));</script>
-
-  <!-- Cookie Consent -->
-  <script src="https://static.elfsight.com/platform/platform.js" async></script>
-  <div class="elfsight-app-759580a9-e1f2-4577-a688-728cfd2bc50a" data-elfsight-app-lazy></div>
 
   <!-- Navigation -->
   <nav>
@@ -56,7 +52,7 @@
     <h1 id="hero-title" class="typewriter">I like fishes </h1>
   </section>
 
-  <!-- Minecraft Server teaser -->
+  <!-- Minecraft Server teaser (graph + join button inside .box) -->
   <section class="section-interactive" data-scroll-section>
     <div class="box">
       <label>Join Address</label>
@@ -93,25 +89,27 @@
         <button id="update-graph" class="btn-disabled">Update Graph</button>
       </div>
 
-      <button id="enter-fullscreen">Full Screen Stats</button>
-
-      <!-- Quick-Join -->
-      <div class="quick-join">
-        <p>Too lazy to copy IP and port? Try this button—it may or may not work.<br>
+      <!-- Quick-Join inside box -->
+      <div class="quick-join" style="margin-top:1rem;">
+        <p style="color:#111; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
            (Server name: <strong>mc.ilikefish.space</strong>)</p>
-        <a class="join-button" href="minecraft://?addExternalServer=mc.ilikefish.space|mc.ilikefish.space:5850">🎮 Join mc.ilikefish.space</a>
+        <a class="join-button" href="minecraft://?addExternalServer=mc.ilikefish.space|mc.ilikefish.space:5850" style="display:inline-block;padding:0.65em 1.25em;border-radius:8px;background:#4CAF50;color:#fff;">🎮 Join mc.ilikefish.space</a>
+      </div>
+
+      <!-- Chart in the box -->
+      <div style="margin-top:1rem;">
+        <canvas id="activityChart" style="width:100%;height:320px;"></canvas>
       </div>
     </div>
-
-    <canvas id="activityChart" style="width:100%;max-width:1100px;margin:1rem auto;display:block;height:340px;"></canvas>
   </section>
 
-  <!-- Bottom download notification restored -->
+  <!-- Bottom download notification -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
 
   <!-- Footer -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
+    <p>Site Version: <span id="current-site-version">—</span> <button id="check-update" class="btn-disabled">🔄 Refresh</button></p>
     <p>
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
@@ -119,34 +117,43 @@
     </p>
   </footer>
 
+  <!-- Modal Markup (shared across site) -->
+  <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" id="modal">
+      <button class="close" id="modal-close" aria-label="Close">&times;</button>
+      <h2 id="modal-title"></h2>
+      <p id="modal-message"></p>
+      <div id="modal-buttons"></div>
+    </div>
+  </div>
+
   <!-- Core scripts -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 
-  <!-- Init chart & bind update button (no auto-updates) -->
+  <!-- Init chart + update button wiring -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const defaultRange = 86400000;
       if (typeof window.initActivityChart === 'function') {
         window.initActivityChart('activityChart', defaultRange)
-        .then(() => {
-          const btn = document.getElementById('update-graph');
-          if (btn) btn.classList.remove('btn-disabled');
-          btn.addEventListener('click', () => {
-            btn.classList.add('btn-disabled');
-            btn.textContent = 'Updating...';
-            const range = parseInt(document.getElementById('range-select').value,10) || defaultRange;
-            window.updateActivityChart(range).finally(() => {
-              btn.textContent = 'Update Graph';
-              btn.classList.remove('btn-disabled');
+          .then(() => {
+            const btn = document.getElementById('update-graph');
+            if (btn) btn.classList.remove('btn-disabled');
+            btn.addEventListener('click', () => {
+              btn.classList.add('btn-disabled');
+              btn.textContent = 'Updating...';
+              const range = parseInt(document.getElementById('range-select').value,10) || defaultRange;
+              window.updateActivityChart(range).finally(() => {
+                btn.textContent = 'Update Graph';
+                btn.classList.remove('btn-disabled');
+              });
             });
-          });
-        })
-        .catch(err => {
-          console.error('Chart init failed:', err);
-        });
+          })
+          .catch(err => console.error('Chart init failed:', err));
       }
-      // Wire service worker precache progress to bottom notification (if enabled)
+
+      // SW progress
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(() => {
           const p = document.getElementById('download-progress');

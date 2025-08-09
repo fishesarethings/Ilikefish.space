@@ -34,84 +34,44 @@
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
 
-  <!-- Local helpers (single includes) -->
+  <!-- Local scripts (single include each) -->
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
-  <script src="/assets/js/typing.js" defer></script>          <!-- single include -->
-  <script src="/assets/js/version-check.js" defer></script>  <!-- centralized version logic -->
-  <script src="/assets/js/graphs.js" defer></script>         <!-- improved graph logic -->
+  <script src="/assets/js/typing.js" defer></script>
+  <script src="/assets/js/graphs.js" defer></script>
+  <script src="/assets/js/version-check.js" defer></script>
 
   <link rel="canonical" href="https://ilikefish.space/index.html">
 
   <style>
-    /* Modal styles (kept minimal) */
+    /* Modal styles (centered) */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
-      z-index: 1000;
+      z-index: 2000;
     }
     .modal {
-      background: #fff; color: #000; padding: 1.5rem; border-radius: 8px;
-      max-width: 420px; width: 90%; position: relative; text-align: center;
+      background: #fff; color: #000; padding: 1.3rem; border-radius: 8px;
+      max-width: 440px; width: 92%; position: relative; text-align: center;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.24);
     }
-    .modal h2 { margin-top: 0; }
-    .modal .close {
-      position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 1.2rem; cursor: pointer;
-    }
-    .modal button { margin: 0.5rem; padding: 0.5rem 1rem; border-radius:6px; cursor:pointer; }
-    .countdown { font-weight: bold; }
+    .modal h2 { margin-top: 0; font-size: 1.05rem; }
+    .modal .close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 1.25rem; cursor: pointer; }
+    .modal button { margin: .45rem; padding: .45rem .9rem; border-radius:6px; cursor:pointer; }
 
-    /* Cookie banner (simple, unobtrusive) */
-    #cookie-banner {
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 1rem;
-      background: rgba(15,23,42,0.95);
-      color: #fff;
-      padding: .8rem 1rem;
-      border-radius: 10px;
-      display: none;
-      z-index: 1300;
-      box-shadow: 0 8px 30px rgba(2,6,23,0.3);
-      max-width: 95%;
-      font-size: .95rem;
-      align-items: center;
-      gap: .6rem;
-    }
-    #cookie-banner button {
-      background: #fff;
-      color: #0b2140;
-      border: none;
-      padding: .35rem .6rem;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    /* small refresh button appearance like original (compact) */
+    #check-update { margin-left:.5rem; padding:.18rem .5rem; font-size:.9em; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
+    #check-update.btn-disabled { opacity:.5; pointer-events:none; filter:grayscale(10%); }
 
-    /* Keep hero background visible and match original look */
-    .hero.first {
-      background-image: url('/assets/img/bg-home.jpg');
-      background-size: cover;
-      background-position: center;
-      min-height: 60vh;
-      display:flex; align-items:center; justify-content:center;
-    }
+    /* small update badge */
+    .update-badge { display:inline-block; margin-left:.4rem; background:#e53935; color:#fff; padding:.12rem .5rem; border-radius:8px; font-weight:700; font-size:.75rem; }
 
-    /* ensure download notifications appear above cookie banner */
-    #download-progress, #download-complete { z-index: 1400; }
+    /* ensure hero uses original background */
+    .hero.first { background-image:url('/assets/img/bg-home.jpg'); background-size:cover; background-position:center; min-height:60vh; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body data-scroll-container>
   <script>window.addEventListener('load',()=>AOS.init({duration:800,once:true}));</script>
-
-  <!-- Cookie Consent: removed Elfsight widget and replaced with a simple banner below -->
-  <!-- NOTE: the simple banner will store acceptance in localStorage key "cookieConsent" -->
-  <div id="cookie-banner" role="dialog" aria-live="polite">
-    <span>By using this website you consent to cookies.</span>
-    <div style="flex:1"></div>
-    <button id="cookie-accept">Accept</button>
-  </div>
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
@@ -142,33 +102,14 @@
   <!-- Load & render games -->
   <script src="/assets/js/games-list.js" defer></script>
 
-  <!-- Progress indicators (restored) -->
+  <!-- Progress indicators (bottom notification restored) -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(() => {
-        const p = document.getElementById('download-progress');
-        const b = p.querySelector('.bar');
-        const d = document.getElementById('download-complete');
-        navigator.serviceWorker.addEventListener('message', ev => {
-          if (ev.data?.type === 'PRECACHE_PROGRESS') {
-            p.style.display = 'block';
-            b.style.width = ev.data.percent + '%';
-            if (ev.data.percent >= 100) {
-              p.style.display = 'none';
-              d.style.display = 'block';
-              setTimeout(() => d.style.display = 'none', 2000);
-            }
-          }
-        });
-      }).catch(()=>{/* ignore sw errors */});
-    }
-  </script>
 
-  <!-- Minecraft Server teaser -->
+  <!-- Minecraft Server teaser (graph + join button moved INTO the .box for contrast) -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-server.jpg');">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
+
     <div class="box">
       <label>Join Address</label>
       <div class="copy-box">
@@ -204,29 +145,31 @@
         <button id="update-graph" class="btn-disabled">Update Graph</button>
       </div>
 
-      <button id="enter-fullscreen">Full Screen Stats</button>
-    </div>
+      <!-- Quick-Join moved inside the box for contrast -->
+      <div class="quick-join" style="margin-top:1rem;">
+        <p style="color:#111; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
+           (Server name: <strong>mc.ilikefish.space</strong>)</p>
+        <a
+          class="join-button"
+          href="minecraft://?addExternalServer=mc.ilikefish.space|mc.ilikefish.space:5850"
+          style="display:inline-block;padding:0.65em 1.25em;border-radius:8px;font-size:1em;text-decoration:none;background:#4CAF50;color:#fff;"
+          onmouseover="this.style.background='#45a049';"
+          onmouseout="this.style.background='#4CAF50';"
+        >🎮 Join mc.ilikefish.space</a>
+      </div>
 
-    <!-- Quick-Join Element (below graph inputs) -->
-    <div class="quick-join" style="margin:1.5em auto; max-width:400px; text-align:center; background:rgba(255,255,255,0.1); padding:1em; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
-      <p style="color:#eee; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
-         (Server name: <strong>mc.ilikefish.space</strong>)</p>
-      <a
-        class="join-button"
-        href="minecraft://?addExternalServer=mc.ilikefish.space|mc.ilikefish.space:5850"
-        style="display:inline-block;padding:0.75em 1.5em;border-radius:8px;font-size:1em;text-decoration:none;background:#4CAF50;color:#fff;transition:background 0.3s;"
-        onmouseover="this.style.background='#45a049';"
-        onmouseout="this.style.background='#4CAF50';"
-      >🎮 Join mc.ilikefish.space</a>
+      <!-- Chart inside the box -->
+      <div style="margin-top:1rem;">
+        <canvas id="activityChart" style="width:100%;height:320px;"></canvas>
+      </div>
     </div>
-
-    <!-- Chart Canvas -->
-    <canvas id="activityChart"></canvas>
   </section>
 
   <!-- Footer + Unlicense -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
-    <p>Site Version: <span id="current-site-version">—</span> <button id="check-update" style="margin-left:.5rem;padding:.2rem .5rem;font-size:.9em;">🔄 Refresh</button></p>
+    <p>Site Version: <span id="current-site-version">—</span>
+      <button id="check-update" class="btn-disabled" aria-label="Check for site updates">🔄 Refresh</button>
+    </p>
     <p>
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
@@ -234,7 +177,7 @@
     </p>
   </footer>
 
-  <!-- Modal Markup -->
+  <!-- Modal Markup (version-check.js will use this) -->
   <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
     <div class="modal" id="modal">
       <button class="close" id="modal-close" aria-label="Close">&times;</button>
@@ -248,10 +191,9 @@
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 
-  <!-- Basic Chart init (uses graphs.js safe API) -->
+  <!-- Init chart + Update button -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // init chart (graphs.js provides initActivityChart/updateActivityChart)
       const defaultRange = 86400000;
       if (typeof window.initActivityChart === 'function') {
         window.initActivityChart('activityChart', defaultRange)
@@ -273,24 +215,6 @@
           });
       }
 
-      // wire check-update button to version-check.js behavior (it binds itself on load)
-      // version-check.js will enable and badge the button if a new version exists.
-
-      // cookie banner logic
-      const cookieBanner = document.getElementById('cookie-banner');
-      const acceptBtn = document.getElementById('cookie-accept');
-      try {
-        const consent = localStorage.getItem('cookieConsent');
-        if (!consent) {
-          cookieBanner.style.display = 'flex';
-        }
-      } catch(e){ cookieBanner.style.display = 'flex'; }
-
-      acceptBtn.addEventListener('click', () => {
-        try { localStorage.setItem('cookieConsent', '1'); } catch(e){}
-        cookieBanner.style.display = 'none';
-      });
-
       // service worker progress listener (bottom notification)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(() => {
@@ -311,32 +235,6 @@
         }).catch(()=>{});
       }
     });
-  </script>
-
-  <!-- Update-Check & Modal Logic (kept centralized) -->
-  <!-- version-check.js handles binding check-update and modal; if it's missing, keep the old behavior fallback -->
-  <script>
-    // fallback: if version-check.js did not bind for some reason, provide minimal click to check version.json
-    (function(){
-      if (window.__ILF_VERSION_CHECK_LOADED) return;
-      const btn = document.getElementById('check-update');
-      if (!btn) return;
-      btn.addEventListener('click', async () => {
-        try {
-          const res = await fetch('/version.json', { cache: 'no-store' });
-          const json = await res.json();
-          const latest = json.version;
-          const stored = localStorage.getItem('siteVersion');
-          if (!latest || latest === stored) { alert('No updates available.'); return; }
-          // simple confirm flow (fallback)
-          if (!confirm('New version available. Reload and update?')) return;
-          localStorage.setItem('siteVersion', latest);
-          location.reload(true);
-        } catch (e) {
-          alert('Could not check for updates.');
-        }
-      });
-    })();
   </script>
 </body>
 </html>
