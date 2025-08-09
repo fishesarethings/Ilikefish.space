@@ -24,40 +24,11 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <style>
-    nav {
-      position: sticky; top: 0;
-      background: rgba(255,255,255,0.95);
-      z-index: 1000;
-    }
-    nav ul {
-      display: flex;
-      justify-content: center;
-      list-style: none;
-      padding: 1rem;
-      margin: 0;
-    }
-    nav a {
-      margin: 0 1rem;
-      color: #333;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    #search-box {
-      display: block;
-      width: 90%; max-width: 400px;
-      margin: 1.5rem auto;
-      padding: .5rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .game-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
-      padding: 0 1rem 2rem;
-    }
+    nav { position: sticky; top: 0; background: rgba(255,255,255,0.95); z-index: 1000; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    nav ul { display:flex; justify-content:center; list-style:none; padding:1rem; margin:0; }
+    nav a { margin: 0 1rem; color: #333; text-decoration: none; font-weight: bold; }
+    #search-box { display: block; width: 90%; max-width: 480px; margin: 1.5rem auto; padding: .6rem; font-size: 1rem; border: 1px solid #e3e3e3; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .game-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:1rem; padding: 0 1rem 2rem; }
   </style>
 </head>
 <body data-aos="fade-up">
@@ -82,6 +53,9 @@
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="/assets/js/games-list.js" defer></script>
 
+  <!-- Version check (centralized) -->
+  <script src="/assets/js/version-check.js" defer></script>
+
   <!-- Client-side filter -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -89,7 +63,8 @@
         .addEventListener('input', e => {
           const term = e.target.value.toLowerCase();
           document.querySelectorAll('.game-card').forEach(card => {
-            const name = card.querySelector('h3').textContent.toLowerCase();
+            const nameEl = card.querySelector('h3');
+            const name = nameEl ? nameEl.textContent.toLowerCase() : '';
             card.style.display = name.includes(term) ? 'flex' : 'none';
           });
         });
