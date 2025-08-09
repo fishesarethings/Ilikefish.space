@@ -15,39 +15,28 @@
   <title>Minecraft Server — I like fishes _</title>
   <link rel="icon" href="/assets/img/ilikefishes.ico">
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <style>
-    body { margin:0; font-family:sans-serif; overflow-x:hidden; }
-    nav ul { display:flex; justify-content:center; list-style:none; padding:1rem; margin:0; }
-    nav a  { margin:0 1rem; color:#555; text-decoration:none; }
-    .hero { height:60vh; display:flex; align-items:center; justify-content:center; background-size:cover; background-position:center; }
-    .section-interactive { padding:5rem 2rem; }
-    .box { background: rgba(255,255,255,0.95) !important; padding:1rem; border-radius:.5rem; margin-bottom:2rem; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-    .copy-box { display:flex; align-items:center; margin:1rem 0; }
-    .copy-box span { flex:1; }
-    .copy-box button, #enter-fullscreen { margin-left:1rem; padding:.5rem 1rem; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
-    #activityChart { max-width:100%; height:300px; display:block; margin: 1rem auto; }
-    .quick-join { background: rgba(255,255,255,0.95); padding: 1rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 2rem auto; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-    .join-button { display:inline-block; background:#4CAF50; color:white; text-decoration:none; padding: 0.75em 1.5em; border-radius:8px; transition: background .18s; }
-    .join-button:hover { background:#45a049; }
-
-    /* disabled */
-    .btn-disabled { opacity:.45; pointer-events:none; }
+    /* small local overrides */
+    .hero { background-image: url('/assets/img/bg-server.jpg'); background-size: cover; background-position: center; min-height:60vh; display:flex; align-items:center; justify-content:center; }
+    .btn-disabled { opacity:.5; pointer-events:none; }
   </style>
 
-  <!-- Local libs -->
+  <!-- Chart.js and local scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
 
-  <!-- Version-check and graphs -->
+  <!-- centralised version check & graphs -->
   <script src="/assets/js/version-check.js" defer></script>
   <script src="/assets/js/graphs.js" defer></script>
 </head>
 <body data-scroll-container>
+  <script>window.addEventListener('load',()=>AOS.init({duration:600,once:true}));</script>
 
   <!-- Cookie Consent -->
   <script src="https://static.elfsight.com/platform/platform.js" async></script>
@@ -63,8 +52,8 @@
   </nav>
 
   <!-- Hero -->
-  <section class="hero" data-scroll-section style="background-image:url('/assets/img/bg-server.jpg')">
-    <h1 id="hero-title" class="typewriter">I like fishes _</h1>
+  <section class="hero" data-scroll-section>
+    <h1 id="hero-title" class="typewriter">I like fishes </h1>
   </section>
 
   <!-- Minecraft Server teaser -->
@@ -106,7 +95,7 @@
 
       <button id="enter-fullscreen">Full Screen Stats</button>
 
-      <!-- Quick-Join Element -->
+      <!-- Quick-Join -->
       <div class="quick-join">
         <p>Too lazy to copy IP and port? Try this button—it may or may not work.<br>
            (Server name: <strong>mc.ilikefish.space</strong>)</p>
@@ -114,12 +103,12 @@
       </div>
     </div>
 
-    <canvas id="activityChart"></canvas>
+    <canvas id="activityChart" style="width:100%;max-width:1100px;margin:1rem auto;display:block;height:340px;"></canvas>
   </section>
 
-  <!-- Core Scripts -->
-  <script src="/assets/js/server.js" defer></script>
-  <script src="/assets/js/fullscreen.js" defer></script>
+  <!-- Bottom download notification restored -->
+  <div id="download-progress"><div class="bar"></div></div>
+  <div id="download-complete">Download complete!</div>
 
   <!-- Footer -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
@@ -130,24 +119,51 @@
     </p>
   </footer>
 
-  <!-- Chart initialization -->
+  <!-- Core scripts -->
+  <script src="/assets/js/server.js" defer></script>
+  <script src="/assets/js/fullscreen.js" defer></script>
+
+  <!-- Init chart & bind update button (no auto-updates) -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const defaultRange = 86400000;
       if (typeof window.initActivityChart === 'function') {
-        window.initActivityChart('activityChart', defaultRange).then(() => {
+        window.initActivityChart('activityChart', defaultRange)
+        .then(() => {
           const btn = document.getElementById('update-graph');
           if (btn) btn.classList.remove('btn-disabled');
           btn.addEventListener('click', () => {
-            const range = parseInt(document.getElementById('range-select').value, 10) || defaultRange;
             btn.classList.add('btn-disabled');
             btn.textContent = 'Updating...';
+            const range = parseInt(document.getElementById('range-select').value,10) || defaultRange;
             window.updateActivityChart(range).finally(() => {
               btn.textContent = 'Update Graph';
               btn.classList.remove('btn-disabled');
             });
           });
-        }).catch(() => {});
+        })
+        .catch(err => {
+          console.error('Chart init failed:', err);
+        });
+      }
+      // Wire service worker precache progress to bottom notification (if enabled)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(() => {
+          const p = document.getElementById('download-progress');
+          const b = p.querySelector('.bar');
+          const d = document.getElementById('download-complete');
+          navigator.serviceWorker.addEventListener('message', ev => {
+            if (ev.data?.type === 'PRECACHE_PROGRESS') {
+              p.style.display = 'block';
+              b.style.width = ev.data.percent + '%';
+              if (ev.data.percent >= 100) {
+                p.style.display = 'none';
+                d.style.display = 'block';
+                setTimeout(() => d.style.display = 'none', 2000);
+              }
+            }
+          });
+        }).catch(()=>{});
       }
     });
   </script>

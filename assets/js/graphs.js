@@ -1,4 +1,4 @@
-// graphs.js — robust, non-blocking graph generator with caps and re-entry protection
+// assets/js/graphs.js — robust, caps, guard against infinite loops
 (function () {
   if (window.__ILF_GRAPHS_LOADED) return;
   window.__ILF_GRAPHS_LOADED = true;
@@ -7,21 +7,16 @@
   let canvasId = null;
   let inProgress = false;
 
-  // Configuration caps
   const DEFAULT_POINTS = 48;
   const MIN_POINTS = 12;
-  const MAX_POINTS = 140;       // prevent extremely large charts
-  const FETCH_TIMEOUT_MS = 5000; // if data generation takes >5s, abort
+  const MAX_POINTS = 140;
+  const FETCH_TIMEOUT_MS = 5000;
 
-  // Dummy data generator (replace with real fetch if you have one).
-  // Uses index-driven sampling to avoid accidental infinite loops.
   function fetchDummyData(rangeMs, points = DEFAULT_POINTS) {
     return new Promise((resolve) => {
       const now = Date.now();
       const labels = new Array(points);
       const data = new Array(points);
-
-      // mild random walk seeded value
       let v = Math.floor(18 + Math.random() * 80);
 
       for (let i = 0; i < points; i++) {
@@ -30,19 +25,15 @@
         const hh = dt.getHours().toString().padStart(2, '0');
         const mm = dt.getMinutes().toString().padStart(2, '0');
         labels[i] = `${hh}:${mm}`;
-
-        // create a gentle daily cycle + noise
         const dayFactor = 1 + 0.35 * Math.sin((t / (1000 * 3600 * 24)) * Math.PI * 2);
         v = Math.max(0, Math.round(v + (Math.random() - 0.5) * 8 * dayFactor));
         data[i] = v;
       }
 
-      // small async delay to simulate network
       setTimeout(() => resolve({ labels, data }), 120 + Math.random() * 220);
     });
   }
 
-  // create a vertical gradient for fill
   function createGradient(ctx, h) {
     try {
       const g = ctx.createLinearGradient(0, 0, 0, h);
@@ -55,7 +46,6 @@
     }
   }
 
-  // Timeout helper
   function withTimeout(promise, ms) {
     return Promise.race([
       promise,
@@ -63,9 +53,7 @@
     ]);
   }
 
-  // Initialize chart (call once per page)
   async function initActivityChart(id, defaultRangeMs = 86400000, points = DEFAULT_POINTS) {
-    // normalize and cap points
     points = Math.max(MIN_POINTS, Math.min(MAX_POINTS, Number(points) || DEFAULT_POINTS));
 
     const el = document.getElementById(id);
@@ -73,15 +61,12 @@
     canvasId = id;
     const ctx = el.getContext('2d');
 
-    // guard: if chart exists, destroy it first
     if (chart) {
-      try { chart.destroy(); } catch (e) { /* ignore */ }
+      try { chart.destroy(); } catch (e) {}
       chart = null;
     }
 
-    // fetch & build initial data (with timeout)
-    const fetchPromise = fetchDummyData(defaultRangeMs, points);
-    const d = await withTimeout(fetchPromise, FETCH_TIMEOUT_MS);
+    const d = await withTimeout(fetchDummyData(defaultRangeMs, points), FETCH_TIMEOUT_MS);
 
     const gradient = createGradient(ctx, el.height || 320);
 
@@ -117,24 +102,18 @@
       }
     });
 
-    // ensure canvas a sane height
     if (!el.style.height) el.style.height = '340px';
     return;
   }
 
-  // Update chart data — protected against re-entry and extremely large ranges.
   async function updateActivityChart(rangeMs, points = DEFAULT_POINTS) {
     if (inProgress) return Promise.reject(new Error('Chart update already in progress'));
     inProgress = true;
 
-    // validate rangeMs numeric and sane
     let rangeNum = Number(rangeMs);
-    if (!isFinite(rangeNum) || rangeNum <= 0) rangeNum = 86400000; // fallback to 24h
-
-    // cap points to avoid giant arrays
+    if (!isFinite(rangeNum) || rangeNum <= 0) rangeNum = 86400000;
     points = Math.max(MIN_POINTS, Math.min(MAX_POINTS, Number(points) || DEFAULT_POINTS));
 
-    // If chart not initialized, try to init it first
     if (!chart || !canvasId) {
       try {
         await initActivityChart('activityChart', rangeNum, points);
@@ -145,10 +124,7 @@
     }
 
     try {
-      // fetch data with timeout
       const d = await withTimeout(fetchDummyData(rangeNum, points), FETCH_TIMEOUT_MS);
-
-      // update chart dataset + gradient
       const canvas = document.getElementById(canvasId);
       if (!canvas) throw new Error('Canvas missing during update');
 
@@ -166,7 +142,6 @@
     }
   }
 
-  // Expose functions
   window.initActivityChart = initActivityChart;
   window.updateActivityChart = updateActivityChart;
 })();
