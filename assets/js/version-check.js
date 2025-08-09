@@ -1,29 +1,28 @@
-// Centralized version-check + old-style centered modal.
-// - Edit /version.json only to bump version.
-// - The script seeds localStorage.siteVersion if missing.
-// - If a newer version exists, the small "Refresh" button is enabled and gets a red "new" badge.
-// - Modal only appears after the user clicks the button. Modal is centered (uses existing modal markup).
-// - Preserves localStorage/sessionStorage (does NOT clear them).
-// - On final confirmation it sets localStorage.siteVersion to latest and reloads (force reload).
+// version-check.js
+// - Seeds localStorage.siteVersion if missing (no clearing).
+// - Polls /version.json every 30s to detect new versions while page is open.
+// - When a newer version is found, enables the footer Refresh button and adds badge.
+// - Clicking the Refresh button fetches /version.json immediately and runs the centered modal if new.
 
-(function () {
-  if (window.__ILF_VERSION_CHECK_LOADED) return;
+// Defensive single-load
+if (window.__ILF_VERSION_CHECK_LOADED) {
+  // already loaded
+} else {
   window.__ILF_VERSION_CHECK_LOADED = true;
 
   const VERSION_JSON = '/version.json';
   const CHECK_BTN_ID = 'check-update';
   const SITE_VERSION_KEY = 'siteVersion';
+  const POLL_INTERVAL_MS = 30000; // 30s
 
-  // ensure modal markup exists (we rely on pages including #modal-backdrop)
   function ensureModalExists() {
-    const backdrop = document.getElementById('modal-backdrop');
+    let backdrop = document.getElementById('modal-backdrop');
     if (!backdrop) {
-      // if a page didn't include modal, create one (defensive)
-      const d = document.createElement('div');
-      d.id = 'modal-backdrop';
-      d.className = 'modal-backdrop';
-      d.style.display = 'none';
-      d.innerHTML = `
+      backdrop = document.createElement('div');
+      backdrop.id = 'modal-backdrop';
+      backdrop.className = 'modal-backdrop';
+      backdrop.style.display = 'none';
+      backdrop.innerHTML = `
         <div class="modal" id="modal">
           <button class="close" id="modal-close" aria-label="Close">&times;</button>
           <h2 id="modal-title"></h2>
@@ -31,9 +30,8 @@
           <div id="modal-buttons"></div>
         </div>
       `;
-      document.body.appendChild(d);
-      document.getElementById('modal-close').addEventListener('click', () => { d.style.display = 'none'; d.setAttribute('aria-hidden','true'); });
-      return d;
+      document.body.appendChild(backdrop);
+      document.getElementById('modal-close').addEventListener('click', () => { backdrop.style.display = 'none'; backdrop.setAttribute('aria-hidden','true'); });
     }
     return backdrop;
   }
@@ -52,9 +50,8 @@
     if (b) { b.style.display = 'none'; b.setAttribute('aria-hidden','true'); }
   }
 
-  // run two-step confirm flow (centered modal)
+  // two-step confirm flow
   function runUpdateFlow(latest) {
-    // Step 1: 5s countdown
     let countdown = 5;
     showModal('Confirm Refresh', `Warning: proceeding will reload the site.<br>Confirm in <span class="countdown" id="cd1">${countdown}</span>s.`,
       `<button id="confirm1" disabled>Confirm</button> <button id="cancel1">Cancel</button>`
@@ -75,7 +72,6 @@
 
     document.getElementById('confirm1').onclick = () => {
       clearInterval(interval1);
-      // Step 2: 15s countdown
       let cd2 = 15;
       showModal('Are you sure?', `Are you sure you want to update? Proceed in <span class="countdown" id="cd2">${cd2}</span>s.`,
         `<button id="confirm2" disabled>Yes, proceed</button> <button id="cancel2">Cancel</button>`
@@ -97,77 +93,74 @@
       document.getElementById('confirm2').onclick = () => {
         clearInterval(interval2);
         closeModal();
-        try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch (e) { /* ignore */ }
+        try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){}
         location.reload(true);
       };
     };
   }
 
-  // enable check button and add a small badge
+  // mark button enabled + badge + bind click
   function enableCheckButton(latest) {
     const btn = document.getElementById(CHECK_BTN_ID);
     if (!btn) return;
     btn.classList.remove('btn-disabled');
-    btn.setAttribute('aria-pressed','false');
-    // add small badge if not present
+    // add badge only once
     if (!btn.querySelector('.update-badge')) {
-      const b = document.createElement('span');
-      b.className = 'update-badge';
-      b.textContent = 'new';
-      btn.appendChild(b);
+      const badge = document.createElement('span');
+      badge.className = 'update-badge';
+      badge.textContent = 'new';
+      btn.appendChild(badge);
     }
-    // bind click to run update flow (use latest captured closure)
-    btn.onclick = () => runUpdateFlow(latest);
+    // click should double-check latest and then run flow
+    btn.onclick = async () => {
+      try {
+        const res = await fetch(VERSION_JSON, { cache: 'no-store' });
+        if (!res.ok) { alert('Could not check updates'); return; }
+        const j = await res.json();
+        const l = String(j.version || '').trim();
+        const storedNow = localStorage.getItem(SITE_VERSION_KEY);
+        if (!l || l === storedNow) { alert('No updates available.'); return; }
+        runUpdateFlow(l);
+      } catch (err) {
+        alert('Could not check updates.');
+      }
+    };
   }
 
-  // main check function
+  // check /version.json and seed if missing
   async function checkVersion() {
     try {
-      const res = await fetch(VERSION_JSON, { cache: 'no-store' });
-      if (!res.ok) return;
-      const json = await res.json();
+      const resp = await fetch(VERSION_JSON, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const json = await resp.json();
       const latest = String(json.version || '').trim();
       if (!latest) return;
 
-      // show latest in footer if element present
-      const currentEl = document.getElementById('current-site-version');
-      if (currentEl) currentEl.textContent = latest;
+      // display current version element if exists
+      const cv = document.getElementById('current-site-version');
+      if (cv) cv.textContent = latest;
 
       const stored = localStorage.getItem(SITE_VERSION_KEY);
       if (!stored) {
-        try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){ /* ignore */ }
-        // seeded; no further action
-        // also bind click handler so it still works if user manually clicks (it will fetch again)
-        const btn = document.getElementById(CHECK_BTN_ID);
-        if (btn) btn.onclick = async () => {
-          // manual check -> run flow if different
-          const r = await fetch(VERSION_JSON, { cache: 'no-store' });
-          const j = await r.json();
-          const l = String(j.version || '').trim();
-          if (l && l !== localStorage.getItem(SITE_VERSION_KEY)) runUpdateFlow(l);
-          else alert('No updates available.');
-        };
+        try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){}
         return;
       }
 
       if (stored !== latest) {
-        // enable the small refresh button (do not auto-show the modal)
         enableCheckButton(latest);
       } else {
-        // same version: ensure button is disabled
         const btn = document.getElementById(CHECK_BTN_ID);
         if (btn) btn.classList.add('btn-disabled');
       }
     } catch (err) {
-      // ignore silently - do not break UX
-      console.warn('version-check failed', err);
+      // silently ignore
+      console.warn('version-check error', err);
     }
   }
 
-  // run on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkVersion);
-  } else {
-    checkVersion();
-  }
-})();
+  // initial check + periodic poll
+  (async function start() {
+    await checkVersion();
+    setInterval(checkVersion, POLL_INTERVAL_MS);
+  })();
+}
