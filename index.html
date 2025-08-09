@@ -40,12 +40,12 @@
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
+  <script src="/assets/js/graphs.js" defer></script>
 
-  <!-- Do NOT clear localStorage on version update — siteVersion is managed by /assets/js/version-check.js -->
   <link rel="canonical" href="https://ilikefish.space/index.html">
 
   <style>
-    /* Modal styles (kept tidy) */
+    /* Modal styles */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
@@ -74,6 +74,25 @@
     nav ul { display:flex; justify-content:center; list-style:none; padding:0.8rem; margin:0; gap:1rem; }
     nav a { padding: .3rem .6rem; color:#333; text-decoration:none; border-radius:6px; transition: background .12s; }
     nav a:hover { background: rgba(0,0,0,0.04); }
+
+    /* Disabled update button style */
+    .btn-disabled {
+      opacity: 0.45;
+      pointer-events: none;
+      filter: grayscale(20%);
+    }
+
+    /* small badge on update button */
+    .update-badge {
+      display:inline-block;
+      margin-left:.5rem;
+      background:#ff3b30;
+      color:#fff;
+      font-size: .75rem;
+      padding:.15rem .4rem;
+      border-radius:8px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body data-scroll-container>
@@ -93,23 +112,21 @@
   </nav>
 
   <!-- Hero -->
-  <section class="hero first" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-home.jpg'); min-height:60vh;">
-    <!-- Main title shown by JS. Also provide a no-JS fallback in the .no-js element -->
-    <h1 id="hero-title" class="typewriter" aria-live="polite">I like fishes _</h1>
-    <div class="no-js" style="display:none;">
-      <!-- Visible if JS disabled; typing.js will add .js-enabled to html when active so CSS can hide .no-js -->
-      <h1 class="typewriter static">I like fishes _</h1>
-    </div>
+  <section class="hero first" data-scroll-section data-aos="fade-up"
+           style="background-image:url('/assets/img/bg-home.jpg'); min-height:60vh;">
+    <h1 id="hero-title" class="typewriter">I like fishes _</h1>
   </section>
 
   <!-- Featured Games -->
-  <section class="section-interactive" data-scroll-section style="background-image:url('/assets/img/bg-games.jpg');">
+  <section class="section-interactive" data-scroll-section
+           style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
   </section>
 
   <!-- All Games -->
-  <section class="section-interactive" data-scroll-section style="background-image:url('/assets/img/bg-games.jpg');">
+  <section class="section-interactive" data-scroll-section
+           style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="1">All Games</h2>
     <div id="all-games" class="cards-container"></div>
   </section>
@@ -121,29 +138,9 @@
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(() => {
-        const p = document.getElementById('download-progress');
-        const b = p.querySelector('.bar');
-        const d = document.getElementById('download-complete');
-        navigator.serviceWorker.addEventListener('message', ev => {
-          if (ev.data?.type === 'PRECACHE_PROGRESS') {
-            p.style.display = 'block';
-            b.style.width = ev.data.percent + '%';
-            if (ev.data.percent >= 100) {
-              p.style.display = 'none';
-              d.style.display = 'block';
-              setTimeout(() => d.style.display = 'none', 2000);
-            }
-          }
-        });
-      });
-    }
-  </script>
-
   <!-- Minecraft Server teaser -->
-  <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-server.jpg');">
+  <section class="section-interactive" data-scroll-section data-aos="fade-up"
+           style="background-image:url('/assets/img/bg-server.jpg');">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
     <div class="box">
       <label>Join Address</label>
@@ -177,14 +174,14 @@
           <option value="2592000000">Last 1 Month</option>
           <option value="31536000000">Last 1 Year</option>
         </select>
-        <button id="update-graph">Update Graph</button>
+        <button id="update-graph" class="btn-disabled">Update Graph</button>
       </div>
 
       <button id="enter-fullscreen">Full Screen Stats</button>
     </div>
 
     <!-- Quick-Join Element (below graph inputs) -->
-    <div class="quick-join" style="margin:1.5em auto; max-width:400px; text-align:center;">
+    <div class="quick-join" style="margin:1.5em auto; max-width:400px; text-align:center; background:rgba(255,255,255,0.1); padding:1em; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
       <p style="color:#111; margin-bottom:0.75em;">Too lazy to copy IP and port? Try this button—it may or may not work.<br>
          (Server name: <strong>mc.ilikefish.space</strong>)</p>
       <a
@@ -197,12 +194,12 @@
     </div>
 
     <!-- Chart Canvas -->
-    <canvas id="activityChart"></canvas>
+    <canvas id="activityChart" style="width:100%;max-width:1100px;margin:1rem auto;display:block;"></canvas>
   </section>
 
   <!-- Footer + Unlicense -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
-    <p>Site Version: <span id="current-site-version">—</span> <button id="check-update" style="margin-left:.5rem;padding:.2rem .5rem;font-size:.9em;">🔄 Refresh</button></p>
+    <p>Site Version: <span id="current-site-version">—</span> <button id="check-update" class="btn-disabled" style="margin-left:.5rem;padding:.2rem .5rem;font-size:.9em;">🔄 Refresh</button></p>
     <p>
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
@@ -210,7 +207,7 @@
     </p>
   </footer>
 
-  <!-- Modal Markup (version-check.js will use this if present; it will create one if not present) -->
+  <!-- Modal Markup -->
   <div id="modal-backdrop" class="modal-backdrop" aria-hidden="true">
     <div class="modal" id="modal">
       <button class="close" id="modal-close" aria-label="Close">&times;</button>
@@ -224,15 +221,30 @@
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 
-  <!-- Basic Chart.js init -->
+  <!-- Basic Chart init binding (graphs.js will define updateActivityChart()) -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const ctx = document.getElementById('activityChart')?.getContext?.('2d');
-      if (ctx) {
-        window.activityChart = new Chart(ctx, {
-          type: 'line',
-          data: { labels: [], datasets: [{ label: 'Activity', data: [] }] },
-          options: { responsive: true, scales: { x: { display: true }, y: { beginAtZero: true } } }
+      // initialize chart with default 24h range so users see something immediately
+      const defaultRange = 86400000;
+      // graphs.js exposes initActivityChart and updateActivityChart
+      if (typeof window.initActivityChart === 'function') {
+        window.initActivityChart('activityChart', defaultRange).then(() => {
+          // enable update-graph (user must click to fetch new) — visually allow clicking now
+          const btn = document.getElementById('update-graph');
+          if (btn) btn.classList.remove('btn-disabled');
+          // wire click
+          btn.addEventListener('click', () => {
+            const range = parseInt(document.getElementById('range-select').value, 10) || defaultRange;
+            // disable while updating
+            btn.classList.add('btn-disabled');
+            btn.textContent = 'Updating...';
+            window.updateActivityChart(range).finally(() => {
+              btn.textContent = 'Update Graph';
+              btn.classList.remove('btn-disabled');
+            });
+          });
+        }).catch(() => {
+          // if init fails, leave button disabled
         });
       }
     });

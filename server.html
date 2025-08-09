@@ -28,10 +28,13 @@
     .copy-box { display:flex; align-items:center; margin:1rem 0; }
     .copy-box span { flex:1; }
     .copy-box button, #enter-fullscreen { margin-left:1rem; padding:.5rem 1rem; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
-    #activityChart { max-width:100%; height:300px; }
+    #activityChart { max-width:100%; height:300px; display:block; margin: 1rem auto; }
     .quick-join { background: rgba(255,255,255,0.95); padding: 1rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 2rem auto; box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
     .join-button { display:inline-block; background:#4CAF50; color:white; text-decoration:none; padding: 0.75em 1.5em; border-radius:8px; transition: background .18s; }
     .join-button:hover { background:#45a049; }
+
+    /* disabled */
+    .btn-disabled { opacity:.45; pointer-events:none; }
   </style>
 
   <!-- Local libs -->
@@ -39,7 +42,10 @@
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
+
+  <!-- Version-check and graphs -->
   <script src="/assets/js/version-check.js" defer></script>
+  <script src="/assets/js/graphs.js" defer></script>
 </head>
 <body data-scroll-container>
 
@@ -95,7 +101,7 @@
           <option value="2592000000">Last 1 Month</option>
           <option value="31536000000">Last 1 Year</option>
         </select>
-        <button id="update-graph">Update Graph</button>
+        <button id="update-graph" class="btn-disabled">Update Graph</button>
       </div>
 
       <button id="enter-fullscreen">Full Screen Stats</button>
@@ -115,16 +121,33 @@
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 
-  <!-- Basic Chart.js initialization -->
+  <!-- Footer -->
+  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem;">
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
+      © 2025 fishesarethings — No rights reserved.
+    </p>
+  </footer>
+
+  <!-- Chart initialization -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const ctx = document.getElementById('activityChart')?.getContext?.('2d');
-      if (ctx) {
-        window.activityChart = new Chart(ctx, {
-          type: 'line',
-          data: { labels: [], datasets: [{ label: 'Activity', data: [] }] },
-          options: { responsive: true, scales: { x: { display: true }, y: { beginAtZero: true } } }
-        });
+      const defaultRange = 86400000;
+      if (typeof window.initActivityChart === 'function') {
+        window.initActivityChart('activityChart', defaultRange).then(() => {
+          const btn = document.getElementById('update-graph');
+          if (btn) btn.classList.remove('btn-disabled');
+          btn.addEventListener('click', () => {
+            const range = parseInt(document.getElementById('range-select').value, 10) || defaultRange;
+            btn.classList.add('btn-disabled');
+            btn.textContent = 'Updating...';
+            window.updateActivityChart(range).finally(() => {
+              btn.textContent = 'Update Graph';
+              btn.classList.remove('btn-disabled');
+            });
+          });
+        }).catch(() => {});
       }
     });
   </script>
