@@ -1,30 +1,14 @@
-/* Base & nav (contrast improved) */
-:root{
-  --bg:#ffffff;
-  --muted:#6b7280;
-  --text:#0b2140;       /* deep navy for headings */
-  --accent:#0056d6;     /* high-contrast blue for buttons */
-  --card-bg:#ffffff;
-  --elev: rgba(2,6,23,0.06);
-}
-html,body{height:100%}
+/* Base & nav */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  color: var(--text);
-  background: linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
+  font-family: sans-serif;
 }
-
-/* Nav */
 nav {
   position: fixed;
   top: 0;
   width: 100%;
-  background: rgba(255,255,255,0.98);
+  background: rgba(255,255,255,0.85);
   z-index: 1000;
-  box-shadow: 0 2px 10px var(--elev);
 }
 nav ul {
   display: flex;
@@ -32,61 +16,44 @@ nav ul {
   list-style: none;
   padding: 1rem;
   margin: 0;
-  gap: 0.5rem;
 }
 nav a {
-  margin: 0 0.35rem;
-  color: #213547;
+  margin: 0 1rem;
+  color: #555;
   text-decoration: none;
-  padding: .35rem .65rem;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background .12s, color .12s, transform .08s;
 }
-nav a:hover{ background: rgba(0,0,0,0.04); transform: translateY(-1px); }
 
-/* Typewriter / hero */
+/* Typewriter cursor */
 .typewriter {
   display: inline-block;
-  border-right: .12em solid var(--text);
+  border-right: .15em solid #555;
   padding-right: .05em;
   white-space: nowrap;
-  animation: blink-cursor .9s step-end infinite;
-  font-weight: 700;
+  animation: blink-cursor .75s step-end infinite;
 }
 @keyframes blink-cursor {
-  0%, 50%       { border-color: var(--text); }
+  0%, 50%       { border-color: #555; }
   50.01%,100%   { border-color: transparent; }
 }
 
 /* Hero section */
 .hero {
-  height: 70vh;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-size: cover;
   background-position: center;
-  padding: 4rem 1rem;
-}
-.hero.first {
-  background: none;
-}
-.hero .typewriter {
-  font-size: clamp(1.8rem, 5vw, 3.2rem);
-  color: var(--text);
-  letter-spacing: -0.01em;
-  text-align: center;
 }
 
-/* Section spacing */
+/* Interactive sections */
 .section-interactive {
   padding: 5rem 2rem;
   background-size: cover;
   background-position: center;
 }
 
-/* cards / game list */
+/* Cards container */
 .cards-container {
   display: flex;
   flex-wrap: wrap;
@@ -99,87 +66,117 @@ nav a:hover{ background: rgba(0,0,0,0.04); transform: translateY(-1px); }
   position: relative;
   overflow: hidden;
   border-radius: 1rem;
-  transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .18s;
-  background: linear-gradient(180deg,#fff,#fbfdff);
-  box-shadow: 0 8px 28px rgba(16,24,40,0.06);
+  transition: transform .3s;
 }
 .game-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 18px 40px rgba(16,24,40,0.08);
+  transform: scale(1.05);
 }
-.game-card img { width:100%; display:block; }
+.game-card img {
+  width: 100%;
+  display: block;
+}
 .card-info {
   padding: 1rem;
-  background: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.15));
+  background: rgba(0,0,0,0.5);
   color: #fff;
   position: absolute;
   bottom: 0;
   width: 100%;
 }
 
-/* Boxes & inputs */
+/* Copy & fullscreen box */
 .box {
-  background: var(--card-bg);
+  background: rgba(255,255,255,0.9) !important;
   padding: 1rem;
-  border-radius: .75rem;
+  border-radius: .5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
 }
 .copy-box {
   display: flex;
   align-items: center;
   margin: 1rem 0;
 }
-.copy-box span { flex: 1; font-weight:600; color: #233244; }
-.copy-box button, #enter-fullscreen {
+.copy-box span {
+  flex: 1;
+}
+.copy-box button,
+#enter-fullscreen {
   margin-left: 1rem;
   padding: .5rem 1rem;
-  border-radius: 8px;
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform .12s, box-shadow .12s;
-  box-shadow: 0 8px 22px rgba(0,86,214,0.12);
-}
-.copy-box button:hover, #enter-fullscreen:hover {
-  transform: translateY(-2px);
-}
-
-/* select styling */
-select {
-  padding:.5rem .6rem;
-  border-radius:8px;
-  border:1px solid #e6eefb;
-  background: #fff;
-  font-weight:600;
 }
 
 /* Chart */
-#activityChart { max-width: 100%; height: 340px; display:block; margin: 1rem auto; }
+#activityChart {
+  max-width: 100%;
+  height: 300px;
+}
 
-/* Progress & download */
-#download-progress { position: fixed; bottom: 3.5rem; left: 50%; transform: translateX(-50%); width: 220px; height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden; display:none; z-index:1001; }
-#download-progress .bar { height: 100%; width: 0%; background: var(--accent); transition: width .2s ease; }
-#download-complete { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.72); color: #fff; padding: .3rem .6rem; border-radius: 4px; font-size:.85rem; display:none; z-index:1001; }
+/* Progress bar */
+#download-progress {
+  position: fixed;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 6px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  display: none;
+  z-index: 1001;
+}
+#download-progress .bar {
+  height: 100%;
+  width: 0%;
+  background: #007aff;
+  transition: width .2s ease;
+}
+#download-complete {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: .3rem .6rem;
+  border-radius: 4px;
+  font-size: .85rem;
+  display: none;
+  z-index: 1001;
+}
 
-/* Ring ping */
-.ring-container { position: relative; width: 40px; height: 40px; }
-.circle { width: 15px; height: 15px; background-color: #62bd19; border-radius:50%; position: absolute; top:12.5px; left:12.5px; }
-.ringring { border: 3px solid #62bd19; border-radius:30px; height:25px; width:25px; position:absolute; left:7.5px; top:7.5px; animation: pulsate 1s ease-out infinite; opacity:0; }
-@keyframes pulsate { 0%{transform:scale(.1);opacity:0} 50%{opacity:1} 100%{transform:scale(1.2);opacity:0} }
+/* Ring + dot ping indicator */
+.ring-container {
+  position: relative;
+  width: 40px; height: 40px;
+}
+.circle {
+  width: 15px;
+  height: 15px;
+  background-color: #62bd19;
+  border-radius: 50%;
+  position: absolute;
+  top: 12.5px;
+  left: 12.5px;
+}
+.ringring {
+  border: 3px solid #62bd19;
+  border-radius: 30px;
+  height: 25px;
+  width: 25px;
+  position: absolute;
+  left: 7.5px;
+  top: 7.5px;
+  animation: pulsate 1s ease-out infinite;
+  opacity: 0;
+}
+@keyframes pulsate {
+  0%   { transform: scale(0.1); opacity: 0; }
+  50%  { opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
 
-/* Footer small */
-footer { text-align:center; padding:1rem; color:var(--muted); font-size:.9rem }
-
-/* subtle hover for links */
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-/* small utility */
-.enter-fade-up { opacity: 0; transform: translateY(6px); animation: enterFadeUp .56s ease forwards; }
-@keyframes enterFadeUp { to { opacity: 1; transform: translateY(0); } }
-
-/* Force white hero bg on first section kept for compatibility */
-.hero.first { background: #fff !important; }
+/* Force white hero bg on first section */
+.hero.first {
+  background: #fff !important;
+}
