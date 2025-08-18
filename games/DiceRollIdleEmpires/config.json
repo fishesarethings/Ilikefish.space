@@ -4,10 +4,6 @@
   "icon": "icon.png",
   "entry": "DiceRollIdleEmpires.html",
   "touchInstructions": "Tap or click to play.",
-  "controllerMapping": {
-    "buttons": {},
-    "axes": {}
-  }
 }
 
 
