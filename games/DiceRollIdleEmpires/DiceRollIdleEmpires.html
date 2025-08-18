@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title> Dice Roll Idle Empires</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #0f5132;
+        }
+        .felt-texture {
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255, 215, 0, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.03) 0%, transparent 50%),
+                linear-gradient(135deg, #0f5132 0%, #166534 25%, #15803d 50%, #16a34a 75%, #0f5132 100%);
+            background-size: 100% 100%, 100% 100%, 100% 100%;
+        }
+        .dice-face {
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            box-shadow:
+                inset -2px -2px 4px rgba(0,0,0,0.2),
+                inset 2px 2px 4px rgba(255,255,255,0.8),
+                4px 4px 8px rgba(0,0,0,0.3);
+        }
+        .dice-dot {
+            background: #333;
+            border-radius: 50%;
+        }
+        .gold-border {
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .auto-clicker-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .pulse-animation {
+            animation: pulse 0.3s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+        .roll-animation {
+            animation: roll 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes roll {
+            0% {
+                transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+                filter: brightness(1) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            }
+            100% {
+                transform: rotateX(720deg) rotateY(720deg) rotateZ(360deg) scale(1);
+            }
+        }
+        /* NOTE: working animation does not touch rotate to avoid conflicts */
+        .working-animation {
+            animation: working 3s ease-in-out infinite;
+        }
+        @keyframes working {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+                filter: brightness(1) drop-shadow(0 0 5px rgba(255,215,0,0.3));
+            }
+            50% {
+                transform: scale(1.08);
+                opacity: 1;
+                filter: brightness(1.2) drop-shadow(0 0 12px rgba(255,215,0,0.7));
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+                filter: brightness(1) drop-shadow(0 0 5px rgba(255,215,0,0.3));
+            }
+        }
+        .bounce-animation {
+            animation: bounce 1s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Generic spin (not used for owned icons in final fix) */
+        .icon-spin {
+            display:inline-block;
+            animation: spin-linear 3s linear infinite;
+            transform-origin: 50% 50%;
+        }
+        @keyframes spin-linear {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* NEW: glow animation uses filter/opacity only (no transform) */
+        @keyframes glow {
+            0% { filter: brightness(1); opacity: 0.9; }
+            50% { filter: brightness(1.25); opacity: 1; }
+            100% { filter: brightness(1); opacity: 0.9; }
+        }
+
+        /* NEW: dedicated owned-spin to guarantee a true 0→360 transform (no interpolation conflicts) */
+        @keyframes owned-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Owned icon: uses owned-spin (transform) + glow (filter) together.
+           will-change/backface-visibility hints to the browser for smoothness. */
+        .owned-icon {
+            display:inline-block;
+            transform-origin: 50% 50%;
+            animation: owned-spin 3s linear infinite, glow 3s ease-in-out infinite;
+            will-change: transform;
+            backface-visibility: hidden;
+        }
+
+        .mini-dice {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            transform-style: preserve-3d;
+            animation: floatDice 4s ease-in-out infinite;
+            pointer-events: none; /* avoid catching clicks */
+            opacity: 0.75; /* reduced visual intensity */
+        }
+        .mini-dice-3d {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-in-out;
+        }
+        .mini-dice-side {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            box-shadow: 0 0 0 rgba(0,0,0,0.0); /* cleaned up */
+        }
+        .mini-dot {
+            width: 2px;
+            height: 2px;
+            background: #f25f5c;
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: inset 0.5px 0.5px #d90429;
+        }
+        @keyframes floatDice {
+            0% {
+                transform: translateY(0px) scale(0.8);
+                opacity: 0.65;
+            }
+            50% {
+                transform: translateY(-8px) scale(0.95);
+                opacity: 0.85;
+            }
+            100% {
+                transform: translateY(0px) scale(0.8);
+                opacity: 0.65;
+            }
+        }
+        .mini-dice:nth-child(1) { animation-delay: 0s; }
+        .mini-dice:nth-child(2) { animation-delay: 0.5s; }
+        .mini-dice:nth-child(3) { animation-delay: 1s; }
+        .mini-dice:nth-child(4) { animation-delay: 1.5s; }
+        .mini-dice:nth-child(5) { animation-delay: 2s; }
+        .mini-dice:nth-child(6) { animation-delay: 2.5s; }
+        .dice-area {
+            position: relative;
+            perspective: 1200px; /* for 3D rendering */
+        }
+
+        /* --- Dice 3D helpers to avoid slicing --- */
+        .dice-3d {
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            transition: transform 1s cubic-bezier(.2,.8,.2,1);
+            will-change: transform;
+        }
+        .dice-side {
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+    </style>
+</head>
+<body class="felt-texture min-h-screen text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-6xl font-bold text-yellow-400 mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">🎲 Dice Roll Idle Empires🎲</h1>
+            <div class="bg-black bg-opacity-50 rounded-lg p-4 inline-block">
+                <div class="text-3xl font-bold text-green-400 mb-2">💰 $<span id="money">0</span></div>
+                <div class="text-lg text-yellow-300">Per Click: <span id="perClick">1-6</span> dice</div>
+                <!-- NEW: show total dice-per-click (reflects double/triple/quad upgrades) -->
+                <div class="text-md text-yellow-200 mt-1">Total Dice: <span id="diceTotal">1</span></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Dice Area -->
+            <div class="lg:col-span-2">
+                <div class="text-center mb-8">
+                    <div class="inline-block dice-area">
+                        <div id="mainDiceContainer" class="flex gap-4 justify-center mb-4 relative z-10">
+                            <!-- Main dice will be generated here -->
+                        </div>
+                        <!-- Mini floating dice -->
+                        <div id="miniDiceContainer"></div>
+                        <div class="text-lg text-yellow-300 animate-pulse">👆 Click the dice to roll! 👆</div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="bg-black bg-opacity-50 rounded-lg p-6">
+                    <h3 class="text-2xl font-bold text-yellow-400 mb-4">📊 Statistics</h3>
+                    <div class="grid grid-cols-2 gap-4 text-lg">
+                        <div>Total Clicks: <span id="totalClicks" class="text-green-400 font-bold">0</span></div>
+                        <div>Total Earned: <span id="totalEarned" class="text-green-400 font-bold">$0</span></div>
+                        <div>Current Balance: <span id="currentBalance" class="text-green-400 font-bold">$0</span></div>
+                        <!-- UPDATED: money per second shows min-max range -->
+                        <div>Money Per Second: <span id="moneyPerSecond" class="text-green-400 font-bold">$0 - $0</span></div>
+                    </div>
+                    <button id="resetButton" class="mt-4 bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition-colors">
+                        ⚠️ Reset All Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Shop -->
+            <div class="bg-black bg-opacity-50 rounded-lg p-6">
+                <h2 class="text-3xl font-bold text-yellow-400 mb-6">🏪 DICE SHOP</h2>
+
+                <!-- Auto Clickers -->
+                <div class="mb-8">
+                    <!-- UPDATED: added id so we can dynamically show total owned in exact format requested -->
+                    <h3 id="autoRollersHeader" class="text-xl font-bold text-green-400 mb-4">🤖 Auto Rollers (0)</h3>
+                    <div id="autoClickersList" class="space-y-2 max-h-96 overflow-y-auto">
+                        <!-- Auto clickers will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Upgrades -->
+                <div>
+                    <h3 class="text-xl font-bold text-purple-400 mb-4">🎯 Dice Upgrades</h3>
+                    <div id="upgradesList" class="space-y-3">
+                        <!-- Upgrades will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-gray-800 p-8 rounded-lg border-2 border-red-500 max-w-md">
+            <h3 class="text-2xl font-bold text-red-400 mb-4">⚠️ CONFIRM RESET</h3>
+            <p class="text-white mb-6">Are you sure you want to reset ALL your progress? This cannot be undone!</p>
+            <div class="flex gap-4">
+                <button id="confirmReset" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    Yes, Reset Everything
+                </button>
+                <button id="cancelReset" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            money: 0,
+            totalClicks: 0,
+            totalEarned: 0,
+            diceCount: 1,
+            autoClickers: {
+                luckyRoller: 0,
+                diceMachine: 0,
+                goldenTumbler: 0,
+                magicWand: 0,
+                casinoBot: 0,
+                dragonDice: 0,
+                fortuneWheel: 0,
+                crystalOrb: 0,
+                jackpotEngine: 0,
+                cosmicDice: 0
+            },
+            autoClickerUpgrades: {
+                luckyRoller: 0,
+                diceMachine: 0,
+                goldenTumbler: 0,
+                magicWand: 0,
+                casinoBot: 0,
+                dragonDice: 0,
+                fortuneWheel: 0,
+                crystalOrb: 0,
+                jackpotEngine: 0,
+                cosmicDice: 0
+            },
+            upgrades: {
+                doubleDice: false,
+                tripleDice: false,
+                quadDice: false
+            }
+        };
+
+        // Keep track of mini-dice rolling intervals so we can clear them when regenerating
+        let miniDiceIntervals = [];
+
+        // Auto clicker definitions
+        const autoClickerTypes = {
+            luckyRoller: {
+                name: "🍀 Lucky Roller",
+                basePrice: 15,
+                baseCps: 0.5,
+                description: "Rolls dice every 2 seconds",
+                icon: "🍀"
+            },
+            diceMachine: {
+                name: "🎰 Dice Machine",
+                basePrice: 100,
+                baseCps: 2,
+                description: "Automated dice rolling machine",
+                icon: "🎰"
+            },
+            goldenTumbler: {
+                name: "✨ Golden Tumbler",
+                basePrice: 1100,
+                baseCps: 8,
+                description: "Luxurious golden dice roller",
+                icon: "✨"
+            },
+            magicWand: {
+                name: "🪄 Magic Wand",
+                basePrice: 5500,
+                baseCps: 25,
+                description: "Enchanted dice summoner",
+                icon: "🪄"
+            },
+            casinoBot: {
+                name: "🤖 Casino Bot",
+                basePrice: 12000,
+                baseCps: 47,
+                description: "AI-powered dice rolling system",
+                icon: "🤖"
+            },
+            dragonDice: {
+                name: "🐉 Dragon Dice",
+                basePrice: 65000,
+                baseCps: 150,
+                description: "Mythical dragon-powered roller",
+                icon: "🐉"
+            },
+            fortuneWheel: {
+                name: "🎡 Fortune Wheel",
+                basePrice: 130000,
+                baseCps: 260,
+                description: "Mystical wheel of dice fortune",
+                icon: "🎡"
+            },
+            crystalOrb: {
+                name: "🔮 Crystal Orb",
+                basePrice: 400000,
+                baseCps: 650,
+                description: "Prophetic dice prediction sphere",
+                icon: "🔮"
+            },
+            jackpotEngine: {
+                name: "💎 Jackpot Engine",
+                basePrice: 1400000,
+                baseCps: 1400,
+                description: "Ultimate dice rolling powerhouse",
+                icon: "💎"
+            },
+            cosmicDice: {
+                name: "🌌 Cosmic Dice",
+                basePrice: 5000000,
+                baseCps: 4000,
+                description: "Harnesses the power of the universe",
+                icon: "🌌"
+            }
+        };
+
+        // Upgrade definitions
+        const upgradeTypes = {
+            doubleDice: {
+                name: "🎲🎲 Double Dice Power",
+                price: 10000000,
+                description: "Adds 1 extra dice to all rolls!"
+            },
+            tripleDice: {
+                name: "🎲🎲🎲 Triple Dice Power",
+                price: 50000000,
+                description: "Adds 2 more dice to all rolls!"
+            },
+            quadDice: {
+                name: "🎲🎲🎲🎲 Quad Dice Power",
+                price: 100000000,
+                description: "Adds 3 more dice to all rolls!"
+            }
+        };
+
+        // Load game state
+        function loadGame() {
+            const saved = localStorage.getItem('diceEmpireGame');
+            if (saved) {
+                gameState = { ...gameState, ...JSON.parse(saved) };
+            }
+            updateDisplay();
+            generateMainDice();
+        }
+
+        // Save game state
+        function saveGame() {
+            localStorage.setItem('diceEmpireGame', JSON.stringify(gameState));
+        }
+
+        // Generate 3D dice HTML
+        function createDice(value) {
+            // IMPORTANT: set --dice-size so each face can use half-depth (prevents slicing)
+            return `
+                <div class="dice-3d w-20 h-20 relative" style="--dice-size:5rem; transform-style: preserve-3d; transition: transform 1s;">
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: translateZ(calc(var(--dice-size) / 2));">${createDiceFace(1)}</div>
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: rotateY(180deg) translateZ(calc(var(--dice-size) / 2));">${createDiceFace(2)}</div>
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: rotateY(-90deg) translateZ(calc(var(--dice-size) / 2));">${createDiceFace(3)}</div>
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: rotateX(90deg) translateZ(calc(var(--dice-size) / 2));">${createDiceFace(4)}</div>
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: rotateX(-90deg) translateZ(calc(var(--dice-size) / 2));">${createDiceFace(5)}</div>
+                    <div class="dice-side absolute w-20 h-20 bg-white border border-gray-300 rounded-lg" style="transform: rotateY(90deg) translateZ(calc(var(--dice-size) / 2));">${createDiceFace(6)}</div>
+                </div>
+            `;
+        }
+
+        // Create dice face with dots
+        function createDiceFace(value) {
+            const dotConfigs = {
+                1: [{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }],
+                2: [
+                    { top: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                3: [
+                    { top: '25%', left: '25%' },
+                    { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                4: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                5: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' },
+                    { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+                ],
+                6: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { top: '50%', left: '25%' },
+                    { top: '50%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ]
+            };
+
+            let dotsHtml = '';
+            dotConfigs[value].forEach(dot => {
+                const style = Object.entries(dot).map(([key, val]) => `${key}: ${val}`).join('; ');
+                dotsHtml += `<div class="absolute w-3 h-3 bg-red-500 rounded-full shadow-inner" style="${style}; box-shadow: inset 1px 1px #d90429;"></div>`;
+            });
+
+            return `<div class="relative w-full h-full">${dotsHtml}</div>`;
+        }
+
+        // Create mini dice with 3D structure
+        function createMiniDice(value) {
+            return `
+                <div class="mini-dice-3d" style="--mini-size:16px">
+                    <div class="mini-dice-side" style="transform: translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(1)}</div>
+                    <div class="mini-dice-side" style="transform: rotateY(180deg) translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(2)}</div>
+                    <div class="mini-dice-side" style="transform: rotateY(-90deg) translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(3)}</div>
+                    <div class="mini-dice-side" style="transform: rotateX(90deg) translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(4)}</div>
+                    <div class="mini-dice-side" style="transform: rotateX(-90deg) translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(5)}</div>
+                    <div class="mini-dice-side" style="transform: rotateY(90deg) translateZ(calc(var(--mini-size) / 2));">${createMiniDiceFace(6)}</div>
+                </div>
+            `;
+        }
+
+        // Create mini dice face with dots
+        function createMiniDiceFace(value) {
+            const dotConfigs = {
+                1: [{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }],
+                2: [
+                    { top: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                3: [
+                    { top: '25%', left: '25%' },
+                    { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                4: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ],
+                5: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' },
+                    { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+                ],
+                6: [
+                    { top: '25%', left: '25%' },
+                    { top: '25%', right: '25%' },
+                    { top: '50%', left: '25%' },
+                    { top: '50%', right: '25%' },
+                    { bottom: '25%', left: '25%' },
+                    { bottom: '25%', right: '25%' }
+                ]
+            };
+
+            let dotsHtml = '';
+            dotConfigs[value].forEach(dot => {
+                const style = Object.entries(dot).map(([key, val]) => `${key}: ${val}`).join('; ');
+                dotsHtml += `<div class="mini-dot" style="${style}"></div>`;
+            });
+
+            return `<div class="relative w-full h-full">${dotsHtml}</div>`;
+        }
+
+        // Generate mini dice around main dice
+        function generateMiniDice() {
+            const container = document.getElementById('miniDiceContainer');
+            // Clear previous intervals to avoid stacking loops which cause messy behavior
+            miniDiceIntervals.forEach(id => clearInterval(id));
+            miniDiceIntervals.length = 0;
+
+            container.innerHTML = '';
+
+            // Calculate how many mini dice to show based on auto clickers owned
+            let totalAutoClickers = 0;
+            Object.values(gameState.autoClickers).forEach(count => {
+                totalAutoClickers += count;
+            });
+
+            const miniDiceCount = Math.min(totalAutoClickers, 12); // Max 12 mini dice
+
+            const positions = [
+                { top: '-20px', left: '-30px' },
+                { top: '-10px', right: '-25px' },
+                { top: '30px', left: '-20px' },
+                { top: '40px', right: '-30px' },
+                { top: '-30px', left: '50%' },
+                { top: '60px', left: '50%' },
+                { top: '-40px', left: '20%' },
+                { top: '-15px', right: '10%' },
+                { top: '50px', left: '10%' },
+                { top: '35px', right: '15%' },
+                { top: '-25px', right: '40%' },
+                { top: '45px', left: '70%' }
+            ];
+
+            for (let i = 0; i < miniDiceCount; i++) {
+                const miniDice = document.createElement('div');
+                miniDice.className = 'mini-dice';
+                miniDice.style.cssText = Object.entries(positions[i]).map(([key, value]) => `${key}: ${value}`).join('; ');
+                miniDice.style.animationDelay = `${i * 0.6}s`;
+
+                // Set initial random dice value and create 3D structure
+                const randomValue = Math.floor(Math.random() * 6) + 1;
+                miniDice.innerHTML = createMiniDice(randomValue);
+
+                // Set initial rotation to show the random value
+                const dice3d = miniDice.querySelector('.mini-dice-3d');
+                const rotations = {
+                    1: 'rotateX(0deg) rotateZ(0deg)',
+                    2: 'rotateX(-90deg) rotateZ(0deg)',
+                    3: 'rotateY(-90deg) rotateZ(0deg)',
+                    4: 'rotateY(90deg) rotateZ(0deg)',
+                    5: 'rotateX(90deg) rotateZ(0deg)',
+                    6: 'rotateY(180deg) rotateZ(0deg)'
+                };
+                if (dice3d) {
+                    dice3d.style.transform = rotations[randomValue];
+                }
+
+                container.appendChild(miniDice);
+
+                // Start rolling animation for each mini dice
+                startMiniDiceRolling(miniDice, i);
+            }
+        }
+
+        // Start continuous rolling for mini dice
+        function startMiniDiceRolling(diceElement, index) {
+            const rollInterval = 2500 + (index * 400); // Different timing for each dice
+
+            const id = setInterval(() => {
+                const newValue = Math.floor(Math.random() * 6) + 1;
+                const dice3d = diceElement.querySelector('.mini-dice-3d');
+
+                // Apply 3D rotation based on dice value (same as main dice)
+                const rotations = {
+                    1: 'rotateX(720deg) rotateZ(-720deg)',
+                    2: 'rotateX(450deg) rotateZ(-720deg)',
+                    3: 'rotateY(-450deg) rotateZ(-1440deg)',
+                    4: 'rotateY(810deg) rotateZ(720deg)',
+                    5: 'rotateX(-810deg) rotateZ(-1080deg)',
+                    6: 'rotateX(-900deg) rotateZ(1080deg)'
+                };
+
+                if (dice3d) {
+                    // apply new transform (there is a transition on .mini-dice-3d so this will animate)
+                    dice3d.style.transform = rotations[newValue];
+                }
+            }, rollInterval);
+
+            // store interval id so it can be cleared later
+            miniDiceIntervals.push(id);
+        }
+
+        // Generate main dice
+        function generateMainDice() {
+            let diceCount = 1;
+            if (gameState.upgrades.quadDice) diceCount = 4;
+            else if (gameState.upgrades.tripleDice) diceCount = 3;
+            else if (gameState.upgrades.doubleDice) diceCount = 2;
+
+            const container = document.getElementById('mainDiceContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < diceCount; i++) {
+                const diceDiv = document.createElement('div');
+                diceDiv.innerHTML = createDice(1);
+                diceDiv.id = `mainDice${i}`;
+                diceDiv.className = 'cursor-pointer transform hover:scale-110 transition-transform duration-200';
+                container.appendChild(diceDiv);
+            }
+
+            // Assign the click handler (overwrite any previous) so we don't attach multiple listeners
+            container.onclick = rollMainDice;
+            updatePerClickDisplay();
+            generateMiniDice(); // Update mini dice when main dice change
+        }
+
+        // Roll dice animation and return value
+        function rollDice(element) {
+            const value = Math.floor(Math.random() * 6) + 1;
+            const dice3d = element.querySelector('.dice-3d');
+
+            // Apply 3D rotation based on dice value
+            const rotations = {
+                1: 'rotateX(720deg) rotateZ(-720deg)',
+                2: 'rotateX(450deg) rotateZ(-720deg)',
+                3: 'rotateY(-450deg) rotateZ(-1440deg)',
+                4: 'rotateY(810deg) rotateZ(720deg)',
+                5: 'rotateX(-810deg) rotateZ(-1080deg)',
+                6: 'rotateX(-900deg) rotateZ(1080deg)'
+            };
+
+            if (dice3d) {
+                dice3d.style.transform = rotations[value];
+            }
+
+            return value;
+        }
+
+        // Calculate total dice count (per click)
+        function getTotalDiceCount() {
+            let count = 1;
+            if (gameState.upgrades.quadDice) count = 4;
+            else if (gameState.upgrades.tripleDice) count = 3;
+            else if (gameState.upgrades.doubleDice) count = 2;
+            return count;
+        }
+
+        // Main dice click
+        function rollMainDice() {
+            const diceElements = document.querySelectorAll('[id^="mainDice"]');
+            let totalValue = 0;
+
+            diceElements.forEach(dice => {
+                const value = rollDice(dice);
+                totalValue += value;
+            });
+
+            setTimeout(() => {
+                gameState.money += totalValue;
+                gameState.totalClicks++;
+                gameState.totalEarned += totalValue;
+                updateDisplay();
+                saveGame();
+            }, 1200);
+
+            // Pulse the dice container visually
+            const container = document.getElementById('mainDiceContainer');
+            container.classList.add('pulse-animation');
+            setTimeout(() => container.classList.remove('pulse-animation'), 300);
+        }
+
+        // Calculate auto clicker price
+        function getAutoClickerPrice(type, owned) {
+            return Math.floor(autoClickerTypes[type].basePrice * Math.pow(1.15, owned));
+        }
+
+        // Calculate upgrade price for auto clickers
+        function getUpgradePrice(type, upgradeLevel) {
+            return Math.floor(autoClickerTypes[type].basePrice * 10 * Math.pow(2, upgradeLevel));
+        }
+
+        // Buy auto clicker
+        function buyAutoClicker(type) {
+            const price = getAutoClickerPrice(type, gameState.autoClickers[type]);
+            if (gameState.money >= price) {
+                gameState.money -= price;
+                gameState.autoClickers[type]++;
+                updateDisplay();
+                generateMiniDice(); // Add new mini dice when buying auto clickers
+                saveGame();
+            }
+        }
+
+        // Upgrade auto clicker
+        function upgradeAutoClicker(type) {
+            const price = getUpgradePrice(type, gameState.autoClickerUpgrades[type]);
+            if (gameState.money >= price) {
+                gameState.money -= price;
+                gameState.autoClickerUpgrades[type]++;
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        // Buy upgrade
+        function buyUpgrade(type) {
+            const upgrade = upgradeTypes[type];
+            if (gameState.money >= upgrade.price && !gameState.upgrades[type]) {
+                gameState.money -= upgrade.price;
+                gameState.upgrades[type] = true;
+                generateMainDice();
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        // Calculate money per second (average — retained for internal use)
+        function calculateMoneyPerSecond() {
+            let total = 0;
+            const diceMultiplier = getTotalDiceCount();
+
+            Object.keys(gameState.autoClickers).forEach(type => {
+                const count = gameState.autoClickers[type];
+                const upgradeLevel = gameState.autoClickerUpgrades[type];
+                const baseCps = autoClickerTypes[type].baseCps;
+                const upgradedCps = baseCps * Math.pow(2, upgradeLevel);
+                total += count * upgradedCps * diceMultiplier * 3.5; // Average dice roll is 3.5
+            });
+
+            return total;
+        }
+
+        // Update per click display
+        function updatePerClickDisplay() {
+            const diceCount = getTotalDiceCount();
+            document.getElementById('perClick').textContent =
+                diceCount === 1 ? '1-6' : `${diceCount}-${diceCount * 6}`;
+
+            // NEW: update the top dice total readout
+            document.getElementById('diceTotal').textContent = diceCount;
+        }
+
+        // Helper: create a new auto-clicker DOM node (only called when a node must be created)
+        function createAutoClickerNode(type, clicker, owned, upgradeLevel, price, upgradePrice, baseCps, contribMin, contribMax, canAfford, canAffordUpgrade) {
+            const div = document.createElement('div');
+            div.id = `auto-${type}`;
+            div.dataset.type = type;
+            div.className = `auto-clicker-item p-2 rounded-lg border transition-all ${canAfford ? 'border-green-400' : 'border-gray-600 opacity-60'}`;
+
+            // build structured inner HTML using small spans we will update later in-place
+            const iconClass = owned > 0 ? 'text-2xl owned-icon' : 'text-2xl';
+
+            div.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="icon-wrap ${iconClass}" aria-hidden="true">${clicker.icon}</div>
+                    <div class="flex-1">
+                        <div class="font-bold text-sm name">${clicker.name}</div>
+                        <div class="text-xs text-gray-300 description">${clicker.description}</div>
+                        <div class="text-xs text-yellow-400 stats">Owned: <span class="owned-count">${owned}</span> | Level: <span class="level">${upgradeLevel + 1}</span> | <span class="avg">$${((baseCps * getTotalDiceCount() * 3.5) * owned).toFixed(1)}</span>/s (avg)</div>
+                        <div class="text-xs text-yellow-300 contrib">Contribution: $<span class="contrib-min">${contribMin.toFixed(1)}</span> - $<span class="contrib-max">${contribMax.toFixed(1)}</span>/s</div>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-2 actions">
+                    <button class="buy-btn flex-1 py-1 px-2 rounded text-xs font-bold transition-colors ${canAfford ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}">
+                        Buy: $<span class="buy-price">${price.toLocaleString()}</span>
+                    </button>
+                    ${owned > 0 ? `<button class="upgrade-btn py-1 px-2 rounded text-xs font-bold transition-colors ${canAffordUpgrade ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}">
+                        Upgrade: $<span class="upgrade-price">${upgradePrice.toLocaleString()}</span>
+                    </button>` : ''}
+                </div>
+            `;
+
+            // Attach listeners for buy and upgrade if affordable (we will update them later)
+            const buyBtn = div.querySelector('.buy-btn');
+            buyBtn.addEventListener('click', () => buyAutoClicker(type));
+
+            const upgradeBtn = div.querySelector('.upgrade-btn');
+            if (upgradeBtn) upgradeBtn.addEventListener('click', () => upgradeAutoClicker(type));
+
+            return div;
+        }
+
+        // Update existing node in-place
+        function updateAutoClickerNode(node, type, clicker, owned, upgradeLevel, price, upgradePrice, baseCps, contribMin, contribMax, canAfford, canAffordUpgrade) {
+            // icon wrapper & class
+            const iconWrap = node.querySelector('.icon-wrap');
+            if (owned > 0) {
+                iconWrap.classList.add('owned-icon');
+            } else {
+                iconWrap.classList.remove('owned-icon');
+            }
+
+            // stats fields
+            const ownedSpan = node.querySelector('.owned-count');
+            if (ownedSpan) ownedSpan.textContent = owned;
+
+            const levelSpan = node.querySelector('.level');
+            if (levelSpan) levelSpan.textContent = (upgradeLevel + 1);
+
+            const avgSpan = node.querySelector('.avg');
+            if (avgSpan) avgSpan.textContent = `$${((baseCps * getTotalDiceCount() * 3.5) * owned).toFixed(1)}`;
+
+            const contribMinSpan = node.querySelector('.contrib-min');
+            const contribMaxSpan = node.querySelector('.contrib-max');
+            if (contribMinSpan) contribMinSpan.textContent = contribMin.toFixed(1);
+            if (contribMaxSpan) contribMaxSpan.textContent = contribMax.toFixed(1);
+
+            // buy button/pricing + classes
+            const buyBtn = node.querySelector('.buy-btn');
+            const buyPriceSpan = node.querySelector('.buy-price');
+            if (buyPriceSpan) buyPriceSpan.textContent = price.toLocaleString();
+            if (buyBtn) {
+                if (canAfford) {
+                    buyBtn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                    buyBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    buyBtn.disabled = false;
+                } else {
+                    buyBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white');
+                    buyBtn.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                    buyBtn.disabled = true;
+                }
+                // reattach click handler in case (use replace to avoid duplicates)
+                buyBtn.replaceWith(buyBtn.cloneNode(true));
+                const newBuy = node.querySelector('.buy-btn');
+                newBuy.addEventListener('click', () => buyAutoClicker(type));
+            }
+
+            // upgrade button handling: create if needed, remove if not
+            let upgradeBtn = node.querySelector('.upgrade-btn');
+            if (owned > 0) {
+                if (!upgradeBtn) {
+                    // create it and append
+                    const actionsDiv = node.querySelector('.actions');
+                    const btn = document.createElement('button');
+                    btn.className = `upgrade-btn py-1 px-2 rounded text-xs font-bold transition-colors ${canAffordUpgrade ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`;
+                    btn.innerHTML = `Upgrade: $<span class="upgrade-price">${upgradePrice.toLocaleString()}</span>`;
+                    btn.addEventListener('click', () => upgradeAutoClicker(type));
+                    actionsDiv.appendChild(btn);
+                } else {
+                    // update price and classes
+                    const upPriceSpan = node.querySelector('.upgrade-price');
+                    if (upPriceSpan) upPriceSpan.textContent = upgradePrice.toLocaleString();
+                    if (canAffordUpgrade) {
+                        upgradeBtn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                        upgradeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white');
+                        upgradeBtn.disabled = false;
+                    } else {
+                        upgradeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'text-white');
+                        upgradeBtn.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                        upgradeBtn.disabled = true;
+                    }
+                    // reattach handler safely
+                    upgradeBtn.replaceWith(upgradeBtn.cloneNode(true));
+                    const newUpgrade = node.querySelector('.upgrade-btn');
+                    newUpgrade.addEventListener('click', () => upgradeAutoClicker(type));
+                }
+            } else {
+                // if no longer owned, remove upgrade button if present
+                if (upgradeBtn) upgradeBtn.remove();
+            }
+
+            // border styling depending on affordability
+            if (canAfford) {
+                node.classList.remove('border-gray-600', 'opacity-60');
+                node.classList.add('border-green-400');
+            } else {
+                node.classList.remove('border-green-400');
+                if (!node.classList.contains('border-gray-600')) node.classList.add('border-gray-600', 'opacity-60');
+            }
+        }
+
+        // Update display (includes new min-max money-per-second and shop contributions)
+        function updateDisplay() {
+            document.getElementById('money').textContent = Math.floor(gameState.money).toLocaleString();
+            document.getElementById('totalClicks').textContent = gameState.totalClicks.toLocaleString();
+            document.getElementById('totalEarned').textContent = Math.floor(gameState.totalEarned).toLocaleString();
+            document.getElementById('currentBalance').textContent = Math.floor(gameState.money).toLocaleString();
+
+            // NEW: compute min/max money per second (dice roll outcome range: 1..6)
+            const diceMultiplier = getTotalDiceCount();
+            let minPerSec = 0;
+            let maxPerSec = 0;
+            Object.keys(gameState.autoClickers).forEach(type => {
+                const count = gameState.autoClickers[type];
+                const upgradeLevel = gameState.autoClickerUpgrades[type];
+                const baseCps = autoClickerTypes[type].baseCps;
+                const upgradedCps = baseCps * Math.pow(2, upgradeLevel);
+
+                // min assumes every dice rolled shows '1' (min),
+                // max assumes every dice rolled shows '6' (max)
+                minPerSec += count * upgradedCps * diceMultiplier * 1;
+                maxPerSec += count * upgradedCps * diceMultiplier * 6;
+            });
+
+            // Format and show min-max (rounded to 1 decimal)
+            document.getElementById('moneyPerSecond').textContent = `$${minPerSec.toFixed(1)} - $${maxPerSec.toFixed(1)}`;
+
+            // Update auto clickers list (now shows owned and min-max contribution per type)
+            const autoClickersList = document.getElementById('autoClickersList');
+
+            // NEW: update the Auto Rollers header showing total number bought in the exact format requested
+            let totalAutoOwned = 0;
+            Object.values(gameState.autoClickers).forEach(c => totalAutoOwned += c);
+            const header = document.getElementById('autoRollersHeader');
+            if (header) header.textContent = `🤖 Auto Rollers (${totalAutoOwned})`;
+
+            // Determine which types should be visible (owned > 0 OR closeToAfford)
+            const showTypes = [];
+            Object.keys(autoClickerTypes).forEach(type => {
+                const owned = gameState.autoClickers[type];
+                const price = getAutoClickerPrice(type, owned);
+                const closeToAfford = gameState.money >= price * 0.1;
+                if (owned > 0 || closeToAfford) showTypes.push(type);
+            });
+
+            // Remove nodes that should no longer be shown (only remove necessary)
+            Array.from(autoClickersList.children).forEach(child => {
+                const dtype = child.dataset.type;
+                if (!showTypes.includes(dtype)) {
+                    child.remove();
+                }
+            });
+
+            // Ensure each visible type exists and is updated in-place to preserve animations and hover state
+            showTypes.forEach(type => {
+                const clicker = autoClickerTypes[type];
+                const owned = gameState.autoClickers[type];
+                const upgradeLevel = gameState.autoClickerUpgrades[type];
+                const price = getAutoClickerPrice(type, owned);
+                const upgradePrice = getUpgradePrice(type, upgradeLevel);
+                const canAfford = gameState.money >= price;
+                const canAffordUpgrade = gameState.money >= upgradePrice && owned > 0;
+                const baseCps = clicker.baseCps * Math.pow(2, upgradeLevel);
+
+                const contribMin = (baseCps * diceMultiplier * 1 * owned);
+                const contribMax = (baseCps * diceMultiplier * 6 * owned);
+
+                const existingNode = document.getElementById(`auto-${type}`);
+                if (existingNode) {
+                    // update in-place
+                    updateAutoClickerNode(existingNode, type, clicker, owned, upgradeLevel, price, upgradePrice, baseCps, contribMin, contribMax, canAfford, canAffordUpgrade);
+                } else {
+                    // create new node and append
+                    const newNode = createAutoClickerNode(type, clicker, owned, upgradeLevel, price, upgradePrice, baseCps, contribMin, contribMax, canAfford, canAffordUpgrade);
+                    autoClickersList.appendChild(newNode);
+                }
+            });
+
+            // Update upgrades list (unchanged behavior, still shows buyable upgrades)
+            const upgradesList = document.getElementById('upgradesList');
+            upgradesList.innerHTML = '';
+
+            Object.keys(upgradeTypes).forEach(type => {
+                const upgrade = upgradeTypes[type];
+                const owned = gameState.upgrades[type];
+                const canAfford = gameState.money >= upgrade.price && !owned;
+                const closeToAfford = gameState.money >= upgrade.price * 0.01; // Show if within 1% of price
+
+                if (owned || closeToAfford) {
+                    const div = document.createElement('div');
+                    div.className = `auto-clicker-item p-3 rounded-lg border transition-all ${owned ? 'border-yellow-400 bg-yellow-900 bg-opacity-30' : canAfford ? 'border-green-400 cursor-pointer hover:bg-opacity-20' : 'border-gray-600 opacity-60'}`;
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-sm">${upgrade.name}</div>
+                                <div class="text-xs text-gray-300">${upgrade.description}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold ${owned ? 'text-yellow-400' : canAfford ? 'text-green-400' : 'text-red-400'}">
+                                    ${owned ? '✅ OWNED' : '$' + upgrade.price.toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (canAfford && !owned) {
+                        div.addEventListener('click', () => buyUpgrade(type));
+                    }
+
+                    upgradesList.appendChild(div);
+                }
+            });
+        }
+
+        // Auto clicker loop
+        function autoClickerLoop() {
+            let totalEarned = 0;
+            const diceMultiplier = getTotalDiceCount();
+
+            Object.keys(gameState.autoClickers).forEach(type => {
+                const count = gameState.autoClickers[type];
+                const upgradeLevel = gameState.autoClickerUpgrades[type];
+                const baseCps = autoClickerTypes[type].baseCps;
+                const upgradedCps = baseCps * Math.pow(2, upgradeLevel);
+                const earnings = count * upgradedCps * diceMultiplier * 3.5; // Average dice roll
+                totalEarned += earnings;
+            });
+
+            if (totalEarned > 0) {
+                gameState.money += totalEarned;
+                gameState.totalEarned += totalEarned;
+                updateDisplay();
+                saveGame();
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            gameState = {
+                money: 0,
+                totalClicks: 0,
+                totalEarned: 0,
+                diceCount: 1,
+                autoClickers: {
+                    luckyRoller: 0,
+                    diceMachine: 0,
+                    goldenTumbler: 0,
+                    magicWand: 0,
+                    casinoBot: 0,
+                    dragonDice: 0,
+                    fortuneWheel: 0,
+                    crystalOrb: 0,
+                    jackpotEngine: 0,
+                    cosmicDice: 0
+                },
+                autoClickerUpgrades: {
+                    luckyRoller: 0,
+                    diceMachine: 0,
+                    goldenTumbler: 0,
+                    magicWand: 0,
+                    casinoBot: 0,
+                    dragonDice: 0,
+                    fortuneWheel: 0,
+                    crystalOrb: 0,
+                    jackpotEngine: 0,
+                    cosmicDice: 0
+                },
+                upgrades: {
+                    doubleDice: false,
+                    tripleDice: false,
+                    quadDice: false
+                }
+            };
+            localStorage.removeItem('diceEmpireGame');
+            // clear mini dice intervals too
+            miniDiceIntervals.forEach(id => clearInterval(id));
+            miniDiceIntervals.length = 0;
+            generateMainDice();
+            updateDisplay();
+        }
+
+        // Event listeners
+        document.getElementById('resetButton').addEventListener('click', () => {
+            document.getElementById('resetModal').classList.remove('hidden');
+        });
+
+        document.getElementById('confirmReset').addEventListener('click', () => {
+            resetGame();
+            document.getElementById('resetModal').classList.add('hidden');
+        });
+
+        document.getElementById('cancelReset').addEventListener('click', () => {
+            document.getElementById('resetModal').classList.add('hidden');
+        });
+
+        // Initialize game
+        loadGame();
+
+        // Start auto clicker loop
+        setInterval(autoClickerLoop, 1000);
+
+        // Auto save every 10 seconds
+        setInterval(saveGame, 10000);
+    </script>
+
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'970f2181407223bf',t:'MTc1NTQ5NjE5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
