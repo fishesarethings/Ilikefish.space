@@ -1,0 +1,63 @@
+{
+  "name": "Gridbite",
+  "title": "Grid Bite,
+  "slug": "gridbite",
+  "folder": "gridbite",
+  "icon": "icon.png",
+  "entry": "gridbite.html",
+  "description": "Fast-paced local 1-2 player snake-like game on a 64×64 grid. Supports keyboard (WASD + Arrow keys), gamepad, and touch controls (on-screen buttons).",
+  "author": "Your Name",
+  "version": "1.0.0",
+  "touchInstructions": "Use the on-screen arrows or swipe to change direction. Tap the ✱ button to boost.",
+  "controls": {
+    "keyboard": {
+      "player1": {
+        "up": "KeyW",
+        "down": "KeyS",
+        "left": "KeyA",
+        "right": "KeyD",
+        "boost": "ShiftLeft"
+      },
+      "player2": {
+        "up": "ArrowUp",
+        "down": "ArrowDown",
+        "left": "ArrowLeft",
+        "right": "ArrowRight",
+        "boost": "ShiftRight"
+      }
+    },
+    "gamepad": {
+      "dpad": {
+        "up": 12,
+        "down": 13,
+        "left": 14,
+        "right": 15
+      },
+      "axes": {
+        "leftStickX": 0,
+        "leftStickY": 1
+      },
+      "buttons": {
+        "boost": [0, 1]
+      }
+    }
+  },
+  "features": {
+    "supportsSinglePlayerArrowFallback": true,
+    "supportsWASD": true,
+    "supportsGamepad": true,
+    "supportsTouch": true,
+    "gridSize": 64,
+    "recommendedCanvas": {
+      "width": 800,
+      "height": 450
+    },
+    "iconSize": [300, 300]
+  },
+  "precache": [
+    "/games/blockgrid64/blockgrid64.html",
+    "/games/blockgrid64/blockgrid64.css",
+    "/games/blockgrid64/blockgrid64.js",
+    "/games/blockgrid64/icon.png"
+  ]
+}

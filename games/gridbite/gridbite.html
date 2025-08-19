@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GridBite</title>
+  <!-- favicon (300x300 PNG named icon.png should be placed next to this HTML file) -->
+  <link rel="icon" href="icon.png" type="image/png" sizes="300x300">
+  <style>
+    * { box-sizing: border-box }
+    html,body{margin:0;padding:0;width:100%;height:100%;background:#111;color:#eee;display:flex;align-items:center;justify-content:center;font-family:sans-serif;overflow:hidden}
+    #container{position:relative}
+    #game-container{position:relative;width:800px;height:450px;background:#000;border-radius:12px;box-shadow:0 0 20px rgba(0,255,204,.5); /* Prevent browser gestures on touch */ touch-action:none;}
+    canvas{display:block;outline:none}
+    button{background:#00ffcc;color:#111;border:none;border-radius:8px;padding:8px;margin:4px 0;width:100%;cursor:pointer;font-weight:bold}
+    button:hover{background:#00ddbb}
+    #controls{position:absolute;top:-60px;left:50%;transform:translateX(-50%);display:flex;gap:10px;pointer-events:none}
+    #controls button,#controls label,#controls input{pointer-events:auto}
+    #pause-btn{width:40px;height:40px;border-radius:50%;background:#00ffcc;font-size:1.2rem}
+    #mute-btn{width:40px;height:40px;border-radius:50%;background:#eee;color:#111;font-size:1.2rem;line-height:1}
+    #volume-control{display:flex;gap:6px;background:rgba(0,255,204,.7);padding:6px;border-radius:12px}
+    #volume-control label{font-size:.75rem;color:#111;display:flex;flex-direction:column;align-items:center}
+    #volume-control input{width:60px}
+    #score-display{position:absolute;top:-28px;left:0;font-weight:bold;color:#0f0}
+    .menu,.overlay{position:absolute;top:50%;left:50%;width:320px;padding:20px;background:rgba(20,20,20,.9);border-radius:16px;transform:translate(-50%,-50%) scale(.8);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:100}
+    .menu.show,.overlay.show{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+    .menu h2{margin-top:0;text-align:center}
+    .menu .section{margin-bottom:16px}
+    .overlay{width:100%;height:100%;background:rgba(0,0,0,.7);top:0;left:0;transform:none}
+    .progress-item{display:flex;align-items:center;margin-bottom:8px}
+    .progress-item .skin-icon{width:32px;height:32px;margin-right:8px;border-radius:4px;opacity:.5}
+    .progress-item.unlocked .skin-icon{opacity:1}
+    .progress-item .bar{flex:1;height:8px;background:#333;border-radius:4px;overflow:hidden;position:relative}
+    .progress-item .bar div{height:100%;background:#0f0;width:0%}
+    .progress-item .percent{margin-left:8px;font-size:.75rem;color:#0f0;white-space:nowrap}
+    select,input[type=checkbox]{width:100%;padding:4px;margin-top:4px}
+    /* Player 1 touch controls */
+    #mobile-controls{position:absolute;bottom:10px;left:10px;display:none;gap:10px;z-index:200}
+    #mobile-controls button{width:50px;height:50px;opacity:.7;font-size:1.2rem}
+    /* Player 2 touch controls */
+    #mobile-controls-p2{position:absolute;bottom:10px;right:10px;display:none;gap:10px;z-index:200}
+    #mobile-controls-p2 button{width:50px;height:50px;opacity:.7;font-size:1.2rem}
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="controls">
+      <button id="pause-btn" title="Pause" aria-label="Pause">❚❚</button>
+      <button id="mute-btn" title="Mute" aria-label="Mute">🔊</button>
+      <div id="volume-control" aria-label="Volume controls">
+        <label>Master<input type="range" id="volMaster" min="0" max="1" step="0.01" value="1"></label>
+        <label>Music<input type="range" id="volMusic"  min="0" max="1" step="0.01" value="1"></label>
+        <label>Eat  <input type="range" id="volEat"    min="0" max="1" step="0.01" value="1"></label>
+        <label>Death<input type="range" id="volDeath"  min="0" max="1" step="0.01" value="1"></label>
+      </div>
+      <div id="score-display">Score: 0</div>
+      <button id="resetAppleBtn" title="Reset Apple (B)" style="font-size:.75rem;padding:4px;">
+        Reset Apple (B)
+      </button>
+    </div>
+
+    <div id="game-container">
+      <canvas id="gameCanvas" aria-label="Game canvas" tabindex="0"></canvas>
+
+      <!-- Main Menu -->
+      <div id="mainMenu" class="menu show" role="dialog" aria-modal="true">
+        <h2>GridBite</h2>
+        <div class="section">
+          <div>High Score: <span id="highScoreDisplay">0</span></div>
+          <div>Last Score: <span id="lastScoreDisplay">0</span></div>
+        </div>
+        <div class="section">
+          <button id="startBtn">Start Game</button>
+          <button id="twoPlayerBtn">2-Player Mode</button>
+          <button id="settingsBtn">Settings</button>
+          <button id="controlsBtn">Controls</button>
+          <button id="unlockPageBtn">Progress</button>
+          <button id="resetBtn">Reset Data</button>
+          <button id="homeBtn">Return to Home</button>
+        </div>
+      </div>
+
+      <!-- Settings Menu -->
+      <div id="settingsMenu" class="menu" role="dialog" aria-modal="true">
+        <h2>Settings</h2>
+        <div class="section">
+          <label>Speed:<br>
+            <select id="speedSelect">
+              <option value="normal">Normal</option>
+              <option value="fast">Fast (+ bonus)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <div id="customSpeedContainer" style="display:none;margin-top:8px;">
+            <label>Interval (ms):<br>
+              <input type="number" id="customSpeedInput" min="50" max="1000" step="10" value="200">
+            </label>
+          </div>
+        </div>
+        <div class="section">
+          <label><input type="checkbox" id="enableGamepad"> Enable Gamepad</label>
+          <label><input type="checkbox" id="enableTouch"> Enable Touchscreen</label>
+        </div>
+        <div class="section">
+          <label>Master<input type="range" id="volMasterMenu" min="0" max="1" step="0.01" value="1"></label>
+          <label>Music <input type="range" id="volMusicMenu"  min="0" max="1" step="0.01" value="1"></label>
+          <label>Eat   <input type="range" id="volEatMenu"    min="0" max="1" step="0.01" value="1"></label>
+          <label>Death <input type="range" id="volDeathMenu"  min="0" max="1" step="0.01" value="1"></label>
+        </div>
+        <div class="section">
+          <button id="settingsBackBtn">Back</button>
+        </div>
+      </div>
+
+      <!-- Controls Menu -->
+      <div id="controlsMenu" class="menu" role="dialog" aria-modal="true">
+        <h2>Remap Controls</h2>
+        <div class="section">
+          <div>Player 1 (WASD):
+            <button class="remapBtn" data-player="1" data-control="up">W</button>
+            <button class="remapBtn" data-player="1" data-control="down">S</button>
+            <button class="remapBtn" data-player="1" data-control="left">A</button>
+            <button class="remapBtn" data-player="1" data-control="right">D</button>
+            <button class="remapBtn" data-player="1" data-control="boost">Shift</button>
+          </div>
+        </div>
+        <div class="section">
+          <div>Player 2 (Arrows):
+            <button class="remapBtn" data-player="2" data-control="up">↑</button>
+            <button class="remapBtn" data-player="2" data-control="down">↓</button>
+            <button class="remapBtn" data-player="2" data-control="left">←</button>
+            <button class="remapBtn" data-player="2" data-control="right">→</button>
+            <button class="remapBtn" data-player="2" data-control="boost">Shift</button>
+          </div>
+        </div>
+        <div class="section">
+          <button id="controlsBackBtn">Back</button>
+        </div>
+      </div>
+
+      <!-- Progress Menu -->
+      <div id="progressMenu" class="menu" role="dialog" aria-modal="true">
+        <h2>Progress & Unlocks</h2>
+        <div class="section" id="unlockList"></div>
+        <div class="section">
+          <button id="progressBackBtn">Back</button>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div id="pauseOverlay" class="overlay" role="dialog" aria-modal="true">
+        <h2>Paused</h2>
+        <div class="section">Score: <span id="pauseScore">0</span></div>
+        <div class="section">High Score: <span id="pauseHigh">0</span></div>
+        <div class="section">
+          <button id="resumeBtn">Resume</button>
+          <button id="exitBtn">Exit</button>
+        </div>
+      </div>
+
+      <!-- Player 1 mobile controls -->
+      <div id="mobile-controls" aria-label="Player 1 controls">
+        <button id="btnUp">↑</button>
+        <button id="btnLeft">←</button>
+        <button id="btnDown">↓</button>
+        <button id="btnRight">→</button>
+        <button id="btnBoost">✱</button>
+      </div>
+
+      <!-- Player 2 mobile controls -->
+      <div id="mobile-controls-p2" aria-label="Player 2 controls">
+        <button id="btnUp2">↑</button>
+        <button id="btnLeft2">←</button>
+        <button id="btnDown2">↓</button>
+        <button id="btnRight2">→</button>
+        <button id="btnBoost2">✱</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    const gameContainer = document.getElementById('game-container');
+
+    // === Fixed grid (16 x 16) ===
+    const FIXED_GRID_SIZE = 16;
+    let GRID = FIXED_GRID_SIZE; // number of cells per side
+    let cellSize = 0;           // pixels per cell (CSS pixels)
+    let offsetX = 0;            // centering offsets
+    let offsetY = 0;
+
+    function computeCellSizeAndOffsets(){
+      const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+      const cssW = gameContainer.clientWidth;
+      const cssH = gameContainer.clientHeight;
+
+      canvas.width  = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      canvas.style.width  = cssW + 'px';
+      canvas.style.height = cssH + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      GRID = FIXED_GRID_SIZE; // always 32
+      cellSize = Math.max(1, Math.floor(Math.min(cssW / GRID, cssH / GRID)));
+      const gridW = cellSize * GRID;
+      const gridH = cellSize * GRID;
+      offsetX = Math.floor((cssW - gridW) / 2);
+      offsetY = Math.floor((cssH - gridH) / 2);
+    }
+
+    // Recompute sizing on resize
+    window.addEventListener('resize', ()=>{
+      const wasPlaying = isPlaying;
+      clearInterval(gameInterval);
+      computeCellSizeAndOffsets();
+      if (wasPlaying) gameInterval = setInterval(tick, tickInterval);
+      draw();
+    });
+
+    // --- Game state ---
+    let isTwoPlayer = false,
+        snakes = [], dirs = [], nextDirs = [], boosts = [],
+        apple = { x:0, y:0 },
+        score = [0,0],
+        highScore = 0,
+        lastScore = 0,
+        gameInterval = null,
+        isPlaying = false,
+        tickInterval = 200,
+        audioCtx = new (window.AudioContext||window.webkitAudioContext)(),
+        music = null,
+        isMuted = false,
+        controls = {
+          1:{ up:'KeyW', down:'KeyS', left:'KeyA', right:'KeyD', boost:'ShiftLeft' },
+          2:{ up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', boost:'ShiftRight' }
+        };
+
+    // DOM refs
+    const volMaster = document.getElementById('volMaster'),
+          volMusic  = document.getElementById('volMusic'),
+          volEat    = document.getElementById('volEat'),
+          volDeath  = document.getElementById('volDeath'),
+          volMasterMenu = document.getElementById('volMasterMenu'),
+          volMusicMenu  = document.getElementById('volMusicMenu'),
+          volEatMenu    = document.getElementById('volEatMenu'),
+          volDeathMenu  = document.getElementById('volDeathMenu'),
+          pauseBtn  = document.getElementById('pause-btn'),
+          muteBtn   = document.getElementById('mute-btn'),
+          scoreDisp = document.getElementById('score-display'),
+          highDisp  = document.getElementById('highScoreDisplay'),
+          lastDisp  = document.getElementById('lastScoreDisplay'),
+          pauseScore= document.getElementById('pauseScore'),
+          pauseHigh = document.getElementById('pauseHigh'),
+          menus     = [
+            document.getElementById('mainMenu'),
+            document.getElementById('settingsMenu'),
+            document.getElementById('controlsMenu'),
+            document.getElementById('progressMenu')
+          ],
+          pauseOverlay = document.getElementById('pauseOverlay'),
+          startBtn   = document.getElementById('startBtn'),
+          twoPlayerBtn = document.getElementById('twoPlayerBtn'),
+          settingsBtn= document.getElementById('settingsBtn'),
+          controlsBtn= document.getElementById('controlsBtn'),
+          unlockBtn  = document.getElementById('unlockPageBtn'),
+          resetBtn   = document.getElementById('resetBtn'),
+          homeBtn    = document.getElementById('homeBtn'),
+          settingsBack = document.getElementById('settingsBackBtn'),
+          controlsBack = document.getElementById('controlsBackBtn'),
+          progressBack = document.getElementById('progressBackBtn'),
+          resumeBtn  = document.getElementById('resumeBtn'),
+          exitBtn    = document.getElementById('exitBtn'),
+          resetAppleBtn = document.getElementById('resetAppleBtn'),
+          speedSelect   = document.getElementById('speedSelect'),
+          customSpeedContainer = document.getElementById('customSpeedContainer'),
+          customSpeedInput     = document.getElementById('customSpeedInput'),
+          enableTouch  = document.getElementById('enableTouch'),
+          p1Controls   = document.getElementById('mobile-controls'),
+          p2Controls   = document.getElementById('mobile-controls-p2');
+
+    function linkVolumeSliders(fromMain=true){
+      const A = fromMain ? [volMaster, volMusic, volEat, volDeath] : [volMasterMenu, volMusicMenu, volEatMenu, volDeathMenu];
+      const B = fromMain ? [volMasterMenu, volMusicMenu, volEatMenu, volDeathMenu] : [volMaster, volMusic, volEat, volDeath];
+      for (let i=0;i<4;i++) B[i].value = A[i].value;
+      updateVolumes();
+    }
+
+    [volMaster,volMusic,volEat,volDeath].forEach(el => el.addEventListener('input', ()=>linkVolumeSliders(true)));
+    [volMasterMenu,volMusicMenu,volEatMenu,volDeathMenu].forEach(el => el.addEventListener('input', ()=>linkVolumeSliders(false)));
+
+    function updateVolumes(){
+      if (music) music.volume = isMuted ? 0 : (+volMaster.value * +volMusic.value);
+    }
+    function toggleMute(){
+      isMuted = !isMuted;
+      muteBtn.textContent = isMuted ? '🔇' : '🔊';
+      updateVolumes();
+    }
+    function playSound(type){
+      if (isMuted) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const g = audioCtx.createGain();
+      const vol = +volMaster.value * +({eat:volEat,death:volDeath}[type].value);
+      g.gain.value = vol;
+      const o = audioCtx.createOscillator();
+      o.type = type==='eat' ? 'square' : 'sawtooth';
+      o.frequency.value = type==='eat' ? 600 : 180;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      o.stop(audioCtx.currentTime + (type==='eat' ? 0.07 : 0.25));
+    }
+
+    function loadData(){
+      const d = JSON.parse(localStorage.getItem('snakeGame')||'{}');
+      if (d.progress) {
+        highScore = d.progress.highScore||0;
+        lastScore = d.progress.lastScore||0;
+      }
+      if (d.controls) {
+        controls[1] = d.controls[1] || controls[1];
+        controls[2] = d.controls[2] || controls[2];
+      }
+      highDisp.textContent = highScore;
+      lastDisp.textContent = lastScore;
+    }
+    function saveData(){
+      localStorage.setItem('snakeGame', JSON.stringify({
+        progress:{ highScore, lastScore: isTwoPlayer ? score[0]+score[1] : score[0] },
+        controls
+      }));
+    }
+    function resetData(){
+      localStorage.removeItem('snakeGame');
+      location.reload();
+    }
+
+    function placeApple(){
+      do {
+        apple.x = Math.floor(Math.random() * GRID);
+        apple.y = Math.floor(Math.random() * GRID);
+      } while (snakes.some(arr => arr.some(s => s.x===apple.x && s.y===apple.y)));
+    }
+
+    function resetGame(two){
+      isTwoPlayer = two;
+      computeCellSizeAndOffsets();
+      snakes=[]; dirs=[]; nextDirs=[]; boosts=[];
+      // Player 1
+      snakes.push([{x:2,y:2},{x:1,y:2},{x:0,y:2}]);
+      dirs.push({x:1,y:0}); nextDirs.push({x:1,y:0}); boosts.push(false);
+      // Player 2
+      if (two){
+        snakes.push([{x:GRID-3,y:GRID-3},{x:GRID-2,y:GRID-3},{x:GRID-1,y:GRID-3}]);
+        dirs.push({x:-1,y:0}); nextDirs.push({x:-1,y:0}); boosts.push(false);
+      }
+      score=[0,0];
+      placeApple();
+      draw();
+      scoreDisp.textContent = two ? `P1:${score[0]} P2:${score[1]}` : `Score: ${score[0]}`;
+      // Focus canvas so WASD works even after UI clicks
+      canvas.focus();
+    }
+
+    function collideAt(x,y,p){
+      if (x<0||x>=GRID||y<0||y>=GRID) return true;
+      if (snakes[p].some(s=>s.x===x&&s.y===y)) return true;
+      if (isTwoPlayer && snakes[(p+1)%2].some(s=>s.x===x&&s.y===y)) return true;
+      return false;
+    }
+
+    function tick(){
+      for (let p=0; p<snakes.length; p++){
+        dirs[p] = nextDirs[p];
+        const steps = boosts[p] ? 2 : 1;
+        for (let step=0; step<steps; step++){
+          const hx = snakes[p][0].x + dirs[p].x;
+          const hy = snakes[p][0].y + dirs[p].y;
+          if (collideAt(hx,hy,p)){ gameOver(); return; }
+          snakes[p].unshift({x:hx,y:hy});
+          if (hx===apple.x && hy===apple.y){ score[p]++; playSound('eat'); placeApple(); }
+          else snakes[p].pop();
+        }
+      }
+      draw();
+      scoreDisp.textContent = isTwoPlayer ? `P1:${score[0]} P2:${score[1]}` : `Score: ${score[0]}`;
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(offsetX, offsetY, cellSize*GRID, cellSize*GRID);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      for (let i=0;i<=GRID;i++){
+        const x = offsetX + i*cellSize;
+        const y = offsetY + i*cellSize;
+        ctx.beginPath(); ctx.moveTo(x, offsetY); ctx.lineTo(x, offsetY + cellSize*GRID); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(offsetX, y); ctx.lineTo(offsetX + cellSize*GRID, y); ctx.stroke();
+      }
+      snakes.forEach((arr,p)=>{
+        arr.forEach((s,i)=>{
+          ctx.fillStyle = p===0 ? (i===0?'#0f0':'#090') : (i===0?'#f0f':'#909');
+          ctx.fillRect(offsetX + s.x*cellSize, offsetY + s.y*cellSize, cellSize, cellSize);
+        });
+      });
+      ctx.fillStyle = '#f00';
+      ctx.fillRect(offsetX + apple.x*cellSize, offsetY + apple.y*cellSize, cellSize, cellSize);
+    }
+
+    function gameOver(){
+      clearInterval(gameInterval);
+      isPlaying=false;
+      lastScore = isTwoPlayer ? score[0]+score[1] : score[0];
+      if (lastScore>highScore) highScore=lastScore;
+      saveData();
+      document.getElementById('highScoreDisplay').textContent=highScore;
+      document.getElementById('lastScoreDisplay').textContent=lastScore;
+      showMenu(menus[0]);
+      playSound('death');
+      if (music) music.pause();
+    }
+
+    function showMenu(menu){
+      menus.forEach(m=>m.classList.remove('show'));
+      pauseOverlay.classList.remove('show');
+      pauseBtn.style.display='none';
+      p1Controls.style.display='none';
+      p2Controls.style.display='none';
+      if (menu) menu.classList.add('show');
+    }
+
+    function startGame(two=false){
+      isPlaying=true;
+      showMenu(null);
+      pauseBtn.style.display='inline';
+      resetGame(two);
+      // Always show touch controls during gameplay (P2 only when 2p)
+      p1Controls.style.display='flex';
+      p2Controls.style.display = two ? 'flex' : 'none';
+      if (music) music.play();
+      clearInterval(gameInterval);
+      gameInterval=setInterval(tick,tickInterval);
+    }
+
+    function pauseGame(){
+      if(!isPlaying) return;
+      clearInterval(gameInterval);
+      isPlaying=false;
+      pauseScore.textContent = isTwoPlayer ? `${score[0]}+${score[1]}` : `${score[0]}`;
+      pauseHigh.textContent = highScore;
+      pauseOverlay.classList.add('show');
+      if (music) music.pause();
+    }
+    function resumeGame(){
+      if(isPlaying) return;
+      isPlaying=true;
+      pauseOverlay.classList.remove('show');
+      // Restore touch pads after resume
+      p1Controls.style.display='flex';
+      if(isTwoPlayer) p2Controls.style.display='flex';
+      clearInterval(gameInterval);
+      gameInterval=setInterval(tick,tickInterval);
+      if (music) music.play();
+      canvas.focus();
+    }
+
+    // --- Keyboard (now uses remapped controls + WASD/Arrow fallback) ---
+    let listening = null;
+
+    function trySetDir(idx, dir){
+      const cur = dirs[idx];
+      if (!cur) return;
+      if (cur.x === -dir.x && cur.y === -dir.y) return; // prevent 180°
+      nextDirs[idx] = dir;
+    }
+
+    document.addEventListener('keydown', e=>{
+      const code=e.code;
+      if(code==='Escape') return pauseGame();
+      if(listening) return handleRemap(e);
+      if(!isPlaying) return;
+
+      // Player 1 (remapped) — allow WASD + remapped keys; in single-player Arrow keys also work
+      if (code===controls[1].up   || code==='KeyW' || (!isTwoPlayer && code==='ArrowUp'))    trySetDir(0,{x:0,y:-1});
+      if (code===controls[1].down || code==='KeyS' || (!isTwoPlayer && code==='ArrowDown'))  trySetDir(0,{x:0,y: 1});
+      if (code===controls[1].left || code==='KeyA' || (!isTwoPlayer && code==='ArrowLeft'))  trySetDir(0,{x:-1,y:0});
+      if (code===controls[1].right|| code==='KeyD' || (!isTwoPlayer && code==='ArrowRight')) trySetDir(0,{x: 1,y:0});
+      if (code===controls[1].boost|| code==='ShiftLeft') boosts[0]=true;
+
+      // Player 2 (remapped)
+      if (isTwoPlayer){
+        if (code===controls[2].up    || code==='ArrowUp')    trySetDir(1,{x:0,y:-1});
+        if (code===controls[2].down  || code==='ArrowDown')  trySetDir(1,{x:0,y: 1});
+        if (code===controls[2].left  || code==='ArrowLeft')  trySetDir(1,{x:-1,y:0});
+        if (code===controls[2].right || code==='ArrowRight') trySetDir(1,{x: 1,y:0});
+        if (code===controls[2].boost || code==='ShiftRight') boosts[1]=true;
+      }
+
+      if (code==='KeyB'){ placeApple(); draw(); }
+    });
+
+    document.addEventListener('keyup', e=>{
+      if (e.code===controls[1].boost || e.code==='ShiftLeft') boosts[0]=false;
+      if (isTwoPlayer && (e.code===controls[2].boost || e.code==='ShiftRight')) boosts[1]=false;
+    });
+
+    // --- Remap UI ---
+    document.querySelectorAll('.remapBtn').forEach(btn=>{
+      btn.onclick=()=>{
+        listening={player:+btn.dataset.player,control:btn.dataset.control};
+        btn.textContent='Listening…';
+      };
+    });
+    function handleRemap(e){
+      const code=e.code;
+      const {player,control}=listening;
+      controls[player][control]=code;
+      document.querySelector(
+        `.remapBtn[data-player="${player}"][data-control="${control}"]`
+      ).textContent=code.replace('Key','').replace('Arrow','');
+      listening=null;
+      saveData();
+    }
+
+    // --- Touch (always active) ---
+    function simulateMobile(dir,down,idx){
+      if(!isPlaying) return;
+      if(dir==='boost'){ boosts[idx]=down; return; }
+      const map={up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};
+      const m=map[dir];
+      trySetDir(idx,m);
+    }
+    function addTouch(id, handlerDown, handlerUp){
+      const b=document.getElementById(id);
+      b.addEventListener('touchstart', e=>{ e.preventDefault(); handlerDown(); }, {passive:false});
+      b.addEventListener('mousedown',   ()=>{ handlerDown(); });
+      ['touchend','touchcancel','mouseup','mouseleave'].forEach(ev=>{
+        b.addEventListener(ev, ()=>{ handlerUp(); });
+      });
+    }
+    ['Up','Down','Left','Right','Boost'].forEach(dir=>{
+      addTouch('btn'+dir, ()=>simulateMobile(dir.toLowerCase(),true,0), ()=>simulateMobile(dir.toLowerCase(),false,0));
+    });
+    ['Up','Down','Left','Right','Boost'].forEach(dir=>{
+      addTouch('btn'+dir+'2', ()=>simulateMobile(dir.toLowerCase(),true,1), ()=>simulateMobile(dir.toLowerCase(),false,1));
+    });
+
+    // --- Gamepad (always enabled; 0->P1, 1->P2) ---
+    let gpTimer = null;
+    function pollGamepads(){
+      const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let i=0;i<Math.min(2,pads.length);i++){
+        const gp = pads[i];
+        if (!gp) continue;
+        const idx = i; // player index
+        // D-pad buttons (12 up, 13 down, 14 left, 15 right)
+        const up    = gp.buttons[12]?.pressed;
+        const down  = gp.buttons[13]?.pressed;
+        const left  = gp.buttons[14]?.pressed;
+        const right = gp.buttons[15]?.pressed;
+        // Left stick
+        const axX = gp.axes[0] || 0, axY = gp.axes[1] || 0;
+        const TH = 0.5;
+        const stickUp = axY < -TH, stickDown = axY > TH, stickLeft = axX < -TH, stickRight = axX > TH;
+
+        if (up || stickUp)    trySetDir(idx,{x:0,y:-1});
+        else if (down || stickDown)  trySetDir(idx,{x:0,y:1});
+        else if (left || stickLeft)  trySetDir(idx,{x:-1,y:0});
+        else if (right || stickRight)trySetDir(idx,{x:1,y:0});
+
+        // Boost: A(0) or B(1)
+        boosts[idx] = !!(gp.buttons[0]?.pressed || gp.buttons[1]?.pressed);
+      }
+    }
+    window.addEventListener('gamepadconnected', ()=>{
+      if (!gpTimer) gpTimer = setInterval(pollGamepads, 60);
+    });
+    window.addEventListener('gamepaddisconnected', ()=>{
+      const anyConnected = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).some(Boolean);
+      if (!anyConnected && gpTimer){ clearInterval(gpTimer); gpTimer = null; }
+    });
+
+    // --- Buttons / Menus ---
+    document.getElementById('resetAppleBtn').onclick = ()=>{ placeApple(); draw(); };
+    document.getElementById('startBtn').onclick = ()=>startGame(false);
+    document.getElementById('twoPlayerBtn').onclick = ()=>startGame(true);
+    document.getElementById('settingsBtn').onclick = ()=>{ showMenu(menus[1]); customSpeedContainer.style.display = (speedSelect.value==='custom'?'block':'none'); };
+    document.getElementById('controlsBtn').onclick = ()=>showMenu(menus[2]);
+    document.getElementById('unlockPageBtn').onclick = ()=>{ renderProgress(); showMenu(menus[3]); };
+    document.getElementById('resetBtn').onclick = ()=>{ if(confirm('Reset all data?')) resetData(); };
+    document.getElementById('homeBtn').onclick  = ()=>{ if(confirm('Return to home?')) location.href='https://ilikefish.space'; };
+    document.getElementById('settingsBackBtn').onclick = ()=>showMenu(menus[0]);
+    document.getElementById('controlsBackBtn').onclick = ()=>showMenu(menus[0]);
+    document.getElementById('progressBackBtn').onclick = ()=>showMenu(menus[0]);
+    document.getElementById('pause-btn').onclick = pauseGame;
+    document.getElementById('resumeBtn').onclick = resumeGame;
+    document.getElementById('exitBtn').onclick = ()=>showMenu(menus[0]);
+    document.getElementById('mute-btn').onclick = toggleMute;
+
+    speedSelect.onchange = ()=>{
+      clearInterval(gameInterval);
+      tickInterval = speedSelect.value==='normal'?200:
+                     speedSelect.value==='fast'?100:
+                     +customSpeedInput.value;
+      customSpeedContainer.style.display = (speedSelect.value==='custom'?'block':'none');
+      if(isPlaying) gameInterval=setInterval(tick,tickInterval);
+    };
+    customSpeedInput.oninput = ()=>{
+      if(speedSelect.value==='custom'){
+        tickInterval=+customSpeedInput.value;
+        clearInterval(gameInterval);
+        if(isPlaying) gameInterval=setInterval(tick,tickInterval);
+      }
+    };
+
+    function renderProgress(){
+      const c=document.getElementById('unlockList');
+      c.innerHTML='';
+      ['Cyan','Magenta','Yellow','Orange','Green','Blue','Purple','Red','Rainbow'].forEach((n,i)=>{
+        const unlocked=highScore>=(i+1)*20;
+        const pct=Math.min((highScore/((i+1)*20))*100,100);
+        const itm=document.createElement('div');
+        itm.className='progress-item'+(unlocked?' unlocked':'');
+        const ic=document.createElement('div'); ic.className='skin-icon'; ic.style.background=n.toLowerCase();
+        const bar=document.createElement('div'); bar.className='bar';
+        const fl=document.createElement('div'); fl.style.width=pct+'%';
+        bar.appendChild(fl);
+        const pc=document.createElement('span'); pc.className='percent'; pc.textContent=Math.floor(pct)+'%';
+        itm.appendChild(ic); itm.appendChild(bar); itm.appendChild(pc);
+        c.appendChild(itm);
+      });
+    }
+
+    // --- Music ---
+    function loadMusic(src){
+      music=new Audio(src);
+      music.loop=true;
+      updateVolumes();
+    }
+
+    // Init
+    loadData();
+    loadMusic('music.mp3');
+    computeCellSizeAndOffsets();
+    showMenu(menus[0]);
+    linkVolumeSliders(true);
+    draw();
+  </script>
+</body>
+</html>
