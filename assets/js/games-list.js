@@ -17,24 +17,70 @@ window.addEventListener('DOMContentLoaded', async () => {
     return console.error('[games-list] ❌ index.json.folders is not an Array');
   }
 
+  const featuredGames = [];
+  const allGames = [];
+
+  // Load each game config.json
   for (const slug of index.folders) {
     console.log(`[games-list] loading config for "${slug}"…`);
     try {
       const resp = await fetch(`/games/${slug}/config.json`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const game = await resp.json();
-      console.log(`[games-list] rendering game:`, game);
-      renderGameCard(game);
+
+      // fallback: make sure folder is set
+      game.folder = game.folder || slug;
+
+      console.log(`[games-list] loaded game config:`, game);
+
+      allGames.push(game);
+      if (game.featured) featuredGames.push(game);
+
     } catch (e) {
       console.error(`[games-list] ❌ failed to load config.json for "${slug}":`, e);
     }
   }
+
+  // Sort featured games by featuredOrder (default = 999 if not set)
+  featuredGames.sort((a, b) => {
+    const aOrder = typeof a.featuredOrder === 'number' ? a.featuredOrder : 999;
+    const bOrder = typeof b.featuredOrder === 'number' ? b.featuredOrder : 999;
+    return aOrder - bOrder;
+  });
+
+  // Render featured
+  const feat = document.getElementById('featured-games');
+  if (feat) {
+    for (const game of featuredGames) {
+      console.log('[games-list] rendering featured:', game.name);
+      feat.append(renderGameCard(game, true)); // true = cloneable
+    }
+  } else {
+    console.warn('[games-list] featured-games container not found');
+  }
+
+  // Render all games to home + games.html
+  for (const game of allGames) {
+    const card = renderGameCard(game, false);
+
+    // All on home
+    const allHome = document.getElementById('all-games');
+    if (allHome) {
+      allHome.append(card.cloneNode(true));
+    }
+
+    // All on games.html
+    const allPage = document.getElementById('games-container');
+    if (allPage) {
+      allPage.append(card);
+    }
+  }
 });
 
-function renderGameCard(game) {
+function renderGameCard(game, forFeatured) {
   if (!game.folder || !game.icon || !game.entry || !game.name) {
     console.error('[games-list] ❌ invalid config.json missing required fields:', game);
-    return;
+    return document.createTextNode('');
   }
 
   const card = document.createElement('div');
@@ -45,7 +91,6 @@ function renderGameCard(game) {
   playLink.href = `/games/${game.folder}/${game.entry}`;
   playLink.target = '_blank'; // Open in a new tab
 
-  // Create the image and button within the link
   playLink.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
@@ -54,32 +99,6 @@ function renderGameCard(game) {
     </div>
   `;
 
-  card.append(playLink); // Append the anchor tag (with the play link) to the card
-
-  // Featured (home)
-  const feat = document.getElementById('featured-games');
-  if (feat) {
-    console.log('[games-list] appending featured:', game.name);
-    if (feat.children.length < 3) feat.append(card.cloneNode(true));
-  } else {
-    console.warn('[games-list] featured-games container not found');
-  }
-
-  // All on home
-  const allHome = document.getElementById('all-games');
-  if (allHome) {
-    console.log('[games-list] appending to all-home:', game.name);
-    allHome.append(card.cloneNode(true));
-  } else {
-    console.warn('[games-list] all-games container not found');
-  }
-
-  // All on games.html
-  const allPage = document.getElementById('games-container');
-  if (allPage) {
-    console.log('[games-list] appending to games-page:', game.name);
-    allPage.append(card);
-  } else {
-    console.warn('[games-list] games-container not found');
-  }
+  card.append(playLink);
+  return card;
 }
