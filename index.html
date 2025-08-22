@@ -66,6 +66,30 @@
 
     /* make hero occupy whole viewport (old behaviour) */
     .hero.first { background-image:url('/assets/img/bg-home.jpg'); background-size:cover; background-position:center; height:100vh; display:flex; align-items:center; justify-content:center; }
+
+    /* ---- Added styles for export button (only new CSS) ---- */
+    .export-backup-wrapper { display:flex; justify-content:center; padding:18px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,252,0.9)); }
+    .export-backup { display:flex; gap:12px; align-items:center; max-width:980px; width:100%; justify-content:center; }
+    .export-btn {
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      background: linear-gradient(90deg,#007aff,#0057d9);
+      color: #fff;
+      border: none;
+      box-shadow: 0 10px 28px rgba(3,22,55,0.12);
+      cursor: pointer;
+      font-size: 0.98rem;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+      white-space: nowrap;
+    }
+    .export-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(3,22,55,0.16); }
+    .export-btn:disabled { opacity: .7; cursor: default; transform:none; box-shadow: none; }
+
+    @media (max-width:560px) {
+      .export-backup { flex-direction: column; gap:10px; padding:6px 6px; }
+      .export-btn { width:100%; text-align:center; padding:10px 14px; font-size:0.95rem; }
+    }
   </style>
 </head>
 <body data-scroll-container>
@@ -89,6 +113,15 @@
   <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container"></div>
+  </section>
+
+  <!-- EXPORT BUTTON (inserted below Featured Games and above All Games) -->
+  <section class="export-backup-wrapper" data-scroll-section data-aos="fade-up" aria-hidden="false">
+    <div class="export-backup">
+      <button id="export-progress-btn" class="export-btn" aria-label="Export game progress">
+        To make sure all game progress is safe export regually
+      </button>
+    </div>
   </section>
 
   <!-- All Games -->
@@ -185,6 +218,107 @@
   <!-- Core Scripts -->
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
+
+  <!-- Export button script (only new JS) -->
+  <script>
+    // Export localStorage and IndexedDB (best-effort) when user clicks the export button.
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('export-progress-btn');
+      if (!btn) return;
+
+      btn.addEventListener('click', async () => {
+        try {
+          btn.disabled = true;
+          const originalText = btn.textContent;
+          btn.textContent = 'Exporting...';
+
+          // 1) Export localStorage
+          try {
+            const ls = {};
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              ls[k] = localStorage.getItem(k);
+            }
+            const blobLS = new Blob([JSON.stringify(ls, null, 2)], { type: 'application/json' });
+            const urlLS = URL.createObjectURL(blobLS);
+            const a1 = document.createElement('a');
+            a1.href = urlLS;
+            a1.download = 'ilikefish-localStorage-backup.json';
+            document.body.appendChild(a1);
+            a1.click();
+            a1.remove();
+            URL.revokeObjectURL(urlLS);
+          } catch (e) {
+            console.error('localStorage export failed', e);
+          }
+
+          // 2) Export IndexedDB (best-effort)
+          try {
+            if (indexedDB && indexedDB.databases) {
+              const dbs = await indexedDB.databases();
+              const out = {};
+              for (const info of dbs) {
+                const name = info.name;
+                if (!name) continue;
+                out[name] = {};
+                await new Promise((resolve) => {
+                  const req = indexedDB.open(name);
+                  req.onsuccess = () => {
+                    const db = req.result;
+                    const storeNames = Array.from(db.objectStoreNames || []);
+                    if (storeNames.length === 0) { db.close(); resolve(); return; }
+                    const tx = db.transaction(storeNames, 'readonly');
+                    Promise.all(storeNames.map(sname => new Promise(r2 => {
+                      const items = [];
+                      try {
+                        const store = tx.objectStore(sname);
+                        const cursorReq = store.openCursor();
+                        cursorReq.onsuccess = ev => {
+                          const cursor = ev.target.result;
+                          if (cursor) { items.push(cursor.value); cursor.continue(); }
+                          else { out[name][sname] = items; r2(); }
+                        };
+                        cursorReq.onerror = () => { out[name][sname] = null; r2(); };
+                      } catch (ee) {
+                        out[name][sname] = null;
+                        r2();
+                      }
+                    }))).then(() => { db.close(); resolve(); });
+                  };
+                  req.onerror = () => { resolve(); };
+                });
+              }
+              const blobDB = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+              const urlDB = URL.createObjectURL(blobDB);
+              const a2 = document.createElement('a');
+              a2.href = urlDB;
+              a2.download = 'ilikefish-indexeddb-backup.json';
+              document.body.appendChild(a2);
+              a2.click();
+              a2.remove();
+              URL.revokeObjectURL(urlDB);
+            } else {
+              // Some browsers don't support indexedDB.databases(); inform via console only.
+              console.warn('indexedDB.databases() not supported — cannot export IndexedDB programmatically in this browser.');
+            }
+          } catch (e) {
+            console.error('IndexedDB export failed', e);
+          }
+
+          btn.textContent = 'Export complete — check downloads';
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }, 2500);
+        } catch (err) {
+          console.error('Export routine failed', err);
+          btn.disabled = false;
+          btn.textContent = 'Export failed — try again';
+          setTimeout(() => { btn.textContent = 'To make sure all game progress is safe export regually'; }, 2200);
+        }
+      });
+    });
+  </script>
 
   <!-- Init chart + update button -->
   <script>
