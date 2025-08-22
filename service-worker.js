@@ -19,8 +19,6 @@ const PRECACHE_URLS = [
   '/games/pong/config.json',
   '/games/pong/icon.png',
   '/games/pong/pong.html',
-  '/games/pong/pong.css',
-  '/games/pong/pong.js',
   '/games/timestable-balloons/config.json',
   '/games/timestable-balloons/icon.png',
   '/games/timestable-balloons/timestable-balloons.html',

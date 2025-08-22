@@ -2,55 +2,233 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Pong v1.2.0 — I like fishes _</title>
-  <link rel="stylesheet" href="pong.css">
-  <script>
-    // On load, clear old cookies/localStorage if version changed
-    const CUR_VER = '1.2.0';
-    if (localStorage.getItem('pongVersion') !== CUR_VER) {
-      localStorage.clear();
-      localStorage.setItem('pongVersion', CUR_VER);
-      location.reload(true);
-    }
-  </script>
+  <title>Pong for ilikefish.space</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{--bg:#071018;--panel:rgba(0,0,0,0.7);--accent:#fff}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--accent);display:flex;align-items:center;justify-content:center}
+    .container{position:relative;width:900px;max-width:96vw}
+    canvas{display:block;width:100%;height:auto;background:#050608;border-radius:8px;border:2px solid rgba(255,255,255,0.06)}
+
+    /* Menu overlay */
+    #menu{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.4));backdrop-filter:blur(4px)}
+    #menu .panel{background:var(--panel);padding:18px;border-radius:10px;display:flex;flex-direction:column;gap:10px;align-items:center}
+    button{cursor:pointer;padding:10px 14px;border-radius:8px;border:none;background:#e6f3ff;color:#081426;font-weight:700}
+    .small-btn{padding:8px 10px;font-weight:600;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--accent)}
+
+    /* In-game controls */
+    #menuBtn{position:absolute;left:8px;top:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.06);border:none;color:var(--accent);cursor:pointer}
+    #scoreBoard{position:absolute;right:12px;top:10px;font-weight:800;letter-spacing:1px}
+  </style>
 </head>
 <body>
-  <div id="game-container">
-    <canvas id="pongCanvas" width="800" height="500"></canvas>
-    <div id="ui-bar">
-      <label>Mode:
-        <select id="mode-select">
-          <option value="single">Single Player</option>
-          <option value="two">Two Player</option>
-        </select>
-      </label>
-      <label>Controls:
-        <select id="control-select">
-          <option value="keyboard">Keyboard</option>
-          <option value="gamepad">Gamepad</option>
-          <option value="touch">Touch</option>
-        </select>
-      </label>
-      <label>Sensitivity:
-        <input type="range" id="sensitivity" min="1" max="20" value="8">
-      </label>
-      <label>Version:
-        <select id="version-select">
-          <option value="1.2.0">1.2.0</option>
-          <option value="1.1.0">1.1.0</option>
-          <option value="1.0.0">1.0.0</option>
-        </select>
-      </label>
-      <button id="start-btn">Start Match</button>
-      <button id="fullscreen-btn">⛶ Fullscreen</button>
+  <div class="container">
+    <canvas id="gameCanvas" width="900" height="560" aria-label="Pong game"></canvas>
+
+    <!-- Menu shows over the canvas; while visible a small bot-vs-bot demo runs on the canvas in the background -->
+    <div id="menu">
+      <div class="panel">
+        <h2 style="margin:0">Pong</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <button onclick="startGame('two')">2 Player</button>
+          <button onclick="startGame('easy')">Single - Easy</button>
+          <button onclick="startGame('medium')">Single - Medium</button>
+          <button onclick="startGame('hard')">Single - Hard</button>
+        </div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7)">Demo: bot vs bot plays behind this menu</div>
+      </div>
     </div>
-    <div id="score-bar">
-      <span id="current-score">0 – 0</span>
-      <span id="high-score">High: 0</span>
-      <button id="reset-scores">Reset High Score</button>
-    </div>
+
+    <button id="menuBtn" title="Return to Menu" style="display:none">Menu</button>
+    <div id="scoreBoard" aria-hidden="true"></div>
   </div>
-  <script src="pong.js"></script>
+
+  <script>
+  (function(){
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menu = document.getElementById('menu');
+    const menuBtn = document.getElementById('menuBtn');
+    const scoreBoard = document.getElementById('scoreBoard');
+
+    // Game constants
+    const paddleW = 12;
+    const paddleH = 100;
+    const ballR = 8;
+    const targetScore = 7;
+
+    // Main game state (used for real game)
+    let state = {
+      mode: 'menu', // 'menu' | 'two' | 'easy' | 'medium' | 'hard'
+      leftY: (canvas.height - paddleH)/2,
+      rightY: (canvas.height - paddleH)/2,
+      ballX: canvas.width/2, ballY: canvas.height/2, ballVX: 6, ballVY: 2,
+      leftScore:0, rightScore:0,
+      raf: null
+    };
+
+    // Demo state for menu background (bot vs bot)
+    let demo = {
+      leftY: (canvas.height - paddleH)/2,
+      rightY: (canvas.height - paddleH)/2,
+      ballX: canvas.width/2, ballY: canvas.height/2, ballVX: 5, ballVY: 2,
+      raf: null
+    };
+
+    // Input
+    const keys = {};
+    window.addEventListener('keydown', e=>{ keys[e.key]=true; });
+    window.addEventListener('keyup', e=>{ keys[e.key]=false; });
+
+    // Utility
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    // Keep paddles inside frame (call after moves)
+    function clampPaddles(s){
+      s.leftY = clamp(s.leftY, 0, canvas.height - paddleH);
+      s.rightY = clamp(s.rightY, 0, canvas.height - paddleH);
+    }
+
+    // Draw helpers
+    function clear(){ ctx.fillStyle='#050608'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+    function drawNet(){ ctx.globalAlpha = 0.12; ctx.fillStyle = '#9ec3ff'; for(let y=0;y<canvas.height;y+=26) ctx.fillRect(canvas.width/2-2,y,4,16); ctx.globalAlpha=1; }
+    function drawPaddle(x,y){ ctx.fillStyle = '#fff'; ctx.fillRect(x,y,paddleW,paddleH); }
+    function drawBall(x,y){ ctx.beginPath(); ctx.arc(x,y,ballR,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); }
+    function drawScores(){ scoreBoard.textContent = state.leftScore + '  —  ' + state.rightScore; }
+
+    // Demo AI (simple)
+    function demoStep(dt){
+      // move demo paddles toward ball
+      const lCenter = demo.leftY + paddleH/2;
+      const rCenter = demo.rightY + paddleH/2;
+      demo.leftY += (demo.ballY - lCenter) * 0.07;
+      demo.rightY += (demo.ballY - rCenter) * 0.07;
+      clampPaddles(demo);
+
+      demo.ballX += demo.ballVX;
+      demo.ballY += demo.ballVY;
+      if(demo.ballY - ballR < 0 || demo.ballY + ballR > canvas.height) demo.ballVY *= -1;
+
+      // left collision
+      if(demo.ballX - ballR < paddleW){
+        if(demo.ballY > demo.leftY && demo.ballY < demo.leftY + paddleH) { demo.ballVX *= -1; demo.ballX = paddleW + ballR; }
+        else { demo.ballX = canvas.width/2; demo.ballY = canvas.height/2; demo.ballVX = 5 * (Math.random()>.5?1:-1); demo.ballVY = (Math.random()*4-2); }
+      }
+      // right collision
+      if(demo.ballX + ballR > canvas.width - paddleW){
+        if(demo.ballY > demo.rightY && demo.ballY < demo.rightY + paddleH) { demo.ballVX *= -1; demo.ballX = canvas.width - paddleW - ballR; }
+        else { demo.ballX = canvas.width/2; demo.ballY = canvas.height/2; demo.ballVX = 5 * (Math.random()>.5?1:-1); demo.ballVY = (Math.random()*4-2); }
+      }
+    }
+
+    function demoLoop(){
+      demoStep(16);
+      renderDemo();
+      demo.raf = requestAnimationFrame(demoLoop);
+    }
+
+    function renderDemo(){
+      clear(); drawNet(); drawPaddle(0,demo.leftY); drawPaddle(canvas.width-paddleW,demo.rightY); drawBall(demo.ballX,demo.ballY);
+    }
+
+    // Real game step
+    function step(){
+      // Player controls
+      if(state.mode === 'two' || ['easy','medium','hard'].includes(state.mode)){
+        if(keys['w'] || keys['W']) state.leftY -= 7;
+        if(keys['s'] || keys['S']) state.leftY += 7;
+      }
+      if(state.mode === 'two'){
+        if(keys['ArrowUp']) state.rightY -= 7;
+        if(keys['ArrowDown']) state.rightY += 7;
+      } else if(['easy','medium','hard'].includes(state.mode)){
+        // AI for right paddle
+        const difficulty = state.mode==='easy'?0.05:state.mode==='medium'?0.09:0.14;
+        const center = state.rightY + paddleH/2;
+        state.rightY += (state.ballY - center) * difficulty;
+      }
+
+      // Ensure paddles stay in frame
+      clampPaddles(state);
+
+      // ball
+      state.ballX += state.ballVX;
+      state.ballY += state.ballVY;
+      if(state.ballY - ballR < 0 || state.ballY + ballR > canvas.height) state.ballVY *= -1;
+
+      // left collide
+      if(state.ballX - ballR < paddleW){
+        if(state.ballY > state.leftY && state.ballY < state.leftY + paddleH){ state.ballVX *= -1; state.ballX = paddleW + ballR; }
+        else { state.rightScore++; spawnBall(state, 1); }
+      }
+      // right collide
+      if(state.ballX + ballR > canvas.width - paddleW){
+        if(state.ballY > state.rightY && state.ballY < state.rightY + paddleH){ state.ballVX *= -1; state.ballX = canvas.width - paddleW - ballR; }
+        else { state.leftScore++; spawnBall(state, -1); }
+      }
+    }
+
+    function spawnBall(s,dir){
+      s.ballX = canvas.width/2; s.ballY = canvas.height/2; s.ballVX = 6 * dir; s.ballVY = (Math.random()*4-2);
+    }
+
+    function renderGame(){
+      clear(); drawNet(); drawPaddle(0,state.leftY); drawPaddle(canvas.width-paddleW,state.rightY); drawBall(state.ballX,state.ballY); drawScores();
+    }
+
+    function gameLoop(){
+      step(); renderGame();
+      // win check
+      if(state.leftScore >= targetScore || state.rightScore >= targetScore){
+        // show menu and stop game loop
+        stopGameLoop();
+        menu.style.display = 'flex';
+        menuBtn.style.display = 'none';
+        startDemo();
+        return;
+      }
+      state.raf = requestAnimationFrame(gameLoop);
+    }
+
+    function startDemo(){
+      // reset demo state
+      demo.leftY = demo.rightY = (canvas.height - paddleH)/2;
+      demo.ballX = canvas.width/2; demo.ballY = canvas.height/2;
+      demo.ballVX = 5 * (Math.random()>.5?1:-1); demo.ballVY = (Math.random()*4-2);
+      if(demo.raf) cancelAnimationFrame(demo.raf);
+      demo.raf = requestAnimationFrame(demoLoop);
+    }
+
+    function stopDemo(){ if(demo.raf) cancelAnimationFrame(demo.raf); demo.raf = null; }
+    function stopGameLoop(){ if(state.raf) cancelAnimationFrame(state.raf); state.raf = null; }
+
+    // Public controls
+    window.startGame = function(mode){
+      // begin a real game
+      state.mode = mode; state.leftY = state.rightY = (canvas.height - paddleH)/2; state.leftScore = state.rightScore = 0;
+      spawnBall(state, Math.random()>0.5?1:-1);
+      menu.style.display = 'none'; menuBtn.style.display = 'inline-block';
+      stopDemo();
+      if(state.raf) cancelAnimationFrame(state.raf);
+      state.raf = requestAnimationFrame(gameLoop);
+    };
+
+    menuBtn.addEventListener('click', ()=>{
+      // return to menu anytime
+      stopGameLoop();
+      menu.style.display = 'flex'; menuBtn.style.display = 'none';
+      startDemo();
+    });
+
+    // Initialize: start demo while menu visible
+    startDemo();
+    // ensure paddles never escape when window resized
+    window.addEventListener('resize', ()=>{ state.leftY = clamp(state.leftY,0,canvas.height-paddleH); state.rightY = clamp(state.rightY,0,canvas.height-paddleH); demo.leftY = clamp(demo.leftY,0,canvas.height-paddleH); demo.rightY = clamp(demo.rightY,0,canvas.height-paddleH); });
+
+    // Also clamp during animation (safety)
+    setInterval(()=>{ clampPaddles(state); clampPaddles(demo); }, 40);
+
+  })();
+  </script>
 </body>
 </html>
