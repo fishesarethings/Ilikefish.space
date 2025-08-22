@@ -171,6 +171,96 @@
     }
   }
 
+  // ---- New: force service worker update & wait for activation ----
+  // This will:
+  //  - set the version in localStorage
+  //  - try to update the registration
+  //  - instruct waiting worker to skipWaiting (if present)
+  //  - wait for the new worker to activate, then reload once
+  // Fallbacks to location.reload(true) on errors.
+  function doFinalUpdate(latestVersion) {
+    try { localStorage.setItem(SITE_VERSION_KEY, latestVersion); } catch (e) { /* ignore */ }
+
+    if (!('serviceWorker' in navigator)) {
+      try { location.reload(true); } catch (e) { location.reload(); }
+      return;
+    }
+
+    // guard to ensure we reload exactly once
+    let reloaded = false;
+    function reloadOnce() {
+      if (reloaded) return;
+      reloaded = true;
+      try { location.reload(true); } catch (e) { location.reload(); }
+    }
+
+    // If the SW activates and becomes controller, controllerchange will fire -> safe to reload
+    const onControllerChange = () => {
+      // slight delay to allow the new SW to take control
+      setTimeout(reloadOnce, 150);
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) {
+        // no registration - just reload
+        navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+        reloadOnce();
+        return;
+      }
+
+      // ask the registration to update its worker files (this should fetch the new precache manifest)
+      reg.update().catch(() => { /* continue anyway */ });
+
+      // If there's a waiting worker, tell it to skipWaiting (activate immediately)
+      if (reg.waiting) {
+        try {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        } catch (e) { /* ignore */ }
+        // Wait for controllerchange -> reload
+        // if controller doesn't change, fallback to listening to the statechange on waiting
+        if (reg.waiting.addEventListener) {
+          reg.waiting.addEventListener('statechange', function sc(e) {
+            if (e.target.state === 'activated') {
+              // give controllerchange a chance to fire; but if it doesn't, reload anyway
+              setTimeout(reloadOnce, 120);
+            }
+          });
+        }
+        return;
+      }
+
+      // Otherwise, maybe an installing worker is present -> watch it
+      if (reg.installing) {
+        const installing = reg.installing;
+        installing.addEventListener('statechange', (evt) => {
+          if (evt.target.state === 'installed') {
+            // If it's installed and there's no waiting (rare), attempt to message skipWaiting
+            if (reg.waiting) {
+              try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
+            }
+          }
+          if (evt.target.state === 'activated') {
+            // activated -> reload
+            setTimeout(reloadOnce, 120);
+          }
+        });
+        return;
+      }
+
+      // No installing/waiting worker found; try to fetch an update and then reload as fallback
+      // Give reg.update() a short grace period
+      setTimeout(() => {
+        navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+        reloadOnce();
+      }, 1200);
+    }).catch(err => {
+      try { navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange); } catch (e){ }
+      reloadOnce();
+    });
+  }
+
   function showModalCenter(latestVersion, onFinalConfirm) {
     const els = ensureModalElements();
     if (!els) return;
@@ -219,7 +309,7 @@
                 if (els.bottomBar) els.bottomBar.style.display = 'block';
               }
 
-              // call final action (store version, reload)
+              // call final action (store version, reload/update SW)
               if (typeof onFinalConfirm === 'function') onFinalConfirm();
             } catch (e) {
               console.error('final update step error', e);
@@ -334,21 +424,26 @@
         if (stored !== latest) {
           // show modal and supply final action
           showModalCenter(latest, () => {
-            try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){}
-            // ensure bottom progress visible (use existing download-progress if present)
-            const existingBottom = document.getElementById('download-progress');
-            const createdBottom = document.getElementById('ilf-bottom-bar');
-            if (existingBottom) {
-              existingBottom.style.display = 'block';
-              const inner = existingBottom.querySelector('.bar');
-              if (inner) inner.style.width = '20%';
-            } else if (createdBottom) {
-              createdBottom.style.display = 'block';
-              const inner = document.getElementById('ilf-bottom-inner');
-              if (inner) inner.style.width = '24%';
+            try {
+              try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){}
+              // ensure bottom progress visible (use existing download-progress if present)
+              const existingBottom = document.getElementById('download-progress');
+              const createdBottom = document.getElementById('ilf-bottom-bar');
+              if (existingBottom) {
+                existingBottom.style.display = 'block';
+                const inner = existingBottom.querySelector('.bar');
+                if (inner) inner.style.width = '20%';
+              } else if (createdBottom) {
+                createdBottom.style.display = 'block';
+                const inner = document.getElementById('ilf-bottom-inner');
+                if (inner) inner.style.width = '24%';
+              }
+              // Use SW-aware final update which will try to update the SW, skip waiting, wait for activation, then reload
+              doFinalUpdate(latest);
+            } catch (e) {
+              console.error('final update invocation failed', e);
+              try { location.reload(true); } catch (err) { location.reload(); }
             }
-            // reload to fetch new assets
-            location.reload(true);
           });
         } else {
           alert('No updates available.');
