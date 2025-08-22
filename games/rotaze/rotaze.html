@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rotaze</title>
+  <style>
+    :root{
+      --bg: #0b0f14; /* dark */
+      --fg: #e6ebf2;
+      --muted:#9aa4b2;
+      --accent:#4da3ff;
+      --wall:#ffffff;
+      --player:#2aa1ff;
+      --good:#36d399; --bad:#f87272; --warn:#fbbf24;
+      --card:#121821; --card2:#0f151d; --border:#1f2937;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8fb; --fg:#0b1220; --muted:#445061; --accent:#1463ff; --wall:#0b1220; --player:#2069ff; --card:#ffffff; --card2:#f2f4f8; --border:#e5e7eb; --shadow: 0 10px 25px rgba(0,0,0,.08);
+      }
+    }
+    [data-theme="dark"]{--bg:#0b0f14; --fg:#e6ebf2; --muted:#9aa4b2; --accent:#4da3ff; --wall:#ffffff; --player:#2aa1ff; --card:#121821; --card2:#0f151d; --border:#1f2937; --shadow: 0 10px 30px rgba(0,0,0,.25);} 
+    [data-theme="light"]{--bg:#f6f8fb; --fg:#0b1220; --muted:#445061; --accent:#1463ff; --wall:#0b1220; --player:#2069ff; --card:#ffffff; --card2:#f2f4f8; --border:#e5e7eb; --shadow: 0 10px 25px rgba(0,0,0,.08);} 
+
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0; font: 16px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--fg); background:linear-gradient(180deg,var(--bg),transparent 250px), radial-gradient(1000px 400px at 80% -10%, rgba(77,163,255,.15), transparent 60%), radial-gradient(800px 500px at 10% 110%, rgba(54,211,153,.12), transparent 60%), var(--bg);
+      overflow:hidden;
+    }
+
+    /* Top HUD */
+    .hud{position:fixed; top:12px; left:12px; right:12px; display:flex; gap:12px; align-items:center; z-index:20}
+    .chip{display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow)}
+    .chip strong{font-weight:700}
+
+    /* Bottom bar */
+    .bottombar{position:fixed; left:50%; transform:translateX(-50%); bottom:12px; display:flex; gap:12px; z-index:20}
+    .btn{appearance:none; border:1px solid var(--border); background:var(--card); color:var(--fg); padding:12px 16px; border-radius:16px; font-weight:700; cursor:pointer; box-shadow:var(--shadow); transition:transform .15s ease, background .2s ease}
+    .btn:hover{transform:translateY(-2px)}
+
+    /* Minimap */
+    .minimap{position:fixed; right:12px; bottom:12px; width:140px; height:140px; background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; z-index:18}
+    .minimap header{display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--border); color:var(--muted); font-size:12px}
+    .minimap canvas{flex:1; background:var(--card2); display:block}
+    .minimap.expanded{position:fixed; right:50%; bottom:50%; transform:translate(50%,50%); width:min(92vw,1000px); height:min(80vh,760px); border-radius:14px; z-index:60}
+
+    /* Panels */
+    .overlay{position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:saturate(140%) blur(6px); display:none; z-index:30}
+    .overlay.show{display:block; animation:fadeIn .2s ease}
+    @keyframes fadeIn{from{opacity:0} to{opacity:1}}
+
+    .panel{position:fixed; inset:0 0 0 auto; width:min(560px, 100%); background:var(--card); border-left:1px solid var(--border); transform:translateX(100%); transition:transform .28s cubic-bezier(.2,.7,.2,1); z-index:50; display:flex; flex-direction:column}
+    .panel.show{transform:translateX(0)}
+    .panel header{padding:18px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px}
+    .panel header h2{margin:0; font-size:20px}
+    .panel .body{padding:16px; overflow:auto; flex:1}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px dashed var(--border)}
+    .pill{padding:8px 12px; border-radius:999px; background:var(--card2); border:1px solid var(--border)}
+    .list{display:grid; gap:12px}
+
+    /* Center canvas container */
+    .stage{position:absolute; inset:0; display:grid; place-items:center}
+    canvas#game{width:min(92vw, 880px); height:min(60vh, 640px); border-radius:24px; background:var(--card2); border:1px solid var(--border); box-shadow:var(--shadow)}
+
+    /* Title splash */
+    .splash{position:absolute; inset:0; display:grid; place-items:center; z-index:25; pointer-events:none}
+    .title{pointer-events:auto; background:var(--card); padding:28px; border-radius:24px; border:1px solid var(--border); box-shadow:var(--shadow); text-align:center; animation:popIn .35s ease}
+    @keyframes popIn{from{transform:scale(.96); opacity:0} to{transform:scale(1); opacity:1}}
+    .title h1{margin:.1rem 0; font-size:42px; letter-spacing:.5px}
+    .title p{margin:.5rem 0 1rem; color:var(--muted)}
+    .title .row{border:0; padding:0; justify-content:center; gap:10px}
+
+    /* Toast */
+    .toast{position:fixed; left:50%; transform:translateX(-50%); top:18px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 14px; color:var(--muted); z-index:100; opacity:0; pointer-events:none}
+    .toast.show{opacity:1; animation:toast .2s ease}
+    @keyframes toast{from{transform:translate(-50%, -6px); opacity:0} to{transform:translate(-50%,0); opacity:1}}
+
+    /* Shop chips */
+    .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:14px}
+    .card{background:var(--card2); border:1px solid var(--border); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px}
+    .card button{margin-top:auto}
+
+    /* Hidden file inputs */
+    input[type=file]{display:none}
+
+    /* Touch drag hint */
+    .dragHint{position:fixed; left:50%; bottom:92px; transform:translateX(-50%); font-size:12px; color:var(--muted)}
+
+    /* small preview canvas in level map */
+    .preview{width:160px;height:120px;border-radius:8px;border:1px solid var(--border);background:var(--card2)}
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="chip"><strong>Level:</strong> <span id="level">1</span></div>
+    <div class="chip"><strong>Time:</strong> <span id="timer">00:00.0</span></div>
+    <div class="chip"><strong>Coins:</strong> <span id="coins">0</span></div>
+    <div class="chip" title="Open modes"><strong>Mode:</strong> <span id="modeLabel">Classic</span></div>
+    <div class="chip pill" id="themeToggle" title="Toggle theme">🌙</div>
+  </div>
+
+  <div class="stage">
+    <canvas id="game" width="880" height="640"></canvas>
+  </div>
+
+  <div class="bottombar">
+    <button class="btn" id="btnMenu">Menu</button>
+    <button class="btn" id="btnRestart">Restart</button>
+    <button class="btn" id="btnMap">Map</button>
+  </div>
+
+  <div class="minimap" id="mini">
+    <header>
+      <div>Minimap</div>
+      <button class="btn" style="padding:6px 10px" id="expandMap">Expand</button>
+    </header>
+    <canvas id="mapCanvas" width="140" height="120"></canvas>
+  </div>
+
+  <!-- Start Menu (splash) -->
+  <div class="splash" id="splash">
+    <div class="title">
+      <h1>Rotaze</h1>
+      <p>Always forward. Always spinning. Beat the maze fast.</p>
+      <div class="row">
+        <button class="btn" id="playClassic">Start Game</button>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:8px; justify-content:center">
+        <button class="btn" id="openModes">Modes</button>
+        <button class="btn" id="openShop">Shop</button>
+        <button class="btn" id="openSettings">Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <!-- Sliding panels -->
+  <div class="panel" id="panelMenu" aria-hidden="true">
+    <header>
+      <h2 id="menuTitle">Main Menu</h2>
+      <div class="pill" id="closeMenu" style="margin-left:auto; cursor:pointer">Close</div>
+    </header>
+    <div class="body">
+      <div class="list">
+        <button class="btn" id="menuPlay">Continue</button>
+        <button class="btn" id="menuModes">Modes</button>
+        <button class="btn" id="menuLevelMap">Level Map</button>
+        <button class="btn" id="menuShop">Shop</button>
+        <button class="btn" id="menuSettings">Settings</button>
+        <button class="btn" id="menuExport">Export Save (.rotaze)</button>
+        <label class="btn" for="importSave">Import Save (.rotaze)</label>
+        <input id="importSave" type="file" accept=".rotaze" />
+        <button class="btn" id="menuExitStart">Exit to Start Screen</button>
+        <button class="btn" id="menuReset" style="background:var(--bad); border-color:var(--bad)">Reset All</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelModes" aria-hidden="true">
+    <header>
+      <h2>Modes</h2>
+      <div class="pill" id="closeModes" style="margin-left:auto; cursor:pointer">Close</div>
+    </header>
+    <div class="body">
+      <div class="list">
+        <div class="row"><div>Classic</div><button class="btn" data-mode="classic">Play</button></div>
+        <div class="row"><div>Timer Rush <span class="pill">Countdown mode</span></div><button class="btn" data-mode="timer">Play</button></div>
+        <div class="row"><div>Dynamic Rotation <span class="pill">View slowly rotates</span></div><button class="btn" data-mode="dynamic">Play</button></div>
+        <div class="row"><div>Custom Maze</div>
+          <div>
+            <label class="btn" for="importMaze">Import .maze</label>
+            <input id="importMaze" type="file" accept=".maze" />
+          </div>
+        </div>
+        <button class="btn" id="exportMaze">Export Current Maze (.maze)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelShop" aria-hidden="true">
+    <header>
+      <h2>Shop</h2>
+      <div class="pill" id="closeShop" style="margin-left:auto; cursor:pointer">Close</div>
+    </header>
+    <div class="body">
+      <p class="muted">Spend coins to unlock skins and trails. Use search & filters to find items.</p>
+      <div style="display:flex; gap:8px; margin:12px 0;">
+        <input id="shopSearch" placeholder="Search skins or trails..." style="flex:1; padding:10px; border-radius:12px; border:1px solid var(--border); background:var(--card2); color:var(--fg)" />
+        <select id="shopSort" style="padding:10px; border-radius:12px; border:1px solid var(--border); background:var(--card2); color:var(--fg)">
+          <option value="suggested">Suggested</option>
+          <option value="cheapest">Cheapest</option>
+          <option value="expensive">Most expensive</option>
+        </select>
+      </div>
+      <div class="grid" id="shopGrid"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelLevelMap" aria-hidden="true">
+    <header>
+      <h2>Level Map</h2>
+      <div class="pill" id="closeLevelMap" style="margin-left:auto; cursor:pointer">Close</div>
+    </header>
+    <div class="body">
+      <p class="muted">Your recent level history. Click a preview to load that maze into the level viewer.</p>
+      <div id="levelMapGrid" class="grid"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelSettings" aria-hidden="true">
+    <header>
+      <button class="btn" id="settingsBack">← Back</button>
+      <h2 style="margin-left:8px">Settings</h2>
+      <div class="pill" id="closeSettings" style="margin-left:auto; cursor:pointer">Close</div>
+    </header>
+    <div class="body">
+      <div class="row"><div>Theme</div>
+        <div>
+          <button class="btn" data-theme="system">System</button>
+          <button class="btn" data-theme="light">Light</button>
+          <button class="btn" data-theme="dark">Dark</button>
+        </div>
+      </div>
+      <div class="row"><div>Music</div>
+        <div>
+          <button class="btn" id="musicToggle">Play/Pause</button>
+          <span class="pill">Place <code>music.mp3</code> next to this file (custom audio)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved.</div>
+  <div class="dragHint">Drag on the canvas to move (touch)</div>
+
+  <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+
+<script>
+(function(){
+  // ===== Utilities & State =====
+  const $ = sel => document.querySelector(sel);
+  const gameCanvas = $('#game');
+  const g = gameCanvas.getContext('2d');
+  const mapCanvas = $('#mapCanvas');
+  const mg = mapCanvas.getContext('2d');
+
+  // handle high-DPI canvases for crisp minimap and main view
+  function resizeCanvases(){
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    // main canvas: size to css pixels * DPR
+    const gw = gameCanvas.clientWidth; const gh = gameCanvas.clientHeight;
+    gameCanvas.width = Math.round(gw * DPR); gameCanvas.height = Math.round(gh * DPR);
+    g.setTransform(DPR,0,0,DPR,0,0);
+    // minimap
+    const mw = mapCanvas.clientWidth; const mh = mapCanvas.clientHeight;
+    mapCanvas.width = Math.round(mw * DPR); mapCanvas.height = Math.round(mh * DPR);
+    mg.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resizeCanvases);
+
+  const state = {
+    level: 1,
+    coins: 0,
+    mode: 'classic', // classic | timer | dynamic
+    theme: 'system', // system|light|dark
+    playerColor: '#2aa1ff',
+    playerSkin: null, // id of skin
+    playerSkinEffect: 'solid',
+    trailStyle: 'solid', // stores trail id (eg 'trail_flame_Blue') or simple ids
+    unlocked: { colors: ['#2aa1ff'], trails: ['solid'] },
+    inventory: { colors: ['#2aa1ff'], trails: ['solid'] },
+    shop: { colors: [], trails: [] },
+    timer: 0,
+    run: false,
+    maze: null,
+    cellSize: 24,
+    visited: new Set(),
+    orientation: 0, // integer orientation used for logic
+    visualAngle: 0, // radians used for smooth rendering
+    rotating: false,
+    rotationFrom:0,
+    rotationTo:0,
+    rotationStart:0,
+    rotationDuration:650, // slightly longer for smoother spin
+    dynamicAngle: 0,
+    checkpoint: null,
+    rngSeed: Math.floor(Math.random()*1e9),
+    revealOrder: [],
+    revealIndex:0,
+    revealing:false,
+    mapExpanded:false
+  };
+
+  // Base color palette and skin/trail effects (used to generate every combo)
+  const baseColors = [
+    {id:'#2aa1ff', name:'Blue', base:50}, {id:'#22d3ee', name:'Cyan', base:60}, {id:'#34d399', name:'Green', base:60},
+    {id:'#fbbf24', name:'Gold', base:80}, {id:'#f472b6', name:'Pink', base:80}, {id:'#a78bfa', name:'Violet', base:90},
+    {id:'#fb7185', name:'Coral', base:110}, {id:'#ef4444', name:'Crimson', base:130}, {id:'#fb923c', name:'Orange', base:140},
+    {id:'#f97316', name:'Amber', base:150}, {id:'#f59e0b', name:'Gold II', base:170}, {id:'#10b981', name:'Emerald', base:180},
+    {id:'#06b6d4', name:'Teal', base:180}, {id:'#7c3aed', name:'Royal', base:200}, {id:'#0ea5e9', name:'Sky', base:200},
+    {id:'#e11d48', name:'Rose', base:230}, {id:'#111827', name:'Midnight', base:250}, {id:'#f0abfc', name:'Lilac', base:260},
+    {id:'#ffd700', name:'Shiny Gold', base:400}, {id:'#00ff7f', name:'Neon Green', base:300}, {id:'#ff007f', name:'Neon Pink', base:300},
+    {id:'#00ffff', name:'Aqua Neon', base:320}, {id:'#7fffd4', name:'Aquamarine', base:220}, {id:'#8b4513', name:'Bronze', base:280}
+  ];
+
+  const skinEffects = [
+    {id:'solid', name:'Solid', mult:1}, {id:'pulse', name:'Pulsing', mult:3}, {id:'glow', name:'Glowing', mult:3},
+    {id:'shimmer', name:'Shimmer', mult:4}, {id:'fire', name:'Fiery', mult:5}, {id:'ice', name:'Icy', mult:5},
+    {id:'shadow', name:'Shadow', mult:4}, {id:'rainbow', name:'Rainbow', mult:6}, {id:'wave', name:'Wave', mult:4}, {id:'metal', name:'Metallic', mult:7}
+  ];
+
+  const trailEffects = [
+    {id:'solid', name:'Solid', mult:1}, {id:'rainbow', name:'Rainbow', mult:5}, {id:'pulse', name:'Pulsing', mult:4},
+    {id:'sparkle', name:'Sparkle', mult:6}, {id:'flame', name:'Flame', mult:7}, {id:'frost', name:'Frost', mult:7},
+    {id:'shadow', name:'Shadow', mult:5}, {id:'electric', name:'Electric', mult:8}, {id:'cosmic', name:'Cosmic', mult:9}, {id:'pixel', name:'Pixel', mult:5}
+  ];
+
+  // Build the shop lists combining every base color with every skin effect (and trails combos)
+  function buildShopCombos(){
+    state.shop.colors = [];
+    state.shop.trails = [];
+    for(const c of baseColors){
+      // base color-only skin
+      state.shop.colors.push({ id:`skin_${c.name}_solid`, name:`${c.name} (Solid)`, price: Math.floor(c.base * 1), color:c.id, effect:'solid' });
+      for(const se of skinEffects){
+        if(se.id==='solid') continue; // already added
+        const price = Math.floor(c.base * se.mult * 1.2);
+        state.shop.colors.push({ id:`skin_${c.name}_${se.id}`, name:`${c.name} (${se.name})`, price, color:c.id, effect:se.id });
+      }
+    }
+    for(const te of trailEffects){
+      for(const c of baseColors){
+        const price = Math.floor((50 + Math.floor(c.base/2)) * te.mult);
+        state.shop.trails.push({ id:`trail_${te.id}_${c.name}`, name:`${te.name} (${c.name})`, price, color:c.id, effect:te.id });
+      }
+    }
+    // add some unique high-end bundles
+    state.shop.colors.push({ id:'skin_legendary_spectrum', name:'Legendary Spectrum (Animated)', price:12000, color:'#ffffff', effect:'rainbow' });
+    state.shop.trails.push({ id:'trail_legendary_supernova', name:'Supernova Trail', price:15000, color:'#ffd700', effect:'cosmic' });
+  }
+
+  // Local Save
+  const SAVE_KEY = 'rotaze.save.v1';
+  const HISTORY_KEY = 'rotaze.history.v1';
+  function save(){ localStorage.setItem(SAVE_KEY, encode(JSON.stringify({
+    level: state.level, coins: state.coins, mode: state.mode, theme: state.theme,
+    playerColor: state.playerColor, trailStyle: state.trailStyle, playerSkin: state.playerSkin
+  })) ); toast('Saved'); }
+  function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(!raw) return; const obj = JSON.parse(decode(raw)); Object.assign(state, obj); updateHUD(); }catch(e){console.warn(e)} }
+
+  // record level history (minimal, stores an encoded maze snapshot and stats)
+  function recordHistory(entry){
+    try{
+      const raw = localStorage.getItem(HISTORY_KEY)||'[]'; const arr = JSON.parse(raw);
+      arr.unshift(entry); if(arr.length>200) arr.length = 200; localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+    }catch(e){ console.warn('history save failed', e); }
+  }
+
+  // Encoders for .maze & .rotaze
+  function encode(s){ return btoa(unescape(encodeURIComponent(s))); }
+  function decode(s){ return decodeURIComponent(escape(atob(s))); }
+
+  // Toast
+  const toastEl = $('#toast');
+  function toast(t){ toastEl.textContent=t; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 1400); }
+
+  // Theme
+  function applyTheme(){
+    if(state.theme==='system'){ document.documentElement.removeAttribute('data-theme'); }
+    else{ document.documentElement.setAttribute('data-theme', state.theme); }
+    updateThemeIcon();
+  }
+  function updateThemeIcon(){ const el = $('#themeToggle'); if(state.theme==='dark') el.textContent='🌙'; else if(state.theme==='light') el.textContent='☀️'; else { const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; el.textContent = prefersDark ? '🌙' : '☀️'; } }
+  applyTheme();
+
+  // Theme toggle cycles dark<->light (top toggle only shows sun/moon)
+  $('#themeToggle').addEventListener('click',()=>{
+    if(state.theme==='dark') state.theme='light'; else state.theme='dark'; applyTheme(); save();
+  });
+  document.querySelectorAll('[data-theme]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ state.theme = btn.dataset.theme; applyTheme(); save(); })
+  });
+
+  // ===== Maze generation (recursive backtracker) with reveal order =====
+  function RNG(seed){ let s = seed>>>0; return ()=> (s = (s*1664525 + 1013904223)>>>0) / 0x100000000; }
+  let rand = RNG(state.rngSeed);
+
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rand()* (i+1)); [arr[i],arr[j]]=[arr[j],arr[i]];} }
+
+  function findFarthestOpen(grid, w, h, sx, sy){
+    // BFS to find farthest open cell from start (sx,sy)
+    const q=[{x:sx,y:sy}]; const seen = Array.from({length:h},()=>Array(w).fill(false)); seen[sy][sx]=true; let last={x:sx,y:sy};
+    for(let qi=0; qi<q.length; qi++){ const cur=q[qi]; last=cur; const dirs=[[0,-1],[1,0],[0,1],[-1,0]]; for(const d of dirs){ const nx=cur.x+d[0], ny=cur.y+d[1]; if(nx>=0&&ny>=0&&nx<w&&ny<h && !seen[ny][nx] && grid[ny][nx]===0){ seen[ny][nx]=true; q.push({x:nx,y:ny}); }} }
+    return last; // return farthest visited in BFS order
+  }
+
+  function generateMaze(level, imported){
+    if(imported){
+      // prepare reveal order for imported maze
+      const cells = imported.cells; const w=imported.w, h=imported.h; const open=[];
+      for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(cells[y][x]===0) open.push({x,y});
+      shuffle(open);
+      imported.revealOrder = open;
+      // ensure end is valid and open
+      if(!imported.end || imported.cells[imported.end.y][imported.end.x]===1){ imported.end = findFarthestOpen(cells, w, h, imported.start.x, imported.start.y); }
+      return imported;
+    }
+    // Increased difficulty growth: mazes get larger faster
+    const base = 9 + Math.min(80, Math.floor(level * 1.4));
+    const w = base + (level%2===0?1:0);
+    const h = base + ((level+1)%2===0?1:0);
+    // initialize grid of walls
+    const grid = Array.from({length:h},()=>Array.from({length:w},()=>1));
+    // carve with recursive backtracker on odd coordinates
+    const start = {x:1,y:1};
+    const stack=[start]; grid[start.y][start.x]=0;
+    const dirs = [[0,-1],[1,0],[0,1],[-1,0]];
+    while(stack.length){
+      const cur = stack[stack.length-1];
+      const options=[];
+      for(let d=0;d<4;d++){ const nx=cur.x+dirs[d][0]*2, ny=cur.y+dirs[d][1]*2; if(ny>0 && ny<h-1 && nx>0 && nx<w-1 && grid[ny][nx]===1) options.push(d); }
+      if(options.length){
+        const d = options[Math.floor(rand()*options.length)];
+        const between = {x: cur.x+dirs[d][0], y: cur.y+dirs[d][1]};
+        const nx=cur.x+dirs[d][0]*2, ny=cur.y+dirs[d][1]*2;
+        grid[between.y][between.x]=0; grid[ny][nx]=0; stack.push({x:nx,y:ny});
+      } else stack.pop();
+    }
+    // add a few random loop openings to increase challenge/choice
+    for(let i=0;i<Math.min(200, Math.floor(level/1.5)); i++){
+      const rx = 1 + Math.floor(rand()*(w-2)); const ry = 1 + Math.floor(rand()*(h-2));
+      if(grid[ry][rx]===1) continue; // only open cells
+      // try to carve an adjacent wall to create a loop
+      const ds = [[1,0],[-1,0],[0,1],[0,-1]]; const d = ds[Math.floor(rand()*4)]; const wx=rx+d[0], wy=ry+d[1];
+      if(wx>0 && wy>0 && wx<w-1 && wy<h-1 && grid[wy][wx]===1) grid[wy][wx]=0;
+    }
+    // choose end as farthest open cell from start to ensure reachable and not random
+    const end = findFarthestOpen(grid, w, h, start.x, start.y);
+    const open=[]; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(grid[y][x]===0) open.push({x,y});
+    shuffle(open);
+    return { w,h,cells:grid, start, end, revealOrder:open };
+  }
+
+  function difficultyOf(maze){
+    const sizeScore = Math.floor((maze.w*maze.h)/40); // slightly higher weighting
+    let walls=0, opens=0; for(let y=1;y<maze.h-1;y++) for(let x=1;x<maze.w-1;x++){ if(maze.cells[y][x]===0){ opens++; let c=0; if(maze.cells[y-1][x]===1)c++; if(maze.cells[y+1][x]===1)c++; if(maze.cells[y][x-1]===1)c++; if(maze.cells[y][x+1]===1)c++; walls+=c; }}
+    const twistScore = Math.floor(walls/(opens||1));
+    return sizeScore + twistScore;
+  }
+
+  // ===== Game logic =====
+  const dirs = [[0,-1],[1,0],[0,1],[-1,0]]; // up,right,down,left
+  let player = {x:1, y:1, path:[]};
+
+  function newRun(importedMaze){
+    state.maze = generateMaze(state.level, importedMaze);
+    rand = RNG(state.rngSeed + state.level*1337);
+    player = {x: state.maze.start.x, y: state.maze.start.y, path:[hash(state.maze.start.x,state.maze.start.y)]};
+    state.visited = new Set(player.path);
+    state.orientation = 0; state.visualAngle = 0; state.rotating=false;
+    state.dynamicAngle = 0; state.checkpoint = null;
+
+    // timer behaviour: if in timer mode, use a countdown based on difficulty
+    const diff = difficultyOf(state.maze);
+    if(state.mode==='timer'){
+      state.timer = Math.max(10, 30 + Math.floor(diff/2)); // seconds remaining
+      state._timerIsCountdown = true;
+    } else { state.timer = 0; state._timerIsCountdown = false; }
+
+    state.run = false; // will start after reveal finishes
+    // reveal animation setup
+    state.revealIndex = 0; state.revealing = true; state.revealOrder = state.maze.revealOrder.slice();
+    updateHUD();
+    // ensure canvases are sized for current display
+    resizeCanvases();
+  }
+
+  function restartLevel(){
+    // restart current maze/level without changing level
+    player = {x: state.maze.start.x, y: state.maze.start.y, path:[hash(state.maze.start.x,state.maze.start.y)]};
+    state.visited = new Set(player.path);
+    state.orientation = 0; state.visualAngle = 0; state.rotating=false; state.dynamicAngle=0;
+    if(state.mode==='timer'){
+      const diff = difficultyOf(state.maze);
+      state.timer = Math.max(10, 30 + Math.floor(diff/2));
+      state._timerIsCountdown = true;
+    } else { state.timer = 0; state._timerIsCountdown = false; }
+    state.revealing = false; state.run = true; toast('Level restarted');
+  }
+
+  function hash(x,y){ return `${x},${y}`; }
+
+  function startPlayAfterReveal(){ state.run = true; state.revealing = false; toast('Go!'); }
+
+  function beginRotationTo(ad){
+    // ad is the absolute direction we will face after the move
+    const targetAngle = -ad * Math.PI/2;
+    state.rotationFrom = state.visualAngle;
+    // normalize to nearest equivalent to avoid long spins
+    let delta = targetAngle - state.rotationFrom;
+    while(delta > Math.PI) delta -= Math.PI*2;
+    while(delta < -Math.PI) delta += Math.PI*2;
+    state.rotationTo = state.rotationFrom + delta;
+    state.rotationStart = perfNow();
+    state.rotating = true;
+  }
+
+  function move(dir){ if(!state.run) return;
+    if(state.mapExpanded) { toast('Close map to move'); return; }
+    const ad = (dir + state.orientation + 4)%4; // absolute direction in grid
+    const nx = player.x + dirs[ad][0];
+    const ny = player.y + dirs[ad][1];
+    if(nx<0||ny<0||nx>=state.maze.w||ny>=state.maze.h) return bump();
+    if(state.maze.cells[ny][nx]===1) return bump();
+    const k = hash(nx,ny);
+    if(state.visited.has(k)) { fail(); return; }
+    player.x = nx; player.y = ny; state.visited.add(k); player.path.push(k);
+    // start smooth rotation animation (visual) while logic orientation updates at end
+    beginRotationTo(ad);
+    // set logical orientation now so subsequent moves compute correctly
+    state.orientation = ad; playStep();
+    const diff = difficultyOf(state.maze);
+    if(diff > 120 && player.path.length % 40 === 0) state.checkpoint = {x:nx,y:ny, orientation:state.orientation, visited:new Set(state.visited), path:[...player.path], timer:state.timer};
+    // win check
+    if(nx===state.maze.end.x && ny===state.maze.end.y){ win(); }
+  }
+
+  function bump(){ playBeep(220, 0.05); }
+
+  function fail(){ playBeep(120, 0.12);
+    // in timer mode, show time's up
+    if(state._timerIsCountdown && state.timer <= 0){ toast('Time up — restart'); }
+    if(state.checkpoint){ const c = state.checkpoint; player.x=c.x; player.y=c.y; state.orientation=c.orientation; state.visited=new Set(c.visited); player.path=[...c.path]; state.timer=c.timer; toast('Back to checkpoint'); }
+    else { toast('Wrong turn — restart!'); newRun(); }
+  }
+
+  function win(){ playBeep(660, 0.15); playBeep(880,0.15,0.08);
+    const diff = difficultyOf(state.maze);
+    const timeBonus = state._timerIsCountdown ? Math.max(1, Math.floor(state.timer)) : Math.max(1, Math.floor(300 - state.timer));
+    let gain = diff + Math.floor(timeBonus/10);
+    if(state.mode==='timer') gain *= 2;
+
+    // record history (minimal snapshot so user can view past level maps)
+    try{
+      const entry = { level: state.level, time: Math.round(state.timer*1000)/1000, diff, coins:gain, date: new Date().toISOString(), maze: encode(JSON.stringify(state.maze)) };
+      recordHistory(entry);
+    }catch(e){ console.warn('record history failed', e); }
+
+    state.coins += gain; state.level++;
+    save();
+    toast(`+${gain} coins! Next level →`);
+    newRun();
+  }
+
+  // Draw a small vector flag for crispness (used in both views)
+  function drawFlag(ctx, x, y, size){
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.beginPath(); ctx.fillStyle = '#222'; ctx.fillRect(-size*0.05, -size*0.6, size*0.08, size*1.1); // pole
+    // flag triangle
+    ctx.beginPath(); ctx.moveTo(size*0.05, -size*0.45); ctx.lineTo(size*0.45, -size*0.3); ctx.lineTo(size*0.05, -size*0.15); ctx.closePath(); ctx.fillStyle = '#d43'; ctx.fill();
+    ctx.restore();
+  }
+
+  // ===== Rendering =====
+  function draw(){
+    // use client sizes (after DPR transform set) for crisp drawing coordinates
+    const W = gameCanvas.clientWidth, H = gameCanvas.clientHeight;
+    g.clearRect(0,0,W,H);
+    if(!state.maze) return;
+
+    // Zoomed player-centric view with rotation (more zoomed-in)
+    const viewCells = 9; // smaller number = more zoom
+    const scale = Math.min(W/(state.cellSize*viewCells), H/(state.cellSize*viewCells));
+    g.save();
+    g.translate(W/2, H/2);
+    const baseAngle = state.visualAngle + (state.mode==='dynamic' ? state.dynamicAngle : 0);
+    g.rotate(baseAngle);
+    g.scale(scale, scale);
+    g.translate(-player.x*state.cellSize, -player.y*state.cellSize);
+
+    // Draw cells around viewport for perf
+    const range = Math.ceil(viewCells/2)+6;
+    const revealSet = new Set();
+    for(let i=0;i<state.revealIndex && i<state.revealOrder.length;i++){ revealSet.add(`${state.revealOrder[i].x},${state.revealOrder[i].y}`); }
+
+    for(let y=Math.max(0,player.y-range); y<Math.min(state.maze.h,player.y+range); y++){
+      for(let x=Math.max(0,player.x-range); x<Math.min(state.maze.w,player.x+range); x++){
+        const isOpen = state.maze.cells[y][x]===0;
+        const revealed = !state.revealing || isOpen && revealSet.has(`${x},${y}`);
+        if(!revealed){
+          // draw cover for unrevealed area
+          g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card2');
+          g.fillRect(x*state.cellSize, y*state.cellSize, state.cellSize, state.cellSize);
+        } else if(state.maze.cells[y][x]===1){
+          g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall');
+          g.fillRect(x*state.cellSize, y*state.cellSize, state.cellSize, state.cellSize);
+        }
+      }
+    }
+
+    // Trail
+    for(let i=0;i<player.path.length;i++){
+      const [x,y] = player.path[i].split(',').map(Number);
+      g.fillStyle = computeTrailColor(i);
+      g.fillRect(x*state.cellSize+4, y*state.cellSize+4, state.cellSize-8, state.cellSize-8);
+    }
+
+    // Player (smaller) - support skin effects
+    const baseSize = (state.cellSize-6) * 0.78; // make player slightly smaller
+    const pulsePhase = perfNow()/220;
+    let fillCol = state.playerColor;
+
+    // apply skin effect (simple but expressive)
+    const skin = state.playerSkinEffect || 'solid';
+    g.save();
+    if(skin==='glow'){
+      g.shadowBlur = 18; g.shadowColor = hexToRGBA(state.playerColor, 0.9);
+    } else if(skin==='shadow'){
+      // draw shadow behind
+      g.fillStyle = 'rgba(0,0,0,0.35)';
+      const s2 = baseSize*1.25; g.fillRect(player.x*state.cellSize + (state.cellSize - s2)/2 + 2, player.y*state.cellSize + (state.cellSize - s2)/2 + 2, s2, s2);
+    } else if(skin==='metal'){
+      // metallic -- use a gradient later when filling
+    }
+
+    if(skin==='pulse'){
+      const h = (Math.floor((perfNow()/80)) % 360);
+      const light = 50 + Math.sin(pulsePhase) * 8;
+      fillCol = `hsl(${h} 80% ${light}%)`;
+    }
+    if(skin==='rainbow'){
+      const h = (perfNow()/30) % 360; fillCol = `hsl(${h} 80% 60%)`;
+    }
+
+    // draw player with optional metallic gradient
+    const s = baseSize + (skin==='pulse'? Math.sin(perfNow()/180)*2 : 0);
+    if(skin==='metal'){
+      const x = player.x*state.cellSize + (state.cellSize - s)/2, y = player.y*state.cellSize + (state.cellSize - s)/2;
+      const lg = g.createLinearGradient(x, y, x + s, y + s);
+      lg.addColorStop(0, lighten(state.playerColor, 0.18));
+      lg.addColorStop(0.5, darken(state.playerColor, 0.1));
+      lg.addColorStop(1, lighten(state.playerColor, 0.05));
+      g.fillStyle = lg; g.fillRect(x, y, s, s);
+    } else {
+      g.fillStyle = fillCol; g.fillRect(player.x*state.cellSize + (state.cellSize - s)/2, player.y*state.cellSize + (state.cellSize - s)/2, s, s);
+    }
+
+    // reset shadow
+    g.restore();
+
+    // Draw finish flag with vector drawing at the end cell
+    try{
+      const end = state.maze.end;
+      const fx = (end.x + 0.5) * state.cellSize;
+      const fy = (end.y + 0.5) * state.cellSize;
+      drawFlag(g, fx, fy, state.cellSize);
+    }catch(e){console.warn(e)}
+
+    g.restore();
+
+    // Minimap tiny (always shows entire maze) or expanded (entire maze centered)
+    drawMini(state.mapExpanded);
+  }
+
+  // Trail color/effect computation (supports full trail ids like 'trail_flame_Blue')
+  function computeTrailColor(i){
+    const t = state.trailStyle || 'solid';
+    // quick cases
+    if(t==='rainbow' || t.startsWith('trail_rainbow')){
+      const h = (i*9 + (perfNow()/20))%360; return `hsl(${h} 80% 60%)`;
+    }
+    if(t==='pulse' || t.startsWith('trail_pulse')){
+      const h = (Math.floor((perfNow()/90) + i) % 360);
+      const light = 55 + Math.sin(perfNow()/200 + i)*6;
+      return `hsl(${h} 80% ${light}%)`;
+    }
+    // parse structured trail ids
+    if(typeof t === 'string' && t.startsWith('trail_')){
+      const parts = t.split('_'); // trail_effect_ColorName
+      const effect = parts[1] || 'solid';
+      const cname = parts.slice(2).join('_');
+      const colorObj = baseColors.find(b=>b.name===cname);
+      const base = colorObj ? colorObj.id : state.playerColor;
+      switch(effect){
+        case 'flame': { const flick = 40 + Math.abs(Math.sin((perfNow()+i*50)/120))*20; return `hsl(${20 + Math.floor(flick)} 90% 55%)`; }
+        case 'frost': return mixColors(base, '#bfefff', 0.45);
+        case 'sparkle': return mixColors(base, '#fff9', 0.35);
+        case 'shadow': return 'rgba(0,0,0,0.6)';
+        case 'electric': return lighten(base, 0.23);
+        case 'cosmic': { const h=(i*17 + perfNow()/30)%360; return `hsl(${h} 70% 60%)`; }
+        case 'pixel': return base + 'cc';
+        default: return base + 'cc';
+      }
+    }
+    // fallback: player color with alpha
+    return state.playerColor + 'cc';
+  }
+
+  // helpers for color manipulation (small, safe funcs)
+  function hexToRGBA(hex, a=1){ const c = hex.replace('#',''); const bigint = parseInt(c,16); const r=(bigint>>16)&255; const g=(bigint>>8)&255; const b=bigint&255; return `rgba(${r},${g},${b},${a})`; }
+  function lighten(hex, amount){ // amount 0..1
+    const c = hexToRgb(hex); return `hsl(${c.h} ${c.s}% ${Math.min(95, c.l + amount*40)}%)`; }
+  function darken(hex, amount){ const c=hexToRgb(hex); return `hsl(${c.h} ${c.s}% ${Math.max(4, c.l - amount*40)}%)`; }
+  function mixColors(hexA, hexB, t){ const a = hexToRgb(hexA); const b = hexToRgb(hexB); const r=Math.round(a.r*(1-t)+b.r*t); const g=Math.round(a.g*(1-t)+b.g*t); const bl=Math.round(a.b*(1-t)+b.b*t); return `rgb(${r},${g},${bl})`; }
+  function hexToRgb(hex){ const c = hex.replace('#',''); const bigint = parseInt(c,16); const r=(bigint>>16)&255; const g=(bigint>>8)&255; const b=bigint&255; // convert to hsl
+    const r1=r/255,g1=g/255,b1=b/255; const max=Math.max(r1,g1,b1), min=Math.min(r1,g1,b1); let h=0,s=0,l=(max+min)/2; if(max!==min){ const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min); switch(max){ case r1: h=(g1-b1)/d + (g1<b1?6:0); break; case g1: h=(b1-r1)/d + 2; break; default: h=(r1-g1)/d + 4; } h*=60; } return {r,g,b,h:Math.round(h),s:Math.round(s*100),l:Math.round(l*100)}; }
+
+  // ===== Minimap (fixed: entire map must be fully visible) =====
+  function drawMini(expanded){
+    // use client sizes
+    const w = mapCanvas.clientWidth, h = mapCanvas.clientHeight;
+    mg.clearRect(0,0,w,h);
+    const m = state.maze; if(!m) return;
+
+    if(!expanded){
+      // full-maze compact view (as before, crisp)
+      const sx = w / m.w, sy = h / m.h; const sc = Math.min(sx,sy);
+      mg.save(); mg.translate((w-m.w*sc)/2, (h-m.h*sc)/2);
+      mg.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall');
+      for(let y=0;y<m.h;y++) for(let x=0;x<m.w;x++){
+        if(m.cells[y][x]===1){ mg.fillRect(x*sc, y*sc, Math.max(1,sc), Math.max(1,sc)); }
+      }
+      for(let i=0;i<player.path.length;i++){ const [x,y]=player.path[i].split(',').map(Number); mg.fillStyle = computeTrailColor(i); mg.fillRect(x*sc+0.5, y*sc+0.5, Math.max(1,sc-1), Math.max(1,sc-1)); }
+      mg.fillStyle = state.playerColor; mg.fillRect(player.x*sc+0.5, player.y*sc+0.5, Math.max(1,sc-1), Math.max(1,sc-1));
+      // flag
+      try{ const fx=(m.end.x+0.5)*sc, fy=(m.end.y+0.5)*sc; drawFlag(mg, fx, fy, Math.max(6, sc*0.9)); }catch(e){}
+      mg.restore();
+    } else {
+      // Expanded map: draw entire maze centered and scaled to fit the expanded canvas
+      // increase padding slightly to avoid clipping edges on varied displays
+      const pad = 8; const sc = Math.min((w - pad*2) / m.w, (h - pad*2) / m.h);
+      const offsetX = (w - m.w * sc) / 2;
+      const offsetY = (h - m.h * sc) / 2;
+      // background
+      mg.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card2');
+      mg.fillRect(0,0,w,h);
+      // draw walls crisply (use floats)
+      mg.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall');
+      for(let y=0;y<m.h;y++){
+        for(let x=0;x<m.w;x++){
+          if(m.cells[y][x]===1){
+            const px = offsetX + x*sc;
+            const py = offsetY + y*sc;
+            mg.fillRect(px, py, Math.max(0.6, sc), Math.max(0.6, sc));
+          }
+        }
+      }
+      // draw trail and player scaled
+      for(let i=0;i<player.path.length;i++){
+        const [x,y] = player.path[i].split(',').map(Number);
+        mg.fillStyle = computeTrailColor(i);
+        const px = offsetX + x*sc + sc*0.12;
+        const py = offsetY + y*sc + sc*0.12;
+        const sz = Math.max(1, sc - sc*0.24);
+        mg.fillRect(px, py, sz, sz);
+      }
+      // player
+      mg.fillStyle = state.playerColor;
+      const ppx = offsetX + player.x*sc + sc*0.12;
+      const ppy = offsetY + player.y*sc + sc*0.12;
+      mg.fillRect(ppx, ppy, Math.max(1, sc - sc*0.24), Math.max(1, sc - sc*0.24));
+      // flag
+      try{
+        const fx = offsetX + (m.end.x + 0.5) * sc;
+        const fy = offsetY + (m.end.y + 0.5) * sc;
+        drawFlag(mg, fx, fy, Math.max(8, sc*0.9));
+      }catch(e){}
+      // border (use float rect)
+      mg.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border'); mg.lineWidth = 2; mg.strokeRect(offsetX+0.5, offsetY+0.5, m.w*sc-1, m.h*sc-1);
+    }
+  }
+
+  // ===== Input =====
+  window.addEventListener('keydown', (e)=>{
+    const k=e.key.toLowerCase();
+    if(k==='escape'){ // toggle menu
+      if(document.getElementById('panelMenu').classList.contains('show')){ closeAll(); }
+      else openMenu(state.run);
+      return;
+    }
+    if(k==='r') { // restart current level
+      restartLevel(); return;
+    }
+    if(k==='arrowup'||k==='w') move(0);
+    if(k==='arrowright'||k==='d') move(1);
+    if(k==='arrowdown'||k==='s') move(2);
+    if(k==='arrowleft'||k==='a') move(3);
+  });
+
+  // Touch drag / mouse drag directions
+  let dragStart=null; function startDrag(x,y){ if(state.mapExpanded) return; dragStart={x,y}; }
+  function endDrag(x,y){ if(!dragStart) return; const dx=x-dragStart.x, dy=y-dragStart.y; const ax=Math.abs(dx), ay=Math.abs(dy); if(Math.max(ax,ay)<20){ dragStart=null; return; } if(ax>ay){ move(dx>0?1:3); } else { move(dy>0?2:0);} dragStart=null; }
+  function canvasPos(e){ const r=gameCanvas.getBoundingClientRect(); return {x:(e.clientX||e.touches?.[0].clientX)-r.left, y:(e.clientY||e.touches?.[0].clientY)-r.top}; }
+  gameCanvas.addEventListener('mousedown', e=> startDrag(...Object.values(canvasPos(e))));
+  window.addEventListener('mouseup', e=> endDrag(...Object.values(canvasPos(e))));
+  gameCanvas.addEventListener('touchstart', e=> {const p=canvasPos(e); startDrag(p.x,p.y)});
+  gameCanvas.addEventListener('touchend', e=> {const p=canvasPos(e); endDrag(p.x||0,p.y||0)});
+
+  // Buttons & Panels
+  const overlay = $('#overlay');
+  const panels = { menu:$('#panelMenu'), modes:$('#panelModes'), shop:$('#panelShop'), settings:$('#panelSettings') };
+  // add levelMap panel reference after DOM created
+  panels.levelMap = $('#panelLevelMap');
+  function openPanel(p){ overlay.classList.add('show'); panels[p].classList.add('show'); }
+  function closeAll(){ overlay.classList.remove('show'); Object.values(panels).forEach(p=>p.classList.remove('show')); }
+
+  // menu open with dynamic text depending on inGame
+  function openMenu(inGame){
+    updateMenuText(inGame);
+    overlay.classList.add('show'); panels.menu.classList.add('show');
+  }
+  function updateMenuText(inGame){
+    document.getElementById('menuTitle').textContent = inGame ? 'Game Menu' : 'Main Menu';
+    document.getElementById('menuPlay').textContent = inGame ? 'Resume' : 'Continue';
+    document.getElementById('menuExitStart').style.display = inGame ? 'block' : 'none';
+  }
+
+  $('#btnMenu').onclick = ()=> openMenu(state.run);
+  $('#menuPlay').onclick = ()=>{ closeAll(); if(state.run) { state.run=true; } else { /* continue from start */ closeAll(); } };
+  $('#closeMenu').onclick = closeAll; $('#closeModes').onclick = closeAll; $('#closeShop').onclick = closeAll; $('#closeSettings').onclick = closeAll; $('#closeLevelMap').onclick = closeAll;
+  overlay.addEventListener('click', closeAll);
+
+  $('#openModes').onclick = ()=> openPanel('modes');
+  $('#openShop').onclick = ()=> openPanel('shop');
+  $('#openSettings').onclick = ()=> openPanel('settings');
+  $('#btnRestart').onclick = ()=> { restartLevel(); };
+
+  // Map expand
+  const mini = $('#mini');
+  const expandBtn = $('#expandMap');
+  $('#btnMap').onclick = ()=> toggleMap();
+  $('#expandMap').onclick = ()=> toggleMap();
+  function toggleMap(){ mini.classList.toggle('expanded'); state.mapExpanded = mini.classList.contains('expanded'); resizeCanvases(); if(state.mapExpanded){ expandBtn.textContent = 'Minimise'; toast('Map expanded — movement disabled'); } else { expandBtn.textContent = 'Expand'; toast('Map minimised'); } }
+
+  // make the Mode label clickable (user requested)
+  const modeLabel = $('#modeLabel'); if(modeLabel){ modeLabel.style.cursor='pointer'; modeLabel.addEventListener('click', ()=> openPanel('modes')); }
+
+  // Settings back arrow
+  $('#settingsBack').onclick = ()=> closeAll();
+
+  // Modes
+  document.querySelectorAll('[data-mode]').forEach(b=> b.addEventListener('click',()=>{ state.mode=b.dataset.mode; $('#modeLabel').textContent=labelMode(state.mode); closeAll(); startGame(); }))
+  $('#playClassic').onclick = ()=>{ state.mode='classic'; startGame(); }
+  function labelMode(m){ return m==='timer'?'Timer Rush': m==='dynamic'?'Dynamic Rotation':'Classic'; }
+
+  // Music & SFX
+  const bgm = $('#bgm');
+  $('#musicToggle').onclick = ()=> { if(bgm.paused){ bgm.play().catch(()=>toast('Autoplay blocked — tap once.')); } else { bgm.pause(); } }
+
+  const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  function playBeep(freq, dur, delay=0){ const t=audioCtx.currentTime + (delay||0); const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='square'; o.frequency.value=freq; o.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t+dur); o.start(t); o.stop(t+dur); }
+  function playStep(){ playBeep(360, .04); }
+
+  // Export/Import Maze
+  $('#exportMaze').onclick = ()=>{
+    const payload = encode(JSON.stringify(state.maze));
+    const blob = new Blob([payload], {type:'application/octet-stream'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `maze_L${state.level}.maze`; a.click();
+  };
+  $('#importMaze').addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return; const txt = await f.text(); const maze = JSON.parse(decode(txt)); closeAll(); newRun(maze);
+  });
+
+  // Export/Import Save
+  $('#menuExport').onclick = ()=>{
+    const raw = localStorage.getItem(SAVE_KEY)||''; if(!raw){ toast('No save'); return; }
+    const blob = new Blob([raw], {type:'application/octet-stream'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='profile.rotaze'; a.click();
+  }
+  $('#importSave').addEventListener('change', async (e)=>{
+    const f = e.target.files[0]; if(!f) return; const txt = await f.text(); try{ localStorage.setItem(SAVE_KEY, txt); load(); toast('Save imported'); }catch(err){ toast('Bad save file'); }
+  });
+
+  // Exit to start screen
+  $('#menuExitStart').onclick = ()=>{
+    state.run = false; $('#splash').style.display='grid'; closeAll(); toast('Back to start screen');
+  };
+
+  // Level Map button in main menu
+  $('#menuLevelMap').onclick = ()=>{ renderLevelMap(); openPanel('levelMap'); };
+
+  // Reset all with confirmation modal-ish
+  $('#menuReset').onclick = ()=>{
+    const confirmBox = document.createElement('div'); confirmBox.className='title'; confirmBox.style.position='fixed'; confirmBox.style.left='50%'; confirmBox.style.top='50%'; confirmBox.style.transform='translate(-50%,-50%)'; confirmBox.innerHTML=`<h2>Reset all data?</h2><p>This will delete progress, coins, and unlocks.</p><div class="row"><button class="btn" id="doReset">Yes, reset</button><button class="btn" id="noReset">Cancel</button></div>`; document.body.appendChild(confirmBox);
+    $('#doReset').onclick=()=>{ localStorage.removeItem(SAVE_KEY); localStorage.removeItem(HISTORY_KEY); location.reload(); };
+    $('#noReset').onclick=()=>{ confirmBox.remove(); };
+  }
+
+  // Shop rendering with search & filters
+  function renderShop(){
+    const grid = $('#shopGrid'); grid.innerHTML='';
+    const coinsEl = $('#coins');
+    const query = ($('#shopSearch').value||'').toLowerCase().trim();
+    const sort = ($('#shopSort').value||'suggested');
+
+    // helper to filter and sort lists
+    function processList(list){
+      let out = list.slice();
+      if(query){ out = out.filter(i => (i.name||'').toLowerCase().includes(query) || (i.effect||'').toLowerCase().includes(query) || (i.color||'').toLowerCase().includes(query)); }
+      if(sort==='cheapest') out.sort((a,b)=>a.price-b.price);
+      else if(sort==='expensive') out.sort((a,b)=>b.price-a.price);
+      return out;
+    }
+
+    function addItem(type, item){
+      const owned = (type==='color'? state.inventory.colors.includes(item.id) : state.inventory.trails.includes(item.id));
+      const card = document.createElement('div'); card.className='card';
+      if(type==='color'){
+        card.innerHTML = `<div style="height:60px; display:grid; place-items:center;">`+
+                         `<div style=\"width:48px;height:48px;border-radius:10px;background:${item.color || '#777'};border:2px solid var(--border);box-shadow: 0 6px 18px rgba(0,0,0,.18)\"></div></div>`+
+                         `<strong>${item.name}</strong>`+
+                         `<div class=\"muted\">${owned? 'Owned' : item.price + ' coins'}</div>`+
+                         `<button class=\"btn\">${owned? 'Equip' : 'Buy'}</button>`;
+      } else {
+        card.innerHTML = `<div style="height:60px; display:grid; place-items:center;">`+
+                         `<div style=\"width:64px;height:18px;border-radius:999px;background:linear-gradient(90deg, ${item.color}, #fff);border:2px solid var(--border);\"></div></div>`+
+                         `<strong>${item.name}</strong>`+
+                         `<div class=\"muted\">${owned? 'Owned' : item.price + ' coins'}</div>`+
+                         `<button class=\"btn\">${owned? 'Equip' : 'Buy'}</button>`;
+      }
+      const btn = card.querySelector('button');
+      btn.onclick = ()=>{
+        if(owned){
+          if(type==='color'){
+            state.playerColor = item.color || state.playerColor; state.playerSkin = item.id; state.playerSkinEffect = item.effect || 'solid';
+          } else {
+            state.trailStyle = item.id; // structured id keeps effect+color
+          }
+          save(); toast('Equipped');
+        }
+        else if(state.coins>=item.price){ state.coins-=item.price; if(type==='color') state.inventory.colors.push(item.id); else state.inventory.trails.push(item.id); coinsEl.textContent = state.coins; save(); renderShop(); toast('Purchased'); }
+        else toast('Not enough coins');
+      }
+      grid.appendChild(card);
+    }
+
+    grid.appendChild(tag('h3','Skins (colors + effects)'));
+    const skins = processList(state.shop.colors);
+    skins.forEach(s=> addItem('color', s));
+    grid.appendChild(tag('h3','Trails (effect + color)'));
+    const trails = processList(state.shop.trails);
+    trails.forEach(t=> addItem('trail', t));
+  }
+  function tag(tagName, text){ const el=document.createElement(tagName); el.textContent=text; return el; }
+
+  // Level map rendering (history viewer)
+  function renderLevelMap(){
+    const container = $('#levelMapGrid'); container.innerHTML='';
+    try{
+      const raw = localStorage.getItem(HISTORY_KEY)||'[]'; const arr = JSON.parse(raw);
+      if(arr.length===0){ container.appendChild(tag('div','No history yet — play and finish levels to populate.')); return; }
+      // render recent first (already stored that way)
+      arr.slice(0,60).forEach((entry, idx)=>{
+        const card = document.createElement('div'); card.className='card';
+        const title = document.createElement('strong'); title.textContent = `Level ${entry.level} — ${entry.coins} coins`;
+        const meta = document.createElement('div'); meta.style.fontSize='12px'; meta.style.color=getComputedStyle(document.documentElement).getPropertyValue('--muted'); meta.textContent = `${new Date(entry.date).toLocaleString()} • time: ${formatTime(entry.time, false)} • diff: ${entry.diff}`;
+        card.appendChild(title); card.appendChild(meta);
+        // preview canvas
+        const cvs = document.createElement('canvas'); cvs.className='preview'; cvs.width=160; cvs.height=120; card.appendChild(cvs);
+        const btnRow = document.createElement('div'); btnRow.style.display='flex'; btnRow.style.gap='8px'; btnRow.style.marginTop='8px';
+        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.textContent='Load Preview';
+        const removeBtn = document.createElement('button'); removeBtn.className='btn'; removeBtn.style.background='var(--bad)'; removeBtn.style.borderColor='var(--bad)'; removeBtn.textContent='Remove';
+        btnRow.appendChild(viewBtn); btnRow.appendChild(removeBtn); card.appendChild(btnRow);
+        container.appendChild(card);
+
+        // draw preview
+        try{
+          const maze = JSON.parse(decode(entry.maze)); drawMiniPreview(cvs, maze);
+        }catch(e){ console.warn('preview draw failed', e); }
+
+        viewBtn.onclick = ()=>{
+          // load that maze into current run (preview mode) — user requested view only
+          try{
+            const maze = JSON.parse(decode(entry.maze)); closeAll(); openPanel('modes'); // simple way to show it's loaded
+            newRun(maze);
+            toast('Loaded selected maze into current level (preview).');
+          }catch(e){ toast('Could not load maze'); }
+        };
+        removeBtn.onclick = ()=>{
+          // remove this entry from history
+          try{ const raw2 = localStorage.getItem(HISTORY_KEY)||'[]'; const arr2=JSON.parse(raw2); arr2.splice(idx,1); localStorage.setItem(HISTORY_KEY, JSON.stringify(arr2)); renderLevelMap(); }catch(e){ toast('Remove failed'); }
+        };
+      });
+    }catch(e){ container.appendChild(tag('div','Failed to load history')); }
+  }
+
+  function drawMiniPreview(canvas, maze){
+    const ctx = canvas.getContext('2d'); const w=canvas.width, h=canvas.height; ctx.clearRect(0,0,w,h);
+    if(!maze) return; const m=maze; const pad=6; const sc = Math.min((w-pad*2)/m.w, (h-pad*2)/m.h); const ox=(w - m.w*sc)/2; const oy=(h - m.h*sc)/2;
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card2'); ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wall');
+    for(let y=0;y<m.h;y++) for(let x=0;x<m.w;x++) if(m.cells[y][x]===1) ctx.fillRect(ox + x*sc, oy + y*sc, Math.max(0.8,sc), Math.max(0.8,sc));
+    // player start
+    ctx.fillStyle = '#2aa1ff'; ctx.fillRect(ox + m.start.x*sc + sc*0.12, oy + m.start.y*sc + sc*0.12, Math.max(1, sc - sc*0.24), Math.max(1, sc - sc*0.24));
+    // flag
+    try{ drawFlag(ctx, ox + (m.end.x+0.5)*sc, oy + (m.end.y+0.5)*sc, Math.max(6, sc*0.9)); }catch(e){}
+  }
+
+  // HUD update
+  function updateHUD(){ $('#level').textContent = state.level; $('#coins').textContent = state.coins; $('#modeLabel').textContent = labelMode(state.mode); updateThemeIcon(); }
+
+  // Timer
+  function perfNow(){ return performance.now(); }
+  let lastTime = perfNow();
+  function tick(){
+    const now = perfNow(); const dt = (now - lastTime)/1000; lastTime = now;
+    // Update smooth rotation
+    if(state.rotating){
+      const t = Math.min(1, (perfNow() - state.rotationStart)/state.rotationDuration);
+      // easeOutCubic
+      const e = 1 - Math.pow(1-t,3);
+      state.visualAngle = state.rotationFrom + (state.rotationTo - state.rotationFrom) * e;
+      if(t>=1) { state.rotating=false; state.visualAngle = state.rotationTo; }
+    }
+    // Reveal animation progress
+    if(state.revealing){
+      const speed = Math.max(40, state.revealOrder.length / 0.9); // aim to reveal quickly
+      state.revealIndex = Math.min(state.revealOrder.length, state.revealIndex + Math.ceil(dt * speed));
+      if(state.revealIndex >= state.revealOrder.length){ startPlayAfterReveal(); }
+    }
+    if(state.run){
+      if(state._timerIsCountdown){ state.timer = Math.max(0, state.timer - dt); if(state.timer<=0){ fail(); }} else { state.timer += dt; if(state.mode==='dynamic') state.dynamicAngle += dt*0.4; }
+    }
+    $('#timer').textContent = formatTime(state.timer, !!state._timerIsCountdown);
+    draw(); requestAnimationFrame(tick);
+  }
+  function formatTime(t, countdown=false){ if(countdown){ const m=Math.floor(t/60); const s=(t%60); return `-${String(m).padStart(2,'0')}:${s.toFixed(1).padStart(4,'0')}`; } const m=Math.floor(t/60); const s=(t%60); return `${String(m).padStart(2,'0')}:${s.toFixed(1).padStart(4,'0')}`; }
+
+  // Buttons initial
+  $('#menuModes').onclick=()=>openPanel('modes');
+  $('#menuShop').onclick=()=>{ buildShopCombos(); renderShop(); openPanel('shop'); };
+  $('#menuSettings').onclick=()=>openPanel('settings');
+
+  // shop search/sort events
+  document.addEventListener('input', (e)=>{ if(e.target && (e.target.id==='shopSearch' || e.target.id==='shopSort')) renderShop(); });
+
+  // Start the game: hide start menu and generate maze with reveal
+  function startGame(){ closeAll(); $('#splash').style.display='none'; newRun(); save(); }
+
+  // Load previous save and boot
+  load(); buildShopCombos(); renderShop(); // initial canvas size
+  // set expand button text correctly on load
+  expandBtn.textContent = state.mapExpanded ? 'Minimise' : 'Expand';
+  resizeCanvases();
+  requestAnimationFrame(tick);
+
+})();
+</script>
+</body>
+</html>

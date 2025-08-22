@@ -47,7 +47,20 @@ const PRECACHE_URLS = [
   '/games/Block-bang/block-bang.html',
   '/games/Block-bang/config.json',
   '/games/Block-bang/explosion.mp4',
-  '/games/Block-bang/icon.png'
+  '/games/Block-bang/icon.png',
+  '/games/DiceRollIdleEmpires/config.json',
+  'games/DiceRollIdleEmpires/DiceRollIdleEmpires.html',
+  'games/DiceRollIdleEmpires/icon.png',
+  'games/DiceRollIdleEmpires/icon1.png',
+  'games/gridbite/config.json',
+  'games/rotaze/icon.png',
+  'games/rotaze/icon1.png',
+  'games/rotaze/rotaze.html',
+  'games/gridbite/config.json',
+  'games/gridbite/gridbite.html',
+  'games/gridbite/icon.png',
+  'games/gridbite/icon1.png',
+  'games/gridbite/music.mp3'
 ];
 
 self.addEventListener('install', evt => {
