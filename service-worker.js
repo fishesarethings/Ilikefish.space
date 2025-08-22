@@ -8,7 +8,7 @@ const LOG_PREFIX = '[sw]';
 
 // --- Precache list (normalize all to absolute paths) ---
 const PRECACHE_URLS = [
-  '/', '/index.html', '/games.html', '/server.html', '/manifest.json',
+  '/', '/index.html', '/games.html', '/server.html', '/manifest.json', '/terms.html'
   '/assets/css/styles.css',
   '/assets/js/typing.js',
   '/assets/js/loco.js',
