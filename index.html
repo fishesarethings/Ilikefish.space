@@ -86,9 +86,27 @@
     .export-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(3,22,55,0.16); }
     .export-btn:disabled { opacity: .7; cursor: default; transform:none; box-shadow: none; }
 
+    /* ---- Added styles for import button (matches export button) ---- */
+    .import-btn {
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      background: linear-gradient(90deg,#00c853,#007e33);
+      color: #fff;
+      border: none;
+      box-shadow: 0 10px 28px rgba(3,22,55,0.12);
+      cursor: pointer;
+      font-size: 0.98rem;
+      transition: transform .12s ease, box-shadow .12s ease;
+      white-space: nowrap;
+    }
+    .import-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(3,22,55,0.16); }
+    .import-btn:disabled { opacity:.7; cursor:default; transform:none; box-shadow:none; }
+
     @media (max-width:560px) {
       .export-backup { flex-direction: column; gap:10px; padding:6px 6px; }
       .export-btn { width:100%; text-align:center; padding:10px 14px; font-size:0.95rem; }
+      .import-btn { width:100%; text-align:center; padding:10px 14px; font-size:0.95rem; }
     }
   </style>
 </head>
@@ -120,6 +138,11 @@
     <div class="export-backup">
       <button id="export-progress-btn" class="export-btn" aria-label="Export game progress">
         To make sure all game progress is safe export regually
+      </button>
+
+      <!-- Import button added beside Export -->
+      <button id="import-progress-btn" class="import-btn" aria-label="Import game progress">
+        Import backup (localStorage / IndexedDB)
       </button>
     </div>
   </section>
@@ -315,6 +338,144 @@
           btn.disabled = false;
           btn.textContent = 'Export failed — try again';
           setTimeout(() => { btn.textContent = 'To make sure all game progress is safe export regually'; }, 2200);
+        }
+      });
+    });
+  </script>
+
+  <!-- Import button script (new JS) -->
+  <script>
+    // Import localStorage and IndexedDB backups (best-effort) when user clicks the import button.
+    document.addEventListener('DOMContentLoaded', () => {
+      const importBtn = document.getElementById('import-progress-btn');
+      if (!importBtn) return;
+
+      // create a hidden file input for selecting the backup JSON
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json,application/json';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+
+      function readFile(file) {
+        return new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.onerror = () => rej(r.error);
+          r.readAsText(file);
+        });
+      }
+
+      function isLikelyLocalStorage(obj) {
+        if (!obj || typeof obj !== 'object') return false;
+        const keys = Object.keys(obj);
+        if (keys.length === 0) return false;
+        return keys.every(k => typeof obj[k] === 'string');
+      }
+
+      function deleteDatabase(name) {
+        return new Promise((resolve) => {
+          try {
+            const del = indexedDB.deleteDatabase(name);
+            del.onsuccess = () => resolve();
+            del.onerror = () => resolve();
+            del.onblocked = () => resolve();
+          } catch (e) {
+            resolve();
+          }
+        });
+      }
+
+      function createAndPopulateDB(name, storesObj) {
+        return new Promise((resolve) => {
+          const req = indexedDB.open(name, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            for (const storeName of Object.keys(storesObj)) {
+              if (!db.objectStoreNames.contains(storeName)) {
+                try { db.createObjectStore(storeName, { autoIncrement: true }); } catch (e) {}
+              }
+            }
+          };
+          req.onsuccess = async (e) => {
+            const db = e.target.result;
+            try {
+              for (const [storeName, items] of Object.entries(storesObj)) {
+                if (!db.objectStoreNames.contains(storeName)) continue;
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                for (const item of (Array.isArray(items) ? items : [])) {
+                  try { store.put(item); } catch (e) { /* ignore item */ }
+                }
+                await new Promise(r => { tx.oncomplete = () => r(); tx.onabort = tx.onerror = () => r(); });
+              }
+            } catch (e) { /* swallow */ }
+            db.close();
+            resolve();
+          };
+          req.onerror = () => resolve();
+        });
+      }
+
+      importBtn.addEventListener('click', () => {
+        fileInput.value = '';
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', async (ev) => {
+        const file = ev.target.files && ev.target.files[0];
+        if (!file) return;
+        importBtn.disabled = true;
+        const originalText = importBtn.textContent;
+        importBtn.textContent = 'Importing...';
+
+        try {
+          const text = await readFile(file);
+          let parsed;
+          try { parsed = JSON.parse(text); } catch (e) {
+            alert('Import failed: file is not valid JSON.');
+            importBtn.disabled = false;
+            importBtn.textContent = originalText;
+            return;
+          }
+
+          if (isLikelyLocalStorage(parsed) || file.name.toLowerCase().includes('localstorage')) {
+            if (!confirm('This will write keys from the backup into localStorage and may overwrite existing keys. Continue?')) {
+              importBtn.disabled = false;
+              importBtn.textContent = originalText;
+              return;
+            }
+            let count = 0;
+            for (const [k, v] of Object.entries(parsed)) {
+              try { localStorage.setItem(k, String(v)); count++; } catch (e) {}
+            }
+            alert('localStorage import complete — set ' + count + ' keys. Reload the page to apply changes.');
+          } else {
+            const dbNames = Object.keys(parsed);
+            if (dbNames.length === 0) {
+              alert('Import JSON contains no databases.');
+            } else {
+              if (!confirm('This will recreate the following IndexedDB database(s):\n\n' + dbNames.join('\n') + '\n\nThe existing databases with those names will be deleted first (recommended). Continue?')) {
+                importBtn.disabled = false;
+                importBtn.textContent = originalText;
+                return;
+              }
+              for (const dbName of dbNames) {
+                try { await deleteDatabase(dbName); } catch (e) {}
+              }
+              for (const dbName of dbNames) {
+                const storesObj = parsed[dbName] || {};
+                await createAndPopulateDB(dbName, storesObj);
+              }
+              alert('IndexedDB import complete. Reload the page to apply changes.');
+            }
+          }
+        } catch (err) {
+          console.error('Import failed', err);
+          alert('Import failed — check console for details.');
+        } finally {
+          importBtn.disabled = false;
+          importBtn.textContent = originalText;
         }
       });
     });
