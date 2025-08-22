@@ -3,5 +3,7 @@
   "folder": "lawnmower-simulator",
   "icon": "icon.png",
   "entry": "lawnmower.html",
+  "featured": true,
+  "featuredOrder": 1,
   "touchInstructions": "Use arrow keys or WASD to move; mow grass for coins."
 }

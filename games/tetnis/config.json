@@ -3,6 +3,8 @@
   "folder": "tetnis",
   "icon": "icon.png",
   "entry": "tetnis.html",
+  "featured": true,
+  "featuredOrder": 3,
   "touchInstructions": "Tap or swipe to move and rotate.",
   "controllerMapping": {
     "buttons": {},
