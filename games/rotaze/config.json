@@ -3,5 +3,7 @@
   "folder":"rotaze",
   "icon":"icon.png",
   "entry":"rotaze.html",
+    "featured": true,
+  "featuredOrder": 1,
   "touchInstructions":"Tap to play."
 }
