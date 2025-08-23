@@ -78,7 +78,12 @@ const PRECACHE_URLS = [
   '/games/Tower-Defense/config.json',
   '/games/Tower-Defense/icon.png',
   '/games/Tower-Defense/icon1.png',
-  '/games/Tower-Defense/Tower-defense.html'
+  '/games/Tower-Defense/Tower-defense.html',
+
+  '/games/DiceRollIdleEmpires2/config.json',
+  '/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html',
+  '/games/DiceRollIdleEmpires2/icon.png',
+  '/games/DiceRollIdleEmpires2/icon1.png'
 ];
 
 // --- helper logs ---

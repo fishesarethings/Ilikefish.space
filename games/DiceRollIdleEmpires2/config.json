@@ -1,0 +1,9 @@
+{
+  "name": "Dice Roll Idle Empires 2",
+  "folder": "DiceRollIdleEmpires2",
+  "icon": "icon.png",
+  "entry": "DiceRollIdleEmpires2.html",
+  "touchInstructions": "Tap or click to play."
+}
+
+
