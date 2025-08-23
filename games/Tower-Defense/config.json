@@ -1,0 +1,14 @@
+{
+  "name": "Tower Defense",
+  "folder": "Tower-Defense",
+  "icon": "icon.png",
+  "entry": "Tower-defense.html",
+  "featured": true,
+  "featuredOrder": 1,
+  "touchInstructions": "Tap or click to play.",
+  "controllerMapping": {
+    "buttons": {},
+    "axes": {}
+  }
+}
+
