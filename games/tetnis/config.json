@@ -4,7 +4,7 @@
   "icon": "icon.png",
   "entry": "tetnis.html",
   "featured": true,
-  "featuredOrder": 3,
+  "featuredOrder": 4,
   "touchInstructions": "Tap or swipe to move and rotate.",
   "controllerMapping": {
     "buttons": {},

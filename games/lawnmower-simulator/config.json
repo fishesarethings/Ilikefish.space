@@ -4,6 +4,6 @@
   "icon": "icon.png",
   "entry": "lawnmower.html",
   "featured": true,
-  "featuredOrder": 1,
+  "featuredOrder": 3,
   "touchInstructions": "Use arrow keys or WASD to move; mow grass for coins."
 }

@@ -4,7 +4,7 @@
   "icon": "icon.png",
   "entry": "Tower-defense.html",
   "featured": true,
-  "featuredOrder": 1,
+  "featuredOrder": 2,
   "touchInstructions": "Tap or click to play.",
   "controllerMapping": {
     "buttons": {},
