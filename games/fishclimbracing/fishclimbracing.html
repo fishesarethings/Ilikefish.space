@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fish Climb Racing — Swim Upstream</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; }
+    body { background: radial-gradient(1200px 800px at 50% 10%, #072b57 0%, #051a36 45%, #041329 100%); }
+    * { user-select: none; -webkit-tap-highlight-color: transparent; }
+    canvas { image-rendering: optimizeQuality; }
+    /* Ambient bubbles */
+    .bubble {
+      position: absolute;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.12);
+      animation: floatUp linear infinite;
+      pointer-events: none;
+      filter: blur(0.3px);
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      5% { opacity: 1; }
+      95% { opacity: 1; }
+      100% { transform: translateY(-120vh) translateX(-10px); opacity: 0; }
+    }
+  </style>
+</head>
+<body class="text-slate-100 font-sans">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="px-6 pt-6 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-cyan-400/20 grid place-items-center ring-1 ring-cyan-300/40">
+          <span class="text-2xl">🐟</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Fish Climb Racing</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="rounded-xl bg-cyan-400/15 border border-cyan-300/30 px-3 py-1.5 text-sm">
+          Cash: <span id="coinsText" class="font-bold text-amber-300">0</span> 💵
+        </div>
+        <button id="howToBtn" class="hidden md:inline px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm">How to play</button>
+        <button id="dailyBtn" class="px-3 py-1.5 rounded-xl bg-amber-300/80 hover:bg-amber-300 active:bg-amber-400 text-slate-900 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Daily 500</button>
+        <button id="saveBtn" class="px-3 py-1.5 rounded-xl bg-emerald-400/80 hover:bg-emerald-400 active:bg-emerald-500 text-slate-900 text-sm font-semibold">Save</button>
+      </div>
+    </header>
+
+    <!-- Game container -->
+    <main class="flex-1 px-4 md:px-6 pb-6 grid">
+      <div class="relative w-full max-w-6xl mx-auto aspect-[16/9] rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl bg-gradient-to-b from-cyan-900/30 to-indigo-950/30">
+        <!-- Canvas -->
+        <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+
+        <!-- HUD -->
+        <div id="hud" class="absolute top-3 left-3 right-3 flex flex-wrap items-center gap-3 z-20 pointer-events-none">
+          <div class="pointer-events-auto px-4 py-2 rounded-xl bg-slate-900/60 backdrop-blur border border-white/10 flex items-center gap-3">
+            <span class="text-sm opacity-80">Distance</span>
+            <span id="distance" class="text-lg font-bold tracking-wide">0 m</span>
+          </div>
+
+          <div class="pointer-events-auto px-4 py-2 rounded-xl bg-slate-900/60 backdrop-blur border border-white/10">
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="opacity-80">Energy</span>
+              <span id="fuelText" class="opacity-80">100%</span>
+            </div>
+            <div class="w-56 h-3 rounded-full bg-white/10 overflow-hidden">
+              <div id="fuelBar" class="h-full rounded-full bg-gradient-to-r from-emerald-300 to-cyan-400" style="width: 100%;"></div>
+            </div>
+            <div class="flex items-center gap-2 mt-2 text-sm">
+              <span class="opacity-80">Ammo</span>
+              <div id="ammoWheel" class="flex gap-1"></div>
+              <span class="ml-3 opacity-80">Laser uses: <span id="laserPtsText">100</span></span>
+            </div>
+          </div>
+
+          <div class="pointer-events-auto ml-auto flex items-center gap-2">
+            <button id="pauseBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 transition">
+              Pause
+            </button>
+            <button id="restartBtn" class="px-4 py-2 rounded-xl bg-rose-500/80 hover:bg-rose-500 active:bg-rose-600 text-white transition">
+              Restart
+            </button>
+          </div>
+
+          <!-- Boss HP Bar -->
+          <div id="bossBarWrap" class="pointer-events-auto basis-full hidden">
+            <div class="px-4 py-2 rounded-xl bg-rose-600/20 backdrop-blur border border-rose-400/30">
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="font-semibold">Boss: Hook Boat</span>
+                <span id="bossHpText" class="opacity-90">100 HP</span>
+              </div>
+              <div class="w-full h-3 rounded-full bg-white/10 overflow-hidden">
+                <div id="bossHpBar" class="h-full rounded-full bg-gradient-to-r from-amber-300 to-rose-400" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Start + Shop Panel -->
+        <div id="startPanel" class="absolute inset-0 z-30 grid place-items-center bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
+          <div class="w-[92%] md:w-[880px] max-h-[92vh] rounded-2xl border border-white/10 bg-slate-900/70 p-6 md:p-8 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">🐠</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold">Choose your fish</h2>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <div class="rounded-xl bg-cyan-400/15 border border-cyan-300/30 px-3 py-1.5">
+                  Cash: <span id="coinsText2" class="font-bold text-amber-300">0</span> 💵
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mb-4 flex gap-2">
+              <button id="tabPlay" class="tab-btn px-4 py-2 rounded-lg bg-emerald-400 text-slate-900 font-bold">Play</button>
+              <button id="tabShop" class="tab-btn px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">Shop</button>
+            </div>
+
+            <!-- Play content -->
+            <div id="playContent">
+              <p class="text-slate-300 mb-4">Pick a fish you’ve unlocked and swim upstream. Each fish has its own style and shots.</p>
+
+              <!-- Filters + Search -->
+              <div class="mb-4 flex flex-col md:flex-row gap-3">
+                <div class="flex gap-2 flex-wrap">
+                  <button class="filter-chip active px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-sm" data-filter="all">All</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-filter="unlocked">Unlocked</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-filter="locked">Locked</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-type="laser">Laser</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-type="bubble">Bubble</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-type="gold">Gold</button>
+                  <button class="filter-chip px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-sm" data-type="electric">Electric</button>
+                </div>
+                <div class="md:ml-auto">
+                  <input id="searchInput" placeholder="Search fish..." class="w-full md:w-72 px-3 py-2 rounded-lg bg-white/10 border border-white/15 outline-none placeholder:text-slate-400" />
+                </div>
+              </div>
+
+              <!-- Unlocked list -->
+              <div id="fishList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <!-- Cards injected by JS -->
+              </div>
+
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-slate-300 text-sm leading-relaxed">
+                  Controls:
+                  <span class="inline-block rounded-md px-2 py-0.5 bg-white/10 ml-1">↑ / W = up</span>
+                  <span class="inline-block rounded-md px-2 py-0.5 bg-white/10 ml-1">↓ / S = down</span>
+                  <span class="inline-block rounded-md px-2 py-0.5 bg-white/10 ml-1">Space = shoot</span>
+                  <span class="inline-block rounded-md px-2 py-0.5 bg-white/10 ml-1">L = laser</span>
+                  <span class="inline-block rounded-md px-2 py-0.5 bg-white/10 ml-1">Escape = pause</span>
+                </div>
+                <button id="startBtn" class="px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-900 font-bold shadow transition">
+                  Start Swim
+                </button>
+              </div>
+            </div>
+
+            <!-- Shop content -->
+            <div id="shopContent" class="hidden">
+              <p class="text-slate-300 mb-4">Earn coins by swimming far and blasting obstacles. Unlock new fish in the shop.</p>
+
+              <!-- Search in shop -->
+              <div class="mb-4 flex items-center gap-3">
+                <input id="shopSearchInput" placeholder="Search shop..." class="w-full md:w-80 px-3 py-2 rounded-lg bg-white/10 border border-white/15 outline-none placeholder:text-slate-400" />
+                <span class="text-sm text-slate-300">Cash: <span id="coinsText3" class="text-amber-300 font-bold">0</span> 💵</span>
+              </div>
+
+              <!-- Mystery Crate -->
+              <div class="mb-4 p-4 rounded-xl border border-amber-300/30 bg-amber-300/10 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-amber-300/30 grid place-items-center border border-amber-300/50">🎁</div>
+                  <div>
+                    <div class="font-bold">Mystery Crate</div>
+                    <div class="text-sm text-slate-300">Get a random skin or ability you don’t own yet.</div>
+                  </div>
+                </div>
+                <button id="buyCrateBtn" class="px-4 py-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-slate-900 font-semibold">Buy • 1000 💵</button>
+              </div>
+
+              <!-- Shop grid -->
+              <div id="shopList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Cards injected by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pause Panel -->
+        <div id="pausePanel" class="hidden absolute inset-0 z-30 grid place-items-center bg-slate-950/70 backdrop-blur-sm">
+          <div class="w-[92%] md:w-[560px] rounded-2xl border border-white/10 bg-slate-900/70 p-6 md:p-8 shadow-2xl text-center">
+            <h3 class="text-2xl font-extrabold mb-2">Paused</h3>
+            <p class="text-slate-300 mb-6">Take a breather. The current is strong!</p>
+            <div class="flex items-center justify-center gap-3">
+              <button id="resumeBtn" class="px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-900 font-bold transition">
+                Resume
+              </button>
+              <button id="pauseRestartBtn" class="px-5 py-3 rounded-xl bg-rose-500/80 hover:bg-rose-500 active:bg-rose-600 text-white font-bold transition">
+                Restart
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Game Over Panel -->
+        <div id="gameOverPanel" class="hidden absolute inset-0 z-30 grid place-items-center bg-slate-950/70 backdrop-blur-sm">
+          <div class="w-[92%] md:w-[560px] rounded-2xl border border-white/10 bg-slate-900/70 p-6 md:p-8 shadow-2xl text-center">
+            <h3 class="text-2xl font-extrabold mb-2">Game Over</h3>
+            <p id="gameOverReason" class="text-slate-300 mb-4">You hit an obstacle!</p>
+            <div class="mb-6 grid grid-cols-2 gap-3">
+              <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+                <div class="text-slate-300 text-sm">Distance</div>
+                <div id="finalDistance" class="text-xl font-bold">0 m</div>
+              </div>
+              <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+                <div class="text-slate-300 text-sm">Cash Earned</div>
+                <div id="finalCoins" class="text-xl font-bold">0 💵</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-center gap-3">
+              <button id="playAgainBtn" class="px-5 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-900 font-bold transition">
+                Play Again
+              </button>
+              <button id="changeFishBtn" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white font-bold border border-white/10 transition">
+                Change Fish
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobileControls" class="absolute bottom-3 left-3 right-3 z-20 flex gap-3 justify-between md:hidden">
+          <div class="flex gap-3">
+            <button data-act="up" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 text-sm">Up</button>
+            <button data-act="down" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 text-sm">Down</button>
+          </div>
+          <div class="flex gap-3">
+            <button data-act="shoot" class="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/10 text-sm">Shoot</button>
+            <button data-act="laser" class="px-5 py-3 rounded-xl bg-fuchsia-400/80 hover:bg-fuchsia-400 active:bg-fuchsia-500 text-slate-900 font-semibold text-sm">Laser</button>
+          </div>
+        </div>
+
+        <!-- Ambient bubbles -->
+        <div id="bubbleLayer" class="absolute inset-0 pointer-events-none z-0"></div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="px-6 pb-6 text-center text-slate-300/80 text-sm">
+      Built for fun on the web. Tip: Aim your shots to clear narrow gaps. No guns are shown; each fish shoots its own themed projectiles.
+    </footer>
+  </div>
+
+  <script>
+    // Utility
+    const rand = (a,b)=>Math.random()*(b-a)+a;
+
+    // Ambient bubbles
+    (function makeBubbles(){
+      const layer = document.getElementById('bubbleLayer');
+      const count = 24;
+      for(let i=0;i<count;i++){
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        const size = rand(6,18);
+        b.style.width = size+'px';
+        b.style.height = size+'px';
+        b.style.left = rand(0,100)+'%';
+        b.style.bottom = '-'+rand(0,40)+'px';
+        b.style.animationDuration = rand(8,18)+'s';
+        b.style.animationDelay = rand(0,10)+'s';
+        layer.appendChild(b);
+      }
+    })();
+
+   // Canvas
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas(){
+  // Get the stage (parent) so we can tweak height on mobile
+  const stage = canvas.parentElement;
+
+  // If narrow (typical mobile portrait), make the stage taller so canvas is usable
+  if (window.innerWidth <= 720) {
+    // Use ~72% of viewport height for the game area on mobile, with a sensible min
+    stage.style.height = Math.max(300, Math.floor(window.innerHeight * 0.72)) + 'px';
+  } else {
+    // Reset to CSS aspect behavior on wider screens
+    stage.style.height = '';
+  }
+
+  // Now measure the canvas container after any stage height change
+  const rect = canvas.getBoundingClientRect();
+
+  // Use the container size (CSS pixels). Lower sensible minima to avoid tiny canvases.
+  const cssW = Math.max(320, Math.floor(rect.width));
+  const cssH = Math.max(240, Math.floor(rect.height));
+
+  // Apply CSS size and actual canvas pixel buffer to match CSS pixels (keeps logic unchanged)
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+  canvas.width = cssW;
+  canvas.height = cssH;
+}
+
+// Observe and resize
+const ro = new ResizeObserver(resizeCanvas);
+ro.observe(canvas);
+
+// Run an immediate resize to initialize
+resizeCanvas();
+
+// HUD & Panels
+const hudEl = {
+  distance: document.getElementById('distance'),
+  fuelBar: document.getElementById('fuelBar'),
+  fuelText: document.getElementById('fuelText'),
+};
+const panels = {
+  start: document.getElementById('startPanel'),
+  pause: document.getElementById('pausePanel'),
+  over: document.getElementById('gameOverPanel'),
+};
+const buttons = {
+  start: document.getElementById('startBtn'),
+  pause: document.getElementById('pauseBtn'),
+  restart: document.getElementById('restartBtn'),
+  resume: document.getElementById('resumeBtn'),
+  pauseRestart: document.getElementById('pauseRestartBtn'),
+  playAgain: document.getElementById('playAgainBtn'),
+  changeFish: document.getElementById('changeFishBtn'),
+  howTo: document.getElementById('howToBtn'),
+  tabPlay: document.getElementById('tabPlay'),
+  tabShop: document.getElementById('tabShop'),
+};
+
+// Economy + Unlocks (saved locally)
+const storage = {
+  load(){
+    try {
+      const raw = JSON.parse(localStorage.getItem('fcr_save')||'{}');
+      return Object.assign({ coins:0, unlocked:['clown'], selected:'clown', lastDaily:0 }, raw);
+    } catch(e){ return { coins:0, unlocked:['clown'], selected:'clown', lastDaily:0 }; }
+  },
+  save(state){
+    localStorage.setItem('fcr_save', JSON.stringify(state));
+  },
+  saveNow(){
+    try {
+      localStorage.setItem('fcr_save', JSON.stringify(save));
+    } catch(e){}
+  }
+};
+const save = storage.load();
+
+// Fish catalog
+// type: bubble | laser | gold | electric | beam
+// Cash icon helper for labels
+const CASH_EMOJI = '💵';
+
+const ALL_FISH = [
+  { id:'clown',  name:'Clownfish',   emoji:'🐠', color:'#FFAF3F', type:'bubble', price:0,    desc:'Default. Shoots air bubbles.' },
+  { id:'shark',  name:'Laser Shark', emoji:'🦈', color:'#60A5FA', type:'laser',  price:800,  desc:'Shoots bright lasers like sci-fi.' },
+  { id:'gold',   name:'Goldfish',    emoji:'🐟', color:'#FFD600', type:'gold',   price:650,  desc:'Shoots shiny gold bars.' },
+  { id:'jelly',  name:'Jellyfish',   emoji:'🪼', color:'#34D399', type:'electric', price:700, desc:'Zaps lightning from tentacles.' },
+  { id:'dolph',  name:'Dolphin',     emoji:'🐬', color:'#93C5FD', type:'bubble', price:500,  desc:'Swift swimmer. Strong bubbles.' },
+  { id:'octo',   name:'Octopus',     emoji:'🐙', color:'#FB7185', type:'ink',    price:500,  desc:'Shoots inky blobs that splat.' },
+  { id:'turtle', name:'Turtle',      emoji:'🐢', color:'#86EFAC', type:'shield', price:450,  desc:'3-life shell shield. Tough!' },
+  { id:'whale',  name:'Whale',       emoji:'🐋', color:'#A5B4FC', type:'tail',   price:900,  desc:'Tail swipe attack up close.' },
+  { id:'ray',    name:'Stingray',    emoji:'🐟', color:'#38BDF8', type:'dash',   price:850,  desc:'Quick dash burst to phase through one obstacle.' },
+  { id:'puff',   name:'Puffer',      emoji:'🐡', color:'#FDE047', type:'spike',  price:550,  desc:'Puff up to spike nearby hazards.' },
+  { id:'angler', name:'Angler',      emoji:'🎣', color:'#93A3AF', type:'lure',   price:750,  desc:'Lures pickups and slows nearby hazards briefly.' },
+  { id:'marlin', name:'Marlin',      emoji:'🐟', color:'#60A5FA', type:'pierce', price:880,  desc:'Spear through a line of hazards.' },
+  { id:'seah',   name:'Seahorse',    emoji:'🐟', color:'#A7F3D0', type:'speed',  price:620,  desc:'Short bursts of swift movement.' },
+  { id:'manta',  name:'Manta',       emoji:'🐟', color:'#67E8F9', type:'glide',  price:820,  desc:'Wide glide that makes dodging easier.' },
+  { id:'narw',   name:'Narwhal',     emoji:'🦄', color:'#A78BFA', type:'beam',   price:980,  desc:'Piercing horn beam in a straight line.' },
+  { id:'crab',   name:'Crab',        emoji:'🦀', color:'#FB7185', type:'guard',  price:560,  desc:'Occasional claw block that negates a hit.' },
+  { id:'seal',   name:'Seal',        emoji:'🦭', color:'#93C5FD', type:'stun',   price:700,  desc:'Barks to briefly stun nearby hazards.' },
+  { id:'eel',    name:'Eel',         emoji:'🐍', color:'#22D3EE', type:'electric',price:760, desc:'Arcs extra lightning to the side.' },
+  { id:'koi',    name:'Koi',         emoji:'🎏', color:'#F97316', type:'bubble', price:600,  desc:'Fancy colors; wider bubbles.' },
+  { id:'orca',   name:'Orca',        emoji:'🐳', color:'#111827', type:'guard',  price:920,  desc:'Tough titan that shrugs a hit.' },
+  { id:'betta',  name:'Betta',       emoji:'🐠', color:'#EF4444', type:'speed',  price:640,  desc:'Flashy, fast sprints.' },
+  { id:'sword',  name:'Swordfish',   emoji:'🐟', color:'#3B82F6', type:'pierce', price:900,  desc:'Cuts a straight path.' },
+  { id:'axo',    name:'Axolotl',     emoji:'🦎', color:'#F472B6', type:'glide',  price:680,  desc:'Smooth glides through gaps.' },
+  { id:'lion',   name:'Lionfish',    emoji:'🐠', color:'#F59E0B', type:'spike',  price:720,  desc:'Spiky burst to clear nearby.' }
+];
+
+// Game state
+const game = {
+  running:false, paused:false, over:false,
+  distance:0,
+  energy:1,
+  speed:190,
+  time:0,
+  sessionCoins:0,
+  fish:{
+    id:'clown',
+    x: 180, y: 0, vy:0,
+    color:'#FFAF3F', emoji:'🐠',
+    radius:28, name:'Clownfish', type:'bubble',
+    agility:1.0, boost:1.0, regen:1.0
+  },
+  obstacles:[],
+  pickups:[],
+  flowBands:[],
+  // projectiles
+  bubbles:[],
+  lasers:[],
+  bolts:[],     // star-wars style laser bolts
+  zaps:[],      // lightning
+  golds:[],     // gold bars
+  inks:[],      // ink blobs
+  explosions:[],
+  // specials
+  shield: { lives:0, flash:0 },
+  tail: { swing:0 },
+  // resources
+  laserPointsMax: 100,
+  laserPoints: 100,
+  // boss
+  boss: { active:false, hp:100, x:0, y:0, t:0, hooks:[], fireCd:0 }
+};
+
+// Update coins UI
+function syncCoins(){
+  document.getElementById('coinsText').textContent = save.coins;
+  document.getElementById('coinsText2').textContent = save.coins;
+  document.getElementById('coinsText3').textContent = save.coins;
+}
+syncCoins();
+
+// Filters
+let currentFilter = { group:'all', type:null, search:'' };
+
+// Build tabs
+function setTab(which){
+  const play = document.getElementById('playContent');
+  const shop = document.getElementById('shopContent');
+  if(which==='play'){
+    play.classList.remove('hidden'); shop.classList.add('hidden');
+    buttons.tabPlay.classList.add('bg-emerald-400','text-slate-900','font-bold');
+    buttons.tabShop.classList.remove('bg-emerald-400','text-slate-900','font-bold');
+    buttons.tabShop.classList.add('bg-white/10','border','border-white/10');
+  } else {
+    shop.classList.remove('hidden'); play.classList.add('hidden');
+    buttons.tabShop.classList.add('bg-emerald-400','text-slate-900','font-bold');
+    buttons.tabPlay.classList.remove('bg-emerald-400','text-slate-900','font-bold');
+    buttons.tabPlay.classList.add('bg-white/10','border','border-white/10');
+  }
+}
+buttons.tabPlay.addEventListener('click', ()=>setTab('play'));
+buttons.tabShop.addEventListener('click', ()=>setTab('shop'));
+
+// Render fish grids
+function matchesFilters(f, unlocked){
+  if(currentFilter.group==='unlocked' && !unlocked) return false;
+  if(currentFilter.group==='locked' && unlocked) return false;
+  if(currentFilter.type && f.type !== currentFilter.type) return false;
+  if(currentFilter.search){
+    const s = currentFilter.search.toLowerCase();
+    if(!(f.name.toLowerCase().includes(s) || f.id.toLowerCase().includes(s))) return false;
+  }
+  return true;
+}
+
+function cardHTML(f, unlocked, inShop=false){
+  const tag = f.type==='laser'?'Laser':f.type==='gold'?'Gold':f.type==='electric'?'Electric':'Bubble';
+  const lockBadge = unlocked ? '<span class="text-emerald-300 text-xs font-semibold">Unlocked</span>'
+                             : `<span class=\"text-amber-300 text-xs font-semibold\">${f.price} ${CASH_EMOJI}</span>`;
+  const btn = inShop
+    ? (unlocked
+        ? `<button data-select=\"${f.id}\" class=\"w-full mt-3 px-3 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-bold\">Select</button>`
+        : `<button data-buy=\"${f.id}\" class=\"w-full mt-3 px-3 py-2 rounded-lg bg-amber-300 hover:bg-amber-200 text-slate-900 font-bold\">Unlock • ${f.price} ${CASH_EMOJI}</button>`)
+    : (unlocked
+        ? `<button data-select=\"${f.id}\" class=\"w-full mt-3 px-3 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-bold\">Select</button>`
+        : `<button disabled class=\"w-full mt-3 px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-slate-400\">Locked • ${f.price} 🪙</button>`);
+  return `
+    <div class=\"group rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition p-4 flex flex-col cursor-pointer\" data-card=\"${f.id}\">
+      <div class=\"flex items-center justify-between\">
+        <div class=\"flex items-center gap-2\">
+          <span class=\"text-3xl\">${f.emoji}</span>
+          <div>
+            <div class=\"font-bold\">${f.name}</div>
+            <div class=\"text-xs text-slate-300\">${f.desc}</div>
+          </div>
+        </div>
+        <span class=\"px-2 py-0.5 text-xs rounded-full bg-white/10 border border-white/15\">${tag}</span>
+      </div>
+      <div class=\"mt-3 flex items-center justify-between\">
+        <div class=\"flex items-center gap-2\">${lockBadge}</div>
+      </div>
+      ${btn}
+    </div>
+  `;
+}
+
+function renderPlayList(){
+  const wrap = document.getElementById('fishList');
+  wrap.innerHTML = '';
+  const unlockedSet = new Set(save.unlocked);
+  const data = ALL_FISH.filter(f => matchesFilters(f, unlockedSet.has(f.id)));
+  data.forEach(f=>{
+    const holder = document.createElement('div');
+    holder.innerHTML = cardHTML(f, unlockedSet.has(f.id), false);
+    const el = holder.firstElementChild;
+    // allow selecting via button or card click if unlocked
+    const select = ()=>{
+      if(!unlockedSet.has(f.id)) return;
+      save.selected = f.id;
+      storage.save(save); // autosave selected fish
+      Array.from(wrap.children).forEach(c=>c.classList.remove('ring-2','ring-emerald-400/70','bg-white/10'));
+      el.classList.add('ring-2','ring-emerald-400/70','bg-white/10');
+      // start immediately
+      startGame();
+    };
+    el.querySelector('[data-select]')?.addEventListener('click', select);
+    el.addEventListener('click', (e)=>{ if(e.target.closest('[data-buy]')) return; select(); });
+    wrap.appendChild(el);
+  });
+
+      // preselect highlight
+      Array.from(wrap.children).forEach(c=>{
+        const id = c.getAttribute('data-card');
+        if(id === save.selected) c.classList.add('ring-2','ring-emerald-400/70','bg-white/10');
+      });
+    }
+
+    function renderShopList(){
+      const wrap = document.getElementById('shopList');
+      wrap.innerHTML = '';
+      const unlockedSet = new Set(save.unlocked);
+      const s = document.getElementById('shopSearchInput').value.trim().toLowerCase();
+      ALL_FISH.filter(f=>{
+        if(s && !(f.name.toLowerCase().includes(s)||f.id.toLowerCase().includes(s))) return false;
+        return true;
+      }).forEach(f=>{
+        const holder = document.createElement('div');
+        holder.innerHTML = cardHTML(f, unlockedSet.has(f.id), true);
+        const el = holder.firstElementChild;
+        // Buy
+        el.querySelector('[data-buy]')?.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(save.coins >= f.price){
+            save.coins -= f.price;
+            save.unlocked.push(f.id);
+            save.selected = f.id;
+            storage.save(save); // autosave after purchase
+            syncCoins();
+            renderShopList();
+            renderPlayList();
+          }
+        });
+        // Select owned from shop too
+        el.querySelector('[data-select]')?.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(!unlockedSet.has(f.id)) return;
+          save.selected = f.id; storage.save(save); renderPlayList(); startGame(); // autosave after selecting in shop
+        });
+        // Card click selects if owned
+        el.addEventListener('click', ()=>{
+          if(unlockedSet.has(f.id)){ save.selected = f.id; storage.save(save); renderPlayList(); startGame(); } // autosave after selecting card
+        });
+        wrap.appendChild(el);
+      });
+
+      // Mystery crate button logic
+      const crateBtn = document.getElementById('buyCrateBtn');
+      if(crateBtn){
+        crateBtn.onclick = ()=>{
+          if(save.coins < 1000){ showToast('Not enough cash for a crate'); return; }
+          // pool of locked fish only
+          const locked = ALL_FISH.filter(f=>!save.unlocked.includes(f.id));
+          if(locked.length===0){ showToast('You already own everything!'); return; }
+          save.coins -= 1000;
+          const pick = locked[(Math.random()*locked.length)|0];
+          // unlock & select
+          save.unlocked.push(pick.id);
+          save.selected = pick.id;
+          storage.save(save);
+          syncCoins();
+          renderPlayList();
+          renderShopList();
+          // subtle toast
+          showToast(`You unlocked: ${pick.name}!`);
+        };
+      }
+    }
+
+    // Filters handlers
+    function updateFilterChips(target){
+      document.querySelectorAll('.filter-chip').forEach(ch=>{
+        ch.classList.remove('active');
+        ch.classList.remove('bg-emerald-400','text-slate-900','font-bold');
+        ch.classList.add('bg-white/10');
+      });
+      target.classList.add('active','bg-emerald-400','text-slate-900','font-bold');
+    }
+    document.querySelectorAll('.filter-chip').forEach(ch=>{
+      ch.addEventListener('click', ()=>{
+        if(ch.dataset.filter){
+          currentFilter.group = ch.dataset.filter;
+          currentFilter.type = null;
+        } else if(ch.dataset.type){
+          currentFilter.type = ch.dataset.type;
+          currentFilter.group = 'all';
+        }
+        updateFilterChips(ch);
+        renderPlayList();
+      });
+    });
+    document.getElementById('searchInput').addEventListener('input', (e)=>{
+      currentFilter.search = e.target.value;
+      renderPlayList();
+    });
+    document.getElementById('shopSearchInput').addEventListener('input', renderShopList);
+
+    // Initial render
+    renderPlayList();
+    renderShopList();
+
+// Controls + Mobile (touch drag to move, tap to shoot, double-tap toggles laser; single-tap while laser -> stop laser + shoot)
+const keys = { up:false, down:false, shoot:false, laser:false };
+
+// --- Keyboard ---
+window.addEventListener('keydown', (e)=>{
+  // movement
+  if(['ArrowUp','w','W','i','I'].includes(e.key)) { keys.up = true; e.preventDefault(); }
+  if(['ArrowDown','s','S','k','K'].includes(e.key)) { keys.down = true; e.preventDefault(); }
+
+  // shoot: Space OR F (Space is primary)
+  if(e.code === 'Space' || e.key === ' ') { keys.shoot = true; e.preventDefault(); }
+  if(['f','F'].includes(e.key)) { keys.shoot = true; e.preventDefault(); }
+
+  // laser: L or l
+  if(['l','L'].includes(e.key)) { keys.laser = true; e.preventDefault(); }
+
+  // restart: R or r -> instantly reset and start a new run
+  if(['r','R'].includes(e.key)){
+    resetGame();
+    game.over = false;
+    game.paused = false;
+    game.running = true;
+    hide(panels.start); hide(panels.over); hide(panels.pause);
+    // reset laser points display
+    game.laserPoints = game.laserPointsMax;
+    const lpEl = document.getElementById('laserPtsText'); if(lpEl) lpEl.textContent = game.laserPoints;
+    e.preventDefault();
+  }
+
+  // pause toggled by Escape (moved off Space so Space can shoot)
+  if(e.key === 'Escape'){
+    if(game.running && !game.over){
+      game.paused = !game.paused;
+      game.paused ? show(panels.pause) : hide(panels.pause);
+    }
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', (e)=>{
+  if(['ArrowUp','w','W','i','I'].includes(e.key)) keys.up = false;
+  if(['ArrowDown','s','S','k','K'].includes(e.key)) keys.down = false;
+
+  // release shoot when Space or F released
+  if(e.code === 'Space' || e.key === ' ' || ['f','F'].includes(e.key)) keys.shoot = false;
+
+  // release laser on L up
+  if(['l','L'].includes(e.key)) keys.laser = false;
+});
+
+// --- Touch / Pointer controls on canvas ---
+// Behavior:
+// - Hold or drag finger up/down to move (continuous).
+// - Single tap -> shoot. If laser is currently active, single tap will stop the laser and shoot instead.
+// - Double-tap -> toggle laser on/off.
+// - Keeps existing on-screen mobileControls buttons working.
+
+let pointerActive = false;
+let activePointerId = null;
+let pointerStart = null;
+let singleTapTimer = null;
+let lastTap = 0;
+const DOUBLE_TAP_MS = 300;
+const TAP_MOVE_THRESHOLD = 12; // px
+
+function canvasPointerToLocalY(e){
+  const rect = canvas.getBoundingClientRect();
+  return e.clientY - rect.top;
+}
+
+function updateMovementForPointerY(clientY){
+  const rect = canvas.getBoundingClientRect();
+  const localY = clientY - rect.top;
+  // compare to fish.y (which is in canvas coordinate space)
+  if(localY < game.fish.y - 8){
+    keys.up = true; keys.down = false;
+  } else if(localY > game.fish.y + 8){
+    keys.down = true; keys.up = false;
+  } else {
+    keys.up = false; keys.down = false;
+  }
+}
+
+function cancelSingleTapTimer(){
+  if(singleTapTimer){ clearTimeout(singleTapTimer); singleTapTimer = null; }
+}
+
+canvas.addEventListener('pointerdown', (e)=>{
+  // only handle primary pointers
+  if(e.isPrimary === false && activePointerId !== null) return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  pointerActive = true;
+  activePointerId = e.pointerId;
+  pointerStart = { x: e.clientX, y: e.clientY };
+
+  const now = Date.now();
+  const isDouble = (now - lastTap) <= DOUBLE_TAP_MS;
+  lastTap = now;
+
+  // If double-tap: cancel pending single-tap and toggle laser immediately
+  if(isDouble){
+    cancelSingleTapTimer();
+    // toggle laser on double-tap
+    keys.laser = !keys.laser;
+    return;
+  }
+
+  // schedule single-tap action (shoot or stop-laser+shoot) if not moved
+  singleTapTimer = setTimeout(()=>{
+    singleTapTimer = null;
+    // If laser is active, single tap should stop laser and shoot instead
+    if(keys.laser){
+      keys.laser = false;
+      // trigger a single shot
+      keys.shoot = true;
+    } else {
+      keys.shoot = true;
+    }
+  }, DOUBLE_TAP_MS + 20); // slightly longer than double-tap window
+
+  // start movement toward pointer position immediately
+  updateMovementForPointerY(e.clientY);
+}, { passive:false });
+
+canvas.addEventListener('pointermove', (e)=>{
+  if(!pointerActive || e.pointerId !== activePointerId) return;
+  e.preventDefault();
+  // If user drags more than threshold, cancel the pending single-tap (it's a drag)
+  if(pointerStart){
+    const dy = Math.abs(e.clientY - pointerStart.y);
+    if(dy > TAP_MOVE_THRESHOLD){
+      cancelSingleTapTimer();
+    }
+  }
+  // Update movement continuously toward pointer Y
+  updateMovementForPointerY(e.clientY);
+}, { passive:false });
+
+function releasePointer(e){
+  if(e.pointerId !== activePointerId) return;
+  e.preventDefault();
+  cancelSingleTapTimer();
+  try{ canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+  pointerActive = false;
+  activePointerId = null;
+  pointerStart = null;
+  // stop movement when finger lifted
+  keys.up = false; keys.down = false;
+}
+
+canvas.addEventListener('pointerup', releasePointer, { passive:false });
+canvas.addEventListener('pointercancel', (e)=>{ releasePointer(e); }, { passive:false });
+
+// --- Keep existing on-screen mobile buttons behavior (unchanged) ---
+document.querySelectorAll('#mobileControls [data-act]').forEach(btn=>{
+  const act = btn.getAttribute('data-act');
+  const set = v=>{
+    if(act==='up') keys.up=v;
+    if(act==='down') keys.down=v;
+    if(act==='shoot') {
+      // touch buttons: single press should fire once
+      if(v){ keys.shoot = true; }
+      else { keys.shoot = false; }
+    }
+    if(act==='laser'){
+      // For on-screen laser button: treat tap as toggle (press to toggle on, tap again to toggle off)
+      // We'll implement as: pointerdown toggles laser; pointerup does nothing.
+      // But to preserve backward compatibility, detect click events instead:
+    }
+  };
+  let activeId = null;
+  const onDown = (ev)=>{ ev.preventDefault(); activeId = act;
+    if(act==='laser'){
+      // toggle laser on button press (single tap)
+      keys.laser = !keys.laser;
+    } else {
+      set(true);
+    }
+  };
+  const onUp = ()=>{ if(activeId===act){
+      if(act !== 'laser') set(false);
+      activeId=null;
+    }
+  };
+  btn.addEventListener('touchstart', onDown, { passive:false });
+  btn.addEventListener('mousedown', onDown);
+  ['touchend','touchcancel'].forEach(ev=>btn.addEventListener(ev, onUp));
+  ['mouseup','mouseleave'].forEach(ev=>btn.addEventListener(ev, onUp));
+});
+
+// Panel helpers
+function show(el){ el.classList.remove('hidden'); }
+function hide(el){ el.classList.add('hidden'); }
+
+// Buttons
+buttons.start.addEventListener('click', startGame);
+panels.start.addEventListener('click', (e)=>{
+  // Allow tapping anywhere empty inside Play or Shop lists to start selected fish
+  const blocked = e.target.closest('button, input, [data-buy], [data-select], .filter-chip');
+  if(blocked) return; // don't start when interacting with UI controls
+  startGame();
+});
+buttons.pause.addEventListener('click', ()=>{ if(game.running && !game.over){ game.paused=true; show(panels.pause); }});
+buttons.resume.addEventListener('click', ()=>{ game.paused=false; hide(panels.pause); });
+buttons.pauseRestart.addEventListener('click', ()=>{ hide(panels.pause); hide(panels.over); show(panels.start); game.running=false; });
+buttons.restart.addEventListener('click', ()=>{ hide(panels.over); show(panels.start); game.running=false; });
+buttons.playAgain.addEventListener('click', ()=>{ hide(panels.over); resetGame(); game.running=true; });
+// also reset laser uses when restarting via buttons
+buttons.restart.addEventListener('click', ()=>{ game.laserPoints = game.laserPointsMax; document.getElementById('laserPtsText').textContent = game.laserPoints; });
+buttons.pauseRestart.addEventListener('click', ()=>{ game.laserPoints = game.laserPointsMax; document.getElementById('laserPtsText').textContent = game.laserPoints; });
+buttons.changeFish.addEventListener('click', ()=>{ hide(panels.over); show(panels.start); game.running=false; });
+
+    // Daily prize button: 500 cash once per day
+    const dailyBtn = document.getElementById('dailyBtn');
+    function dailyEligible(){
+      const now = Date.now();
+      // eligible if 24h passed since lastDaily
+      return (now - (save.lastDaily||0)) >= 24*60*60*1000;
+    }
+    function refreshDaily(){
+      dailyBtn.disabled = !dailyEligible();
+      dailyBtn.textContent = dailyEligible() ? 'Daily 500' : 'Come back later';
+      dailyBtn.title = dailyEligible() ? 'Claim 500 cash' : 'You can claim again after 24 hours';
+    }
+    refreshDaily();
+    dailyBtn.addEventListener('click', ()=>{
+      if(!dailyEligible()) { showToast('Daily already claimed'); return; }
+      save.coins += 500;
+      save.lastDaily = Date.now();
+      storage.save(save);
+      syncCoins();
+      refreshDaily();
+      showToast('Daily reward +500!');
+    });
+
+    // Manual save button
+    document.getElementById('saveBtn').addEventListener('click', ()=>{
+      storage.saveNow();
+      // small visual ping: briefly flash the cash pill
+      const pill = document.querySelector('#coinsText').parentElement;
+      pill.classList.add('ring-2','ring-emerald-300/70');
+      setTimeout(()=>pill.classList.remove('ring-2','ring-emerald-300/70'), 500);
+    });
+
+    // River decor bands
+    function buildFlowBands(){
+      game.flowBands = [
+        { speed: 0.35, amp: 6, color:'rgba(255,255,255,0.06)', size: 18, seed: Math.random()*1000 },
+        { speed: 0.7, amp: 10, color:'rgba(255,255,255,0.08)', size: 28, seed: Math.random()*1000 },
+        { speed: 1.1, amp: 14, color:'rgba(255,255,255,0.10)', size: 38, seed: Math.random()*1000 },
+      ];
+    }
+
+    // Spawns
+    function spawnObstacle(){
+      const w = canvas.width, h = canvas.height;
+      const y = rand(60, h-60);
+      const baseSpeed = game.speed * rand(0.95, 1.15);
+      const types = ['rock','net','log'];
+      const type = types[(Math.random()*types.length)|0];
+      const obs = {
+        id:'o'+Math.random().toString(36).slice(2),
+        type,
+        x: w + 80, y,
+        vx: -baseSpeed * (type==='net'?0.9:type==='rock'?1.05:1.0),
+        w: type==='rock' ? rand(28,44) : type==='net' ? rand(70,110) : rand(80,120),
+        h: type==='rock' ? rand(28,44) : type==='net' ? rand(26,44) : rand(28,42),
+        rot: rand(-0.15,0.15)
+      };
+      game.obstacles.push(obs);
+    }
+    function spawnPickup(){
+      const w = canvas.width, h = canvas.height;
+      const y = rand(70, h-70);
+      game.pickups.push({
+        id: 'b' + Math.random().toString(36).slice(2),
+        x: w + 40,
+        y, vx: -(game.speed*0.95),
+        r: 12, t: 0
+      });
+    }
+
+    // Reset + Start
+    function applySelected(){
+      const f = ALL_FISH.find(x=>x.id===save.selected) || ALL_FISH[0];
+      game.fish.id = f.id;
+      game.fish.name = f.name;
+      game.fish.emoji = f.emoji;
+      game.fish.color = f.color;
+      game.fish.type = f.type;
+      // lightweight toggles for new abilities
+      game.dash = { ready:true, cd:0 };
+      game.spike = { active:false, t:0 };
+      game.lure = { t:0 };
+    }
+
+    function resetGame(){
+      const h = canvas.height;
+      game.distance = 0;
+      game.sessionCoins = 0;
+      game.energy = 1;
+      game.laserPoints = game.laserPointsMax; // reset laser uses each run
+      game.speed = 190;
+      game.time = 0;
+      game.obstacles = [];
+      game.pickups = [];
+      game.bubbles = [];
+      game.lasers = [];
+      game.bolts = [];
+      game.zaps = [];
+      game.golds = [];
+      game.inks = [];
+      game.explosions = [];
+      game.shield = { lives: (game.fish.type==='shield'?3:0), flash:0 };
+      game.tail = { swing:0 };
+      game.boss = { active:false, hp:100, x:0, y:0, t:0, hooks:[], fireCd:0 };
+      document.getElementById('bossBarWrap').classList.add('hidden');
+      game.fish.x = Math.max(140, canvas.width*0.22);
+      game.fish.y = h/2;
+      game.fish.vy = 0;
+      applySelected();
+      buildFlowBands();
+      for(let i=0;i<5;i++) spawnObstacle();
+      for(let i=0;i<3;i++) spawnPickup();
+      updateHUD();
+    }
+
+    function startGame(){
+      if(!save.unlocked.includes(save.selected)) return;
+      hide(panels.start);
+      resetGame();
+      game.over = false;
+      game.paused = false;
+      game.running = true;
+      lastTs = 0;
+    }
+
+    // Tiny toast helper
+    function showToast(msg){
+      let t = document.getElementById('toast');
+      if(!t){
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg bg-emerald-400 text-slate-900 font-semibold shadow border border-white/20';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg;
+      t.style.opacity = '1';
+      t.style.transform = 'translate(-50%, 0)';
+      setTimeout(()=>{ t.style.opacity = '0'; }, 1400);
+    }
+
+    // HUD
+    function updateHUD(){
+      hudEl.distance.textContent = `${Math.floor(game.distance)} m`;
+      const pct = Math.max(0, Math.min(1, game.energy));
+      hudEl.fuelBar.style.width = (pct*100).toFixed(1) + '%';
+      hudEl.fuelText.textContent = Math.round(pct*100) + '%';
+      const lpEl = document.getElementById('laserPtsText'); if(lpEl) lpEl.textContent = Math.ceil(game.laserPoints);
+      // ammo/energy pips + turtle shield pips
+      const wheel = document.getElementById('ammoWheel');
+      if(wheel){
+        wheel.innerHTML = '';
+        const shieldLives = game.shield?.lives || 0;
+        const pips = 6;
+        const filled = Math.round(pct * pips);
+        for(let i=0;i<pips;i++){
+          const dot = document.createElement('div');
+          dot.style.width='10px'; dot.style.height='10px';
+          dot.style.borderRadius='999px';
+          dot.style.border='1px solid rgba(255,255,255,0.5)';
+          if(i < shieldLives){
+            dot.style.background = 'linear-gradient(90deg,#22c55e,#16a34a)';
+          } else {
+            dot.style.background = (i < filled) ? 'linear-gradient(90deg,#34d399,#22d3ee)' : 'transparent';
+          }
+          wheel.appendChild(dot);
+        }
+      }
+    }
+
+    // Game over
+    function endGame(reason){
+      game.over = true; game.running = false;
+      // Convert distance to cash + shots bonus
+      const earned = Math.floor(game.distance/15) + Math.floor(game.sessionCoins);
+      save.coins += earned;
+      storage.save(save); // autosave after runs
+      syncCoins();
+
+      document.getElementById('gameOverReason').textContent = reason;
+      document.getElementById('finalDistance').textContent = `${Math.floor(game.distance)} m`;
+      document.getElementById('finalCoins').textContent = `${earned} 🪙`;
+      show(panels.over);
+    }
+
+    // Drawing
+    function drawRiverBackground(w,h, t){
+      const grad = ctx.createLinearGradient(0,0,0,h);
+      grad.addColorStop(0, '#083c6d');
+      grad.addColorStop(0.5, '#072b57');
+      grad.addColorStop(1, '#0a2141');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,w,h);
+
+      ctx.save();
+      for(const band of game.flowBands){
+        ctx.fillStyle = band.color;
+        const yStep = band.size;
+        for(let y = (band.seed%yStep); y < h; y += yStep){
+          const xOff = ((t*game.speed*band.speed) % (yStep*8));
+          ctx.fillRect(w - xOff, y, 120, 2);
+          ctx.fillRect(w - xOff - 240, y, 120, 2);
+          ctx.fillRect(w - xOff - 480, y, 120, 2);
+        }
+      }
+      ctx.restore();
+
+      const grd = ctx.createLinearGradient(0,0,0,80);
+      grd.addColorStop(0, 'rgba(255,255,255,0.08)');
+      grd.addColorStop(1, 'rgba(255,255,255,0.0)');
+      ctx.fillStyle = grd; ctx.fillRect(0,0,w,80);
+
+      const grd2 = ctx.createLinearGradient(0,h-100,0,h);
+      grd2.addColorStop(0, 'rgba(255,255,255,0.0)');
+      grd2.addColorStop(1, 'rgba(255,255,255,0.06)');
+      ctx.fillStyle = grd2; ctx.fillRect(0,h-100,w,100);
+    }
+
+    function drawObstacle(o){
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(o.rot);
+      if(o.type==='rock'){
+        ctx.fillStyle = 'rgba(180,200,220,0.9)';
+        ctx.beginPath();
+        ctx.moveTo(-o.w*0.5, -o.h*0.3);
+        ctx.quadraticCurveTo(0, -o.h*0.7, o.w*0.5, -o.h*0.2);
+        ctx.quadraticCurveTo(o.w*0.4, o.h*0.6, -o.w*0.4, o.h*0.4);
+        ctx.closePath(); ctx.fill();
+      } else if(o.type==='net'){
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.strokeStyle = 'rgba(200,230,255,0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(-o.w/2, -o.h/2, o.w, o.h);
+        for(let x=-o.w/2; x<=o.w/2; x+=10){ ctx.beginPath(); ctx.moveTo(x,-o.h/2); ctx.lineTo(x,o.h/2); ctx.stroke(); }
+        for(let y=-o.h/2; y<=o.h/2; y+=10){ ctx.beginPath(); ctx.moveTo(-o.w/2,y); ctx.lineTo(o.w/2,y); ctx.stroke(); }
+      } else { // log
+        ctx.fillStyle = 'rgba(139,92,62,0.9)';
+        ctx.fillRect(-o.w/2, -o.h/2, o.w, o.h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-o.w/2+8,0); ctx.lineTo(o.w/2-8,0); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPickup(p){
+      ctx.save();
+      ctx.translate(p.x, p.y + Math.sin((p.t+game.time)*4)*3);
+      const rg = ctx.createRadialGradient(0,0,0, 0,0,p.r);
+      rg.addColorStop(0, 'rgba(255,255,255,0.85)');
+      rg.addColorStop(1, 'rgba(173,216,230,0.3)');
+      ctx.fillStyle = rg;
+      ctx.beginPath(); ctx.arc(0,0,p.r,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(-3,-3,4,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawFish(){
+      const f = game.fish;
+      ctx.save();
+      ctx.translate(f.x, f.y);
+      const bob = Math.sin(game.time*8)*2;
+      ctx.translate(0, bob);
+
+      // Size by type for variety
+      const baseLen = 74;
+      const bodyLen = (f.id==='whale') ? baseLen+16 : (f.id==='turtle'? baseLen-6 : baseLen);
+      const bodyHt  = (f.id==='whale') ? 36 : (f.id==='turtle'? 34 : 32);
+
+      // Special case: Jellyfish uses bell shape and tentacles for a more natural look
+      if(f.id==='jelly'){
+        // Bell
+        const bellR = 28;
+        const g = ctx.createRadialGradient(0,-6,2, 0,0,bellR);
+        g.addColorStop(0,'rgba(255,255,255,0.85)');
+        g.addColorStop(0.5,f.color+'CC');
+        g.addColorStop(1,f.color+'33');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(0, -4, bellR, bellR*0.7, 0, Math.PI, 0, true);
+        ctx.fill();
+        // Rim
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, 6, bellR*0.85, bellR*0.25, 0, 0, Math.PI*2); ctx.stroke();
+        // Tentacles
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 1.6;
+        for(let i=0;i<6;i++){
+          const off = (i-2.5)*5;
+          ctx.beginPath();
+          ctx.moveTo(off, 6);
+          ctx.bezierCurveTo(off+6, 18, off-4, 28, off+Math.sin(game.time*2+i)*2, 40);
+          ctx.stroke();
+        }
+        // Eye with shine
+        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(12, -6, 5, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(13, -6, 2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.beginPath(); ctx.arc(14, -7, 0.9, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      // Body gradient for a softer, realistic look
+      const grad = ctx.createLinearGradient(0, -bodyHt, 0, bodyHt);
+      grad.addColorStop(0, f.color+'DD');
+      grad.addColorStop(0.5, f.color+'FF');
+      grad.addColorStop(1, f.color+'BB');
+      ctx.fillStyle = grad; ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-bodyLen*0.48, -bodyHt*0.45);
+      ctx.quadraticCurveTo(bodyLen*0.15, -bodyHt*0.75, bodyLen*0.5, 0);
+      ctx.quadraticCurveTo(bodyLen*0.15,  bodyHt*0.75, -bodyLen*0.48, bodyHt*0.45);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+
+      // Subtle scales (few translucent dots)
+      ctx.save();
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = 'white';
+      for(let i=0;i<18;i++){
+        const sx = -bodyLen*0.25 + (i%6)* (bodyLen*0.1);
+        const sy = -bodyHt*0.25 + Math.floor(i/6)*(bodyHt*0.25);
+        ctx.beginPath(); ctx.arc(sx, sy, 1.5, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      // Tail with a soft translucent membrane
+      const flap = Math.sin(game.time*16 + f.y*0.01)*0.35;
+      ctx.save(); ctx.translate(-bodyLen*0.48, 0); ctx.rotate(flap);
+      const tailGrad = ctx.createLinearGradient(-bodyLen*0.22,0,0,0);
+      tailGrad.addColorStop(0, f.color+'44');
+      tailGrad.addColorStop(1, f.color+'CC');
+      ctx.fillStyle = tailGrad;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-bodyLen*0.22, -bodyHt*0.38); ctx.lineTo(-bodyLen*0.22, bodyHt*0.38); ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      // Dorsal/pectoral fins
+      ctx.fillStyle = f.color+'AA';
+      // dorsal
+      ctx.beginPath(); ctx.moveTo(-bodyLen*0.1, -bodyHt*0.45); ctx.lineTo(0, -bodyHt*0.7); ctx.lineTo(bodyLen*0.08, -bodyHt*0.45); ctx.closePath(); ctx.fill();
+      // pectoral
+      ctx.beginPath(); ctx.moveTo(-bodyLen*0.05, bodyHt*0.05); ctx.quadraticCurveTo(bodyLen*0.1, bodyHt*0.35, bodyLen*0.22, bodyHt*0.1); ctx.closePath(); ctx.fill();
+
+      // Eye with glossy shine
+      ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(bodyLen*0.28, -6, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(bodyLen*0.28+1.5, -6, 2.7, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.arc(bodyLen*0.28+3, -7.5, 1.2, 0, Math.PI*2); ctx.fill();
+
+      // Gill line and mouth hint
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(bodyLen*0.18, -2, 8, Math.PI*0.6, Math.PI*1.3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bodyLen*0.48, 2); ctx.quadraticCurveTo(bodyLen*0.52, 4, bodyLen*0.46, 6); ctx.stroke();
+
+      // Species details
+      if(f.id==='shark'){
+        // Gray top tint and dorsal fin, gill slits
+        ctx.save();
+        ctx.globalAlpha = 0.25; ctx.fillStyle = 'rgba(60,90,130,0.9)';
+        ctx.beginPath(); ctx.moveTo(-bodyLen*0.48, -bodyHt*0.05); ctx.lineTo(bodyLen*0.5, -bodyHt*0.05); ctx.lineTo(bodyLen*0.5, -bodyHt*0.45); ctx.lineTo(-bodyLen*0.48, -bodyHt*0.45); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1.2;
+        for(let i=0;i<3;i++){ ctx.beginPath(); ctx.moveTo(bodyLen*0.06+i*6, -2); ctx.lineTo(bodyLen*0.06+i*6, 6); ctx.stroke(); }
+      }
+
+      if(f.id==='turtle'){
+        // Shell plates overlay
+        ctx.save();
+        ctx.globalAlpha = 0.35; ctx.strokeStyle='rgba(30,50,20,0.5)'; ctx.lineWidth=2;
+        const r = 14;
+        for(let i=-1;i<=1;i++){
+          for(let j=-1;j<=1;j++){
+            ctx.beginPath(); ctx.ellipse(-6 + i*16, j*10, r*0.7, r*0.5, 0.2, 0, Math.PI*2); ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      if(f.id==='whale'){
+        // Tail fluke hint
+        ctx.save();
+        ctx.globalAlpha = 0.35; ctx.fillStyle='rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.moveTo(-bodyLen*0.52, 0); ctx.quadraticCurveTo(-bodyLen*0.62, -10, -bodyLen*0.7, -2); ctx.quadraticCurveTo(-bodyLen*0.6, 4, -bodyLen*0.52, 0); ctx.fill();
+        ctx.restore();
+      }
+
+      // Light glint along top
+      ctx.save();
+      ctx.globalAlpha = 0.25; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-bodyLen*0.2, -bodyHt*0.3); ctx.quadraticCurveTo(bodyLen*0.15, -bodyHt*0.5, bodyLen*0.42, -bodyHt*0.15); ctx.stroke();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    // Explosions (comic “BOOM!” burst)
+    function spawnExplosion(x,y){
+      // realistic-ish multi-layer explosion: core, ring, sparks, smoke
+      game.explosions.push({
+        x, y,
+        t: 1.2 + Math.random()*0.2, // core life
+        ring: 0,
+        init: true,
+        sparks: [], // {x,y,vx,vy,life}
+        smoke: []   // {x,y,vx,vy,r,life}
+      });
+    }
+    function renderExplosions(dt){
+      const keep=[];
+      for(const ex of game.explosions){
+        // initialize particles once
+        if(ex.init){
+          ex.init = false;
+          // sparks
+          for(let i=0;i<18;i++){
+            const ang = Math.random()*Math.PI*2;
+            const spd = 140 + Math.random()*220;
+            ex.sparks.push({ x:ex.x, y:ex.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, life:0.4+Math.random()*0.5 });
+          }
+          // smoke puffs
+          for(let i=0;i<8;i++){
+            const ang = Math.random()*Math.PI*2;
+            const spd = 40 + Math.random()*60;
+            ex.smoke.push({ x:ex.x, y:ex.y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:10+Math.random()*12, life:1.0+Math.random()*0.8 });
+          }
+        }
+
+        ex.t -= dt;
+        const coreLife = Math.max(0, ex.t);
+        const p = 1 - Math.min(1, (1.2 - coreLife)/1.2);
+
+        // expand ring
+        ex.ring = (ex.ring || 0) + 220*dt;
+
+        // draw core fireball
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const r = 18 + (1-p)*10 + (1-coreLife)*26;
+        const g1 = ctx.createRadialGradient(ex.x, ex.y, 0, ex.x, ex.y, r);
+        g1.addColorStop(0, 'rgba(255,255,200,0.95)');
+        g1.addColorStop(0.35, 'rgba(255,170,50,0.9)');
+        g1.addColorStop(0.8, 'rgba(255,80,0,0.3)');
+        g1.addColorStop(1, 'rgba(255,80,0,0)');
+        ctx.fillStyle = g1;
+        ctx.beginPath(); ctx.arc(ex.x, ex.y, r, 0, Math.PI*2); ctx.fill();
+
+        // shockwave ring
+        ctx.globalAlpha = 0.35 * (coreLife/1.2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.ring*0.3, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+
+        // sparks update/draw
+        const keepS=[];
+        for(const s of ex.sparks){
+          s.life -= dt; if(s.life<=0) continue;
+          s.x += s.vx*dt; s.y += s.vy*dt; s.vy += 80*dt; // slight gravity
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          const a = Math.max(0, Math.min(1, s.life*2));
+          ctx.fillStyle = `rgba(255,200,120,${a})`;
+          ctx.beginPath(); ctx.arc(s.x, s.y, 2.2, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = `rgba(255,120,0,${a*0.8})`;
+          ctx.beginPath(); ctx.arc(s.x+0.5, s.y+0.5, 1.2, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+          keepS.push(s);
+        }
+        ex.sparks = keepS;
+
+        // smoke update/draw
+        const keepM=[];
+        for(const m of ex.smoke){
+          m.life -= dt; if(m.life<=0) continue;
+          m.x += m.vx*dt*0.4; m.y += m.vy*dt*0.4 - 12*dt; // drift and rise
+          m.r += 12*dt;
+          const a = Math.max(0, Math.min(0.5, m.life*0.4));
+          const g2 = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r);
+          g2.addColorStop(0, `rgba(80,80,90,${a})`);
+          g2.addColorStop(1, `rgba(40,40,50,0)`);
+          ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI*2); ctx.fill();
+          keepM.push(m);
+        }
+        ex.smoke = keepM;
+
+        if(coreLife>0 || ex.sparks.length || ex.smoke.length){ keep.push(ex); }
+      }
+      game.explosions = keep;
+    }
+
+    // Loop + Physics
+    let lastTs = 0;
+
+    function step(dt){
+      const w = canvas.width, h = canvas.height;
+
+      // Trigger boss at 3000m
+      if(!game.boss.active && game.distance >= 3000){
+        game.boss.active = true;
+        game.boss.hp = 100;
+        game.boss.x = w - 160;
+        game.boss.y = 120;
+        game.boss.t = 0; game.boss.hooks = []; game.boss.fireCd = 0;
+        document.getElementById('bossBarWrap').classList.remove('hidden');
+      }
+
+      // Difficulty ramp (slow during boss)
+      game.speed += dt * (game.boss.active ? 1.2 : 3);
+      game.distance += (game.speed * dt) * 0.25;
+
+      // Movement
+      const swimUp = 520, swimDown = 480;
+      let targetVy = 0;
+      if(keys.up) targetVy -= swimUp;
+      if(keys.down) targetVy += swimDown;
+      // Natural regen minus laser drain below
+
+      // Passive effects for some abilities
+      if(game.fish.type==='lure'){
+        // pull pickups slightly toward player
+        for(const p of game.pickups){
+          const dx = game.fish.x - p.x, dy = game.fish.y - p.y;
+          const d = Math.hypot(dx,dy)+1;
+          const pull = 60 * dt;
+          p.x += (dx/d) * pull * 0.5;
+          p.y += (dy/d) * pull * 0.5;
+        }
+        // slow nearby obstacles a bit
+        for(const o of game.obstacles){
+          const d = Math.hypot(o.x-game.fish.x, o.y-game.fish.y);
+          if(d<180){ o.x += 40*dt; }
+        }
+      }
+      if(game.fish.type==='spike'){
+        // brief pulse when shooting turns into AoE
+        if(keys.shoot && !game.spike.active){ game.spike.active=true; game.spike.t=0.25; }
+        if(game.spike.active){
+          game.spike.t -= dt; if(game.spike.t<=0){ game.spike.active=false; }
+          // pop close obstacles
+          for(const o of game.obstacles){
+            const d = Math.hypot(o.x-game.fish.x, o.y-game.fish.y);
+            if(d<70){ spawnExplosion(o.x,o.y); o.x=-9999; }
+          }
+        }
+      }
+
+      // Shooting
+      // Bubble default & others on F press (single shots)
+      if(keys.shoot){
+        if(game.fish.type==='bubble'){
+          // air bubble
+          game.bubbles.push({ x:game.fish.x+40, y:game.fish.y, vx: 420, vy: Math.sin(game.time*6)*18, r: 6, life:1.8 });
+          game.sessionCoins += 0.02;
+          keys.shoot = false; // tap-to-shoot feel
+        } else if(game.fish.type==='laser' && game.fish.id==='shark'){
+          // star-wars style bolt
+          game.bolts.push({ x:game.fish.x+50, y:game.fish.y-2, vx:900, life:1.2, hue: Math.random()<0.5?0:210 });
+          game.sessionCoins += 0.03;
+          keys.shoot = false;
+        } else if(game.fish.type==='gold'){
+          // gold bar
+          game.golds.push({ x:game.fish.x+46, y:game.fish.y-2, vx:620, life:1.6 });
+          game.sessionCoins += 0.04;
+          keys.shoot = false;
+        } else if(game.fish.type==='electric' && game.fish.id==='jelly'){
+          // lightning zap
+          game.zaps.push({ x: game.fish.x+32, y: game.fish.y+10, life: 0.16, seed: Math.random()*5 });
+          game.sessionCoins += 0.03;
+          keys.shoot = false;
+        } else if(game.fish.type==='ink'){
+          // octopus ink
+          game.inks.push({ x:game.fish.x+38, y:game.fish.y+6, vx:520, life:1.2, r: 7 });
+          game.sessionCoins += 0.03;
+          keys.shoot = false;
+        } else {
+          // fallback bubble
+          game.bubbles.push({ x:game.fish.x+40, y:game.fish.y, vx: 420, vy: 0, r: 6, life:1.8 });
+          keys.shoot = false;
+        }
+      }
+
+      // Laser (hold L): also available to Laser Shark; more reliable wide hit
+      if(keys.laser && game.energy>0.02 && game.laserPoints>0){
+        game.energy -= 0.35 * dt;
+        // spend laser points over time
+        game.laserPoints = Math.max(0, game.laserPoints - 20 * dt);
+        document.getElementById('laserPtsText').textContent = Math.ceil(game.laserPoints);
+        game.lasers.push({ x: game.fish.x+48, y: game.fish.y-2, life: 0.06 });
+        for(const o of game.obstacles){
+          if(o.x - o.w/2 < w && o.x + o.w/2 > (game.fish.x+48)){
+            const withinY = (Math.abs(o.y - (game.fish.y-2)) < (o.h/2 + 10));
+            if(withinY){ spawnExplosion(o.x, o.y); o.x=-9999; game.sessionCoins += 0.3; game.distance += 3; }
+          }
+        }
+      } else {
+        // Recharge to full in ~10 seconds
+        game.energy += 0.10 * dt;
+      }
+
+      // prevent use when depleted
+      if(game.laserPoints<=0){ keys.laser = false; }
+
+      // Whale tail attack (tap Shoot also triggers swing for whales)
+      if(game.fish.type==='tail'){
+        // auto decay
+        if(game.tail.swing>0) game.tail.swing -= dt*2.2;
+        // start swing on shoot
+        if(keys.shoot){ game.tail.swing = 0.5; }
+        // damage close obstacles
+        if(game.tail.swing>0){
+          for(const o of game.obstacles){
+            const inFront = o.x < game.fish.x + 120 && o.x > game.fish.x - 10;
+            const nearY = Math.abs(o.y - game.fish.y) < 50;
+            if(inFront && nearY){ spawnExplosion(o.x, o.y); o.x=-9999; game.sessionCoins += 0.25; }
+          }
+        }
+      }
+      game.energy = Math.max(0, Math.min(1, game.energy));
+
+      // Integrate fish
+      game.fish.vy += (targetVy - game.fish.vy) * 0.25;
+      game.fish.y += game.fish.vy * dt;
+
+      // Bounds
+      const pad = 40;
+      if(game.fish.y < pad){ game.fish.y = pad; game.fish.vy = Math.max(0, game.fish.vy); }
+      if(game.fish.y > h - pad){ game.fish.y = h - pad; game.fish.vy = Math.min(0, game.fish.vy); }
+
+      // Move obstacles & pickups
+      for(const o of game.obstacles){ o.x += (-game.speed * (o.type==='net'?0.9:o.type==='rock'?1.05:1.0)) * dt; o.y += Math.sin((o.x+o.y)*0.002)*8*dt; }
+      for(const p of game.pickups){ p.x += -(game.speed*0.95) * dt; p.t += dt; }
+
+      // Boss movement and hooks
+      if(game.boss.active){
+        const b = game.boss; b.t += dt;
+        // bobbing
+        b.y = 120 + Math.sin(b.t*1.5)*12;
+        b.x = Math.max(w-220, w-160 + Math.sin(b.t*0.8)*10);
+        // fire cadence
+        b.fireCd -= dt;
+        if(b.fireCd <= 0){
+          b.fireCd = 1.2 + Math.random()*0.4;
+          // launch a hook towards fish
+          const originX = b.x + 60, originY = b.y - 10;
+          const dx = (game.fish.x - originX), dy = (game.fish.y - originY);
+          const len = Math.max(1, Math.hypot(dx,dy));
+          const spd = 260;
+          b.hooks.push({ x: originX, y: originY, x0: originX, y0: originY, vx: dx/len*spd, vy: dy/len*spd, t:0 });
+        }
+        // update hooks
+        const keep=[];
+        for(const hk of b.hooks){
+          hk.t += dt; hk.x += hk.vx*dt; hk.y += hk.vy*dt;
+          // if off screen or too long
+          if(hk.x < -40 || hk.x> w+40 || hk.y< -40 || hk.y> h+40){ continue; }
+          keep.push(hk);
+        }
+        b.hooks = keep;
+      }
+
+      // Spawn pacing (halt most during boss)
+      const bossOn = game.boss.active;
+      if(!bossOn){
+        if(Math.random() < (0.9 + Math.min(0.8, game.time*0.02)) * dt) spawnObstacle();
+        if(Math.random() < 0.45 * dt) spawnPickup();
+      }
+
+      // Cleanup off-screen
+      game.obstacles = game.obstacles.filter(o=>o.x > -200);
+      game.pickups = game.pickups.filter(p=>p.x > -60);
+
+      // Update projectiles
+      for(const b of game.bubbles){ b.x += b.vx*dt; b.y += b.vy*dt; b.life -= dt; b.r = 5 + Math.sin((1-b.life)*6)*2; }
+      game.bubbles = game.bubbles.filter(b=>b.life>0 && b.x < w+60);
+
+      for(const L of game.lasers){ L.life -= dt; }
+      game.lasers = game.lasers.filter(L=>L.life>0);
+
+      for(const bl of game.bolts){ bl.x += bl.vx*dt; bl.life -= dt; }
+      game.bolts = game.bolts.filter(bl=>bl.life>0 && bl.x < w+60);
+
+      for(const g of game.golds){ g.x += g.vx*dt; g.life -= dt; }
+      game.golds = game.golds.filter(g=>g.life>0 && g.x < w+60);
+
+      for(const k of game.inks){ k.x += k.vx*dt; k.life -= dt; }
+      game.inks = game.inks.filter(k=>k.life>0 && k.x < w+60);
+
+      for(const z of game.zaps){ z.life -= dt; }
+      game.zaps = game.zaps.filter(z=>z.life>0);
+
+      // Collisions fish with obstacles
+      const fx = game.fish.x, fy = game.fish.y, fr = game.fish.radius;
+      for(const o of game.obstacles){
+        const cx = Math.max(o.x - o.w/2, Math.min(fx, o.x + o.w/2));
+        const cy = Math.max(o.y - o.h/2, Math.min(fy, o.y + o.h/2));
+        const dx = fx - cx, dy = fy - cy;
+        if(dx*dx + dy*dy < fr*fr){
+          if(game.shield.lives>0){
+            // absorb hit
+            game.shield.lives--; game.shield.flash = 0.4; o.x = -9999; game.sessionCoins += 0.1;
+          } else {
+            endGame('You hit an obstacle!');
+          }
+          break;
+        }
+      }
+
+      // Hooks hitting fish
+      if(game.boss.active){
+        const b = game.boss;
+        const keepHooks = [];
+        for(const hk of b.hooks){
+          const dx = fx - hk.x, dy = fy - hk.y;
+          if(dx*dx + dy*dy < (fr+8)*(fr+8)){
+            if(game.shield.lives>0){ game.shield.lives--; game.shield.flash=0.4; spawnExplosion(hk.x,hk.y); }
+            else { endGame('Hooked by the boss!'); }
+            continue; // destroy hook
+          }
+          keepHooks.push(hk);
+        }
+        b.hooks = keepHooks;
+      }
+
+      // Projectile hits
+      function aabbHitPoint(o, x, y){
+        return (x > o.x - o.w/2 && x < o.x + o.w/2 && y > o.y - o.h/2 && y < o.y + o.h/2);
+      }
+      for(const o of game.obstacles){
+        // bubbles
+        for(const b of game.bubbles){
+          if(aabbHitPoint(o, b.x, b.y)){ spawnExplosion(b.x, b.y); o.x=-9999; b.life=0; game.sessionCoins += 0.15; }
+        }
+        // bolts
+        for(const bl of game.bolts){
+          if(aabbHitPoint(o, bl.x, fy)){ spawnExplosion(o.x, o.y); o.x=-9999; bl.life=0; game.sessionCoins += 0.25; }
+        }
+        // gold bars (wide)
+        for(const g of game.golds){
+          if(aabbHitPoint(o, g.x, g.y)){ spawnExplosion(g.x, g.y); o.x=-9999; g.life=0; game.sessionCoins += 0.25; }
+        }
+        // ink blobs (splat)
+        for(const k of game.inks){
+          if(aabbHitPoint(o, k.x, k.y)){ spawnExplosion(k.x, k.y); o.x=-9999; k.life=0; game.sessionCoins += 0.2; }
+        }
+        // zaps (line)
+        for(const z of game.zaps){
+          if(o.x + o.w/2 > z.x && Math.abs(o.y - z.y) < (o.h/2 + 16)){ spawnExplosion(o.x, o.y); o.x=-9999; game.sessionCoins += 0.3; }
+        }
+      }
+      game.obstacles = game.obstacles.filter(o=>o.x>-200);
+
+      // Damage boss with shots
+      if(game.boss.active){
+        const b = game.boss;
+        let dmg = 0;
+        const hitRect = {x: b.x-70, y: b.y-30, w: 140, h: 60};
+        function pointInBoss(px,py){ return px>hitRect.x && px<hitRect.x+hitRect.w && py>hitRect.y && py<hitRect.y+hitRect.h; }
+        for(const bb of game.bubbles){ if(pointInBoss(bb.x, bb.y)){ bb.life=0; dmg+=1; spawnExplosion(bb.x,bb.y);} }
+        for(const bl of game.bolts){ if(pointInBoss(bl.x, fy)){ bl.life=0; dmg+=3; spawnExplosion(bl.x,fy);} }
+        for(const g of game.golds){ if(pointInBoss(g.x, g.y)){ g.life=0; dmg+=2; spawnExplosion(g.x,g.y);} }
+        for(const k of game.inks){ if(pointInBoss(k.x, k.y)){ k.life=0; dmg+=2; spawnExplosion(k.x,k.y);} }
+        for(const z of game.zaps){ if(pointInBoss(b.x, z.y)){ dmg+=4; spawnExplosion(b.x,z.y);} }
+        for(const L of game.lasers){ if(pointInBoss(L.x+30, L.y)){ dmg+=6; } }
+        if(dmg>0){
+          b.hp = Math.max(0, b.hp - dmg);
+          const pct = (b.hp/100)*100;
+          document.getElementById('bossHpBar').style.width = pct+'%';
+          document.getElementById('bossHpText').textContent = Math.round(b.hp) + ' HP';
+          if(b.hp<=0){
+            // boss defeated
+            spawnExplosion(b.x, b.y);
+            b.active=false; b.hooks=[];
+            document.getElementById('bossBarWrap').classList.add('hidden');
+            // reward cash and distance boost
+            save.coins += 300;
+            storage.save(save);
+            syncCoins();
+            game.distance += 200;
+          }
+        }
+      }
+
+      // Pickups (energy bubbles)
+      for(const p of game.pickups){
+        const dx = fx - p.x, dy = fy - (p.y + Math.sin((p.t+game.time)*4)*3);
+        if(dx*dx + dy*dy < (fr + p.r)*(fr + p.r)){
+          p.x = -9999;
+          game.energy = Math.min(1, game.energy + 0.25);
+        }
+      }
+
+      updateHUD();
+    }
+
+    function drawLasers(){
+      const w = canvas.width;
+      for(const L of game.lasers){
+        const alpha = Math.min(1, Math.max(0, L.life*12));
+        const grad = ctx.createLinearGradient(L.x, L.y-8, w, L.y+8);
+        grad.addColorStop(0, `rgba(255,0,200,${0.5*alpha})`);
+        grad.addColorStop(0.2, `rgba(128,0,255,${0.7*alpha})`);
+        grad.addColorStop(1, `rgba(0,255,255,0)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(L.x, L.y-2, w - L.x, 4);
+        ctx.strokeStyle = `rgba(255,255,255,${0.9*alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(L.x, L.y); ctx.lineTo(w, L.y); ctx.stroke();
+      }
+    }
+
+    function drawBolts(){
+      for(const bl of game.bolts){
+        const a = Math.max(0.2, bl.life);
+        const color = bl.hue===0 ? 'rgba(255,80,80,'+a+')' : 'rgba(80,160,255,'+a+')';
+        ctx.fillStyle = color;
+        ctx.fillRect(bl.x-10, game.fish.y-1.5, 20, 3);
+        ctx.fillStyle = 'rgba(255,255,255,'+a+')';
+        ctx.fillRect(bl.x-6, game.fish.y-0.5, 12, 1);
+      }
+    }
+
+    function drawBubbles(){
+      for(const b of game.bubbles){
+        const rg = ctx.createRadialGradient(b.x-2,b.y-2,0, b.x,b.y,b.r);
+        rg.addColorStop(0, 'rgba(255,255,255,0.9)');
+        rg.addColorStop(1, 'rgba(150,220,255,0.35)');
+        ctx.fillStyle = rg;
+        ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(b.x-2,b.y-2, b.r*0.35, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+
+    function drawGoldBars(){
+      for(const g of game.golds){
+        const grd = ctx.createLinearGradient(g.x-10,g.y-6, g.x+18,g.y+6);
+        grd.addColorStop(0,'rgba(255,215,0,0.95)');
+        grd.addColorStop(1,'rgba(255,165,0,0.95)');
+        ctx.fillStyle = grd;
+        ctx.fillRect(g.x-8, g.y-4, 16, 8);
+        ctx.strokeStyle='rgba(120,80,0,0.6)';
+        ctx.strokeRect(g.x-8, g.y-4, 16, 8);
+      }
+    }
+
+    function drawInks(){
+      for(const k of game.inks){
+        const a = Math.max(0.3, k.life);
+        ctx.fillStyle = 'rgba(20,30,50,'+a+')';
+        ctx.beginPath();
+        ctx.ellipse(k.x, k.y, 10, 6, 0.2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(10,15,25,'+a+')';
+        ctx.beginPath();
+        ctx.ellipse(k.x-4, k.y-2, 4, 3, -0.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function drawZaps(){
+      const w = canvas.width;
+      for(const z of game.zaps){
+        const alpha = Math.max(0, Math.min(1, z.life*8));
+        const steps = 14;
+        const seg = (w - z.x) / steps;
+        // glow
+        ctx.save();
+        ctx.globalAlpha = 0.7*alpha; ctx.strokeStyle = 'rgba(0,255,255,0.35)'; ctx.lineWidth=8;
+        ctx.beginPath();
+        let y = z.y; ctx.moveTo(z.x, y);
+        for(let i=1;i<=steps;i++){ const jitter = Math.sin((i+z.seed)*6.3)*(10+(i%3)*3); y = z.y+jitter; ctx.lineTo(z.x+i*seg, y); }
+        ctx.stroke(); ctx.restore();
+        // core
+        ctx.save();
+        ctx.globalAlpha = 0.95*alpha; ctx.strokeStyle='rgba(147,197,253,1)'; ctx.lineWidth=2;
+        ctx.beginPath();
+        y = z.y; ctx.moveTo(z.x, y);
+        for(let i=1;i<=steps;i++){ const jitter = Math.sin((i+z.seed*2.1)*9.1)*(6+(i%2)*4); y = z.y+jitter; ctx.lineTo(z.x+i*seg, y); }
+        ctx.stroke(); ctx.restore();
+      }
+    }
+
+    function drawBossBoat(){
+      const b = game.boss;
+      if(!b.active) return;
+      // Boat body
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      // hull
+      ctx.fillStyle = 'rgba(120,70,40,0.95)';
+      ctx.beginPath();
+      ctx.moveTo(-70, 10); ctx.lineTo(70, 10); ctx.lineTo(56, 24); ctx.lineTo(-56, 24); ctx.closePath();
+      ctx.fill();
+      // deck
+      ctx.fillStyle = 'rgba(220,230,240,0.95)';
+      ctx.fillRect(-40, -10, 80, 20);
+      // cabin
+      ctx.fillStyle = 'rgba(240,250,255,0.95)';
+      ctx.fillRect(-12,-30, 24, 20);
+      // mast and hook launcher
+      ctx.fillStyle = 'rgba(200,200,210,0.9)';
+      ctx.fillRect(8,-40, 6, 30);
+      ctx.strokeStyle = 'rgba(240,240,255,0.8)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(11,-40); ctx.lineTo(60,-10); ctx.stroke();
+      // Flag
+      ctx.fillStyle = 'rgba(255,90,90,0.9)';
+      ctx.beginPath(); ctx.moveTo(8,-38); ctx.lineTo(28,-32); ctx.lineTo(8,-26); ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      // Hooks
+      ctx.strokeStyle = 'rgba(200,220,255,0.9)';
+      ctx.fillStyle = 'rgba(230,240,255,0.95)';
+      ctx.lineWidth = 2;
+      for(const h of b.hooks){
+        // line
+        ctx.beginPath(); ctx.moveTo(h.x0, h.y0); ctx.lineTo(h.x, h.y); ctx.stroke();
+        // hook head
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, 6, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle='rgba(100,120,200,0.9)';
+        ctx.beginPath(); ctx.arc(h.x, h.y+2, 8, Math.PI*0.1, Math.PI*0.9); ctx.stroke();
+      }
+    }
+
+    function render(){
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      drawRiverBackground(w,h, game.time);
+
+      // Scene
+      for(const p of game.pickups){ drawPickup(p); }
+      for(const o of game.obstacles){ drawObstacle(o); }
+      drawBubbles();
+      drawGoldBars();
+      drawBolts();
+      drawZaps();
+      drawInks();
+      drawLasers();
+      drawBossBoat();
+      // Shield flash aura (turtle)
+      if(game.shield.lives>0){
+        ctx.save();
+        ctx.globalAlpha = 0.15 + Math.max(0, game.shield.flash);
+        const gx = game.fish.x, gy = game.fish.y;
+        const grad = ctx.createRadialGradient(gx,gy,0,gx,gy,42);
+        grad.addColorStop(0,'rgba(125, 211, 252, 0.8)');
+        grad.addColorStop(1,'rgba(125, 211, 252, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(gx,gy, 42, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        if(game.shield.flash>0) game.shield.flash -= 0.02;
+      }
+
+      // Tail swing arc (whale)
+      if(game.fish.type==='tail' && game.tail.swing>0){
+        ctx.save();
+        ctx.globalAlpha = Math.min(0.5, game.tail.swing);
+        ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(game.fish.x+20, game.fish.y+10, 60, Math.PI*1.2, Math.PI*1.6);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      drawFish();
+
+      // Speed streaks
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = '#fff';
+      for(let i=0;i<6;i++){
+        const y = (i+1) * h/7 + Math.sin((i*1.3 + game.time*3))*10;
+        const len = 50 + i*14;
+        ctx.fillRect(20, y, len, 2);
+      }
+      ctx.restore();
+    }
+
+    function loop(ts){
+      if(!lastTs) lastTs = ts;
+      const dt = Math.min(0.033, Math.max(0.001, (ts - lastTs)/1000));
+      lastTs = ts;
+
+      if(game.running && !game.paused && !game.over){
+        game.time += dt;
+        step(dt);
+      }
+      render();
+      renderExplosions(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    // Start state
+    resetGame();
+
+    // Prevent scroll on touch inside game area while playing
+    document.querySelector('main').addEventListener('touchmove', (e)=>{ if(game.running && !game.paused) { e.preventDefault(); } }, { passive:false });
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9746ff30826598c5',t:'MTc1NjA4MTk5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

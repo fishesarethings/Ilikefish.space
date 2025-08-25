@@ -83,7 +83,12 @@ const PRECACHE_URLS = [
   '/games/DiceRollIdleEmpires2/config.json',
   '/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html',
   '/games/DiceRollIdleEmpires2/icon.png',
-  '/games/DiceRollIdleEmpires2/icon1.png'
+  '/games/DiceRollIdleEmpires2/icon1.png',
+
+  '/games/fishclimbracing/config.json',
+  '/games/fishclimbracing/fishclimbracing.html',
+  '/games/fishclimbracing/icon1.png',
+  '/games/fishclimbracing/icon.png'
 ];
 
 // --- helper logs ---
