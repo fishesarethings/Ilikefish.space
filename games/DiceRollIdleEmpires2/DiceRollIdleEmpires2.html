@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dice Roll Idle Empires 2 — HARD MODE</title>
+  <title>Dice Roll Idle Empires — HARD MODE (rebirth fix)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background:#0f5132; }
@@ -30,7 +30,7 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="text-center mb-8">
-      <h1 class="text-5xl md:text-6xl font-extrabold text-yellow-400 mb-4" style="text-shadow:2px 2px 4px rgba(0,0,0,.8);">🎲 Dice Roll Idle Empires 2 — HARD MODE</h1>
+      <h1 class="text-5xl md:text-6xl font-extrabold text-yellow-400 mb-4" style="text-shadow:2px 2px 4px rgba(0,0,0,.8);">🎲 Dice Roll Idle Empires — HARD MODE</h1>
       <div class="bg-black bg-opacity-50 rounded-lg p-4 inline-block">
         <div class="text-3xl font-bold text-green-400 mb-2">💰 $<span id="money">0</span></div>
         <div class="text-lg text-yellow-300">Per Click: <span id="perClick">1-6</span></div>
@@ -144,12 +144,10 @@
       if (!isFinite(n)) return '∞';
       if (n < 1000000) return Math.floor(n).toLocaleString();
       if (NOTATION === 'std') {
-        // compact but will stop around 1e15; fallback to scientific if needed
         try {
           return Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: decimals }).format(n);
         } catch(_) { /* fallthrough */ }
       }
-      // scientific, safe up to ~1e308 — enough for 45+ zeros
       const e = Math.floor(Math.log10(n));
       const m = n / Math.pow(10, e);
       return m.toFixed(decimals) + 'e' + e;
@@ -161,7 +159,6 @@
     const SAVE_KEY = 'diceEmpireGameV2';
 
     const autoClickerTypes = {
-      // earlier tiers — nerfed cps, steeper price growth
       luckyRoller:   { name:"🍀 Lucky Roller",   basePrice: 25,       baseCps: 0.25, icon:"🍀",  desc:"Rolls every few seconds" },
       diceMachine:   { name:"🎰 Dice Machine",   basePrice: 150,      baseCps: 1,    icon:"🎰",  desc:"Automated dice rolling" },
       goldenTumbler: { name:"✨ Golden Tumbler", basePrice: 1250,     baseCps: 3.5,  icon:"✨",  desc:"Gilded tumbler" },
@@ -172,7 +169,6 @@
       crystalOrb:    { name:"🔮 Crystal Orb",    basePrice: 1200000,  baseCps: 220,  icon:"🔮",  desc:"Prophetic power" },
       jackpotEngine: { name:"💎 Jackpot Engine", basePrice: 4500000,  baseCps: 650,  icon:"💎",  desc:"Powerhouse" },
       cosmicDice:    { name:"🌌 Cosmic Dice",    basePrice: 16000000, baseCps: 1800, icon:"🌌",  desc:"Universal force" },
-      // new late game tiers — prices explode, cps grows slower to stretch the run
       antimatterCup: { name:"⚛️ Antimatter Cup", basePrice: 5e9,      baseCps: 6000, icon:"⚛️", desc:"Exotic flux" },
       voidDealer:    { name:"🕳️ Void Dealer",    basePrice: 2e12,     baseCps: 15000,icon:"🕳️", desc:"Deals in nothing" },
       chronoforge:   { name:"⏳ Chrono Forge",   basePrice: 1e15,     baseCps: 42000,icon:"⏳",  desc:"Time-tempered rolls" },
@@ -184,31 +180,25 @@
       paradoxMill:   { name:"♾️ Paradox Mill",   basePrice: 1e36,     baseCps: 1.0e7, icon:"♾️",  desc:"Grinds causality" },
       omnidice:      { name:"🌠 Omni-Dice",      basePrice: 1e40,     baseCps: 2.8e7, icon:"🌠",  desc:"Every face at once" },
     };
-    const AUTO_PRICE_GROWTH = 1.30; // steeper (was ~1.15)
+    const AUTO_PRICE_GROWTH = 1.30;
 
     const upgradeTypes = [
-      // Dice count (very pricey; pushes totals fast but far into late game)
       { id:'doubleDice', name:'🎲🎲 Double Dice',      price: 1e7,     once:true, apply:(s)=>{s.flags.double=true;} },
       { id:'tripleDice', name:'🎲🎲🎲 Triple Dice',    price: 5e8,     once:true, apply:(s)=>{s.flags.triple=true;} },
       { id:'quadDice',   name:'🎲x4 Quad Dice',       price: 5e10,    once:true, apply:(s)=>{s.flags.quad=true;} },
       { id:'decaDice',   name:'🎲x10 Deca Dice',      price: 1e14,    once:true, apply:(s)=>{s.flags.deca=true;} },
       { id:'hectoDice',  name:'🎲x100 Hecto Dice',    price: 1e18,    once:true, apply:(s)=>{s.flags.hecto=true;} },
       { id:'kiloDice',   name:'🎲x1000 Kilo Dice',    price: 1e22,    once:true, apply:(s)=>{s.flags.kilo=true;} },
-
-      // Click & global multipliers
       { id:'clickX2',    name:'🖱️ Click Power x2',    price: 1e9,     once:false, multKey:'clickMult', mult:2 },
       { id:'clickX3',    name:'🖱️ Click Power x3',    price: 1e12,    once:false, multKey:'clickMult', mult:3 },
       { id:'globalX2',   name:'🌍 Global x2',         price: 1e15,    once:false, multKey:'globalMult', mult:2 },
       { id:'globalX5',   name:'🌍 Global x5',         price: 2e18,    once:false, multKey:'globalMult', mult:5 },
       { id:'globalX10',  name:'🌍 Global x10',        price: 1e22,    once:false, multKey:'globalMult', mult:10 },
-
-      // Mega late-game (45+ zeros)
       { id:'omegaCore',  name:'🧿 Omega Core x25',    price: 1e45,    once:false, multKey:'globalMult', mult:25 },
       { id:'alphaSeal',  name:'🔻 Alpha Seal x50',    price: 1e60,    once:false, multKey:'globalMult', mult:50 },
       { id:'zenithKey',  name:'🔺 Zenith Key x100',   price: 1e90,    once:false, multKey:'globalMult', mult:100 },
     ];
 
-    // Ascension (permanent) — cost scales with level
     const ascensionTypes = {
       shardMult: { name:'Shard Gain +25%/lvl', baseCost: 5,  desc:'Gain more Lucky Shards on rebirth',   perLevel:(lvl)=>({ shardMult:1 + 0.25*lvl }) },
       clickBoost:{ name:'Click Power +20%/lvl', baseCost: 3, desc:'Stronger manual clicks',               perLevel:(lvl)=>({ clickBoost:1 + 0.2*lvl }) },
@@ -238,12 +228,10 @@
      * Save / Load / Migrate
      ************************/
     function migrateOldSaveIfAny() {
-      // migrate from your old 'diceEmpireGame' if present
       const oldRaw = localStorage.getItem('diceEmpireGame');
       if (!oldRaw) return;
       try {
         const old = JSON.parse(oldRaw);
-        // shallow migration: keep money/earned/clickers/upgrades
         S.money = +old.money || 0;
         S.totalClicks = +old.totalClicks || 0;
         S.totalEarned = +old.totalEarned || 0;
@@ -259,7 +247,6 @@
           S.flags.triple = !!old.upgrades.tripleDice;
           S.flags.quad   = !!old.upgrades.quadDice;
         }
-        // wipe old to avoid confusion
         localStorage.removeItem('diceEmpireGame');
       } catch(_) {}
     }
@@ -281,7 +268,6 @@
           S = defaultState();
         }
       } else {
-        // try migrate
         migrateOldSaveIfAny();
       }
       NOTATION = S.notation;
@@ -308,13 +294,11 @@
     }
 
     function lifetimeMultiplier() {
-      // base 1 * ascension global * mult.globalMult + shards passive (each shard gives passive +10% baked into ascension 'globalBoost' instead of per shard to keep it tidy)
       const a = aggregateAscension();
       return (S.mult.globalMult) * (a.lifetimeGlobal || 1);
     }
 
     function aggregateAscension() {
-      // compute combined effects of ascension levels
       const res = { shardMult:1, clickBoost:1, autoBoost:1, priceGrowth:AUTO_PRICE_GROWTH, lifetimeGlobal:1 };
       for (const k of Object.keys(ascensionTypes)) {
         const lvl = S.ascension[k]||0;
@@ -333,12 +317,6 @@
       return Math.floor(base * Math.pow(growth, owned));
     }
 
-    function getUpgradePriceGrowth(level) {
-      // not used now, but handy if we want stacking upgrades
-      return Math.pow(2, level);
-    }
-
-    // money/sec from autos (min & max use 1 and 6 per die)
     function autosPerSec(minMax = 'avg') {
       const d = diceCount();
       const a = aggregateAscension();
@@ -350,7 +328,7 @@
         if (!count) continue;
         const upg = S.autoClickerUpgrades[type] || 0;
         const baseCps = autoClickerTypes[type].baseCps;
-        const cps = baseCps * Math.pow(1.75, upg) * autoBoost * global; // upgrades weaker than x2 to stretch runs
+        const cps = baseCps * Math.pow(1.75, upg) * autoBoost * global;
         const dieVal = minMax==='min' ? 1 : (minMax==='max' ? 6 : 3.5);
         total += count * cps * d * dieVal;
       }
@@ -404,7 +382,7 @@
       const container = document.getElementById('mainDiceContainer');
       container.innerHTML = '';
       const count = diceCount();
-      const maxShow = Math.min(count, 8); // avoid DOM overload when you get 100/1000 dice
+      const maxShow = Math.min(count, 8);
       for (let i=0;i<maxShow;i++) {
         const diceDiv = document.createElement('div');
         diceDiv.innerHTML = createDice();
@@ -435,7 +413,6 @@
       const diceElements = document.querySelectorAll('[id^="mainDice"]');
       let totalFaces = 0;
       diceElements.forEach(d => totalFaces += rollDice(d));
-      // if you have more dice than we render, estimate remaining with average 3.5
       const rendered = Math.min(diceElements.length, diceCount());
       const hidden = Math.max(0, diceCount() - rendered);
       totalFaces += hidden * 3.5;
@@ -469,39 +446,29 @@
      * Shops & UI refresh
      ************************/
     function updateDisplay() {
-      // money & totals
       document.getElementById('money').textContent = fmt(S.money);
       document.getElementById('totalClicks').textContent = (S.totalClicks|0).toLocaleString();
       document.getElementById('totalEarned').textContent = '$' + fmt(S.totalEarned);
       document.getElementById('currentBalance').textContent = '$' + fmt(S.money);
 
-      // min/max autos
       const min = autosPerSec('min'), max = autosPerSec('max');
       document.getElementById('moneyPerSecond').textContent = `$${fmt(min,1)} - $${fmt(max,1)}`;
 
-      // multipliers
       document.getElementById('lifetimeMult').textContent = 'x' + (lifetimeMultiplier()).toFixed(2);
       document.getElementById('globalMult').textContent = currentGlobalMultText();
 
-      // shards & prestige
       document.getElementById('shards').textContent = (S.shards|0);
       const p = potentialShards();
       document.getElementById('potentialShards').textContent = (p|0);
-      const canRebirth = p > 0 && S.totalEarned >= 1e9;
+      const canRebirth = p > 0 && Number(S.totalEarned) >= 1e9;
       const rbtn = document.getElementById('rebirthBtn');
       rbtn.disabled = !canRebirth;
 
-      // auto rollers
       renderAutoClickers();
-
-      // upgrades
       renderUpgrades();
-
-      // ascension
       renderAscension();
     }
 
-    // Auto clickers
     function renderAutoClickers() {
       const list = document.getElementById('autoClickersList');
       list.innerHTML = '';
@@ -567,18 +534,14 @@
       }
     }
 
-    // Upgrades
     function renderUpgrades() {
       const wrap = document.getElementById('upgradesList');
       wrap.innerHTML = '';
       for (const u of upgradeTypes) {
-        // availability
-        const owned = u.once ? !!S.flags[u.id] || (u.multKey && S.mult[u.multKey] && S.mult[u.multKey] >= (u.mult||1) && u.once) : false;
         const alreadyApplied = u.once ? !!S.flags[u.id] : false;
         const price = u.price;
         const can = S.money >= price && !alreadyApplied;
 
-        // show even if close (1% of price) to entice
         if (alreadyApplied || S.money >= price * 0.01) {
           const div = document.createElement('div');
           div.className = `auto-clicker-item p-3 rounded-lg border transition-all ${alreadyApplied ? 'border-yellow-400 bg-yellow-900/30' : can ? 'border-green-400 cursor-pointer hover:bg-white/5' : 'border-gray-600 opacity-60'}`;
@@ -615,29 +578,44 @@
     }
 
     /***********************
-     * Prestige / Ascension
+     * Prestige / Ascension (MINIMAL FIXES HERE)
      ************************/
+    // MINIMAL CHANGE: robust potentialShards calculation
     function potentialShards() {
-      // base: sqrt(totalEarned / 1e9), then apply ascension shardMult
-      if (S.totalEarned < 1e9) return 0;
+      const earned = Number(S.totalEarned) || 0;
+      if (earned < 1e9) return 0;
       const a = aggregateAscension();
       const mult = a.shardMult || 1;
-      return Math.floor(Math.sqrt(S.totalEarned / 1e9) * mult);
+      const shards = Math.floor(Math.sqrt(earned / 1e9) * mult);
+      return Math.max(0, shards);
     }
 
+    // MINIMAL CHANGE: use pre-rebirth earned value, then reset while preserving ascension/shards
     function doRebirth() {
-      const shardsGain = potentialShards();
+      const prevEarned = Number(S.totalEarned) || 0;
+      if (prevEarned < 1e9) return;
+      const a = aggregateAscension();
+      const shardsGain = Math.floor(Math.sqrt(prevEarned / 1e9) * (a.shardMult || 1));
       if (shardsGain <= 0) return;
 
-      S.shards += shardsGain;
+      S.shards = (S.shards || 0) + shardsGain;
 
-      // reset soft progress
-      const keep = { shards:S.shards, ascension:S.ascension, notation:S.notation, version:S.version };
+      // Keep permanent ascension & notation & version & shards
+      const keep = { shards: S.shards, ascension: S.ascension, notation: S.notation, version: S.version };
       const fresh = defaultState();
       S = { ...fresh, ...keep };
-      S.totalEarned = 0; // lifetime resets for gated prestige in this hard-mode
+
+      // Reset gating totals so player restarts properly
+      S.totalEarned = 0;
+      S.totalClicks = 0;
+      S.money = 0;
+
       generateMainDice();
-      updateDisplay(); saveGame();
+      updateDisplay();
+      saveGame();
+
+      // Small confirmation so player sees the result
+      try { alert(`Rebirth complete — you gained ${shardsGain} Lucky Shards!`); } catch(e) {}
     }
 
     function renderAscension() {
@@ -646,9 +624,9 @@
       for (const id of Object.keys(ascensionTypes)) {
         const cfg = ascensionTypes[id];
         const lvl = S.ascension[id]||0;
-        const cost = Math.floor(cfg.baseCost * Math.pow(1.45, lvl)); // grows fast
+        const cost = Math.floor(cfg.baseCost * Math.pow(1.45, lvl));
         const can = S.shards >= cost;
-        const a = cfg.perLevel(lvl+1); // preview next
+        const a = cfg.perLevel(lvl+1);
         const preview = Object.entries(a).map(([k,v])=>{
           if (k==='priceGrowth') return `Price Growth ➜ ${v.toFixed(2)}x`;
           if (k==='lifetimeGlobal') return `Lifetime Global ➜ x${v.toFixed(2)}`;
@@ -698,7 +676,6 @@
       }
     }
 
-    // UI events
     document.getElementById('resetButton').addEventListener('click', ()=> {
       document.getElementById('resetModal').classList.remove('hidden');
     });
@@ -718,7 +695,6 @@
     });
     document.getElementById('confirmHardReset').addEventListener('click', ()=>{
       localStorage.removeItem(SAVE_KEY);
-      // also remove legacy just in case
       localStorage.removeItem('diceEmpireGame');
       S = defaultState();
       document.getElementById('hardResetModal').classList.add('hidden');
@@ -736,7 +712,6 @@
 
     // Init
     loadGame();
-    // Loops
     setInterval(autoClickerLoop, 1000);
     setInterval(saveGame, 10000);
   </script>
