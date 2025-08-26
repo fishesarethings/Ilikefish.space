@@ -1,0 +1,7 @@
+{
+  "name":"Emoji Match",
+  "folder":"emojimatch",
+  "icon":"icon.png",
+  "entry":"emojimatch.html",
+  "touchInstructions":"Tap to play."
+}
