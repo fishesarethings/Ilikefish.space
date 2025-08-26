@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Match - ilikefish.space</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .site-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .game-title {
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
+            margin-bottom: 20px;
+        }
+
+        .level-info {
+            background: rgba(255,255,255,0.2);
+            padding: 15px 30px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .clue {
+            font-size: 36px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .instructions {
+            font-size: 18px;
+            opacity: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .game-board {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .emoji-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .emoji-card {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .emoji-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .emoji-card.selected {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.2);
+            transform: scale(1.1);
+        }
+
+        .emoji-card.correct {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.3);
+            animation: bounce 0.6s ease;
+        }
+
+        .emoji-card.wrong {
+            border-color: #f44336;
+            background: rgba(244,67,54,0.3);
+            animation: shake 0.6s ease;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .message {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px 30px;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .floating-emoji {
+            position: fixed;
+            font-size: 30px;
+            pointer-events: none;
+            z-index: 999;
+            animation: float-up 3s ease-out forwards;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-200px) rotate(360deg);
+            }
+        }
+
+        .encouragement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slide-in 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .celebration-burst {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            pointer-events: none;
+            z-index: 1001;
+            animation: celebration 2s ease-out forwards;
+        }
+
+        @keyframes celebration {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .milestone-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #ffeaa7);
+            background-size: 400% 400%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: rainbow-bg 3s ease-in-out;
+        }
+
+        @keyframes rainbow-bg {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .milestone-content {
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .milestone-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            animation: bounce-in 1s ease-out;
+        }
+
+        .milestone-message {
+            font-size: 24px;
+            margin-bottom: 30px;
+            animation: slide-up 1s ease-out 0.5s both;
+        }
+
+        .milestone-emojis {
+            font-size: 80px;
+            margin: 20px 0;
+            animation: spin-dance 2s ease-in-out 1s both;
+        }
+
+        .milestone-progress {
+            font-size: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 15px 30px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            animation: fade-in 1s ease-out 1.5s both;
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes slide-up {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes spin-dance {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(10deg) scale(1.1); }
+            50% { transform: rotate(-10deg) scale(1.2); }
+            75% { transform: rotate(5deg) scale(1.1); }
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fireworks {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: firework 2s ease-out infinite;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--color);
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .sliding-emoji {
+            position: fixed;
+            top: 0;
+            left: -100px;
+            z-index: 500;
+            pointer-events: none;
+            animation: slide-across 8s linear infinite;
+        }
+
+        .sliding-emoji.small {
+            font-size: 20px;
+            top: 10px;
+        }
+
+        .sliding-emoji.medium {
+            font-size: 40px;
+            top: 5px;
+        }
+
+        .sliding-emoji.large {
+            font-size: 60px;
+            top: 0px;
+        }
+
+        .sliding-emoji.extra-large {
+            font-size: 80px;
+            top: -5px;
+        }
+
+        @keyframes slide-across {
+            0% {
+                transform: translateX(-100px) rotate(0deg);
+                opacity: 0.8;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) rotate(360deg);
+                opacity: 0.8;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .modal p {
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .auto-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.3);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        @media (max-width: 768px) {
+            .game-title { font-size: 36px; }
+            .clue { font-size: 28px; }
+            .emoji-card { width: 60px; height: 60px; font-size: 30px; }
+            .instructions { font-size: 16px; }
+            .modal { padding: 30px 20px; }
+            .modal h2 { font-size: 28px; }
+            .modal p { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="site-title">ilikefish.space</div>
+        <div class="game-title">🎮 EMOJI MATCH 🎮</div>
+    </div>
+
+    <div class="score">Level: <span id="level">1</span> | Score: <span id="score">0</span></div>
+
+    <div class="level-info">
+        <div class="clue" id="clue">LION KING</div>
+        <div class="instructions" id="instructions">Match 2 emojis to complete the phrase!</div>
+    </div>
+
+    <div class="game-board" id="gameBoard">
+        <!-- Emoji rows will be generated here -->
+    </div>
+
+    <div class="message" id="message" style="display: none;"></div>
+
+    <div class="controls">
+        <button class="btn btn-secondary" onclick="resetLevel()">Reset Level</button>
+        <button class="btn btn-secondary" onclick="previousLevel()" id="prevBtn">Previous Level</button>
+        <button class="btn btn-primary" onclick="nextLevel()" id="nextBtn" style="display: none;">Next Level</button>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal" style="display: none;">
+        <div class="modal">
+            <h2>🎉 Congratulations! 🎉</h2>
+            <p id="modalMessage">You completed the level!</p>
+            <div class="auto-switch">
+                <span>Auto-advance:</span>
+                <label class="switch">
+                    <input type="checkbox" id="autoSwitch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">Stay Here</button>
+                <button class="btn btn-primary" onclick="proceedToNext()">Next Level</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 1;
+        let score = 0;
+        let selectedEmojis = [];
+        let currentLevelData = {};
+        let highestLevel = 1;
+        let autoAdvance = false;
+
+        // Encouragement messages and emojis
+        const encouragementMessages = [
+            "🌟 You're doing great!",
+            "💪 Keep it up!",
+            "🎯 Nice focus!",
+            "🚀 You're on fire!",
+            "⭐ Awesome work!",
+            "🎉 Fantastic!",
+            "💎 Brilliant!",
+            "🏆 Champion!",
+            "🌈 Amazing!",
+            "🎊 Superb!"
+        ];
+
+        const celebrationEmojis = ["🎉", "🎊", "⭐", "🌟", "💫", "✨", "🎈", "🎆", "🎇", "🏆"];
+        const floatingEmojis = ["😊", "😄", "🥳", "😍", "🤩", "👏", "👍", "💪", "🔥", "⚡"];
+        const slidingEmojis = ["💩", "😊", "🍑", "😂", "🥰", "😎", "🤪", "🥳", "😍", "🤩", "🔥", "💖", "✨", "🌟", "🎉", "🦄", "🍕", "🌈", "⚡", "💫"];
+
+        let encouragementTimer;
+        let slidingEmojiTimer;
+
+        // Load saved progress
+        function loadProgress() {
+            const saved = localStorage.getItem('emojiMatchProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                currentLevel = progress.currentLevel || 1;
+                score = progress.score || 0;
+                highestLevel = progress.highestLevel || 1;
+                autoAdvance = progress.autoAdvance || false;
+                document.getElementById('autoSwitch').checked = autoAdvance;
+            }
+        }
+
+        // Save progress
+        function saveProgress() {
+            const progress = {
+                currentLevel: currentLevel,
+                score: score,
+                highestLevel: highestLevel,
+                autoAdvance: autoAdvance
+            };
+            localStorage.setItem('emojiMatchProgress', JSON.stringify(progress));
+        }
+
+        const baseLevels = [
+            {
+                clue: "LION KING",
+                required: ["🦁", "👑"],
+                emojis: ["🦁", "👑", "🐱", "🎭", "🌟", "🎪"],
+                instructions: "Match 2 emojis to complete the phrase!"
+            },
+            {
+                clue: "FIRE TRUCK",
+                required: ["🔥", "🚛"],
+                emojis: ["🔥", "🚛", "🚗", "💧", "🏠", "🚨"],
+                instructions: "Match 2 emojis to complete the phrase!"
+            },
+            {
+                clue: "SUNNY DAY",
+                required: ["☀️", "🌞"],
+                emojis: ["☀️", "🌞", "🌙", "⭐", "☁️", "🌈"],
+                instructions: "Match 2 emojis to complete the phrase!"
+            },
+            {
+                clue: "BIRTHDAY PARTY",
+                required: ["🎂", "🎉", "🎈"],
+                emojis: ["🎂", "🎉", "🎈", "🎁", "🍕", "🎵", "🎪", "🎭", "🌟"],
+                instructions: "Match 3 emojis to complete the phrase!"
+            },
+            {
+                clue: "SPACE ADVENTURE",
+                required: ["🚀", "⭐", "👨‍🚀"],
+                emojis: ["🚀", "⭐", "👨‍🚀", "🌍", "🌌", "🛸", "☄️", "🌙", "🔭"],
+                instructions: "Match 3 emojis to complete the phrase!"
+            },
+            {
+                clue: "BEACH VACATION",
+                required: ["🏖️", "🌊", "☀️", "🏄‍♂️"],
+                emojis: ["🏖️", "🌊", "☀️", "🏄‍♂️", "🐠", "⛵", "🦈", "🐙", "⚓", "🐚", "🌴", "🦀"],
+                instructions: "Match 4 emojis to complete the phrase!"
+            }
+        ];
+
+        const infiniteLevelTemplates = [
+            {
+                clues: ["PIZZA PARTY", "MUSIC DANCE", "STARRY NIGHT", "FLOWER GARDEN", "COFFEE MORNING"],
+                patterns: [
+                    {required: ["🍕", "🎉"], extras: ["🍔", "🎵", "🌮", "🎈", "🥤", "🎪"]},
+                    {required: ["🎵", "💃"], extras: ["🎸", "🎤", "🎹", "🕺", "🎺", "🎻"]},
+                    {required: ["⭐", "🌙"], extras: ["☀️", "🌞", "☁️", "🌈", "🌤️", "🌦️"]},
+                    {required: ["🌸", "🌻"], extras: ["🌹", "🌷", "🌺", "🌼", "🌿", "🍀"]},
+                    {required: ["☕", "🌅"], extras: ["🥐", "🧈", "🍞", "🥞", "🧇", "🥓"]}
+                ]
+            },
+            {
+                clues: ["WINTER WONDERLAND", "SUMMER VACATION", "FOREST ADVENTURE", "CITY LIFE", "FARM ANIMALS"],
+                patterns: [
+                    {required: ["❄️", "⛄", "🎿"], extras: ["☀️", "🌸", "🏖️", "🌊", "🔥", "🌡️", "🧊", "⛷️", "🏔️"]},
+                    {required: ["🏖️", "🌊", "☀️"], extras: ["❄️", "⛄", "🥶", "🌙", "🍂", "🍁", "🌸", "🏄‍♂️", "🏐"]},
+                    {required: ["🌲", "🐻", "🏕️"], extras: ["🏢", "🚗", "🏠", "🦌", "🍄", "🌿", "🦋", "🐿️", "🔥"]},
+                    {required: ["🏢", "🚗", "🚦"], extras: ["🌲", "🌳", "🐦", "🚌", "🚕", "🏪", "🏬", "🛣️", "🏙️"]},
+                    {required: ["🐄", "🐷", "🚜"], extras: ["🐔", "🐑", "🐴", "🌾", "🥕", "🌽", "🍎", "🏡", "🌻"]}
+                ]
+            },
+            {
+                clues: ["COOKING DINNER", "MOVIE NIGHT", "SPORTS GAME", "SCHOOL DAY", "DOCTOR VISIT"],
+                patterns: [
+                    {required: ["👨‍🍳", "🍽️", "🔥"], extras: ["🥘", "🍝", "🥗", "🍖", "🧄", "🧅", "🥄", "🍴", "👩‍🍳"]},
+                    {required: ["🎬", "🍿", "🛋️"], extras: ["📺", "🎭", "🎪", "🎨", "🎵", "📱", "💻", "🕯️", "🌙"]},
+                    {required: ["⚽", "🏆", "👕"], extras: ["🏀", "🏈", "⚾", "🎾", "🏐", "🥅", "👟", "🏃‍♂️", "🏟️"]},
+                    {required: ["📚", "✏️", "🎒"], extras: ["📝", "📐", "🖍️", "📊", "🧮", "🔬", "🌍", "👨‍🏫", "🏫"]},
+                    {required: ["👩‍⚕️", "🩺", "💊"], extras: ["🏥", "🚑", "🌡️", "💉", "🩹", "😷", "🧴", "⚕️", "🔬"]}
+                ]
+            }
+        ];
+
+        function generateInfiniteLevel(levelNum) {
+            const difficulty = Math.min(Math.floor((levelNum - 7) / 2) + 2, 6); // 2-6 emojis to match, increases every 2 levels
+            const templateIndex = (levelNum - 7) % infiniteLevelTemplates.length;
+            const template = infiniteLevelTemplates[templateIndex];
+            const patternIndex = Math.floor(Math.random() * template.patterns.length);
+            const pattern = template.patterns[patternIndex];
+            
+            // Select required emojis based on difficulty
+            const required = pattern.required.slice(0, difficulty);
+            
+            // Add extra emojis to make it challenging - more emojis as levels get harder
+            const extraCount = Math.max(8, difficulty * 3 + Math.floor(levelNum / 5));
+            const shuffledExtras = [...pattern.extras].sort(() => Math.random() - 0.5);
+            const allEmojis = [...required, ...shuffledExtras.slice(0, extraCount)];
+            
+            return {
+                clue: template.clues[patternIndex] || `CHALLENGE ${levelNum}`,
+                required: required,
+                emojis: allEmojis.sort(() => Math.random() - 0.5),
+                instructions: `Match ${difficulty} emojis to complete the phrase!`
+            };
+        }
+
+        // Create floating emojis
+        function createFloatingEmoji(x, y) {
+            const emoji = document.createElement('div');
+            emoji.className = 'floating-emoji';
+            emoji.textContent = floatingEmojis[Math.floor(Math.random() * floatingEmojis.length)];
+            emoji.style.left = x + 'px';
+            emoji.style.top = y + 'px';
+            document.body.appendChild(emoji);
+            
+            setTimeout(() => {
+                emoji.remove();
+            }, 3000);
+        }
+
+        // Show encouragement message
+        function showEncouragement() {
+            const existing = document.querySelector('.encouragement');
+            if (existing) existing.remove();
+            
+            const encouragement = document.createElement('div');
+            encouragement.className = 'encouragement';
+            encouragement.textContent = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+            document.body.appendChild(encouragement);
+            
+            setTimeout(() => {
+                encouragement.remove();
+            }, 3000);
+        }
+
+        // Create celebration burst
+        function createCelebrationBurst() {
+            const burst = document.createElement('div');
+            burst.className = 'celebration-burst';
+            burst.textContent = celebrationEmojis[Math.floor(Math.random() * celebrationEmojis.length)];
+            document.body.appendChild(burst);
+            
+            setTimeout(() => {
+                burst.remove();
+            }, 2000);
+        }
+
+        // Create sliding emoji across top of screen
+        function createSlidingEmoji() {
+            const emoji = document.createElement('div');
+            emoji.className = 'sliding-emoji';
+            
+            // Random emoji from the sliding emojis array
+            emoji.textContent = slidingEmojis[Math.floor(Math.random() * slidingEmojis.length)];
+            
+            // Random size - small, medium, large, or extra-large
+            const sizes = ['small', 'medium', 'large', 'extra-large'];
+            const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+            emoji.classList.add(randomSize);
+            
+            // Random vertical position within top area
+            const topOffset = Math.random() * 60; // 0-60px from top
+            emoji.style.top = topOffset + 'px';
+            
+            // Random animation duration for variety
+            const duration = Math.random() * 4 + 6; // 6-10 seconds
+            emoji.style.animationDuration = duration + 's';
+            
+            document.body.appendChild(emoji);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                emoji.remove();
+            }, duration * 1000);
+        }
+
+        // Start sliding emoji timer
+        function startSlidingEmojiTimer() {
+            clearTimeout(slidingEmojiTimer);
+            slidingEmojiTimer = setTimeout(() => {
+                createSlidingEmoji();
+                startSlidingEmojiTimer(); // Restart timer
+            }, Math.random() * 3000 + 2000); // Random between 2-5 seconds
+        }
+
+        // Milestone celebration animations
+        function showMilestoneAnimation(level) {
+            const milestoneData = {
+                5: { title: "🎉 LEVEL 5 CHAMPION! 🎉", message: "You're getting really good at this!", emojis: "🏆🌟🎊", progress: "25% Complete!" },
+                10: { title: "🚀 LEVEL 10 MASTER! 🚀", message: "Incredible skills! You're on fire!", emojis: "🔥💪⭐", progress: "50% Complete!" },
+                15: { title: "👑 LEVEL 15 LEGEND! 👑", message: "Amazing! You're a true emoji expert!", emojis: "💎🎯🏅", progress: "75% Complete!" },
+                20: { title: "🌟 LEVEL 20 SUPERSTAR! 🌟", message: "Unbelievable! You're unstoppable!", emojis: "🎆🎈🎪", progress: "100% Complete!" },
+                25: { title: "🎊 LEVEL 25 ULTIMATE! 🎊", message: "You've reached legendary status!", emojis: "👑💫🏆", progress: "Beyond Mastery!" }
+            };
+
+            const data = milestoneData[level] || {
+                title: `🎉 LEVEL ${level} ACHIEVED! 🎉`,
+                message: "You're absolutely incredible!",
+                emojis: "🌟🎊🏆",
+                progress: "Epic Achievement!"
+            };
+
+            const animation = document.createElement('div');
+            animation.className = 'milestone-animation';
+            animation.innerHTML = `
+                <div class="milestone-content">
+                    <div class="milestone-title">${data.title}</div>
+                    <div class="milestone-message">${data.message}</div>
+                    <div class="milestone-emojis">${data.emojis}</div>
+                    <div class="milestone-progress">${data.progress}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(animation);
+            
+            // Add fireworks
+            createFireworks(animation);
+            
+            // Add confetti
+            createConfetti(animation);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                animation.remove();
+            }, 4000);
+        }
+
+        // Create fireworks effect
+        function createFireworks(container) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#fd79a8'];
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'fireworks';
+                    firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    firework.style.left = Math.random() * 100 + '%';
+                    firework.style.top = Math.random() * 100 + '%';
+                    
+                    const dx = (Math.random() - 0.5) * 400;
+                    const dy = (Math.random() - 0.5) * 400;
+                    firework.style.setProperty('--dx', dx + 'px');
+                    firework.style.setProperty('--dy', dy + 'px');
+                    
+                    container.appendChild(firework);
+                    
+                    setTimeout(() => {
+                        firework.remove();
+                    }, 2000);
+                }, i * 100);
+            }
+        }
+
+        // Create confetti effect
+        function createConfetti(container) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#fd79a8'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    
+                    container.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }, i * 50);
+            }
+        }
+
+        // Start encouragement timer
+        function startEncouragementTimer() {
+            clearTimeout(encouragementTimer);
+            encouragementTimer = setTimeout(() => {
+                showEncouragement();
+                startEncouragementTimer(); // Restart timer
+            }, Math.random() * 15000 + 10000); // Random between 10-25 seconds
+        }
+
+        function initGame() {
+            loadProgress();
+            loadLevel(currentLevel);
+            startEncouragementTimer();
+            startSlidingEmojiTimer();
+        }
+
+        function loadLevel(level) {
+            // Use base levels for first 6 levels, then generate infinite levels
+            if (level <= baseLevels.length) {
+                currentLevelData = baseLevels[level - 1];
+            } else {
+                currentLevelData = generateInfiniteLevel(level);
+            }
+            
+            selectedEmojis = [];
+            
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('clue').textContent = currentLevelData.clue;
+            document.getElementById('instructions').textContent = currentLevelData.instructions;
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('message').style.display = 'none';
+            
+            // Show/hide previous button
+            document.getElementById('prevBtn').style.display = level > 1 ? 'inline-block' : 'none';
+
+            generateBoard();
+            
+            // Show level start encouragement for higher levels
+            if (level > 1) {
+                setTimeout(() => {
+                    const levelMessages = [
+                        `🎯 Level ${level} - Let's go!`,
+                        `🚀 Ready for Level ${level}?`,
+                        `⭐ Level ${level} awaits!`,
+                        `💪 You've got this, Level ${level}!`,
+                        `🌟 Level ${level} - Show your skills!`
+                    ];
+                    const encouragement = document.createElement('div');
+                    encouragement.className = 'encouragement';
+                    encouragement.textContent = levelMessages[Math.floor(Math.random() * levelMessages.length)];
+                    document.body.appendChild(encouragement);
+                    
+                    setTimeout(() => {
+                        encouragement.remove();
+                    }, 3000);
+                }, 500);
+            }
+        }
+
+        function generateBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+
+            // Shuffle emojis
+            const shuffledEmojis = [...currentLevelData.emojis].sort(() => Math.random() - 0.5);
+            
+            // Create 3 rows
+            const emojisPerRow = Math.ceil(shuffledEmojis.length / 3);
+            
+            for (let row = 0; row < 3; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'emoji-row';
+                
+                const startIndex = row * emojisPerRow;
+                const endIndex = Math.min(startIndex + emojisPerRow, shuffledEmojis.length);
+                
+                for (let i = startIndex; i < endIndex; i++) {
+                    if (shuffledEmojis[i]) {
+                        const emojiCard = document.createElement('div');
+                        emojiCard.className = 'emoji-card';
+                        emojiCard.textContent = shuffledEmojis[i];
+                        emojiCard.onclick = () => selectEmoji(emojiCard, shuffledEmojis[i]);
+                        rowDiv.appendChild(emojiCard);
+                    }
+                }
+                
+                board.appendChild(rowDiv);
+            }
+        }
+
+        function selectEmoji(card, emoji) {
+            if (card.classList.contains('correct') || card.classList.contains('wrong')) {
+                return;
+            }
+
+            // Create floating emoji on click
+            const rect = card.getBoundingClientRect();
+            createFloatingEmoji(rect.left + rect.width/2, rect.top + rect.height/2);
+
+            if (card.classList.contains('selected')) {
+                // Deselect
+                card.classList.remove('selected');
+                selectedEmojis = selectedEmojis.filter(e => e !== emoji);
+            } else {
+                // Select
+                card.classList.add('selected');
+                selectedEmojis.push(emoji);
+            }
+
+            // Check if we have the right number of selections
+            if (selectedEmojis.length === currentLevelData.required.length) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const isCorrect = currentLevelData.required.every(emoji => 
+                selectedEmojis.includes(emoji)
+            ) && selectedEmojis.length === currentLevelData.required.length;
+
+            const selectedCards = document.querySelectorAll('.emoji-card.selected');
+            
+            if (isCorrect) {
+                selectedCards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.classList.add('correct');
+                    
+                    // Create celebration effects for each correct card
+                    const rect = card.getBoundingClientRect();
+                    createFloatingEmoji(rect.left + rect.width/2, rect.top + rect.height/2);
+                });
+                
+                // Create celebration burst
+                createCelebrationBurst();
+                
+                // Show random encouragement
+                setTimeout(() => {
+                    showEncouragement();
+                }, 500);
+                
+                score += currentLevel * 100;
+                document.getElementById('score').textContent = score;
+                
+                // Update highest level reached
+                if (currentLevel >= highestLevel) {
+                    highestLevel = currentLevel + 1;
+                }
+                
+                saveProgress();
+                
+                // Show success modal
+                setTimeout(() => {
+                    showSuccessModal();
+                }, 1000);
+            } else {
+                selectedCards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.classList.add('wrong');
+                });
+                
+                showMessage("❌ Wrong match! Rearranging emojis... ❌", "error");
+                
+                // Rearrange emojis after wrong match instead of full reset
+                setTimeout(() => {
+                    rearrangeEmojis();
+                }, 1500);
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.style.display = 'block';
+            
+            if (type === 'success') {
+                messageEl.style.background = 'rgba(76,175,80,0.3)';
+            } else {
+                messageEl.style.background = 'rgba(244,67,54,0.3)';
+            }
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            saveProgress();
+            loadLevel(currentLevel);
+        }
+
+        function resetLevel() {
+            selectedEmojis = [];
+            loadLevel(currentLevel);
+        }
+
+        function rearrangeEmojis() {
+            selectedEmojis = [];
+            
+            // Clear wrong selections
+            const wrongCards = document.querySelectorAll('.emoji-card.wrong');
+            wrongCards.forEach(card => {
+                card.classList.remove('wrong');
+            });
+            
+            // Hide message
+            document.getElementById('message').style.display = 'none';
+            
+            // Regenerate board with same emojis but different positions
+            generateBoard();
+        }
+
+        function previousLevel() {
+            if (currentLevel > 1) {
+                currentLevel--;
+                saveProgress();
+                loadLevel(currentLevel);
+            }
+        }
+
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            const message = document.getElementById('modalMessage');
+            
+            // Check if this is a milestone level (every 5 levels)
+            if (currentLevel % 5 === 0) {
+                // Show milestone animation first
+                showMilestoneAnimation(currentLevel);
+                
+                // Delay the modal to show after milestone animation
+                setTimeout(() => {
+                    if (currentLevel <= 6) {
+                        message.textContent = `Amazing! You completed level ${currentLevel}! Ready for the next challenge?`;
+                    } else {
+                        message.textContent = `Incredible! Level ${currentLevel} conquered! The challenges keep getting harder!`;
+                    }
+                    
+                    modal.style.display = 'flex';
+                    
+                    // Auto-advance if enabled
+                    if (autoAdvance) {
+                        setTimeout(() => {
+                            proceedToNext();
+                        }, 2000);
+                    }
+                }, 4500); // Show modal after milestone animation
+            } else {
+                // Regular level completion
+                if (currentLevel <= 6) {
+                    message.textContent = `Amazing! You completed level ${currentLevel}! Ready for the next challenge?`;
+                } else {
+                    message.textContent = `Incredible! Level ${currentLevel} conquered! The challenges keep getting harder!`;
+                }
+                
+                modal.style.display = 'flex';
+                
+                // Auto-advance if enabled
+                if (autoAdvance) {
+                    setTimeout(() => {
+                        proceedToNext();
+                    }, 2000);
+                }
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        function proceedToNext() {
+            closeModal();
+            nextLevel();
+        }
+
+        // Auto-switch toggle
+        document.getElementById('autoSwitch').addEventListener('change', function() {
+            autoAdvance = this.checked;
+            saveProgress();
+        });
+
+        // Initialize the game
+        initGame();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9752d53fa34b120c',t:'MTc1NjIwNjEwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

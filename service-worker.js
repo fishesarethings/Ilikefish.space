@@ -92,7 +92,12 @@ const PRECACHE_URLS = [
 
   '/games/minetycoon/config.json',
   '/games/minetycoon/icon.png',
-  '/games/minetycoon/minetycoon.html'
+  '/games/minetycoon/minetycoon.html',
+
+  '/games/emojimatch/config.json',
+  '/games/emojimatch/emojimatch.html',
+  '/games/emojimatch/icon.png',
+  '/games/emojimatch/icon1.png'
 ];
 
 // --- helper logs ---
