@@ -88,7 +88,11 @@ const PRECACHE_URLS = [
   '/games/fishclimbracing/config.json',
   '/games/fishclimbracing/fishclimbracing.html',
   '/games/fishclimbracing/icon1.png',
-  '/games/fishclimbracing/icon.png'
+  '/games/fishclimbracing/icon.png',
+
+  '/games/minetycoon/config.json',
+  '/games/minetycoon/icon.png',
+  '/games/minetycoon/minetycoon.html'
 ];
 
 // --- helper logs ---
