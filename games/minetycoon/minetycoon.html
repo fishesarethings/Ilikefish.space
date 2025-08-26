@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mine Tycoon - Idle Mining Game (Live Test)</title>
+    <title>Mine Tycoon - Idle Mining Game</title>
     <style>
         * {
             margin: 0;
@@ -42,61 +42,7 @@
             margin-bottom: 10px;
         }
 
-        .mine-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            justify-content: center;
-        }
 
-        .mine-tab {
-            background: rgba(68, 45, 23, 0.6);
-            border: 2px solid rgba(248, 233, 161, 0.2);
-            border-radius: 12px;
-            padding: 15px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            min-width: 120px;
-        }
-
-        .mine-tab:hover:not(.locked) {
-            background: rgba(68, 45, 23, 0.8);
-            border-color: #ffd700;
-        }
-
-        .mine-tab.active {
-            background: rgba(255, 215, 0, 0.2);
-            border-color: #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .mine-tab.locked {
-            background: rgba(68, 45, 23, 0.3);
-            border-color: rgba(248, 233, 161, 0.1);
-            cursor: pointer;
-        }
-
-        .mine-tab.locked:hover {
-            background: rgba(68, 45, 23, 0.5);
-            border-color: rgba(248, 233, 161, 0.3);
-        }
-
-        .tab-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 5px;
-        }
-
-        .tab-status {
-            font-size: 0.9rem;
-            color: #90EE90;
-        }
-
-        .mine-tab.locked .tab-status {
-            color: #ccc;
-        }
 
 
 
@@ -415,6 +361,127 @@
             }
         }
 
+        @keyframes diamondFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            20% {
+                transform: translateY(-10px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(0.8);
+            }
+        }
+
+        .fish-explosion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .fish-emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: fishExplode 3s ease-out forwards;
+            pointer-events: none;
+            left: 50%;
+            top: 50%;
+        }
+
+        @keyframes fishExplode {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.1) rotate(0deg);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(calc(-50% + var(--final-x) * 0.3), calc(-50% + var(--final-y) * 0.3)) scale(1.2) rotate(72deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--final-x)), calc(-50% + var(--final-y))) scale(0.8) rotate(360deg);
+            }
+        }
+
+        .rebirth-popup {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 24, 16, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+            border: 3px solid #ff6b35;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5);
+        }
+
+        .rebirth-popup.show {
+            display: flex;
+        }
+
+        .rebirth-popup h3 {
+            color: #ff6b35;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+
+        .rebirth-popup p {
+            color: #f8e9a1;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .rebirth-popup-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .rebirth-popup-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rebirth-confirm {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+        }
+
+        .rebirth-confirm:hover {
+            background: linear-gradient(135deg, #ff8c42, #ff6b35);
+            transform: translateY(-2px);
+        }
+
+        .rebirth-cancel {
+            background: linear-gradient(135deg, #666, #888);
+            color: white;
+        }
+
+        .rebirth-cancel:hover {
+            background: linear-gradient(135deg, #888, #666);
+            transform: translateY(-2px);
+        }
+
         @media (max-width: 640px) {
             .game-container {
                 padding: 20px;
@@ -435,24 +502,11 @@
 <body>
     <div class="game-container">
         <div class="header">
-            <h1>⛏️ Mine Tycoon ⛏️</h1>
+            <h1 id="game-title">⛏️ Mine Tycoon ⛏️</h1>
             <p>Build your mining empire!</p>
         </div>
 
-        <div class="mine-tabs">
-            <div class="mine-tab active" id="mine-tab-0" onclick="buyMine(0)">
-                <div class="tab-title">Mine 1</div>
-                <div class="tab-status" id="tab-status-0">Active</div>
-            </div>
-            <div class="mine-tab locked" id="mine-tab-1" onclick="buyMine(1)">
-                <div class="tab-title">Mine 2</div>
-                <div class="tab-status" id="tab-status-1">🔒 50,000 💰</div>
-            </div>
-            <div class="mine-tab locked" id="mine-tab-2" onclick="buyMine(2)">
-                <div class="tab-title">Mine 3</div>
-                <div class="tab-status" id="tab-status-2">🔒 100,000 💰</div>
-            </div>
-        </div>
+
 
         <div class="stats-panel">
             <div class="stat-card">
@@ -476,8 +530,8 @@
                 <div class="stat-value" id="rebirths-display">0</div>
             </div>
             <div class="stat-card">
-                <div>⚡ Profit x</div>
-                <div class="stat-value" id="multiplier-display">1</div>
+                <div>💎 Lifetime</div>
+                <div class="stat-value" id="lifetime-display">1K</div>
             </div>
         </div>
 
@@ -493,7 +547,7 @@
 
         <div class="shop-section">
             <h2 class="shop-title">🏪 Upgrade Shop</h2>
-            <div class="shop-buttons">
+            <div class="shop-buttons" style="position: relative;">
                 <button class="shop-btn" id="dig-level">
                     🏗️ Dig New Level - Cost: <span id="level-cost">25</span> gold
                 </button>
@@ -505,11 +559,25 @@
                     ⚡ Upgrade Worker Speed - Cost: <span id="worker-upgrade-cost">25</span> gold
                 </button>
                 <button class="shop-btn" id="upgrade-carts">
-                    🚋 Upgrade Cart Storage (+25) - Cost: <span id="cart-upgrade-cost">19</span> gold
+                    🚋 Upgrade Cart Storage (<span id="cart-increase">+25</span>) - Cost: <span id="cart-upgrade-cost">19</span> gold
                 </button>
                 <button class="shop-btn" id="rebirth-btn" style="background: linear-gradient(135deg, #ff6b35, #ff8c42); display: none;">
-                    🔄 REBIRTH - 5x Profit Forever! (Requires 100,000 💰)
+                    🔄 REBIRTH - 5x Profit Forever! (Requires <span id="rebirth-cost-display">1,000,000</span> 💎 lifetime)
                 </button>
+               
+                <div class="rebirth-popup" id="rebirth-popup">
+                    <h3>🔄 REBIRTH CONFIRMATION 🔄</h3>
+                    <p>You will lose ALL current progress but gain:</p>
+                    <p>• 5x profit multiplier FOREVER!<br>
+                    • Keep your <span id="popup-rebirths">0</span> rebirths<br>
+                    • Keep your <span id="popup-lifetime">0</span> lifetime gold</p>
+                    <p>Next rebirth will cost <span id="popup-next-cost">5M</span> lifetime gold.</p>
+                    <p><strong>Are you absolutely sure?</strong></p>
+                    <div class="rebirth-popup-buttons">
+                        <button class="rebirth-popup-btn rebirth-confirm" id="confirm-rebirth">YES, REBIRTH!</button>
+                        <button class="rebirth-popup-btn rebirth-cancel" id="cancel-rebirth">Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -542,9 +610,13 @@
             unlockedMines: [true, false, false], // Track which mines are unlocked
             rebirths: 0, // Number of rebirths
             profitMultiplier: 1, // Multiplier for gold earned
-            activeMine: 0, // which mine tab is currently active
-            rebirthCost: 100000 // changed from 10,000 to 100,000 as requested
+            lifetimeGold: 1000, // Total gold earned throughout all rebirths
+            rebirthCost: 1000000 // Cost for next rebirth (starts at 1 million)
         };
+
+        // Easter egg variables
+        let titleClickCount = 0;
+        let titleClickTimer = null;
 
         // DOM elements
         const goldDisplay = document.getElementById('gold-display');
@@ -552,7 +624,7 @@
         const tunnelsDisplay = document.getElementById('tunnels-display');
         const workersDisplay = document.getElementById('workers-display');
         const rebirthsDisplay = document.getElementById('rebirths-display');
-        const multiplierDisplay = document.getElementById('multiplier-display');
+        const lifetimeDisplay = document.getElementById('lifetime-display');
         const orePerSecondDisplay = document.getElementById('ore-per-second');
         const cartCapacityDisplay = document.getElementById('cart-capacity');
         const levelCostDisplay = document.getElementById('level-cost');
@@ -560,6 +632,7 @@
 
         const workerUpgradeCostDisplay = document.getElementById('worker-upgrade-cost');
         const cartUpgradeCostDisplay = document.getElementById('cart-upgrade-cost');
+        const cartIncreaseDisplay = document.getElementById('cart-increase');
         const mineVisual = document.getElementById('mine-visual');
         const mineLevels = document.getElementById('mine-levels');
 
@@ -569,6 +642,7 @@
         const upgradeWorkersBtn = document.getElementById('upgrade-workers');
         const upgradeCartsBtn = document.getElementById('upgrade-carts');
         const rebirthBtn = document.getElementById('rebirth-btn');
+        const rebirthCostDisplay = document.getElementById('rebirth-cost-display');
 
 
 
@@ -699,32 +773,17 @@
             return totalRate;
         }
 
-
-
-        // Update mine tabs
-        function updateMineTabs() {
-            for (let i = 0; i < 3; i++) {
-                const tab = document.getElementById(`mine-tab-${i}`);
-                const status = document.getElementById(`tab-status-${i}`);
-               
-                if (gameState.unlockedMines[i]) {
-                    tab.classList.remove('locked');
-                    // only mark the currently active mine as active
-                    if (gameState.activeMine === i) {
-                        tab.classList.add('active');
-                        status.textContent = 'Active';
-                    } else {
-                        tab.classList.remove('active');
-                        status.textContent = 'Unlocked';
-                    }
-                } else {
-                    tab.classList.add('locked');
-                    tab.classList.remove('active');
-                    const cost = i === 1 ? '50,000' : '100,000';
-                    status.textContent = `🔒 ${cost} 💰`;
-                }
-            }
+        // Format large numbers
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return Math.floor(num).toLocaleString();
         }
+
+
+
+
 
         // Update display
         function updateDisplay() {
@@ -733,7 +792,7 @@
             tunnelsDisplay.textContent = gameState.tunnels.length;
             workersDisplay.textContent = gameState.workers;
             rebirthsDisplay.textContent = gameState.rebirths;
-            multiplierDisplay.textContent = gameState.profitMultiplier + 'x';
+            lifetimeDisplay.textContent = formatNumber(gameState.lifetimeGold);
             orePerSecondDisplay.textContent = calculateMiningRate();
             cartCapacityDisplay.textContent = gameState.cartCapacity;
             levelCostDisplay.textContent = gameState.levelCost;
@@ -741,6 +800,18 @@
 
             workerUpgradeCostDisplay.textContent = gameState.workerUpgradeCost;
             cartUpgradeCostDisplay.textContent = gameState.cartUpgradeCost;
+            rebirthCostDisplay.textContent = formatNumber(gameState.rebirthCost);
+           
+            // Update cart increase display based on current capacity
+            let capacityIncrease = 25;
+            if (gameState.cartCapacity >= 1500) {
+                capacityIncrease = 250;
+            } else if (gameState.cartCapacity >= 750) {
+                capacityIncrease = 100;
+            } else if (gameState.cartCapacity >= 400) {
+                capacityIncrease = 75;
+            }
+            cartIncreaseDisplay.textContent = '+' + capacityIncrease;
 
             // Update button states
             digLevelBtn.disabled = gameState.gold < gameState.levelCost;
@@ -749,16 +820,13 @@
             upgradeWorkersBtn.disabled = gameState.gold < gameState.workerUpgradeCost || gameState.workers === 0;
             upgradeCartsBtn.disabled = gameState.gold < gameState.cartUpgradeCost || gameState.tunnels.length === 0;
 
-            // Show/hide rebirth button (now uses gameState.rebirthCost)
-            if (gameState.gold >= gameState.rebirthCost) {
+            // Show/hide rebirth button based on lifetime gold earned
+            if (gameState.lifetimeGold >= gameState.rebirthCost) {
                 rebirthBtn.style.display = 'block';
                 rebirthBtn.disabled = false;
             } else {
                 rebirthBtn.style.display = 'none';
             }
-
-            // Update mine tabs
-            updateMineTabs();
 
             // Update visual elements
             createMineLevels();
@@ -768,84 +836,96 @@
         function showPopup(amount, type, x, y) {
             const popup = document.createElement('div');
             popup.className = 'gold-popup';
-            popup.textContent = '+' + amount + (type === 'ore' ? ' 🪨' : ' 💰');
+           
+            if (type === 'diamond') {
+                popup.textContent = amount; // Already includes diamond emoji and formatting
+                popup.style.color = '#00FFFF';
+                popup.style.fontSize = '1.5rem';
+                popup.style.textShadow = '0 0 10px #00FFFF, 0 0 20px #00FFFF';
+                popup.style.animation = 'diamondFloat 3s ease-out forwards';
+            } else {
+                popup.textContent = '+' + amount + (type === 'ore' ? ' 🪨' : ' 💰');
+                popup.style.color = type === 'ore' ? '#8B4513' : '#ffd700';
+            }
+           
             popup.style.left = (x || Math.random() * 80 + 10) + '%';
             popup.style.top = (y || 30) + '%';
-            popup.style.color = type === 'ore' ? '#8B4513' : '#ffd700';
             mineVisual.appendChild(popup);
 
             setTimeout(() => {
                 if (popup.parentNode) {
                     popup.parentNode.removeChild(popup);
                 }
-            }, 2000);
+            }, type === 'diamond' ? 3000 : 2000);
         }
 
-        // Buy or switch mine
-        function buyMine(mineIndex) {
-            // If already unlocked, switch to that mine
-            if (gameState.unlockedMines[mineIndex]) {
-                gameState.activeMine = mineIndex;
-                updateDisplay();
-                return; // just switch active tab
+
+
+        // Show rebirth popup
+        function showRebirthPopup() {
+            if (gameState.lifetimeGold >= gameState.rebirthCost) {
+                // Update popup content with current values
+                document.getElementById('popup-rebirths').textContent = gameState.rebirths;
+                document.getElementById('popup-lifetime').textContent = formatNumber(gameState.lifetimeGold);
+                document.getElementById('popup-next-cost').textContent = formatNumber(gameState.rebirthCost * 5);
+               
+                // Show the popup
+                document.getElementById('rebirth-popup').classList.add('show');
             }
-           
-            const cost = mineIndex === 1 ? 50000 : 100000;
-            if (gameState.gold >= cost) {
-                gameState.gold -= cost;
-                gameState.unlockedMines[mineIndex] = true;
-                gameState.activeMine = mineIndex;
-                updateDisplay();
-                showPopup(`Mine ${mineIndex + 1} Unlocked!`, 'gold');
-            } else {
-                // Provide feedback when trying to buy without enough gold
-                showPopup(`Need ${cost.toLocaleString()} 💰`, 'gold');
-            }
+        }
+
+        // Hide rebirth popup
+        function hideRebirthPopup() {
+            document.getElementById('rebirth-popup').classList.remove('show');
         }
 
         // Rebirth function
         function rebirth() {
-            if (gameState.gold >= gameState.rebirthCost) {
-                // Confirm rebirth
-                if (confirm('Are you sure you want to rebirth? You will lose all progress but gain 5x profit multiplier forever!')) {
-                    // Increase rebirth count and profit multiplier
-                    gameState.rebirths++;
-                    gameState.profitMultiplier *= 5;
-                   
-                    // Reset everything except rebirths and multiplier
-                    const savedRebirths = gameState.rebirths;
-                    const savedMultiplier = gameState.profitMultiplier;
-                   
-                    gameState = {
-                        gold: 1000,
-                        levels: 1,
-                        tunnels: [],
-                        workers: 0,
-                        liftSpeed: 1,
-                        levelCost: 25,
-                        workerCost: 13,
-                        liftCost: 50,
-                        tunnelCost: 15,
-                        workerUpgradeCost: 25,
-                        cartCapacity: 5,
-                        cartUpgradeCost: 19,
-                        unlockedMines: [true, false, false],
-                        rebirths: savedRebirths,
-                        profitMultiplier: savedMultiplier,
-                        activeMine: 0,
-                        rebirthCost: 100000
-                    };
-                   
-                    updateDisplay();
-                    showPopup(`Rebirth Complete! ${savedMultiplier}x Profit!`, 'gold');
-                   
-                    // Reset lift position
-                    setTimeout(() => {
-                        const lift = document.getElementById('lift');
-                        lift.style.transform = `translateX(-50%) translateY(40px)`;
-                    }, 100);
+            // Increase rebirth count and profit multiplier
+            gameState.rebirths++;
+            gameState.profitMultiplier *= 5;
+            gameState.rebirthCost *= 5;
+           
+            // Reset everything except rebirths, multiplier, lifetime gold, and rebirth cost
+            const savedRebirths = gameState.rebirths;
+            const savedMultiplier = gameState.profitMultiplier;
+            const savedLifetimeGold = gameState.lifetimeGold;
+            const savedRebirthCost = gameState.rebirthCost;
+           
+            // Reset game state
+            gameState.gold = 1000;
+            gameState.levels = 1;
+            gameState.tunnels = [];
+            gameState.workers = 0;
+            gameState.liftSpeed = 1;
+            gameState.levelCost = 25;
+            gameState.workerCost = 13;
+            gameState.liftCost = 50;
+            gameState.tunnelCost = 15;
+            gameState.workerUpgradeCost = 25;
+            gameState.cartCapacity = 5;
+            gameState.cartUpgradeCost = 19;
+            gameState.unlockedMines = [true, false, false];
+           
+            // Restore persistent values
+            gameState.rebirths = savedRebirths;
+            gameState.profitMultiplier = savedMultiplier;
+            gameState.lifetimeGold = savedLifetimeGold;
+            gameState.rebirthCost = savedRebirthCost;
+           
+            // Hide popup and update display
+            hideRebirthPopup();
+            updateDisplay();
+            showPopup(`🔄 REBIRTH! ${savedMultiplier}x Profit Forever!`, 'diamond');
+           
+            // Reset lift position
+            setTimeout(() => {
+                const lift = document.getElementById('lift');
+                if (lift) {
+                    lift.style.transform = `translateX(-50%) translateY(40px)`;
+                    lift.classList.remove('moving');
                 }
-            }
+            }, 100);
         }
 
 
@@ -914,7 +994,18 @@
         function upgradeCarts() {
             if (gameState.gold >= gameState.cartUpgradeCost && gameState.tunnels.length > 0) {
                 gameState.gold -= gameState.cartUpgradeCost;
-                gameState.cartCapacity += 25;
+               
+                // Scale cart capacity increase based on current capacity
+                let capacityIncrease = 25; // Default increase
+                if (gameState.cartCapacity >= 1500) {
+                    capacityIncrease = 250;
+                } else if (gameState.cartCapacity >= 750) {
+                    capacityIncrease = 100;
+                } else if (gameState.cartCapacity >= 400) {
+                    capacityIncrease = 75;
+                }
+               
+                gameState.cartCapacity += capacityIncrease;
                 // Update all existing carts
                 gameState.tunnels.forEach(tunnel => {
                     tunnel.cartCapacity = gameState.cartCapacity;
@@ -935,6 +1026,28 @@
                     const oreToMine = Math.min(orePerSecond, spaceInCart);
                    
                     if (oreToMine > 0) {
+                        // Check for diamond chance (0.001% per ore mined)
+                        for (let i = 0; i < oreToMine; i++) {
+                            if (Math.random() < 0.00001) { // 0.001% chance
+                                // Diamond found!
+                                let diamondReward;
+                                if (gameState.gold > 100000) {
+                                    diamondReward = gameState.gold * 10;
+                                } else {
+                                    diamondReward = 2500000;
+                                }
+                               
+                                gameState.gold += diamondReward;
+                                gameState.lifetimeGold += diamondReward;
+                               
+                                // Show diamond popup
+                                showPopup(`💎 DIAMOND! +${formatNumber(diamondReward)}`, 'diamond',
+                                    Math.random() * 60 + 20, Math.random() * 30 + 20);
+                               
+                                break; // Only one diamond per tunnel per second max
+                            }
+                        }
+                       
                         tunnel.cartOre += oreToMine;
                         // Remove the separate ore storage since it goes directly to cart
                         tunnel.ore = 0;
@@ -1007,6 +1120,7 @@
                 setTimeout(() => {
                     const multipliedGold = totalGold * gameState.profitMultiplier;
                     gameState.gold += multipliedGold;
+                    gameState.lifetimeGold += multipliedGold; // Track lifetime earnings
                     showPopup(multipliedGold, 'gold');
                 }, 2000); // Wait 2 seconds for lift to reach top
                
@@ -1062,13 +1176,84 @@
             updateDisplay();
         }
 
+        // Fish explosion function
+        function createFishExplosion() {
+            const fishContainer = document.createElement('div');
+            fishContainer.className = 'fish-explosion';
+            document.body.appendChild(fishContainer);
+           
+            // Create 30 fish emojis
+            for (let i = 0; i < 30; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'fish-emoji';
+                fish.textContent = '🐟';
+               
+                // Calculate explosion direction (360 degrees divided by number of fish)
+                const angle = (i / 30) * 360;
+                const distance = 200 + Math.random() * 300; // Random distance from center
+               
+                // Convert angle to radians and calculate final position
+                const radian = (angle * Math.PI) / 180;
+                const finalX = Math.cos(radian) * distance;
+                const finalY = Math.sin(radian) * distance;
+               
+                // Set custom CSS properties for the final position
+                fish.style.setProperty('--final-x', finalX + 'px');
+                fish.style.setProperty('--final-y', finalY + 'px');
+               
+                // Random size variation
+                const size = 1 + Math.random() * 2;
+                fish.style.fontSize = size + 'rem';
+               
+                // Slight random delay for more natural explosion
+                fish.style.animationDelay = Math.random() * 0.3 + 's';
+               
+                fishContainer.appendChild(fish);
+            }
+           
+            // Remove the fish explosion after animation completes
+            setTimeout(() => {
+                if (fishContainer.parentNode) {
+                    fishContainer.parentNode.removeChild(fishContainer);
+                }
+            }, 4000);
+        }
+
+        // Easter egg function
+        function handleTitleClick() {
+            titleClickCount++;
+           
+            // Reset timer
+            if (titleClickTimer) {
+                clearTimeout(titleClickTimer);
+            }
+           
+            // Reset counter after 3 seconds of no clicks
+            titleClickTimer = setTimeout(() => {
+                titleClickCount = 0;
+            }, 3000);
+           
+            // Check if 7 clicks reached
+            if (titleClickCount === 7) {
+                gameState.gold += 1000000;
+                gameState.lifetimeGold += 1000000;
+                showPopup('🎉 SECRET BONUS! +1,000,000', 'diamond', 50, 10);
+                createFishExplosion(); // Add fish explosion!
+                titleClickCount = 0; // Reset counter
+                updateDisplay();
+            }
+        }
+
         // Event listeners
+        document.getElementById('game-title').addEventListener('click', handleTitleClick);
         digLevelBtn.addEventListener('click', digNewLevel);
         hireWorkerBtn.addEventListener('click', hireWorker);
 
         upgradeWorkersBtn.addEventListener('click', upgradeWorkers);
         upgradeCartsBtn.addEventListener('click', upgradeCarts);
-        rebirthBtn.addEventListener('click', rebirth);
+        rebirthBtn.addEventListener('click', showRebirthPopup);
+        document.getElementById('confirm-rebirth').addEventListener('click', rebirth);
+        document.getElementById('cancel-rebirth').addEventListener('click', hideRebirthPopup);
 
         // Load saved game
         function loadGame() {
@@ -1085,8 +1270,6 @@
                         tunnel.cartOre = 0;
                     }
                 });
-                // ensure rebirthCost stays consistent if not in save
-                if (!gameState.rebirthCost) gameState.rebirthCost = 100000;
             }
         }
 
@@ -1118,5 +1301,5 @@
         // Save on page unload
         window.addEventListener('beforeunload', saveGame);
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97505a7614fc864f',t:'MTc1NjE4MDEwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
