@@ -29,7 +29,7 @@
   .card h2{font-size:20px;margin-bottom:8px}
   .primary{background:linear-gradient(90deg,var(--accent),#ff9a66);border-radius:12px;padding:10px 14px;color:#1a1a1a;font-weight:800;cursor:pointer;border:none}
   .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;margin-left:8px}
-  .info{max-height:320px;overflow:auto;padding-top:8px;font-size:13px;text-align:left}
+  .info{max-height:320px;overflow:auto;padding-top:8px;font-size:13px}
   .shop{display:flex;flex-direction:column;gap:8px}
   .shop-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02)}
   .controls-bottom{position:absolute;right:12px;bottom:12px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
@@ -117,7 +117,14 @@
     <div id="homeInfo" class="info"><strong>History &amp; Lore</strong><div id="loreList"><p>The ocean rose and swallowed the lands — the whole world flooded. Only the fish survived. Their descendants now roam the endless water.</p></div><strong>Controls</strong><ul><li>Mouse: move with cursor</li><li>Keyboard: WASD / Arrow keys, Hold Shift to boost (loses size)</li><li>Mobile: tap anywhere and drag to move (Roblox-like). Pick Mobile and then choose "Floating Joystick" or "Touch Anywhere".</li></ul></div>
     <div id="shopPanel" class="info hidden"><strong>Shop</strong>
       <div style="margin:8px 0;display:flex;gap:8px"><input id="shopSearch" placeholder="Search" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/><select id="shopSort" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"><option value="price-asc">Price ↑</option><option value="price-desc">Price ↓</option><option value="name">Name</option></select></div>
-    <div id="leaderboardPanel" class="info hidden"><strong>Leaderboard</strong><div id="leaderboardList" style="margin-top:8px"></div></div>
+    <div id="leaderboardPanel" class="info hidden"><strong>Leaderboard</strong>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;margin-bottom:8px">
+        <input id="leaderboardSearch" placeholder="Search players" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/>
+        <select id="leaderboardFilter" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"><option value="all">All</option><option value="online">Online only</option><option value="offline">Offline only</option><option value="bots">Bots only</option></select>
+        <button id="findMeBtn" class="secondary">Find Me</button>
+      </div>
+      <div id="leaderboardList" style="margin-top:8px"></div>
+    </div>
       <div id="shopItems" class="shop"></div>
     </div>
   </div>
@@ -214,7 +221,7 @@ const BANNED = ['fuck','shit','bitch','cunt','asshole','dick','bastard','damn','
 function normalizeName(s){ s = s.toLowerCase(); const map = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s' }; let out=''; for(const ch of s){ if(map[ch]) out += map[ch]; else if(/[a-z0-9]/.test(ch)) out += ch; } return out; }
 function levenshtein(a,b){ if(a===b) return 0; const m=a.length, n=b.length; const dp = Array.from({length:m+1},(_,i)=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost = a[i-1]===b[j-1]?0:1; dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost); } } return dp[m][n]; }
 function isNameAllowed(raw){ if(!raw || raw.trim().length<2) return {ok:false,reason:'Name too short'}; if(raw.length>20) return {ok:false,reason:'Name too long'}; if(/[!@#\$%\^&*\(\)\+={}\[\]|\;:'"<>,\?~`]/.test(raw)) return {ok:false,reason:'Name contains invalid symbols'}; const norm = normalizeName(raw); for(const bad of BANNED){ if(norm.includes(bad)) return {ok:false,reason:'Name contains disallowed word'}; const dist = levenshtein(norm, bad); if(dist <= 1) return {ok:false,reason:'Name contains disallowed or obfuscated word'}; } return {ok:true}; }
-setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); if(usernameInput) usernameInput.value = username; });
+setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); if(usernameInput) usernameInput.value = username; uploadPlayerState(); });
 
 // Mobile control style handling: floating joystick vs touch-anywhere
 let mobileStyle = localStorage.getItem('mobileStyle') || (document.getElementById('mobileStyle') ? document.getElementById('mobileStyle').value : 'floating'); if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').value = mobileStyle; if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').addEventListener('change',(e)=>{ mobileStyle = e.target.value; localStorage.setItem('mobileStyle', mobileStyle); updateControlUI(); });
@@ -411,6 +418,8 @@ const firebaseConfig = {
 
 let firebaseApp = null, firebaseDB = null, firebaseAuth = null, firebaseConnected=false, firebaseUid=null;
 let onlinePlayers = {}; // map uid -> {username,score,timestamp}
+let remotePlayers = {}; // uid -> enemy object reference for rendering in-world
+let firebaseUploadIntervalId = null; // <-- new: periodic uploader id
 function updateConnUI(connected, pingMs=null){
   const dot = document.getElementById('connIndicator'); const text = document.getElementById('connText'); const msEl = document.getElementById('connMs');
   if(connected){ dot.style.background='#4caf50'; text.textContent='Online'; if(msEl) msEl.textContent = pingMs ? `${Math.round(pingMs)} ms` : ''; }
@@ -437,12 +446,17 @@ function ensureFirebaseConnected(){
         firebaseDB.ref('/players').on('value', snap=>{
           const val = snap.val() || {};
           onlinePlayers = val;
+          // sync remote players for in-world rendering
+          syncRemotePlayers(onlinePlayers);
           rebuildLeaderboards();
         });
+        // set onDisconnect to remove our entry
+        try{
+          firebaseDB.ref('/players/'+firebaseUid).onDisconnect().remove();
+        }catch(e){}
         // write initial presence object for this player (will be updated by uploadPlayer)
-        return firebaseDB.ref('/players/'+firebaseUid).set({username: username || 'Guest', score: player.score||0, ts: Date.now()}).catch(err=>{
+        return firebaseDB.ref('/players/'+firebaseUid).set({username: username || 'Guest', score: player.score||0, ts: Date.now(), x: player.x, y: player.y, size: player.size}).catch(err=>{
           console.error('write players failed', err);
-          // permission denied will be handled below
         });
       }).catch(err=>{
         console.error('ping failed', err);
@@ -469,16 +483,25 @@ function ensureFirebaseConnected(){
 // upload local player state to firebase (if connected)
 function uploadPlayerState(){
   if(!firebaseConnected || !firebaseDB || !firebaseUid) return;
-  const p = {username: username || 'Guest', score: player.score||0, ts: Date.now(), size: player.size||0};
+  const p = {username: username || 'Guest', score: player.score||0, ts: Date.now(), size: player.size||0, x: player.x||0, y: player.y||0};
   firebaseDB.ref('/players/' + firebaseUid).set(p).catch(err=>{
     console.error('upload player failed', err);
-    // If permission denied, update UI
     if(err && err.code === 'PERMISSION_DENIED'){
       updateConnUI(false);
       firebaseConnected = false;
       showToast('Firebase permission denied — offline mode.',2200);
+      // stop periodic uploads if permission denied
+      stopFirebaseUploads();
     }
   });
+}
+
+// stop periodic uploads & cleanup remote markers
+function stopFirebaseUploads(){
+  if(firebaseUploadIntervalId){ clearInterval(firebaseUploadIntervalId); firebaseUploadIntervalId = null; }
+  // remove remote displayed players if we want: keep them until new snapshot removes them
+  // but clear our entry if we are offline now
+  try{ if(firebaseConnected && firebaseDB && firebaseUid){ firebaseDB.ref('/players/'+firebaseUid).remove().catch(()=>{}); } }catch(e){}
 }
 
 // remove player from online list when leaving (best effort)
@@ -486,8 +509,32 @@ function removePlayerOnLeave(){
   if(firebaseConnected && firebaseDB && firebaseUid){
     try{ firebaseDB.ref('/players/'+firebaseUid).remove(); }catch(e){}
   }
+  stopFirebaseUploads();
 }
 window.addEventListener('beforeunload', ()=>{ removePlayerOnLeave(); });
+
+// ---------- remote player sync: show other online players in the world ----------
+function syncRemotePlayers(playersObj){
+  // playersObj: uid -> {username,score,x,y,size}
+  const seen = new Set();
+  for(const uid in playersObj){
+    if(uid === firebaseUid) continue; // skip ourselves
+    const p = playersObj[uid];
+    seen.add(uid);
+    if(remotePlayers[uid]){
+      // update
+      const ent = remotePlayers[uid]; ent.x = p.x !== undefined ? p.x : ent.x; ent.y = p.y !== undefined ? p.y : ent.y; ent.size = p.size || ent.size; ent.name = p.username || ent.name; ent.color = ent.color || '#66ccff';
+    } else {
+      // create a lightweight entity and add to enemies array for rendering/interaction (but flagged as remote so they don't affect leaderboard offline bots)
+      const ent = { id: 'rp_' + uid, x: (p.x!==undefined? p.x : player.x + (Math.random()-0.5)*300), y: (p.y!==undefined? p.y : player.y + (Math.random()-0.5)*300), size: p.size || 12, speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#66ccff', state:'wander', name: p.username || 'Player', remoteUid: uid, isRemote:true };
+      enemies.push(ent); remotePlayers[uid] = ent;
+    }
+  }
+  // remove any remote players that disappeared
+  for(const uid in remotePlayers){ if(!seen.has(uid)){ const ent = remotePlayers[uid]; // remove from enemies
+      const idx = enemies.indexOf(ent); if(idx>=0) enemies.splice(idx,1); delete remotePlayers[uid]; }
+  }
+}
 
 // ---------- Leaderboard handling (offline bots + online players) ----------
 let localBots = [];
@@ -548,11 +595,12 @@ function renderFullLeader(all){
   let arr = all.slice();
   if(search) arr = arr.filter(x=>x.username.toLowerCase().includes(search.toLowerCase()));
   if(filter==='online') arr = arr.filter(x=>x.online);
-  if(filter==='offline') arr = arr.filter(x=>!x.online);
-  // display top 50 or so
+  if(filter==='offline') arr = arr.filter(x=>!x.online && !x.offlineBot);
+  if(filter==='bots') arr = arr.filter(x=>x.offlineBot);
+  // display top 200
   arr.slice(0,200).forEach((p,idx)=>{
     const r = document.createElement('div'); r.style.display='flex'; r.style.justifyContent='space-between'; r.style.padding='6px 0'; r.style.borderBottom='1px solid rgba(255,255,255,0.03)';
-    r.innerHTML = `<div style="font-weight:${p.me?800:600}">${idx+1}. ${p.username}${p.online?'<span style="opacity:0.7;margin-left:6px">(online)</span>':''}${p.offlineBot?'<span style="opacity:0.6;margin-left:6px">bot</span>':''}</div><div style="opacity:0.95">${p.score}</div>`;
+    r.innerHTML = `<div style="font-weight:${p.me?800:600}">${idx+1}. ${p.username}${p.online?'<span style="opacity:0.7;margin-left:6px">(online)</span>':''}${p.offlineBot?'<span style="opacity:0.6;margin-left:6px"> bot</span>':''}</div><div style="opacity:0.95">${p.score}</div>`;
     el.appendChild(r);
   });
 }
@@ -560,7 +608,6 @@ function renderFullLeader(all){
 // search handler for mini
 document.getElementById('miniSearch').addEventListener('input',(e)=>{
   const q = e.target.value.toLowerCase();
-  // filter bots+online players merge
   const merged = [];
   for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
   for(const b of localBots) merged.push(b);
@@ -579,24 +626,20 @@ document.getElementById('miniToggle').addEventListener('click', ()=>{
 
 // find myself in full leaderboard
 function findMeInFull(){
-  // open leaderboardPanel
   document.getElementById('leaderboardPanel').classList.remove('hidden');
   document.getElementById('homeInfo').classList.add('hidden');
-  // render with current merged
   const merged = [];
   for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
   for(const b of localBots) merged.push(b);
   merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
   merged.sort((a,b)=>b.score - a.score);
   renderFullLeader(merged);
-  // scroll to first entry matching my username
-  // Not implementing auto-scroll since the container is regenerated
 }
+
+document.getElementById('findMeBtn').addEventListener('click', ()=>{ findMeInFull(); });
 
 // ---------- ensure bots appear in offline mode ----------
 function ensureOfflineBotsVisible(){
-  // we spawn bots on the map already (enemies with offlineBot:true).
-  // Also regenerate localBots occasionally for leaderboard freshness
   if(Math.random() < 0.06) {
     generateLocalBots(10);
     rebuildLeaderboards();
@@ -613,54 +656,51 @@ function setRandomSpawn(){
 function handleBounds(){ let clamped=false; if(player.x < -WORLD_BOUND){ player.x = -WORLD_BOUND; clamped=true; } if(player.x > WORLD_BOUND){ player.x = WORLD_BOUND; clamped=true; } if(player.y < -WORLD_BOUND){ player.y = -WORLD_BOUND; clamped=true; } if(player.y > WORLD_BOUND){ player.y = WORLD_BOUND; clamped=true; } if(clamped){ for(let i=0;i<2;i++) spawnEnemyRelative(player.x + randBetween(-200,200), player.y + randBetween(-200,200)); player.hunger = Math.max(0, player.hunger - 8); } }
 
 function update(dt){ if(!running) return;
-  // density-aware spawn throttling to avoid floods when stopped
   const nearbyCount = enemies.filter(e=>Math.hypot(e.x-player.x,e.y-player.y) < 1600).length;
-  const densityFactor = Math.max(0.08, 1 - nearbyCount/80); // reduce spawns when many nearby
-  // reduce spawn when player is nearly stopped to avoid attracting mass spawns
+  const densityFactor = Math.max(0.08, 1 - nearbyCount/80);
   const spawnSpeedFactor = player.speed < 3 ? 0.32 : 1;
   const spawnFactor = player.alive ? spawnSpeedFactor : 0.06;
   if(Math.random() < 0.12 * spawnFactor * densityFactor) spawnFoodAround(player.x, player.y);
   if(Math.random() < 0.004 * spawnFactor * densityFactor) spawnEnemyRelative(player.x, player.y);
   if(Math.random() < 0.08 * spawnFactor * densityFactor) spawnBubbleAround(player.x, player.y);
 
-  // Movement: only update player movement when alive
   let vx=0, vy=0;
   if(player.alive){
     if(((controlMode==='mouse') || (controlMode==='mobile' && mobileStyle==='touch')) && pointerX!=null && pointerY!=null){ const w = screenToWorld(pointerX, pointerY); vx = w.x - player.x; vy = w.y - player.y; }
     if(controlMode==='keyboard'){ if(keys['w']||keys['arrowup']) vy-=1; if(keys['s']||keys['arrowdown']) vy+=1; if(keys['a']||keys['arrowleft']) vx-=1; if(keys['d']||keys['arrowright']) vx+=1; }
     const mag = Math.hypot(vx,vy);
     let movingSpeed = 0;
-    if(mag>0.01){ player.angle = Math.atan2(vy, vx); const speedFactor = player.baseSpeed * (1 - Math.min(0.75, (player.size-8)/300)); let sp = speedFactor * (1 + (boosting?1.2:0)); // scale down speed on keyboard boost slightly
-      if(controlMode==='keyboard' && boosting) sp *= 1.4; // if using virtual joystick or touch-anywhere, make speed proportional to displacement for fine control on mobile
+    if(mag>0.01){ player.angle = Math.atan2(vy, vx); const speedFactor = player.baseSpeed * (1 - Math.min(0.75, (player.size-8)/300)); let sp = speedFactor * (1 + (boosting?1.2:0));
+      if(controlMode==='keyboard' && boosting) sp *= 1.4;
       if(usingJoy || (controlMode==='mobile' && touchAnywhereStart)){
         sp *= Math.max(0.18, Math.min(1, lastJoyStrength));
       }
       const dx = Math.cos(player.angle) * sp * dt/1000; const dy = Math.sin(player.angle) * sp * dt/1000; player.x += dx; player.y += dy; movingSpeed = Math.hypot(dx,dy) / (dt/1000);
       if(boosting){ player.size = Math.max(8, player.size - 0.05 * dt/1000); player.hunger = Math.max(0, player.hunger - 0.12 * dt/1000); playBoost(); }
-    } else { // small idle drift only when alive
+    } else {
       const dx = Math.cos(player.angle) * 8 * dt/1000; const dy = Math.sin(player.angle) * 8 * dt/1000; player.x += dx; player.y += dy; movingSpeed = Math.hypot(dx,dy)/(dt/1000);
     }
     player.vx = movingSpeed * Math.cos(player.angle); player.vy = movingSpeed * Math.sin(player.angle); player.speed = movingSpeed;
   } else {
-    // player dead: stop movement entirely and keep size handled by deathSequence
     player.vx = 0; player.vy = 0; player.speed = 0;
   }
 
   handleBounds();
 
-  // hunger decay faster the bigger you are and when moving fast
   const baseDecay = dt/5000 * Math.max(0.6, player.size/24);
   const movementDecay = (player.speed/80) * (dt/1000) * Math.max(0.8, player.size/24);
   player.hunger -= baseDecay + movementDecay;
   ui.hungerEl.style.width = Math.max(0, player.hunger) + '%';
-  if(player.hunger <= 0 && player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; // freeze camera at the location of death
-      deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } }
+  if(player.hunger <= 0 && player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } }
 
   for(const f of foods) f.wobble += 0.02 * dt/16;
   for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; b.y -= b.vy * dt/1000; if(Math.hypot(b.x-player.x,b.y-player.y)>8000) bubbles.splice(i,1); }
 
-  // AI for enemies: all fish try to eat closest fish (even smallest); small fish flee from larger fish
+  // simple AI & remote player position smoothing
   for(const e of enemies){
+    if(e.isRemote){ // gentle idle movement so remote players aren't static if no updates
+      e.x += Math.cos(e.angle) * (e.speed*0.05) * dt/1000; e.y += Math.sin(e.angle) * (e.speed*0.05) * dt/1000; if(Math.random()<0.008) e.angle += (Math.random()-0.5)*1.2; continue;
+    }
     e.hunger = (e.hunger||100) - dt/12000 * (e.size/24);
     let prey=null; let preyDist=1e9;
     let threat=null; let threatDist=1e9;
@@ -676,10 +716,9 @@ function update(dt){ if(!running) return;
   for(let i=foods.length-1;i>=0;i--){ const f=foods[i]; const d=Math.hypot(player.x-f.x,player.y-f.y); if(d < player.size + f.size*0.7){ foods.splice(i,1); player.size += f.size*0.08; player.score += 1; player.coins += 1; player.hunger = Math.min(100, player.hunger + 6); playEat(); } }
   // player-enemy
   for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d < player.size + e.size*0.6){ if(e.size > player.size * 1.05){ if(player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } } } else if(player.size > e.size * 1.05){ player.size += e.size*0.18; player.score += Math.round(e.size/6); player.coins += Math.round(e.size/8); enemies.splice(i,1); playEat(); } } }
-  // enemy vs enemy: they eat smaller each other (closest apply)
+  // enemy vs enemy
   for(let i=enemies.length-1;i>=0;i--){ for(let j=enemies.length-1;j>=0;j--){ if(i===j) continue; const a=enemies[i], b=enemies[j]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(d < a.size + b.size){ if(a.size > b.size * 1.05){ a.size += b.size*0.14; enemies.splice(j,1); if(j<i) i--; break; } } } }
 
-  // spawn logic controlled by density-aware function
   ensureLargerExists(nearbyCount);
   trimEntities();
   ensureOfflineBotsVisible();
@@ -698,8 +737,8 @@ function update(dt){ if(!running) return;
   ui.highEl.textContent = high;
   ui.coinsEl.textContent = player.coins;
 
-  // upload to firebase occasionally
-  if(firebaseConnected && Math.random() < 0.06){
+  // upload to firebase occasionally (safeguard additional uploads if not using periodic uploader)
+  if(firebaseConnected && Math.random() < 0.03){
     uploadPlayerState();
   }
   // keep mini leaderboard refreshed occasionally
@@ -772,9 +811,7 @@ document.getElementById('leaderboardBtn').addEventListener('click', ()=>{ docume
 
 // play start helper
 function startGame(online){
-  // read control preference from home control
   controlMode = document.getElementById('homeControlMode').value; document.getElementById('controlMode').value = controlMode; mobileStyle = document.getElementById('mobileStyle')?document.getElementById('mobileStyle').value:'floating'; localStorage.setItem('controlMode', controlMode); localStorage.setItem('mobileStyle', mobileStyle); updateControlUI();
-  // require a valid username before starting
   const saved = localStorage.getItem('playerName') || 'Guest'; if(!saved || saved==='Guest'){ showToast('Please set a username before starting.',2200); return; }
   document.getElementById('overlay').classList.add('hidden'); // fully reset world and camera
   foods=[]; enemies=[]; bubbles=[]; currents=[]; setRandomSpawn(); player.size=8 + Math.random()*8; player.hunger=100; player.score=0; player.coins=0; player.alive=true; deathHandled=false; pausedByContext=false; cameraFrozen=false; deathCameraX=0; deathCameraY=0; camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX=null; pointerY=null; keys={}; // repopulate
@@ -784,10 +821,18 @@ function startGame(online){
     ensureFirebaseConnected().then(ok=>{
       if(ok){
         showToast('Online mode: connected to Firebase',1600);
-        // upload initial state
+        // immediate upload so others see you at spawn
         uploadPlayerState();
+        // start periodic uploads every 1.5s
+        if(firebaseUploadIntervalId) clearInterval(firebaseUploadIntervalId);
+        firebaseUploadIntervalId = setInterval(()=>{
+          uploadPlayerState();
+        }, 1500);
+        // ensure onDisconnect is registered (extra safety)
+        try{ firebaseDB.ref('/players/'+firebaseUid).onDisconnect().remove(); }catch(e){}
       } else {
         showToast('Could not connect to Firebase — starting offline',2600);
+        rebuildLeaderboards();
       }
     });
   } else {
@@ -796,7 +841,7 @@ function startGame(online){
   }
 }
 
-document.getElementById('btnLeave').addEventListener('click', ()=>{ setRunning(false); document.getElementById('overlay').classList.remove('hidden'); });
+document.getElementById('btnLeave').addEventListener('click', ()=>{ setRunning(false); document.getElementById('overlay').classList.remove('hidden'); removePlayerOnLeave(); });
 
 document.getElementById('btnPause').addEventListener('click', ()=>{ setRunning(!running); });
 
@@ -821,7 +866,7 @@ window.runTests = function(){
 };
 
 // expose debug
-window.__game = {player, foods, enemies, bubbles, localBots, onlinePlayers};
+window.__game = {player, foods, enemies, bubbles, localBots, onlinePlayers, remotePlayers};
 
 // initial mini leaderboard render
 rebuildLeaderboards();
