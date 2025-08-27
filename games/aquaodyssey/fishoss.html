@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>ilikefish.space - Aqua Odyssey</title>
+<style>
+  :root{--glass:rgba(255,255,255,0.08);--glass-2:rgba(255,255,255,0.06);--accent:#ffd166;--accent-2:#06c8ff;--bg-top:#7ee8fa;--bg-bottom:#123a63;--panel-radius:14px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;width:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#fff;overflow:hidden}
+  body{background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));touch-action:none}
+  canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh}
+  .hud{position:absolute;left:12px;right:12px;top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:60}
+  .panel{backdrop-filter:blur(6px);background:var(--glass);padding:10px 12px;border-radius:var(--panel-radius);box-shadow:0 6px 18px rgba(0,0,0,0.25)}
+  .title{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#ff9a66);display:flex;align-items:center;justify-content:center}
+  .app-title{font-weight:700;font-size:18px}
+  .username-display{font-size:12px;opacity:0.95}
+  .stats{display:flex;gap:10px;align-items:center}
+  .stat{font-size:14px;min-width:68px;text-align:center}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{background:var(--glass-2);border-radius:10px;padding:8px 10px;font-weight:600;border:1px solid rgba(255,255,255,0.06);cursor:pointer}
+  .side{position:absolute;left:14px;bottom:14px;display:flex;gap:12px;align-items:flex-end;z-index:50}
+  .joy{width:120px;height:120px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;position:fixed;left:14px;bottom:14px}
+  .stick{width:56px;height:56px;border-radius:999px;background:rgba(255,255,255,0.12);transform:translate(0,0)}
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:80}
+  .overlay.hidden{display:none}
+  .card{width:100%;max-width:820px;pointer-events:all;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));padding:22px;border-radius:16px;backdrop-filter:blur(6px);text-align:center}
+  
+  .card h2{font-size:20px;margin-bottom:8px}
+  .primary{background:linear-gradient(90deg,var(--accent),#ff9a66);border-radius:12px;padding:10px 14px;color:#1a1a1a;font-weight:800;cursor:pointer;border:none}
+  .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;margin-left:8px}
+  .info{max-height:320px;overflow:auto;padding-top:8px;font-size:13px}
+  .shop{display:flex;flex-direction:column;gap:8px}
+  .shop-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02)}
+  .controls-bottom{position:absolute;right:12px;bottom:12px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .chip{padding:8px 10px;border-radius:999px;background:var(--glass-2);font-weight:700}
+  .bar{height:10px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:40%}
+  .depth-gauge{width:28px;height:86px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.04);display:flex;align-items:flex-end;padding:4px}
+  .depth-fill{width:100%;background:linear-gradient(180deg,#06c8ff,#004f7a);border-radius:8px;transition:height 260ms linear}
+  .hidden{display:none}
+  .mode-select{display:flex;gap:6px;align-items:center}
+  .boost-btn{background:linear-gradient(90deg,#ffd766,#ff8a66);padding:8px 10px;border-radius:10px;font-weight:800}
+  input[type=text]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white}
+  .err{color:#ffb3b3;font-size:12px;margin-top:6px}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);top:22px;padding:10px 14px;background:rgba(0,0,0,0.6);border-radius:10px;z-index:200;font-weight:700}
+  @media (max-width:900px){ .hud{left:8px;right:8px;top:8px} .card{max-width:92vw} }
+  @media (max-width:600px){.app-title{font-size:16px}.stat{font-size:13px}.joy{width:96px;height:96px}.stick{width:44px;height:44px}.hud{flex-direction:column;gap:6px;align-items:flex-start}}
+  /* mini leaderboard (top-left, compact) */
+  #miniLeaderboard{position:fixed;left:12px;top:72px;z-index:120;min-width:180px;max-width:260px;border-radius:12px;padding:8px;backdrop-filter:blur(6px);background:rgba(0,0,0,0.16);font-size:13px}
+  #miniLeaderboard h4{margin:0 0 6px 0;font-size:13px}
+  #miniLeaderboard .lb-row{display:flex;justify-content:space-between;gap:8px;padding:6px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:6px}
+  #miniLeaderboard .controls{display:flex;gap:6px;align-items:center}
+  #miniLeaderboard .toggle{cursor:pointer;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent}
+  #miniLeaderboard .search{flex:1;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white}
+  #miniLeaderboard.small{min-width:160px}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div class="hud">
+  <div class="title panel">
+    <div class="logo" aria-hidden><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 32c8-12 24-16 36-10 12 6 12 18 0 24C30 54 14 48 6 32z" fill="#fff" opacity="0.18"/><path d="M8 32c8-10 22-14 34-9 9 4 9 12 0 17C30 51 14 44 8 32z" fill="#fff"/></svg></div>
+    <div style="display:flex;flex-direction:column"><div class="app-title">Aqua Odyssey</div><div id="usernameDisplay" class="username-display">Guest</div></div>
+  </div>
+  <div class="panel stats"><div class="stat">Size<br><strong id="size">1.0</strong></div><div class="stat">Score<br><strong id="score">0</strong></div><div class="stat">High<br><strong id="highscore">0</strong></div><div class="stat">Coins<br><strong id="coins">0</strong></div><div class="stat">Depth<br><strong id="depthVal">0 m</strong></div></div>
+  <div class="controls"><div class="panel"><div style="font-size:12px;opacity:0.85">Hunger</div><div class="bar" style="width:120px;margin-top:6px"><i id="hungerBar" style="width:100%"></i></div></div>
+    <div class="mode-select panel" style="align-items:center">Control: <select id="controlMode" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="mouse">Mouse</option><option value="keyboard">Keyboard</option><option value="mobile">Mobile</option></select></div>
+    <button id="btnPause" class="btn panel">Pause</button>
+    <button id="btnLeave" class="btn panel">Exit</button>
+  </div>
+</div>
+
+<!-- compact in-game leaderboard (top-left) -->
+<div id="miniLeaderboard" class="panel small">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <h4 style="margin:0">Leaderboard</h4>
+    <div style="display:flex;gap:6px;align-items:center">
+      <input id="miniSearch" class="search" placeholder="search" />
+      <button id="miniToggle" class="toggle">▼</button>
+    </div>
+  </div>
+  <div id="miniList" style="margin-top:8px;max-height:220px;overflow:auto"></div>
+  <div id="miniFooter" style="margin-top:6px;font-size:12px;opacity:0.9;display:flex;justify-content:space-between"><div id="miniYou">You: -</div><div id="miniCount">0</div></div>
+</div>
+
+<div class="side">
+  <div class="joy panel" id="joystick"><div class="stick" id="stick"></div></div>
+</div>
+<div class="controls-bottom">
+  <div style="display:flex;align-items:center;gap:10px"><div class="chip panel">FPS: <span id="fps">0</span></div><div style="text-align:center" class="panel" aria-hidden><div style="font-size:12px;opacity:0.85">Depth</div><div class="depth-gauge" id="depthGauge"><div class="depth-fill" id="depthFill" style="height:4%"></div></div></div></div>
+  <button id="boostMobile" class="boost-btn panel">BOOST</button>
+</div>
+<div id="toastArea"></div>
+<div class="overlay" id="overlay">
+  <div class="card" id="homeCard">
+    <h2>Aqua Odyssey</h2>
+    <p>Survive as long as possible — larger fish eat smaller fish. You get hungrier the bigger you are. New things keep spawning: the sea is endless.</p>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <button id="startOfflineBtn" class="primary">Play Offline</button>
+      <button id="startOnlineBtn" class="primary" style="margin-left:8px">Play Online</button>
+      <button id="fbSetupBtn" class="secondary" style="margin-left:8px">Connect Firebase</button>
+      <button id="infoBtn" class="secondary" style="margin-left:8px">Info</button>
+      <button id="leaderboardBtn" class="secondary" style="margin-left:8px">Leaderboard</button>
+      <button id="shopBtn" class="secondary" style="margin-left:8px">Shop</button>
+      <div style="margin-left:12px;display:flex;align-items:center;gap:8px">
+        <div id="connIndicator" style="width:12px;height:12px;border-radius:999px;background:#999;border:2px solid rgba(0,0,0,0.3)"></div>
+        <div id="connText" style="font-size:12px;opacity:0.9">Offline</div>
+        <div id="connMs" style="font-size:12px;opacity:0.9;margin-left:6px"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Controls on Home: <select id="homeControlMode" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="mouse">Mouse</option><option value="keyboard">Keyboard</option><option value="mobile">Mobile</option></select></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;justify-content:center"><label style="font-size:13px">Enable Mobile Testing (shows Mobile option on non-touch devices): <input id="allowMobileTest" type="checkbox" style="margin-left:8px"/></label></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Mobile Mode: <select id="mobileStyle" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="floating">Floating Joystick</option><option value="touch">Touch Anywhere</option></select></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Choose Username: <input id="usernameInput" type="text" placeholder="Enter username" style="margin-left:8px;min-width:180px"/><button id="setNameBtn" class="secondary">Set</button></div>
+    <div id="nameErr" class="err"></div>
+    <div id="homeInfo" class="info"><strong>History &amp; Lore</strong><div id="loreList"><p>The ocean rose and swallowed the lands — the whole world flooded. Only the fish survived. Their descendants now roam the endless water.</p></div><strong>Controls</strong><ul><li>Mouse: move with cursor</li><li>Keyboard: WASD / Arrow keys, Hold Shift to boost (loses size)</li><li>Mobile: tap anywhere and drag to move (Roblox-like). Pick Mobile and then choose "Floating Joystick" or "Touch Anywhere".</li></ul></div>
+    <div id="shopPanel" class="info hidden"><strong>Shop</strong>
+      <div style="margin:8px 0;display:flex;gap:8px"><input id="shopSearch" placeholder="Search" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/><select id="shopSort" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"><option value="price-asc">Price ↑</option><option value="price-desc">Price ↓</option><option value="name">Name</option></select></div>
+    <div id="leaderboardPanel" class="info hidden"><strong>Leaderboard</strong><div id="leaderboardList" style="margin-top:8px"></div></div>
+      <div id="shopItems" class="shop"></div>
+    </div>
+  </div>
+</div>
+<script>
+// ---------- setup ----------
+const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); let DPR = Math.max(1, window.devicePixelRatio || 1);
+function resize(){ DPR = Math.max(1, window.devicePixelRatio || 1); canvas.width = Math.floor(window.innerWidth * DPR); canvas.height = Math.floor(window.innerHeight * DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize', resize); window.addEventListener('orientationchange', resize); resize();
+
+function overlayVisible(){ const o = document.getElementById('overlay'); return o && !o.classList.contains('hidden'); }
+
+// toast
+function showToast(msg, ms=2200){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.getElementById('toastArea').appendChild(t); setTimeout(()=>{ t.style.transition='opacity 400ms'; t.style.opacity='0'; setTimeout(()=>t.remove(),420); }, ms); }
+
+// prevent default scrolling on touch inside game
+document.body.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; e.preventDefault(); }, {passive:false});
+
+// world: simulate infinite by spawning relative to player and trimming far entities
+const camera = { x: 0, y: 0, scale: 1 };
+let cameraFrozen = false; let deathCameraX = 0, deathCameraY = 0; // when frozen, camera shows these coords
+function screenToWorld(sx, sy){ return { x: camera.x + sx / camera.scale, y: camera.y + sy / camera.scale }; }
+
+let running = false, lastTime = performance.now(), fpsCounter = 0, fpsTimer = 0;
+const ui = { sizeEl: document.getElementById('size'), scoreEl: document.getElementById('score'), highEl: document.getElementById('highscore'), coinsEl: document.getElementById('coins'), hungerEl: document.getElementById('hungerBar'), fpsEl: document.getElementById('fps'), depthEl: document.getElementById('depthVal'), depthFill: document.getElementById('depthFill'), usernameDisplay: document.getElementById('usernameDisplay') };
+
+// define setRunning to control game loop & pause button label
+function setRunning(v){ const was = running; running = !!v; const btn = document.getElementById('btnPause'); if(btn) btn.textContent = running ? 'Pause' : 'Resume'; if(running && !was){ lastTime = performance.now(); requestAnimationFrame(mainLoop); } }
+
+// player (reduced baseSpeed for calmer movement)
+const player = { x: 0, y: 0, size: 12, baseSpeed: 140, angle: 0, skin: 'classic', color: '#ff9a66', eyeColor: '#0b1b2b', hunger: 100, coins: 0, score: 0, alive: true, vx:0, vy:0, speed:0 };
+
+let foods = [], enemies = [], bubbles = [], currents = [];
+const MAX_FOOD = 250;
+const WORLD_BOUND = 4200; // prevent escaping by clamping to a large world
+let enemyIdCounter = 1;
+let deathHandled = false; let pausedByContext = false;
+
+// ---------- lore (expanded) ----------
+const LORE = [
+  {id:1,title:'The Great Flood',text:'Centuries ago, glaciers melted and ancient storms merged — sea levels rose and swallowed the coasts. Mountains became islands and valleys became trenches. Humanity tried to adapt but the scale was too great. The survivors went to the skies; the waters took the rest.'},
+  {id:2,title:'The New Shoals',text:'Out of sunken cities and overturned forests, new ecosystems grew. Fish colonized skyscraper canyons, rivers became highways of plankton and algae. Shoals formed communities, some nomadic, some stationary around deep wrecks.'},
+  {id:3,title:'The Hunger Wars',text:'Competition intensified. Shoals learned to hunt in packs, ambush smaller schools, and hide in thermoclines. The Hunger Wars reshaped behavior — cunning and cooperation often beat brute strength.'},
+  {id:4,title:'Abyssal Relics',text:'Beneath the waves lie artifacts of a lost age: towers of glass, rusted bridges, and murals preserved in dark caverns. Many fish now make their dens among these relics, and stories — songs really — pass down about the world that was.'},
+  {id:5,title:'The Currents Pact',text:'Some ancient currents stabilized into predictable routes. Fish learned these paths like highways: migrating predators follow them, schools use them to conserve energy, and entrepreneurs — if fish had them — would have found trade lanes.'},
+  {id:6,title:'The Singing',text:'Fish developed complex calls — not words, but vibrations and light patterns — to mark territories and warn kin. These songs encode memory: where a reef used to be, which shoal vanished, which bubble of air remains deep below.'}
+];
+function renderLore(){ const el = document.getElementById('loreList'); el.innerHTML = ''; for(const entry of LORE){ const d=document.createElement('div'); d.style.marginBottom='8px'; d.innerHTML = `<strong>${entry.title}</strong><div style="font-size:13px;opacity:0.95">${entry.text}</div>`; el.appendChild(d); } }
+renderLore();
+
+// skins & shop (SKINS still exist but skins UI removed; shop will show skins as purchasable/equippable items)
+const SKINS = [
+  {id:'classic',name:'Classic',color:'#ff9a66',emoji:'🐟',price:0},
+  {id:'azure',name:'Azure',color:'#66d9ff',emoji:'🐠',price:250},
+  {id:'neon',name:'Neon',color:'#b8ff6a',emoji:'🐡',price:420},
+  {id:'scarlet',name:'Scarlet',color:'#ff3e3e',emoji:'🦈',price:600},
+  {id:'gold',name:'Golden',color:'#ffd700',emoji:'🐟',price:900},
+  {id:'shadow',name:'Shadow',color:'#6b6b6b',emoji:'👻',price:1200},
+  {id:'coral',name:'Coral',color:'#ff9acc',emoji:'🐠',price:340},
+  {id:'mint',name:'Mint',color:'#7effc6',emoji:'🐡',price:480},
+  {id:'glow',name:'Glow',color:'#9a66ff',emoji:'✨',price:780},
+  {id:'stripe',name:'Stripe',color:'#66ffda',emoji:'🎏',price:550}
+];
+
+const SHOP_ITEMS = [
+  {id:'coin_small',name:'Coin Pack: 500',type:'consumable',desc:'Instant +500 coins',price:1200,effect:()=>{ player.coins += 500 }},
+  {id:'coin_large',name:'Coin Pack: 3000',type:'consumable',desc:'Instant +3000 coins',price:5200,effect:()=>{ player.coins += 3000 }},
+  {id:'speed_up',name:'Engine Upgrade',type:'upgrade',desc:'Permanent +40 base speed',price:2500,effect:()=>{ player.baseSpeed += 40 }},
+  {id:'bubble_trail',name:'Bubble Trail',type:'cosmetic',desc:'Leaves a small bubble trail',price:900,effect:()=>{ player.trail='bubbles' }},
+  {id:'deep_theme',name:'Abyss Theme',type:'theme',desc:'Darker deep-ocean background',price:3500,effect:()=>{ document.documentElement.style.setProperty('--bg-top','#0b3b5a'); document.documentElement.style.setProperty('--bg-bottom','#001428'); }},
+  // new items
+  {id:'meal_box',name:'Meal Box',type:'consumable',desc:'Restores hunger +40',price:800,effect:()=>{ player.hunger = Math.min(100, player.hunger + 40); }},
+  {id:'magnet',name:'Coin Magnet (30s)',type:'consumable',desc:'Attract small coins for 30s',price:1800,effect:()=>{ player.magnetUntil = Date.now()+30000; }},
+  {id:'mega_pack',name:'Mega Coin Pack: 10,000',type:'consumable',desc:'Big coin boost',price:15000,effect:()=>{ player.coins += 10000 }},
+];
+
+const owned = new Set(JSON.parse(localStorage.getItem('ownedSkins')||'["classic"]'));
+let equipped = localStorage.getItem('equippedSkin') || 'classic';
+function saveOwned(){ localStorage.setItem('ownedSkins', JSON.stringify(Array.from(owned))); localStorage.setItem('equippedSkin', equipped); }
+
+// username handling + profanity filter (unchanged)
+const usernameInput = document.getElementById('usernameInput'); const setNameBtn = document.getElementById('setNameBtn'); const nameErr = document.getElementById('nameErr');
+let username = localStorage.getItem('playerName') || 'Guest'; ui.usernameDisplay.textContent = username;
+const BANNED = ['fuck','shit','bitch','cunt','asshole','dick','bastard','damn','whore','motherfucker','nigger','faggot'];
+function normalizeName(s){ s = s.toLowerCase(); const map = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s' }; let out=''; for(const ch of s){ if(map[ch]) out += map[ch]; else if(/[a-z0-9]/.test(ch)) out += ch; } return out; }
+function levenshtein(a,b){ if(a===b) return 0; const m=a.length, n=b.length; const dp = Array.from({length:m+1},(_,i)=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost = a[i-1]===b[j-1]?0:1; dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost); } } return dp[m][n]; }
+function isNameAllowed(raw){ if(!raw || raw.trim().length<2) return {ok:false,reason:'Name too short'}; if(raw.length>20) return {ok:false,reason:'Name too long'}; if(/[!@#\$%\^&*\(\)\+={}\[\]|\;:'"<>,\?~`]/.test(raw)) return {ok:false,reason:'Name contains invalid symbols'}; const norm = normalizeName(raw); for(const bad of BANNED){ if(norm.includes(bad)) return {ok:false,reason:'Name contains disallowed word'}; const dist = levenshtein(norm, bad); if(dist <= 1) return {ok:false,reason:'Name contains disallowed or obfuscated word'}; } return {ok:true}; }
+setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); });
+
+// Mobile control style handling: floating joystick vs touch-anywhere
+let mobileStyle = localStorage.getItem('mobileStyle') || (document.getElementById('mobileStyle') ? document.getElementById('mobileStyle').value : 'floating'); if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').value = mobileStyle; if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').addEventListener('change',(e)=>{ mobileStyle = e.target.value; localStorage.setItem('mobileStyle', mobileStyle); updateControlUI(); });
+
+// whether device supports touch
+const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints>0);
+// allow user to enable mobile testing on desktop
+const allowTestCheckbox = document.getElementById('allowMobileTest'); if(allowTestCheckbox){ allowTestCheckbox.checked = localStorage.getItem('allowMobileTest') === '1'; allowTestCheckbox.addEventListener('change',(e)=>{ localStorage.setItem('allowMobileTest', e.target.checked ? '1' : '0'); updateMobileOptionVisibility(); updateControlUI(); }); }
+function updateMobileOptionVisibility(){ const show = isTouch || (allowTestCheckbox && allowTestCheckbox.checked); document.querySelectorAll('#controlMode option, #homeControlMode option').forEach(opt=>{ if(opt.value==='mobile'){ opt.style.display = show ? 'block' : 'none'; } }); // if current selection is mobile but it's hidden, fallback
+  const cm = document.getElementById('controlMode'); if(cm && cm.value==='mobile' && !show){ cm.value = 'mouse'; controlMode = 'mouse'; localStorage.setItem('controlMode','mouse'); }
+}
+
+// global touchmove to support mobile tap-and-drag for pointing at the world
+let touchAnywhereStart = null; // used when mobileStyle === 'touch'
+window.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; const t = e.touches[0]; if(!t) return; // if a joystick is active it will update pointerX/pointerY; otherwise allow tap-to-point
+  pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); }, {passive:false});
+window.addEventListener('touchend', (e)=>{ if(overlayVisible()) return; pointerX = null; pointerY = null; touchAnywhereStart = null; });
+
+// helper: generate enemy names
+function genEnemyName(){ const adj = ['Drift','Wave','Coral','Reef','Bram','Glim','Scale','Torrent','Murk','Glint']; const suf = Math.floor(Math.random()*999); return adj[Math.floor(Math.random()*adj.length)] + '_' + suf; }
+
+// shop rendering (with small color thumbnails for skins)
+function renderShop(filter='',sortBy='price-asc'){ shopItemsEl.innerHTML=''; let list = SHOP_ITEMS.concat(SKINS.map(s=>Object.assign({type:'skin'},s))).filter(i=>i.name.toLowerCase().includes((filter||'').toLowerCase())); if(sortBy==='price-asc') list.sort((a,b)=>a.price-b.price); if(sortBy==='price-desc') list.sort((a,b)=>b.price-a.price); if(sortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+ for(const it of list){ const row = document.createElement('div'); row.className='shop-row'; const left = document.createElement('div');
+    // thumbnail for skins
+    let thumb = '';
+    if(it.type==='skin' || it.color){ thumb = `<div style="width:56px;height:40px;border-radius:8px;background:${it.color||'#999'};display:inline-block;margin-right:8px;vertical-align:middle;border:2px solid rgba(255,255,255,0.06)"></div>`; }
+    left.innerHTML = `${thumb}<div style="display:inline-block;vertical-align:middle"><div style=\"font-weight:800\">${it.name}</div><div style=\"font-size:12px;opacity:0.9\">${it.desc||''}</div></div>`;
+    const right = document.createElement('div'); const price = document.createElement('div'); price.style.fontWeight='800'; price.style.marginRight='8px'; price.textContent = it.price + ' c'; const btn = document.createElement('button'); btn.className='btn';
+    const affordable = player.coins >= it.price;
+    if(it.type==='skin'){ btn.textContent = owned.has(it.id)?(equipped===it.id?'Equipped':'Equip'):'Buy'; if(!owned.has(it.id) && !affordable) btn.disabled=true; btn.onclick=()=>{ if(owned.has(it.id)){ equipped = it.id; player.color = it.color; saveOwned(); showToast(it.name + ' equipped'); renderShop(document.getElementById('shopSearch').value, document.getElementById('shopSort').value); } else { if(player.coins >= it.price){ player.coins -= it.price; owned.add(it.id); equipped = it.id; player.color = it.color; saveOwned(); showToast('Purchased and equipped ' + it.name); renderShop(document.getElementById('shopSearch').value, document.getElementById('shopSort').value); ui.coinsEl.textContent = player.coins; } else showToast('Not enough coins'); } };
+    } else { btn.textContent = 'Buy'; if(!affordable) btn.disabled=true; btn.onclick = ()=>{ if(player.coins >= it.price){ player.coins -= it.price; // apply effect if available
+          try{ if(it.effect) it.effect(); }catch(e){}
+          showToast('Purchased ' + it.name);
+          ui.coinsEl.textContent = player.coins;
+        } else showToast('Not enough coins'); } }
+    right.style.display='flex'; right.style.alignItems='center'; right.appendChild(price); right.appendChild(btn); row.appendChild(left); row.appendChild(right); shopItemsEl.appendChild(row); }
+}
+
+const shopItemsEl = document.getElementById('shopItems'); document.getElementById('shopSearch').addEventListener('input',(e)=>renderShop(e.target.value, document.getElementById('shopSort').value)); document.getElementById('shopSort').addEventListener('change',(e)=>renderShop(document.getElementById('shopSearch').value, e.target.value));
+renderShop();
+
+// ---------- spawning & world management (infinite-ish) ----------
+function randBetween(a,b){ return a + Math.random()*(b-a); }
+function spawnFoodAround(cx,cy){ if(foods.length>MAX_FOOD) return; const angle = Math.random()*Math.PI*2; const dist = 300 + Math.random()*1200; const f={ x: cx + Math.cos(angle)*dist, y: cy + Math.sin(angle)*dist, size: 3 + Math.random()*6, wobble: Math.random()*Math.PI*2, color:'#fff59d' }; foods.push(f); }
+function spawnEnemyRelative(cx,cy){ const base = 10 + Math.random()*36; const rel = Math.random()*player.size*0.9; const size = Math.max(8, Math.min(player.size*2.2, base + rel)); const e = { id: enemyIdCounter++, x: cx + (Math.random()-0.5)*1600, y: cy + (Math.random()-0.5)*1600, size, speed: 30 + Math.random()*110, angle: Math.random()*Math.PI*2, color: '#ff6b6b', state:'wander', target:null, hunger:100, name: genEnemyName() }; enemies.push(e); }
+function spawnBubbleAround(cx,cy){ bubbles.push({ x: cx + (Math.random()-0.5)*800, y: cy + (Math.random()-0.5)*800, r: 3+Math.random()*8, vy: 20+Math.random()*60, alpha: 0.08+Math.random()*0.18 }); }
+
+// ensure there's always at least one fish larger than player but not absurd
+let lastLargeSpawn = 0;
+function ensureLargerExists(nearbyCount){ let largest = player.size; for(const e of enemies) if(e.size>largest) largest=e.size; const refSize = Math.max(player.size, 8); const now = performance.now(); if(largest <= refSize * 1.05){ // avoid spawning too often or when area is dense
+    if(now - lastLargeSpawn > 3500 && nearbyCount < 28){ const sz = Math.min(refSize*1.9, refSize * (1.2 + Math.random()*0.6)); const e = { id: enemyIdCounter++, x: player.x + (Math.random()-0.5)*1200, y: player.y + (Math.random()-0.5)*1200, size: Math.max(sz, refSize+6), speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#d45b5b', state:'wander', target:null, hunger:100, name: genEnemyName() }; enemies.push(e); lastLargeSpawn = now; } } }
+
+// trim distant entities to keep runtime manageable
+function trimEntities(){ const R = Math.max(window.innerWidth, window.innerHeight) * 4; foods = foods.filter(f=>Math.hypot(f.x-player.x,f.y-player.y) < R); enemies = enemies.filter(e=>Math.hypot(e.x-player.x,e.y-player.y) < R*1.5); bubbles = bubbles.filter(b=>Math.hypot(b.x-player.x,b.y-player.y) < R); }
+
+// initial populate
+for(let i=0;i<110;i++) spawnFoodAround(player.x, player.y);
+for(let i=0;i<12;i++) spawnEnemyRelative(player.x, player.y);
+for(let i=0;i<80;i++) spawnBubbleAround(player.x, player.y);
+
+// ---------- input ----------
+let controlMode = localStorage.getItem('controlMode') || document.getElementById('controlMode').value; document.getElementById('controlMode').value = controlMode; document.getElementById('controlMode').addEventListener('change', e=>{ controlMode = e.target.value; document.getElementById('homeControlMode').value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); });
+const homeControl = document.getElementById('homeControlMode'); homeControl.value = controlMode; homeControl.addEventListener('change', e=>{ controlMode = e.target.value; document.getElementById('controlMode').value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); });
+
+let pointerX=null,pointerY=null; let keys = {};
+
+// UI helper: show/hide mobile controls based on selected mode and style (minimal change)
+function updateControlUI(){ const joy = document.getElementById('joystick'); const boost = document.getElementById('boostMobile'); if(!joy || !boost) return; if(controlMode === 'mobile' && mobileStyle === 'floating'){ joy.style.display = 'flex'; boost.style.display = 'block'; } else if(controlMode === 'mobile' && mobileStyle === 'touch'){ joy.style.display = 'none'; boost.style.display = 'block'; } else { joy.style.display = 'none'; boost.style.display = 'none'; try{ usingJoy = false; lastJoyStrength = 0; touchAnywhereStart = null; }catch(e){} } }
+// initial UI sync
+setTimeout(()=>{ updateMobileOptionVisibility(); updateControlUI(); }, 10);
+
+window.addEventListener('mousemove', e=>{ if(overlayVisible()) return; if(controlMode==='mouse'){ pointerX = e.clientX; pointerY = e.clientY; } });
+window.addEventListener('mousedown', e=>{ if(overlayVisible()) return; }); window.addEventListener('mouseup', e=>{ if(overlayVisible()) return; });
+
+// --- MOBILE DRAG: support both floating joystick and touch-anywhere styles ---
+window.addEventListener('touchstart',e=>{ if(overlayVisible()) return; const t=e.touches[0]; if(t){ pointerX=t.clientX; pointerY=t.clientY; }
+  try{ const target = e.target; const joy = document.getElementById('joystick'); if(joy && controlMode === 'mobile' && mobileStyle === 'floating' && !joy.contains(target)){ // move joystick to finger (floating)
+      if(!joy._orig) joy._orig = {left: joy.style.left || '', bottom: joy.style.bottom || '', top: joy.style.top || '', position: joy.style.position || ''};
+      joy.style.position = 'fixed'; joy.style.left = (t.clientX - joy.offsetWidth/2) + 'px'; joy.style.top = (t.clientY - joy.offsetHeight/2) + 'px'; joy.style.bottom = '';
+      usingJoy = true; joy._touch = true; const rect = joy.getBoundingClientRect(); joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2}; pointerX = joyCenter.x; pointerY = joyCenter.y; stick.style.transform = 'translate(0,0)'; lastJoyStrength = 0; }
+    else if(controlMode === 'mobile' && mobileStyle === 'touch'){ // start touch-anywhere tracking
+      touchAnywhereStart = {x: t.clientX, y: t.clientY}; lastJoyStrength = 0; }
+  }catch(err){}
+}, {passive:false});
+
+window.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; const t = e.touches[0]; if(!t) return; try{ const joy = document.getElementById('joystick'); if(usingJoy && joy && joyCenter && controlMode==='mobile' && mobileStyle==='floating'){ const dx = Math.max(-36, Math.min(36, t.clientX - joyCenter.x)); const dy = Math.max(-36, Math.min(36, t.clientY - joyCenter.y)); stick.style.transform = `translate(${dx}px,${dy}px)`; pointerX = joyCenter.x + dx*1.6; pointerY = joyCenter.y + dy*1.6; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/36); e.preventDefault(); return; } }catch(err){}
+  // touch-anywhere: compute strength based on displacement from touch start
+  if(controlMode === 'mobile' && mobileStyle === 'touch' && touchAnywhereStart){ const dx = t.clientX - touchAnywhereStart.x; const dy = t.clientY - touchAnywhereStart.y; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/160); pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); return; }
+  // default tap-to-point behavior
+  if(controlMode === 'mouse' || controlMode === 'mobile'){ pointerX = t.clientX; pointerY = t.clientY; }
+  e.preventDefault(); }, {passive:false});
+
+window.addEventListener('touchend', (e)=>{ if(overlayVisible()) return; pointerX = null; pointerY = null; touchAnywhereStart = null; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; }
+    if(joy) { delete joy._touch; }
+    usingJoy = false; lastJoyStrength = 0;
+  }catch(err){}
+});
+
+window.addEventListener('touchcancel', (e)=>{ try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; } usingJoy = false; pointerX = null; pointerY = null; lastJoyStrength = 0; touchAnywhereStart = null; }catch(err){} }, {passive:false});
+
+window.addEventListener('keydown', e=>{ if(overlayVisible()) return; keys[e.key.toLowerCase()] = true; if(e.key===' '){ e.preventDefault(); boosting=true; } if(e.key==='Shift'){ boosting=true; } }); window.addEventListener('keyup', e=>{ if(overlayVisible()) return; keys[e.key.toLowerCase()] = false; if(e.key===' '){ boosting=false; } if(e.key==='Shift'){ boosting=false; } });
+
+// boost button supports pointer events for reliability
+const boostBtn = document.getElementById('boostMobile'); if(boostBtn){ boostBtn.addEventListener('pointerdown', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }); boostBtn.addEventListener('pointerup', ()=>{ boosting=false; }); boostBtn.addEventListener('pointercancel', ()=>{ boosting=false; }); // touch events for devices that prefer touch
+  boostBtn.addEventListener('touchstart', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }, {passive:false}); boostBtn.addEventListener('touchend', ()=>{ boosting=false; }); boostBtn.addEventListener('touchcancel', ()=>{ boosting=false; }); }
+let boosting=false;
+
+// joystick: pointer events for better cross-device support
+const joystick = document.getElementById('joystick'); const stick = document.getElementById('stick'); let usingJoy=false; let joyCenter = null; let joyPointerId = null; let lastJoyStrength = 0;
+function joyPointerDown(e){ if(overlayVisible()) return; if(controlMode !== 'mobile' || mobileStyle !== 'floating') return; usingJoy=true; joyPointerId = e.pointerId; e.preventDefault(); const rect = joystick.getBoundingClientRect(); joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2}; }
+function joyPointerMove(e){ if(!usingJoy) return; if(joyPointerId!=null && e.pointerId !== joyPointerId) return; e.preventDefault(); const cx = joyCenter.x, cy = joyCenter.y; const dx = Math.max(-36, Math.min(36, e.clientX - cx)); const dy = Math.max(-36, Math.min(36, e.clientY - cy)); stick.style.transform = `translate(${dx}px,${dy}px)`; pointerX = cx + dx*1.6; pointerY = cy + dy*1.6; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/36); }
+function joyPointerUp(e){ if(joyPointerId!=null && e.pointerId !== joyPointerId) return; usingJoy=false; joyPointerId = null; stick.style.transform='translate(0,0)'; pointerX=null; pointerY=null; lastJoyStrength = 0; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; }
+  }catch(err){} }
+if(joystick){ joystick.addEventListener('pointerdown', joyPointerDown); window.addEventListener('pointermove', joyPointerMove); window.addEventListener('pointerup', joyPointerUp); }
+
+// --- Pointer-event fallback for mobile/touch devices ---
+// These handlers unify pointer events with the existing touch handlers so mobile control is robust.
+window.addEventListener('pointerdown', (e)=>{
+  try{
+    if(overlayVisible()) return;
+    // only handle touch pointers here
+    if(e.pointerType === 'touch'){
+      if(controlMode === 'mobile'){
+        pointerX = e.clientX; pointerY = e.clientY;
+        // if floating joystick style, move joystick to finger unless the touch was on the joystick itself
+        const joyEl = document.getElementById('joystick');
+        if(mobileStyle === 'floating' && joyEl && !joyEl.contains(e.target) && !joyEl._touch){
+          if(!joyEl._orig) joyEl._orig = {left: joyEl.style.left || '', bottom: joyEl.style.bottom || '', top: joyEl.style.top || '', position: joyEl.style.position || ''};
+          joyEl.style.position = 'fixed'; joyEl.style.left = (e.clientX - joyEl.offsetWidth/2) + 'px'; joyEl.style.top = (e.clientY - joyEl.offsetHeight/2) + 'px'; joyEl.style.bottom = '';
+          usingJoy = true; joyEl._touch = true; const rect = joyEl.getBoundingClientRect(); joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2}; pointerX = joyCenter.x; pointerY = joyCenter.y; stick.style.transform = 'translate(0,0)'; lastJoyStrength = 0;
+        }
+      } else if(controlMode === 'mouse'){
+        pointerX = e.clientX; pointerY = e.clientY;
+      }
+    }
+  }catch(err){}
+}, {passive:false});
+
+window.addEventListener('pointermove', (e)=>{
+  try{
+    if(overlayVisible()) return;
+    if(e.pointerType === 'touch'){
+      if(usingJoy && joyCenter && controlMode==='mobile' && mobileStyle==='floating'){
+        const dx = Math.max(-36, Math.min(36, e.clientX - joyCenter.x));
+        const dy = Math.max(-36, Math.min(36, e.clientY - joyCenter.y));
+        stick.style.transform = `translate(${dx}px,${dy}px)`;
+        pointerX = joyCenter.x + dx*1.6; pointerY = joyCenter.y + dy*1.6; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/36);
+        e.preventDefault();
+        return;
+      }
+      // touch-anywhere
+      if(controlMode === 'mobile' && mobileStyle === 'touch' && touchAnywhereStart){
+        const dx = e.clientX - touchAnywhereStart.x; const dy = e.clientY - touchAnywhereStart.y; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/160);
+        pointerX = e.clientX; pointerY = e.clientY; e.preventDefault(); return;
+      }
+      if(controlMode === 'mouse' || controlMode === 'mobile'){ pointerX = e.clientX; pointerY = e.clientY; }
+    }
+  }catch(err){}
+}, {passive:false});
+
+window.addEventListener('pointerup', (e)=>{
+  try{
+    if(e.pointerType === 'touch'){
+      pointerX = null; pointerY = null; touchAnywhereStart = null;
+      const joyEl = document.getElementById('joystick');
+      if(joyEl && joyEl._orig){ joyEl.style.position = joyEl._orig.position; joyEl.style.left = joyEl._orig.left; joyEl.style.top = joyEl._orig.top; joyEl.style.bottom = joyEl._orig.bottom; delete joyEl._orig; }
+      if(joyEl) delete joyEl._touch; usingJoy = false; lastJoyStrength = 0;
+    }
+  }catch(err){}
+}, {passive:false});
+
+// wheel zoom for desktop
+canvas.addEventListener('wheel', (e)=>{ if(overlayVisible()) return; e.preventDefault(); const delta = e.deltaY > 0 ? 0.95 : 1.05; camera.scale = Math.max(0.22, Math.min(1.3, camera.scale * delta)); });
+
+// pinch-to-zoom support for mobile
+let pinchActive = false; let pinchStartDist = 0; let pinchStartScale = 1;
+canvas.addEventListener('touchstart', (e)=>{ if(e.touches.length===2){ pinchActive = true; const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; pinchStartDist = Math.hypot(dx,dy); pinchStartScale = camera.scale; } }, {passive:false});
+canvas.addEventListener('touchmove', (e)=>{ if(pinchActive && e.touches.length===2){ e.preventDefault(); const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; const dist = Math.hypot(dx,dy); const factor = dist / (pinchStartDist || dist); camera.scale = Math.max(0.22, Math.min(1.3, pinchStartScale * factor)); } }, {passive:false});
+canvas.addEventListener('touchend', (e)=>{ if(pinchActive && e.touches.length < 2) pinchActive = false; });
+
+// Right-click should not pause. Prevent browser menu, but use right-button as a boost (hold)
+window.addEventListener('contextmenu', e=>{ e.preventDefault(); });
+window.addEventListener('pointerdown', (e)=>{ if(e.button===2 && !overlayVisible()){ boosting = true; } });
+window.addEventListener('pointerup', (e)=>{ if(e.button===2){ boosting = false; } });
+
+// ---------- audio (WebAudio improved) ----------
+const AudioContext = window.AudioContext || window.webkitAudioContext; let audioCtx=null, masterGain=null, ambGain=null;
+function ensureAudio(){ if(!audioCtx){ audioCtx = new AudioContext(); masterGain = audioCtx.createGain(); masterGain.gain.value = 0.07; masterGain.connect(audioCtx.destination);
+    // ambient pad
+    ambGain = audioCtx.createGain(); ambGain.gain.value = 0.02; ambGain.connect(masterGain);
+    const pad = audioCtx.createOscillator(); pad.type = 'sine'; pad.frequency.value = 80; const padFilter = audioCtx.createBiquadFilter(); padFilter.type = 'lowpass'; padFilter.frequency.value = 600; pad.connect(padFilter); padFilter.connect(ambGain); pad.start();
+    // gentle noise for water
+    const bufferSize = 2*audioCtx.sampleRate; const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate); const data = noiseBuffer.getChannelData(0); for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1)*0.02; } const nb = audioCtx.createBufferSource(); nb.buffer = noiseBuffer; nb.loop=true; const nGain = audioCtx.createGain(); nGain.gain.value = 0.01; nb.connect(nGain); nGain.connect(masterGain); nb.start(); } }
+function playEat(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(700, now); o.frequency.exponentialRampToValueAtTime(330, now+0.12); g.gain.setValueAtTime(0.12, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.14); }
+function playBoost(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(720, now+0.12); g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.16); }
+function playDeath(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(40, now+0.9); g.gain.setValueAtTime(0.28, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.9); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.95); }
+
+// ---------- update & AI ----------
+function handleBounds(){ let clamped=false; if(player.x < -WORLD_BOUND){ player.x = -WORLD_BOUND; clamped=true; } if(player.x > WORLD_BOUND){ player.x = WORLD_BOUND; clamped=true; } if(player.y < -WORLD_BOUND){ player.y = -WORLD_BOUND; clamped=true; } if(player.y > WORLD_BOUND){ player.y = WORLD_BOUND; clamped=true; } if(clamped){ for(let i=0;i<2;i++) spawnEnemyRelative(player.x + randBetween(-200,200), player.y + randBetween(-200,200)); player.hunger = Math.max(0, player.hunger - 8); } }
+
+function update(dt){ if(!running) return;
+  // density-aware spawn throttling to avoid floods when stopped
+  const nearbyCount = enemies.filter(e=>Math.hypot(e.x-player.x,e.y-player.y) < 1600).length;
+  const densityFactor = Math.max(0.08, 1 - nearbyCount/80); // reduce spawns when many nearby
+  // reduce spawn when player is nearly stopped to avoid attracting mass spawns
+  const spawnSpeedFactor = player.speed < 3 ? 0.32 : 1;
+  const spawnFactor = player.alive ? spawnSpeedFactor : 0.06;
+  if(Math.random() < 0.12 * spawnFactor * densityFactor) spawnFoodAround(player.x, player.y);
+  if(Math.random() < 0.004 * spawnFactor * densityFactor) spawnEnemyRelative(player.x, player.y);
+  if(Math.random() < 0.08 * spawnFactor * densityFactor) spawnBubbleAround(player.x, player.y);
+
+  // Movement: only update player movement when alive
+  let vx=0, vy=0;
+  if(player.alive){
+    if(((controlMode==='mouse') || (controlMode==='mobile' && mobileStyle==='touch')) && pointerX!=null && pointerY!=null){ const w = screenToWorld(pointerX, pointerY); vx = w.x - player.x; vy = w.y - player.y; }
+    if(controlMode==='keyboard'){ if(keys['w']||keys['arrowup']) vy-=1; if(keys['s']||keys['arrowdown']) vy+=1; if(keys['a']||keys['arrowleft']) vx-=1; if(keys['d']||keys['arrowright']) vx+=1; }
+    const mag = Math.hypot(vx,vy);
+    let movingSpeed = 0;
+    if(mag>0.01){ player.angle = Math.atan2(vy, vx); const speedFactor = player.baseSpeed * (1 - Math.min(0.75, (player.size-8)/300)); let sp = speedFactor * (1 + (boosting?1.2:0)); // scale down speed on keyboard boost slightly
+      if(controlMode==='keyboard' && boosting) sp *= 1.4; // if using virtual joystick or touch-anywhere, make speed proportional to displacement for fine control on mobile
+      if(usingJoy || (controlMode==='mobile' && touchAnywhereStart)){
+        sp *= Math.max(0.18, Math.min(1, lastJoyStrength));
+      }
+      const dx = Math.cos(player.angle) * sp * dt/1000; const dy = Math.sin(player.angle) * sp * dt/1000; player.x += dx; player.y += dy; movingSpeed = Math.hypot(dx,dy) / (dt/1000);
+      if(boosting){ player.size = Math.max(8, player.size - 0.05 * dt/1000); player.hunger = Math.max(0, player.hunger - 0.12 * dt/1000); playBoost(); }
+    } else { // small idle drift only when alive
+      const dx = Math.cos(player.angle) * 8 * dt/1000; const dy = Math.sin(player.angle) * 8 * dt/1000; player.x += dx; player.y += dy; movingSpeed = Math.hypot(dx,dy)/(dt/1000);
+    }
+    player.vx = movingSpeed * Math.cos(player.angle); player.vy = movingSpeed * Math.sin(player.angle); player.speed = movingSpeed;
+  } else {
+    // player dead: stop movement entirely and keep size handled by deathSequence
+    player.vx = 0; player.vy = 0; player.speed = 0;
+  }
+
+  handleBounds();
+
+  // hunger decay faster the bigger you are and when moving fast
+  const baseDecay = dt/5000 * Math.max(0.6, player.size/24);
+  const movementDecay = (player.speed/80) * (dt/1000) * Math.max(0.8, player.size/24);
+  player.hunger -= baseDecay + movementDecay;
+  ui.hungerEl.style.width = Math.max(0, player.hunger) + '%';
+  if(player.hunger <= 0 && player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; // freeze camera at the location of death
+      deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } }
+
+  for(const f of foods) f.wobble += 0.02 * dt/16;
+  for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; b.y -= b.vy * dt/1000; if(Math.hypot(b.x-player.x,b.y-player.y)>8000) bubbles.splice(i,1); }
+
+  // AI for enemies: all fish try to eat closest fish (even smallest); small fish flee from larger fish
+  for(const e of enemies){
+    e.hunger = (e.hunger||100) - dt/12000 * (e.size/24);
+    let prey=null; let preyDist=1e9;
+    let threat=null; let threatDist=1e9;
+    const dToPlayer = Math.hypot(player.x-e.x, player.y-e.y);
+    if(player.alive){ if(player.size <= e.size * 1.05 && dToPlayer < preyDist){ prey = {type:'player',ref:player,x:player.x,y:player.y,size:player.size}; preyDist = dToPlayer; } if(player.size > e.size * 1.05 && dToPlayer < threatDist){ threat = {type:'player',ref:player,x:player.x,y:player.y,size:player.size}; threatDist = dToPlayer; } }
+    for(const other of enemies){ if(other===e) continue; const d = Math.hypot(other.x-e.x, other.y-e.y); if(other.size <= e.size * 1.05 && d < preyDist){ prey = {type:'enemy',ref:other,x:other.x,y:other.y,size:other.size}; preyDist = d; } if(other.size > e.size * 1.05 && d < threatDist){ threat = {type:'enemy',ref:other,x:other.x,y:other.y,size:other.size}; threatDist = d; } }
+    if(threat && threatDist < 420){ e.state='flee'; const ang = Math.atan2(e.y - threat.y, e.x - threat.x); e.x += Math.cos(ang) * (e.speed*0.9) * dt/1000; e.y += Math.sin(ang) * (e.speed*0.9) * dt/1000; e.angle = ang;
+    } else if(prey){ e.state='hunt'; const ang = Math.atan2(prey.y - e.y, prey.x - e.x); e.x += Math.cos(ang) * e.speed * dt/1000; e.y += Math.sin(ang) * e.speed * dt/1000; e.angle = ang; for(const ally of enemies){ if(ally!==e && Math.hypot(ally.x-e.x, ally.y-e.y) < 450 && (!ally.target || ally.target.size < prey.size)) ally.target = prey; }
+    } else { e.state='wander'; e.x += Math.cos(e.angle) * (e.speed*0.18) * dt/1000; e.y += Math.sin(e.angle) * (e.speed*0.18) * dt/1000; if(Math.random()<0.01) e.angle += (Math.random()-0.5)*1.2; }
+  }
+
+  // collisions: player-food
+  for(let i=foods.length-1;i>=0;i--){ const f=foods[i]; const d=Math.hypot(player.x-f.x,player.y-f.y); if(d < player.size + f.size*0.7){ foods.splice(i,1); player.size += f.size*0.08; player.score += 1; player.coins += 1; player.hunger = Math.min(100, player.hunger + 6); playEat(); } }
+  // player-enemy
+  for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d < player.size + e.size*0.6){ if(e.size > player.size * 1.05){ if(player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } } } else if(player.size > e.size * 1.05){ player.size += e.size*0.18; player.score += Math.round(e.size/6); player.coins += Math.round(e.size/8); enemies.splice(i,1); playEat(); } } }
+  // enemy vs enemy: they eat smaller each other (closest apply)
+  for(let i=enemies.length-1;i>=0;i--){ for(let j=enemies.length-1;j>=0;j--){ if(i===j) continue; const a=enemies[i], b=enemies[j]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(d < a.size + b.size){ if(a.size > b.size * 1.05){ a.size += b.size*0.14; enemies.splice(j,1); if(j<i) i--; break; } } } }
+
+  // spawn logic controlled by density-aware function
+  ensureLargerExists(nearbyCount);
+  trimEntities();
+
+  const depthSigned = -Math.round(player.y);
+  const sign = depthSigned >= 0 ? '+' : '-';
+  ui.depthEl.textContent = `${sign}${Math.abs(depthSigned)} m`;
+  const maxDepth = 3000; const pct = Math.min(1, Math.max(0, depthSigned) / maxDepth);
+  ui.depthFill.style.height = `${Math.max(4, pct*100)}%`;
+
+  ui.sizeEl.textContent = player.size.toFixed(1);
+  ui.scoreEl.textContent = player.score;
+  const highKey = 'aqua_highscore_' + (localStorage.getItem('playerName')||'Guest');
+  let high = parseInt(localStorage.getItem(highKey) || '0',10);
+  if(player.score > high){ high = player.score; localStorage.setItem(highKey, high); }
+  ui.highEl.textContent = high;
+  ui.coinsEl.textContent = player.coins;
+}
+
+// ---------- rendering & background ----------
+function updateCamera(dt){ const scale = Math.max(0.22, Math.min(1.3, (28)/(player.size+6))); camera.scale += (scale - camera.scale) * 0.08; const vw = window.innerWidth / camera.scale, vh = window.innerHeight / camera.scale; if(cameraFrozen){ camera.x = deathCameraX - vw/2; camera.y = deathCameraY - vh/2; } else { camera.x = player.x - vw/2; camera.y = player.y - vh/2; } }
+function clear(){ ctx.clearRect(0,0,canvas.width/ DPR, canvas.height/ DPR); }
+function worldToScreen(wx,wy){ return { x: (wx - camera.x) * camera.scale, y: (wy - camera.y) * camera.scale }; }
+
+// color utils: interpolate towards yellow for smaller and red for larger, fading smoothly
+function hexToRgb(hex){ hex = hex.replace('#',''); const num = parseInt(hex,16); return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 }; }
+function rgbToHex(r,g,b){ return '#'+((1<<24)+(Math.round(r)<<16)+(Math.round(g)<<8)+Math.round(b)).toString(16).slice(1); }
+function mixColors(c1,c2,t){ const a=hexToRgb(c1); const b=hexToRgb(c2); const r=a.r + (b.r-a.r)*t; const g=a.g + (b.g-a.g)*t; const bl=a.b + (b.b-a.b)*t; return rgbToHex(r,g,bl); }
+
+function displayColorForFish(f){ const base = f.color || '#ff9a66'; const yellow = '#fff59d'; const red = '#ff6b6b';
+  const ratio = (f.size - player.size) / Math.max(1, player.size);
+  const t = Math.min(1, Math.abs(ratio) );
+  if(f === player) return base; // player's own skin
+  if(f.size < player.size){ // smaller -> fade towards yellow
+    return mixColors(base, yellow, Math.min(1, t*1.1));
+  } else { // larger -> fade towards red
+    return mixColors(base, red, Math.min(1, t*1.1));
+  }
+}
+
+function drawFish(x,y,r,angle,opts={color:'#ff9a66',eye:'#0b1b2b'}, entityRef=null){ ctx.save(); const s = worldToScreen(x,y); ctx.translate(s.x, s.y); ctx.rotate(angle); const rr = r * camera.scale; ctx.beginPath(); ctx.ellipse(0,0,rr*1.25, rr, 0,0,Math.PI*2); const fillC = entityRef ? displayColorForFish(entityRef) : opts.color; ctx.fillStyle = fillC; ctx.fill(); ctx.beginPath(); ctx.moveTo(-rr*0.9,0); ctx.lineTo(-rr*1.7,-rr*0.7); ctx.lineTo(-rr*1.7,rr*0.7); ctx.closePath(); ctx.fillStyle = shade(fillC,-12); ctx.fill(); ctx.beginPath(); ctx.moveTo(rr*0.2,-rr*0.7); ctx.quadraticCurveTo(rr*0.6,-rr*1.4,rr*1.1,-rr*0.6); ctx.closePath(); ctx.fillStyle = shade(fillC,6); ctx.fill(); ctx.beginPath(); ctx.arc(rr*0.6,-rr*0.15, Math.max(2, rr*0.18),0,Math.PI*2); ctx.fillStyle = opts.eye; ctx.fill(); ctx.beginPath(); ctx.arc(rr*0.68,-rr*0.15, Math.max(1.2, rr*0.08),0,Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+  // draw name labels: for player show username when stopped; for enemies show their name
+  const screen = worldToScreen(x,y);
+  ctx.save(); ctx.font = `${Math.max(10,12*camera.scale)}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.lineWidth=3; if(entityRef === player){ if(player.speed < 8){ // show username when stopped/slow
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#ffffff'; ctx.strokeText(username, screen.x, screen.y - (rr*1.2)); ctx.fillText(username, screen.x, screen.y - (rr*1.2)); }
+  } else if(entityRef && entityRef.name){ ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#fff'; ctx.strokeText(entityRef.name, screen.x, screen.y - (rr*1.2)); ctx.fillText(entityRef.name, screen.x, screen.y - (rr*1.2)); }
+  ctx.restore(); }
+function drawFood(f){ const t = performance.now()/600 + f.wobble; const wig = Math.sin(t)*2; drawFish(f.x, f.y + wig, f.size, Math.sin(t)*0.6 + Math.PI/6, {color:f.color, eye:'#222'}, f); }
+function drawEnemy(e){ drawFish(e.x, e.y, e.size, e.angle, {color:e.color, eye:'#000'}, e); }
+function drawBubble(b){ const s = worldToScreen(b.x,b.y); ctx.beginPath(); ctx.arc(s.x, s.y, b.r * camera.scale, 0, Math.PI*2); ctx.fillStyle = `rgba(255,255,255,${b.alpha})`; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${Math.min(0.4,b.alpha)})`; ctx.stroke(); }
+function shade(hex,percent){ const c = hex.replace('#',''); const num = parseInt(c,16); let r=(num>>16)+Math.round(255*percent/100); let g=((num>>8)&0x00FF)+Math.round(255*percent/100); let b=(num&0x0000FF)+Math.round(255*percent/100); r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b)); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
+
+function renderBackground(){ // full-viewport gradient only (removed lines/waves per request)
+  const w = canvas.width/DPR, h = canvas.height/DPR;
+  const g = ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,getComputedStyle(document.documentElement).getPropertyValue('--bg-top').trim()||'#7ee8fa'); g.addColorStop(1,getComputedStyle(document.documentElement).getPropertyValue('--bg-bottom').trim()||'#0b2f55'); ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+}
+
+function render(){ clear(); renderBackground(); updateCamera(16);
+  // draw world objects
+  for(const f of foods) drawFood(f);
+  for(const e of enemies) drawEnemy(e);
+  for(const b of bubbles) drawBubble(b);
+  // always draw player so corpse is visible where you died; movement is frozen when dead
+  drawFish(player.x, player.y, player.size, player.angle, {color:player.color, eye:player.eyeColor}, player);
+}
+
+// ---------- death animation & sequences ----------
+function deathSequence(){ const startSize = player.size; const dur = 1200; const t0 = performance.now(); function anim(){ const t = performance.now() - t0; const p = Math.min(1, t/dur); // animate size down but DO NOT move player coordinates
+    player.size = startSize * (1 - p);
+    clear(); render(); ctx.save(); ctx.globalAlpha = p*0.9; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.restore(); if(p<1) requestAnimationFrame(anim); else { // show menu but do NOT pause world (camera frozen at death coords)
+      document.getElementById('overlay').classList.remove('hidden'); document.getElementById('homeInfo').innerHTML = `<h3>You Died</h3><p>Score: ${player.score} — press Start to reset.</p>`; document.getElementById('shopPanel').classList.add('hidden'); } } requestAnimationFrame(anim); }
+
+// ---------- main loop ----------
+function mainLoop(now){ if(!running) return; const dt = Math.min(60, now - lastTime); update(dt); render(); lastTime = now; fpsTimer += dt; fpsCounter++; if(fpsTimer >= 500){ ui.fpsEl.textContent = Math.round(fpsCounter / (fpsTimer/1000)); fpsTimer = 0; fpsCounter = 0; } requestAnimationFrame(mainLoop); }
+
+// ---------- utilities ----------
+function ensureAudioStarted(){ try{ ensureAudio(); } catch(e){} }
+
+
+
+// Hard-coded Firebase config (provided by project owner). This will be used automatically so you don't need to paste it.
+const HARDCODED_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCK2mIqOVp1d0VV3C6dycHTvnVtaE4CspQ",
+  authDomain: "aqua-odyssey.firebaseapp.com",
+  databaseURL: "https://aqua-odyssey-default-rtdb.firebaseio.com",
+  projectId: "aqua-odyssey",
+  storageBucket: "aqua-odyssey.firebasestorage.app",
+  messagingSenderId: "54640172756",
+  appId: "1:54640172756:web:608837b0b971f896812541",
+  measurementId: "G-ZZBZERRPCH"
+};
+
+// fallback store of latest leaderboard items for the mini-board
+window._latestLeaderboardItems = [];
+
+let fbUid = null;
+let fbAuthInitialized = false;
+
+async function setupFirebaseAuthAndPresence(){
+  if(fbAuthInitialized) return true;
+  try{
+    if(!window.firebase){ console.warn('Firebase SDK missing'); return false; }
+    if(!firebase.auth){ // load compat auth if needed
+      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
+    }
+    window.fbAuth = firebase.auth();
+    fbAuthInitialized = true;
+    try{ await fbAuth.signInAnonymously(); }catch(e){ console.warn('Anonymous sign-in failed', e); }
+    fbAuth.onAuthStateChanged(user=>{
+      if(user){ fbUid = user.uid; console.log('Signed into Firebase as', fbUid); document.getElementById('connIndicator').style.background = '#2ecc40'; document.getElementById('connText').textContent = 'Firebase OK'; }
+      else { fbUid = null; document.getElementById('connIndicator').style.background = '#ff4136'; document.getElementById('connText').textContent = 'Not authed'; }
+    });
+    // periodic sync of player state
+    setInterval(()=>{ try{ if(fbUid) writePlayerStateToFirebase(); }catch(e){} }, 5000);
+    // subscribe leaderboard if DB present
+    if(window.fbDB) subscribeLeaderboard();
+    return true;
+  }catch(e){ console.error('Auth setup failed', e); return false; }
+}
+
+function writePlayerStateToFirebase(){
+  try{
+    if(!fbUid || !window.fbDB) return;
+    const playerRef = fbDB.ref('players/' + fbUid);
+    playerRef.update({ name: localStorage.getItem('playerName') || 'Guest', score: Number(player.score)||0, coins: Number(player.coins)||0, size: Math.round(player.size*10)/10, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+  }catch(e){ console.warn('writePlayerStateToFirebase failed', e); }
+}
+
+function subscribeLeaderboard(){
+  if(!window.fbDB) return;
+  try{
+    const q2 = window.fbDB.ref('players').orderByChild('score').limitToLast(100);
+    q2.on('value', snap2=>{
+      const items = [];
+      snap2.forEach(ch=>{ items.push({ uid: ch.key, ...ch.val() }); });
+      items.reverse();
+      window._latestLeaderboardItems = items;
+      // update overlay leaderboard
+      const el = document.getElementById('leaderboardList'); if(el){ el.innerHTML = ''; for(const it of items.slice(0,10)){ const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.padding='6px 8px'; row.style.background='rgba(255,255,255,0.02)'; row.style.borderRadius='8px'; row.style.marginBottom='6px'; row.innerHTML = `<div style="font-weight:800">${escapeHtml(it.name||'Guest')}</div><div style="opacity:0.9">${it.score||0}</div>`; el.appendChild(row); } }
+      // update mini leaderboard
+      renderMiniLeaderboard(items, document.getElementById('miniSearch')?document.getElementById('miniSearch').value:'');
+    });
+  }catch(e){ console.warn('subscribeLeaderboard failed', e); }
+}
+
+// lightweight network ping to check connectivity
+async function pingConnection(){
+  const start = performance.now();
+  try{
+    // use a fast URL that returns 204; mode 'no-cors' avoids CORS issues but still times the request
+    await fetch('https://www.gstatic.com/generate_204', {cache:'no-store', mode:'no-cors'});
+    const ms = Math.round(performance.now()-start);
+    document.getElementById('connMs').textContent = ms + ' ms';
+    document.getElementById('connIndicator').style.background = '#2ecc40';
+    if(window.fbDB){ document.getElementById('connText').textContent = 'Online · Firebase'; document.getElementById('startOnlineBtn').disabled = false; }
+    else { document.getElementById('connText').textContent = 'Online · No Firebase'; document.getElementById('startOnlineBtn').disabled = false; }
+    return true;
+  }catch(e){
+    document.getElementById('connIndicator').style.background = '#999';
+    document.getElementById('connText').textContent = 'Offline';
+    document.getElementById('connMs').textContent = '';
+    document.getElementById('startOnlineBtn').disabled = true;
+    return false;
+  }
+}
+
+// minimal Firebase connect routine (best-effort). It reads config from localStorage and loads compat SDKs.
+async function ensureFirebaseConnected(){
+  // prefer user-provided config, fall back to hardcoded
+  let cfgStr = localStorage.getItem('firebaseConfig');
+  let obj = null;
+  try{ obj = cfgStr ? JSON.parse(cfgStr) : HARDCODED_FIREBASE_CONFIG; }catch(e){ obj = HARDCODED_FIREBASE_CONFIG; }
+  try{
+    // load SDKs if missing
+    if(!window.firebase || !window.firebase.app){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+    if(!window.firebase || !window.firebase.database){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+    if(!window.firebase.apps || window.firebase.apps.length===0){ window.fbApp = firebase.initializeApp(obj); window.fbDB = firebase.database(); }
+    // write/read a test key to estimate latency
+    const key = 'ping_test/' + (Math.random().toString(36).slice(2,9)); const t0 = Date.now(); await window.fbDB.ref(key).set({ ts: firebase.database.ServerValue.TIMESTAMP }); await window.fbDB.ref(key).get(); const t1 = Date.now(); const ms = t1 - t0; document.getElementById('connMs').textContent = ms + ' ms (fb)'; document.getElementById('connIndicator').style.background='#2ecc40'; document.getElementById('connText').textContent='Firebase OK';
+    // ensure auth & presence & subscriptions
+    try{ await setupFirebaseAuthAndPresence(); }catch(e){}
+    try{ subscribeLeaderboard(); }catch(e){}
+    return true;
+  }catch(e){ console.error(e); showToast('Firebase connection failed: '+(e && e.message?e.message:'error')); document.getElementById('connIndicator').style.background='#ff4136'; document.getElementById('connText').textContent='FB Error'; return false; }
+}
+
+// wire mini-search and toggle controls
+try{ const ms = document.getElementById('miniSearch'); if(ms){ ms.addEventListener('input', ()=>{ renderMiniLeaderboard(window._latestLeaderboardItems, ms.value); }); }
+  const mt = document.getElementById('miniToggle'); if(mt){ mt.addEventListener('click', ()=>{ const el = document.getElementById('miniLeaderboard'); if(el) el.classList.toggle('small'); renderMiniLeaderboard(window._latestLeaderboardItems, document.getElementById('miniSearch')?document.getElementById('miniSearch').value:''); }); }
+}catch(e){}
+
+// keep trying to auto-setup auth/presence when firebase DB becomes available
+setInterval(()=>{ try{ if(window.fbDB && !fbAuthInitialized) setupFirebaseAuthAndPresence(); }catch(e){} }, 2000);
+
+// ensure initial auth setup if fbDB already exists
+try{ if(window.fbDB) setupFirebaseAuthAndPresence(); }catch(e){};
+
+// make boost button more responsive across input types across input types
+if(typeof boostBtn !== 'undefined' && boostBtn){ try{ boostBtn.addEventListener('mousedown', ()=>{ boosting=true; }); boostBtn.addEventListener('mouseup', ()=>{ boosting=false; }); boostBtn.addEventListener('mouseleave', ()=>{ boosting=false; }); boostBtn.addEventListener('touchstart', (e)=>{ boosting=true; e.preventDefault(); }, {passive:false}); boostBtn.addEventListener('touchend', ()=>{ boosting=false; }); }catch(e){}
+}
+
+
+
+document.getElementById('infoBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.remove('hidden'); document.getElementById('shopPanel').classList.add('hidden'); });
+document.getElementById('shopBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('shopPanel').classList.remove('hidden'); renderShop(document.getElementById('shopSearch').value||'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); });
+
+// --- Added minimal handlers to wire start/online/firebase/leaderboard buttons ---
+(function wireMenuButtons(){
+  const startOffline = document.getElementById('startOfflineBtn');
+  const startOnline = document.getElementById('startOnlineBtn');
+  const fbBtn = document.getElementById('fbSetupBtn');
+  const lbBtn = document.getElementById('leaderboardBtn');
+  // ensure online start disabled until connectivity checked
+  if(startOnline) startOnline.disabled = true;
+
+  function startGame(mode){
+    const saved = localStorage.getItem('playerName') || 'Guest';
+    if(!saved || saved === 'Guest'){ showToast('Please set a username before starting.',2200); return; }
+    document.getElementById('overlay').classList.add('hidden');
+    // reset world and spawn at a random location (not 0,0)
+    foods = []; enemies = []; bubbles = []; currents = [];
+    player.x = randBetween(-WORLD_BOUND*0.6, WORLD_BOUND*0.6);
+    player.y = randBetween(-WORLD_BOUND*0.6, WORLD_BOUND*0.6);
+    player.size = 8 + Math.random()*8;
+    player.hunger = 100; player.score = 0; player.coins = 0; player.alive = true; deathHandled = false; pausedByContext = false; cameraFrozen = false; deathCameraX = 0; deathCameraY = 0;
+    camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX = null; pointerY = null; keys = {};
+    for(let i=0;i<120;i++) spawnFoodAround(player.x, player.y);
+    for(let i=0;i<14;i++) spawnEnemyRelative(player.x, player.y);
+    for(let i=0;i<100;i++) spawnBubbleAround(player.x, player.y);
+    ensureAudioStarted(); setRunning(true);
+    if(mode === 'online'){
+      ensureFirebaseConnected().then(ok=>{
+        if(!ok){ showToast('Could not fully connect to Firebase — continuing in offline mode'); }
+        else { try{ setupFirebaseAuthAndPresence(); writePlayerStateToFirebase(); }catch(e){} }
+      });
+    }
+  }
+
+  if(startOffline) startOffline.addEventListener('click', ()=> startGame('offline'));
+  if(startOnline) startOnline.addEventListener('click', ()=>{
+    // guard: must be online and firebase available (pingConnection will enable button)
+    if(startOnline.disabled){ showToast('Online start is not available (offline)'); return; }
+    startGame('online');
+  });
+  if(fbBtn) fbBtn.addEventListener('click', ()=>{ ensureFirebaseConnected(); });
+  if(lbBtn) lbBtn.addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('shopPanel').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.remove('hidden'); });
+})();
+
+// --- mini leaderboard renderer (used by Firebase subscription and UI) ---
+function renderMiniLeaderboard(items, filter){
+  try{
+    items = items || window._latestLeaderboardItems || [];
+    const q = (filter||'').trim().toLowerCase();
+    const listEl = document.getElementById('miniList');
+    if(!listEl) return;
+    listEl.innerHTML = '';
+    const shown = items.filter(it=>{ if(!q) return true; return (it.name||'').toLowerCase().includes(q); }).slice(0,10);
+    for(const it of shown){ const row = document.createElement('div'); row.className='lb-row'; row.innerHTML = `<div style="font-weight:800">${escapeHtml(it.name||'Guest')}</div><div style="opacity:0.95">${it.score||0}</div>`; listEl.appendChild(row); }
+    const youEl = document.getElementById('miniYou'); if(youEl){ const me = items.find(it=> it.uid === fbUid) || {name: localStorage.getItem('playerName')||'Guest', score: player.score}; youEl.textContent = `You: ${me.name} · ${me.score||0}`; }
+    const countEl = document.getElementById('miniCount'); if(countEl) countEl.textContent = items.length;
+  }catch(e){ console.warn('renderMiniLeaderboard error', e); }
+}
+
+// quick ping and enable startOnline when online
+pingConnection(); setInterval(pingConnection, 5000);
+
+// helper to escape HTML
+function escapeHtml(s){ return (''+s).replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+
+// render initial local mini leaderboard (empty)
+renderMiniLeaderboard(window._latestLeaderboardItems, '');
+
+document.getElementById('btnLeave').addEventListener('click', ()=>{ setRunning(false); document.getElementById('overlay').classList.remove('hidden'); });
+
+// Pause disabled for gameplay — keep control via Start/Exit only
+try{ const _pb = document.getElementById('btnPause'); if(_pb){ _pb.disabled = true; _pb.textContent = 'Pause (disabled)'; } }catch(e){}
+
+// start paused on home
+document.getElementById('overlay').classList.remove('hidden'); setRunning(false);
+
+// ensure shop inputs exist handlers
+(function initShopInputs(){ const search = document.getElementById('shopSearch'); const sort = document.getElementById('shopSort'); if(search) search.addEventListener('input', e=>renderShop(e.target.value, sort?sort.value:'price-asc')); if(sort) sort.addEventListener('change', e=>renderShop(search?search.value:'', e.target.value)); })();
+
+// restore saved username display
+const savedName = localStorage.getItem('playerName'); if(savedName){ ui.usernameDisplay.textContent = savedName; if(usernameInput) usernameInput.value = savedName; }
+
+// hide mobile option on non-touch by default (unless testing allowed)
+updateMobileOptionVisibility();
+
+// simple self-tests (run manually in console with window.runTests())
+window.runTests = function(){
+  try { console.assert(typeof setRunning === 'function', 'setRunning should exist');
+        console.assert(document.getElementById('btnPause'), 'Pause button exists');
+        console.log('Self-tests passed.'); }
+  catch(e){ console.error('Self-tests failed', e); }
+};
+
+// expose debug
+window.__game = {player, foods, enemies, bubbles};
+// small injection: ensure offline bots spawn when Play Offline is clicked (minimal, non-invasive)
+(function(){ try{ const btn = document.getElementById('startOfflineBtn'); if(btn){ btn.addEventListener('click', ()=>{ setTimeout(()=>{ try{ const extra = 8; for(let i=0;i<extra;i++) spawnEnemyRelative(player.x + randBetween(-1200,1200), player.y + randBetween(-1200,1200)); }catch(e){} }, 120); }); } }catch(e){} })();
+</script>
+</body>
+</html>
