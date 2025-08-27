@@ -26,11 +26,10 @@
   .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:80}
   .overlay.hidden{display:none}
   .card{width:100%;max-width:820px;pointer-events:all;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));padding:22px;border-radius:16px;backdrop-filter:blur(6px);text-align:center}
-  
   .card h2{font-size:20px;margin-bottom:8px}
   .primary{background:linear-gradient(90deg,var(--accent),#ff9a66);border-radius:12px;padding:10px 14px;color:#1a1a1a;font-weight:800;cursor:pointer;border:none}
   .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;margin-left:8px}
-  .info{max-height:320px;overflow:auto;padding-top:8px;font-size:13px}
+  .info{max-height:320px;overflow:auto;padding-top:8px;font-size:13px;text-align:left}
   .shop{display:flex;flex-direction:column;gap:8px}
   .shop-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02)}
   .controls-bottom{position:absolute;right:12px;bottom:12px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
@@ -123,6 +122,12 @@
     </div>
   </div>
 </div>
+
+<!-- Firebase compat SDKs (minimal) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <script>
 // ---------- setup ----------
 const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); let DPR = Math.max(1, window.devicePixelRatio || 1);
@@ -193,20 +198,23 @@ const SHOP_ITEMS = [
   {id:'meal_box',name:'Meal Box',type:'consumable',desc:'Restores hunger +40',price:800,effect:()=>{ player.hunger = Math.min(100, player.hunger + 40); }},
   {id:'magnet',name:'Coin Magnet (30s)',type:'consumable',desc:'Attract small coins for 30s',price:1800,effect:()=>{ player.magnetUntil = Date.now()+30000; }},
   {id:'mega_pack',name:'Mega Coin Pack: 10,000',type:'consumable',desc:'Big coin boost',price:15000,effect:()=>{ player.coins += 10000 }},
+  // a couple more small items for variety
+  {id:'skin_pack',name:'Starter Skins',type:'bundle',desc:'Unlocks 2 skins',price:900,effect:()=>{ owned.add('azure'); owned.add('coral'); saveOwned(); }},
+  {id:'speed_small',name:'Speed +15',type:'upgrade',desc:'Permanent +15 base speed',price:1200,effect:()=>{ player.baseSpeed += 15 }}
 ];
 
 const owned = new Set(JSON.parse(localStorage.getItem('ownedSkins')||'["classic"]'));
 let equipped = localStorage.getItem('equippedSkin') || 'classic';
 function saveOwned(){ localStorage.setItem('ownedSkins', JSON.stringify(Array.from(owned))); localStorage.setItem('equippedSkin', equipped); }
 
-// username handling + profanity filter (unchanged)
+// username handling + profanity filter (unchanged) — ensure input is populated on load
 const usernameInput = document.getElementById('usernameInput'); const setNameBtn = document.getElementById('setNameBtn'); const nameErr = document.getElementById('nameErr');
-let username = localStorage.getItem('playerName') || 'Guest'; ui.usernameDisplay.textContent = username;
+let username = localStorage.getItem('playerName') || 'Guest'; ui.usernameDisplay.textContent = username; if(usernameInput) usernameInput.value = (username==='Guest' ? '' : username);
 const BANNED = ['fuck','shit','bitch','cunt','asshole','dick','bastard','damn','whore','motherfucker','nigger','faggot'];
 function normalizeName(s){ s = s.toLowerCase(); const map = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s' }; let out=''; for(const ch of s){ if(map[ch]) out += map[ch]; else if(/[a-z0-9]/.test(ch)) out += ch; } return out; }
 function levenshtein(a,b){ if(a===b) return 0; const m=a.length, n=b.length; const dp = Array.from({length:m+1},(_,i)=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost = a[i-1]===b[j-1]?0:1; dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost); } } return dp[m][n]; }
 function isNameAllowed(raw){ if(!raw || raw.trim().length<2) return {ok:false,reason:'Name too short'}; if(raw.length>20) return {ok:false,reason:'Name too long'}; if(/[!@#\$%\^&*\(\)\+={}\[\]|\;:'"<>,\?~`]/.test(raw)) return {ok:false,reason:'Name contains invalid symbols'}; const norm = normalizeName(raw); for(const bad of BANNED){ if(norm.includes(bad)) return {ok:false,reason:'Name contains disallowed word'}; const dist = levenshtein(norm, bad); if(dist <= 1) return {ok:false,reason:'Name contains disallowed or obfuscated word'}; } return {ok:true}; }
-setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); });
+setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); if(usernameInput) usernameInput.value = username; });
 
 // Mobile control style handling: floating joystick vs touch-anywhere
 let mobileStyle = localStorage.getItem('mobileStyle') || (document.getElementById('mobileStyle') ? document.getElementById('mobileStyle').value : 'floating'); if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').value = mobileStyle; if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').addEventListener('change',(e)=>{ mobileStyle = e.target.value; localStorage.setItem('mobileStyle', mobileStyle); updateControlUI(); });
@@ -246,19 +254,19 @@ function renderShop(filter='',sortBy='price-asc'){ shopItemsEl.innerHTML=''; let
     right.style.display='flex'; right.style.alignItems='center'; right.appendChild(price); right.appendChild(btn); row.appendChild(left); row.appendChild(right); shopItemsEl.appendChild(row); }
 }
 
-const shopItemsEl = document.getElementById('shopItems'); document.getElementById('shopSearch').addEventListener('input',(e)=>renderShop(e.target.value, document.getElementById('shopSort').value)); document.getElementById('shopSort').addEventListener('change',(e)=>renderShop(document.getElementById('shopSearch').value, e.target.value));
+const shopItemsEl = document.getElementById('shopItems'); if(document.getElementById('shopSearch')) document.getElementById('shopSearch').addEventListener('input',(e)=>renderShop(e.target.value, document.getElementById('shopSort').value)); if(document.getElementById('shopSort')) document.getElementById('shopSort').addEventListener('change',(e)=>renderShop(document.getElementById('shopSearch').value, e.target.value));
 renderShop();
 
 // ---------- spawning & world management (infinite-ish) ----------
 function randBetween(a,b){ return a + Math.random()*(b-a); }
 function spawnFoodAround(cx,cy){ if(foods.length>MAX_FOOD) return; const angle = Math.random()*Math.PI*2; const dist = 300 + Math.random()*1200; const f={ x: cx + Math.cos(angle)*dist, y: cy + Math.sin(angle)*dist, size: 3 + Math.random()*6, wobble: Math.random()*Math.PI*2, color:'#fff59d' }; foods.push(f); }
-function spawnEnemyRelative(cx,cy){ const base = 10 + Math.random()*36; const rel = Math.random()*player.size*0.9; const size = Math.max(8, Math.min(player.size*2.2, base + rel)); const e = { id: enemyIdCounter++, x: cx + (Math.random()-0.5)*1600, y: cy + (Math.random()-0.5)*1600, size, speed: 30 + Math.random()*110, angle: Math.random()*Math.PI*2, color: '#ff6b6b', state:'wander', target:null, hunger:100, name: genEnemyName() }; enemies.push(e); }
+function spawnEnemyRelative(cx,cy){ const base = 10 + Math.random()*36; const rel = Math.random()*player.size*0.9; const size = Math.max(8, Math.min(player.size*2.2, base + rel)); const e = { id: enemyIdCounter++, x: cx + (Math.random()-0.5)*1600, y: cy + (Math.random()-0.5)*1600, size, speed: 30 + Math.random()*110, angle: Math.random()*Math.PI*2, color: '#ff6b6b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot:true }; enemies.push(e); }
 function spawnBubbleAround(cx,cy){ bubbles.push({ x: cx + (Math.random()-0.5)*800, y: cy + (Math.random()-0.5)*800, r: 3+Math.random()*8, vy: 20+Math.random()*60, alpha: 0.08+Math.random()*0.18 }); }
 
 // ensure there's always at least one fish larger than player but not absurd
 let lastLargeSpawn = 0;
 function ensureLargerExists(nearbyCount){ let largest = player.size; for(const e of enemies) if(e.size>largest) largest=e.size; const refSize = Math.max(player.size, 8); const now = performance.now(); if(largest <= refSize * 1.05){ // avoid spawning too often or when area is dense
-    if(now - lastLargeSpawn > 3500 && nearbyCount < 28){ const sz = Math.min(refSize*1.9, refSize * (1.2 + Math.random()*0.6)); const e = { id: enemyIdCounter++, x: player.x + (Math.random()-0.5)*1200, y: player.y + (Math.random()-0.5)*1200, size: Math.max(sz, refSize+6), speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#d45b5b', state:'wander', target:null, hunger:100, name: genEnemyName() }; enemies.push(e); lastLargeSpawn = now; } } }
+    if(now - lastLargeSpawn > 3500 && nearbyCount < 28){ const sz = Math.min(refSize*1.9, refSize * (1.2 + Math.random()*0.6)); const e = { id: enemyIdCounter++, x: player.x + (Math.random()-0.5)*1200, y: player.y + (Math.random()-0.5)*1200, size: Math.max(sz, refSize+6), speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#d45b5b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot:true }; enemies.push(e); lastLargeSpawn = now; } } }
 
 // trim distant entities to keep runtime manageable
 function trimEntities(){ const R = Math.max(window.innerWidth, window.innerHeight) * 4; foods = foods.filter(f=>Math.hypot(f.x-player.x,f.y-player.y) < R); enemies = enemies.filter(e=>Math.hypot(e.x-player.x,e.y-player.y) < R*1.5); bubbles = bubbles.filter(b=>Math.hypot(b.x-player.x,b.y-player.y) < R); }
@@ -371,27 +379,11 @@ window.addEventListener('pointermove', (e)=>{
 window.addEventListener('pointerup', (e)=>{
   try{
     if(e.pointerType === 'touch'){
-      pointerX = null; pointerY = null; touchAnywhereStart = null;
-      const joyEl = document.getElementById('joystick');
-      if(joyEl && joyEl._orig){ joyEl.style.position = joyEl._orig.position; joyEl.style.left = joyEl._orig.left; joyEl.style.top = joyEl._orig.top; joyEl.style.bottom = joyEl._orig.bottom; delete joyEl._orig; }
-      if(joyEl) delete joyEl._touch; usingJoy = false; lastJoyStrength = 0;
+      pointerX = null; pointerY = null; touchAnywhereStart = null; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; } if(joy) delete joy._touch; }catch(e){}
+      usingJoy = false; lastJoyStrength = 0;
     }
   }catch(err){}
-}, {passive:false});
-
-// wheel zoom for desktop
-canvas.addEventListener('wheel', (e)=>{ if(overlayVisible()) return; e.preventDefault(); const delta = e.deltaY > 0 ? 0.95 : 1.05; camera.scale = Math.max(0.22, Math.min(1.3, camera.scale * delta)); });
-
-// pinch-to-zoom support for mobile
-let pinchActive = false; let pinchStartDist = 0; let pinchStartScale = 1;
-canvas.addEventListener('touchstart', (e)=>{ if(e.touches.length===2){ pinchActive = true; const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; pinchStartDist = Math.hypot(dx,dy); pinchStartScale = camera.scale; } }, {passive:false});
-canvas.addEventListener('touchmove', (e)=>{ if(pinchActive && e.touches.length===2){ e.preventDefault(); const dx = e.touches[0].clientX - e.touches[1].clientX; const dy = e.touches[0].clientY - e.touches[1].clientY; const dist = Math.hypot(dx,dy); const factor = dist / (pinchStartDist || dist); camera.scale = Math.max(0.22, Math.min(1.3, pinchStartScale * factor)); } }, {passive:false});
-canvas.addEventListener('touchend', (e)=>{ if(pinchActive && e.touches.length < 2) pinchActive = false; });
-
-// Right-click should not pause. Prevent browser menu, but use right-button as a boost (hold)
-window.addEventListener('contextmenu', e=>{ e.preventDefault(); });
-window.addEventListener('pointerdown', (e)=>{ if(e.button===2 && !overlayVisible()){ boosting = true; } });
-window.addEventListener('pointerup', (e)=>{ if(e.button===2){ boosting = false; } });
+});
 
 // ---------- audio (WebAudio improved) ----------
 const AudioContext = window.AudioContext || window.webkitAudioContext; let audioCtx=null, masterGain=null, ambGain=null;
@@ -404,6 +396,218 @@ function ensureAudio(){ if(!audioCtx){ audioCtx = new AudioContext(); masterGain
 function playEat(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(700, now); o.frequency.exponentialRampToValueAtTime(330, now+0.12); g.gain.setValueAtTime(0.12, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.14); }
 function playBoost(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(720, now+0.12); g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.16); }
 function playDeath(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(40, now+0.9); g.gain.setValueAtTime(0.28, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.9); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.95); }
+
+// ---------- Firebase (compat) ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyCK2mIqOVp1d0VV3C6dycHTvnVtaE4CspQ",
+  authDomain: "aqua-odyssey.firebaseapp.com",
+  databaseURL: "https://aqua-odyssey-default-rtdb.firebaseio.com",
+  projectId: "aqua-odyssey",
+  storageBucket: "aqua-odyssey.firebasestorage.app",
+  messagingSenderId: "54640172756",
+  appId: "1:54640172756:web:608837b0b971f896812541",
+  measurementId: "G-ZZBZERRPCH"
+};
+
+let firebaseApp = null, firebaseDB = null, firebaseAuth = null, firebaseConnected=false, firebaseUid=null;
+let onlinePlayers = {}; // map uid -> {username,score,timestamp}
+function updateConnUI(connected, pingMs=null){
+  const dot = document.getElementById('connIndicator'); const text = document.getElementById('connText'); const msEl = document.getElementById('connMs');
+  if(connected){ dot.style.background='#4caf50'; text.textContent='Online'; if(msEl) msEl.textContent = pingMs ? `${Math.round(pingMs)} ms` : ''; }
+  else { dot.style.background='#999'; text.textContent='Offline'; if(msEl) msEl.textContent = ''; }
+}
+
+// init firebase and auth anonymously, subscribe to players
+function ensureFirebaseConnected(){
+  if(firebaseConnected) return Promise.resolve(true);
+  try{
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    firebaseAuth = firebase.auth();
+    firebaseDB = firebase.database();
+    return firebaseAuth.signInAnonymously().then(cred=>{
+      firebaseUid = cred.user.uid;
+      // ping test (attempt write to /ping_test/$uid)
+      const pingPath = '/ping_test/'+firebaseUid;
+      const start = performance.now();
+      return firebaseDB.ref(pingPath).set({ts:Date.now()}).then(()=>{
+        const pingMs = performance.now() - start;
+        firebaseConnected = true;
+        updateConnUI(true, pingMs);
+        // listen for players list
+        firebaseDB.ref('/players').on('value', snap=>{
+          const val = snap.val() || {};
+          onlinePlayers = val;
+          rebuildLeaderboards();
+        });
+        // write initial presence object for this player (will be updated by uploadPlayer)
+        return firebaseDB.ref('/players/'+firebaseUid).set({username: username || 'Guest', score: player.score||0, ts: Date.now()}).catch(err=>{
+          console.error('write players failed', err);
+          // permission denied will be handled below
+        });
+      }).catch(err=>{
+        console.error('ping failed', err);
+        firebaseConnected = false;
+        updateConnUI(false);
+        showToast('Could not fully connect to Firebase — continuing in offline mode.',3800);
+        return false;
+      });
+    }).catch(err=>{
+      console.error('auth failed', err);
+      firebaseConnected = false;
+      updateConnUI(false);
+      showToast('Firebase auth failed — offline mode.',2200);
+      return false;
+    });
+  } catch(e){
+    console.error('firebase init error', e);
+    firebaseConnected = false;
+    updateConnUI(false);
+    return Promise.resolve(false);
+  }
+}
+
+// upload local player state to firebase (if connected)
+function uploadPlayerState(){
+  if(!firebaseConnected || !firebaseDB || !firebaseUid) return;
+  const p = {username: username || 'Guest', score: player.score||0, ts: Date.now(), size: player.size||0};
+  firebaseDB.ref('/players/' + firebaseUid).set(p).catch(err=>{
+    console.error('upload player failed', err);
+    // If permission denied, update UI
+    if(err && err.code === 'PERMISSION_DENIED'){
+      updateConnUI(false);
+      firebaseConnected = false;
+      showToast('Firebase permission denied — offline mode.',2200);
+    }
+  });
+}
+
+// remove player from online list when leaving (best effort)
+function removePlayerOnLeave(){
+  if(firebaseConnected && firebaseDB && firebaseUid){
+    try{ firebaseDB.ref('/players/'+firebaseUid).remove(); }catch(e){}
+  }
+}
+window.addEventListener('beforeunload', ()=>{ removePlayerOnLeave(); });
+
+// ---------- Leaderboard handling (offline bots + online players) ----------
+let localBots = [];
+function generateLocalBots(count=8){
+  localBots = [];
+  for(let i=0;i<count;i++){
+    localBots.push({
+      id: 'bot_' + i + '_' + Math.floor(Math.random()*9999),
+      username: genEnemyName(),
+      score: Math.round(5 + Math.random()*300),
+      offlineBot: true
+    });
+  }
+}
+generateLocalBots(12);
+
+// builder: merges online players and local bots and sorts by score
+function rebuildLeaderboards(){
+  const merged = [];
+  // Add online players
+  for(const uid in onlinePlayers){
+    const p = onlinePlayers[uid];
+    merged.push({id: uid, username: (p.username||'Guest'), score: p.score||0, online:true});
+  }
+  // Add local bots (they might conflict with online IDs; keep offlineBot flag)
+  for(const b of localBots) merged.push(b);
+  // Add current player as well
+  merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
+  merged.sort((a,b)=>b.score - a.score);
+  // update mini + full
+  renderMiniLeader(merged.slice(0,10));
+  renderFullLeader(merged);
+}
+
+// render mini leaderboard list (compact)
+function renderMiniLeader(list){
+  const miniList = document.getElementById('miniList');
+  miniList.innerHTML = '';
+  list.forEach((p, idx)=>{
+    const row = document.createElement('div'); row.className='lb-row';
+    const left = document.createElement('div'); left.style.fontWeight = p.me ? '800' : '600'; left.style.fontSize='13px';
+    left.textContent = `${idx+1}. ${p.username}`;
+    const right = document.createElement('div'); right.style.opacity=0.95; right.textContent = p.score;
+    row.appendChild(left); row.appendChild(right); miniList.appendChild(row);
+  });
+  const myEntry = list.find(i=>i.me) || list.find(i=>i.username === username);
+  document.getElementById('miniYou').textContent = myEntry ? `You: ${myEntry.score}` : `You: ${player.score||0}`;
+  document.getElementById('miniCount').textContent = `${list.length}`;
+}
+
+// render full leaderboard UI (with search/filter)
+function renderFullLeader(all){
+  const el = document.getElementById('leaderboardList');
+  if(!el) return;
+  el.innerHTML = '';
+  const search = (document.getElementById('leaderboardSearch') && document.getElementById('leaderboardSearch').value) || '';
+  const filter = (document.getElementById('leaderboardFilter') && document.getElementById('leaderboardFilter').value) || 'all';
+  let arr = all.slice();
+  if(search) arr = arr.filter(x=>x.username.toLowerCase().includes(search.toLowerCase()));
+  if(filter==='online') arr = arr.filter(x=>x.online);
+  if(filter==='offline') arr = arr.filter(x=>!x.online);
+  // display top 50 or so
+  arr.slice(0,200).forEach((p,idx)=>{
+    const r = document.createElement('div'); r.style.display='flex'; r.style.justifyContent='space-between'; r.style.padding='6px 0'; r.style.borderBottom='1px solid rgba(255,255,255,0.03)';
+    r.innerHTML = `<div style="font-weight:${p.me?800:600}">${idx+1}. ${p.username}${p.online?'<span style="opacity:0.7;margin-left:6px">(online)</span>':''}${p.offlineBot?'<span style="opacity:0.6;margin-left:6px">bot</span>':''}</div><div style="opacity:0.95">${p.score}</div>`;
+    el.appendChild(r);
+  });
+}
+
+// search handler for mini
+document.getElementById('miniSearch').addEventListener('input',(e)=>{
+  const q = e.target.value.toLowerCase();
+  // filter bots+online players merge
+  const merged = [];
+  for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
+  for(const b of localBots) merged.push(b);
+  merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
+  const res = merged.filter(x=>x.username.toLowerCase().includes(q)).sort((a,b)=>b.score-a.score).slice(0,10);
+  renderMiniLeader(res);
+});
+
+// mini toggle (collapse/expand)
+document.getElementById('miniToggle').addEventListener('click', ()=>{
+  const mini = document.getElementById('miniLeaderboard');
+  mini.classList.toggle('small');
+  const t = document.getElementById('miniToggle');
+  t.textContent = mini.classList.contains('small') ? '▼' : '▲';
+});
+
+// find myself in full leaderboard
+function findMeInFull(){
+  // open leaderboardPanel
+  document.getElementById('leaderboardPanel').classList.remove('hidden');
+  document.getElementById('homeInfo').classList.add('hidden');
+  // render with current merged
+  const merged = [];
+  for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
+  for(const b of localBots) merged.push(b);
+  merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
+  merged.sort((a,b)=>b.score - a.score);
+  renderFullLeader(merged);
+  // scroll to first entry matching my username
+  // Not implementing auto-scroll since the container is regenerated
+}
+
+// ---------- ensure bots appear in offline mode ----------
+function ensureOfflineBotsVisible(){
+  // we spawn bots on the map already (enemies with offlineBot:true).
+  // Also regenerate localBots occasionally for leaderboard freshness
+  if(Math.random() < 0.06) {
+    generateLocalBots(10);
+    rebuildLeaderboards();
+  }
+}
+
+// ---------- spawning tweaks: spawn player randomly near center (not always 0,0) ----------
+function setRandomSpawn(){
+  player.x = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5);
+  player.y = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5);
+}
 
 // ---------- update & AI ----------
 function handleBounds(){ let clamped=false; if(player.x < -WORLD_BOUND){ player.x = -WORLD_BOUND; clamped=true; } if(player.x > WORLD_BOUND){ player.x = WORLD_BOUND; clamped=true; } if(player.y < -WORLD_BOUND){ player.y = -WORLD_BOUND; clamped=true; } if(player.y > WORLD_BOUND){ player.y = WORLD_BOUND; clamped=true; } if(clamped){ for(let i=0;i<2;i++) spawnEnemyRelative(player.x + randBetween(-200,200), player.y + randBetween(-200,200)); player.hunger = Math.max(0, player.hunger - 8); } }
@@ -478,6 +682,7 @@ function update(dt){ if(!running) return;
   // spawn logic controlled by density-aware function
   ensureLargerExists(nearbyCount);
   trimEntities();
+  ensureOfflineBotsVisible();
 
   const depthSigned = -Math.round(player.y);
   const sign = depthSigned >= 0 ? '+' : '-';
@@ -492,6 +697,13 @@ function update(dt){ if(!running) return;
   if(player.score > high){ high = player.score; localStorage.setItem(highKey, high); }
   ui.highEl.textContent = high;
   ui.coinsEl.textContent = player.coins;
+
+  // upload to firebase occasionally
+  if(firebaseConnected && Math.random() < 0.06){
+    uploadPlayerState();
+  }
+  // keep mini leaderboard refreshed occasionally
+  if(Math.random() < 0.06) rebuildLeaderboards();
 }
 
 // ---------- rendering & background ----------
@@ -550,207 +762,43 @@ function deathSequence(){ const startSize = player.size; const dur = 1200; const
 // ---------- main loop ----------
 function mainLoop(now){ if(!running) return; const dt = Math.min(60, now - lastTime); update(dt); render(); lastTime = now; fpsTimer += dt; fpsCounter++; if(fpsTimer >= 500){ ui.fpsEl.textContent = Math.round(fpsCounter / (fpsTimer/1000)); fpsTimer = 0; fpsCounter = 0; } requestAnimationFrame(mainLoop); }
 
-// ---------- utilities ----------
-function ensureAudioStarted(){ try{ ensureAudio(); } catch(e){} }
-
-
-
-// Hard-coded Firebase config (provided by project owner). This will be used automatically so you don't need to paste it.
-const HARDCODED_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCK2mIqOVp1d0VV3C6dycHTvnVtaE4CspQ",
-  authDomain: "aqua-odyssey.firebaseapp.com",
-  databaseURL: "https://aqua-odyssey-default-rtdb.firebaseio.com",
-  projectId: "aqua-odyssey",
-  storageBucket: "aqua-odyssey.firebasestorage.app",
-  messagingSenderId: "54640172756",
-  appId: "1:54640172756:web:608837b0b971f896812541",
-  measurementId: "G-ZZBZERRPCH"
-};
-
-// fallback store of latest leaderboard items for the mini-board
-window._latestLeaderboardItems = [];
-
-let fbUid = null;
-let fbAuthInitialized = false;
-
-async function setupFirebaseAuthAndPresence(){
-  if(fbAuthInitialized) return true;
-  try{
-    if(!window.firebase){ console.warn('Firebase SDK missing'); return false; }
-    if(!firebase.auth){ // load compat auth if needed
-      await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); });
-    }
-    window.fbAuth = firebase.auth();
-    fbAuthInitialized = true;
-    try{ await fbAuth.signInAnonymously(); }catch(e){ console.warn('Anonymous sign-in failed', e); }
-    fbAuth.onAuthStateChanged(user=>{
-      if(user){ fbUid = user.uid; console.log('Signed into Firebase as', fbUid); document.getElementById('connIndicator').style.background = '#2ecc40'; document.getElementById('connText').textContent = 'Firebase OK'; }
-      else { fbUid = null; document.getElementById('connIndicator').style.background = '#ff4136'; document.getElementById('connText').textContent = 'Not authed'; }
-    });
-    // periodic sync of player state
-    setInterval(()=>{ try{ if(fbUid) writePlayerStateToFirebase(); }catch(e){} }, 5000);
-    // subscribe leaderboard if DB present
-    if(window.fbDB) subscribeLeaderboard();
-    return true;
-  }catch(e){ console.error('Auth setup failed', e); return false; }
-}
-
-function writePlayerStateToFirebase(){
-  try{
-    if(!fbUid || !window.fbDB) return;
-    const playerRef = fbDB.ref('players/' + fbUid);
-    playerRef.update({ name: localStorage.getItem('playerName') || 'Guest', score: Number(player.score)||0, coins: Number(player.coins)||0, size: Math.round(player.size*10)/10, lastSeen: firebase.database.ServerValue.TIMESTAMP });
-  }catch(e){ console.warn('writePlayerStateToFirebase failed', e); }
-}
-
-function subscribeLeaderboard(){
-  if(!window.fbDB) return;
-  try{
-    const q2 = window.fbDB.ref('players').orderByChild('score').limitToLast(100);
-    q2.on('value', snap2=>{
-      const items = [];
-      snap2.forEach(ch=>{ items.push({ uid: ch.key, ...ch.val() }); });
-      items.reverse();
-      window._latestLeaderboardItems = items;
-      // update overlay leaderboard
-      const el = document.getElementById('leaderboardList'); if(el){ el.innerHTML = ''; for(const it of items.slice(0,10)){ const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.padding='6px 8px'; row.style.background='rgba(255,255,255,0.02)'; row.style.borderRadius='8px'; row.style.marginBottom='6px'; row.innerHTML = `<div style="font-weight:800">${escapeHtml(it.name||'Guest')}</div><div style="opacity:0.9">${it.score||0}</div>`; el.appendChild(row); } }
-      // update mini leaderboard
-      renderMiniLeaderboard(items, document.getElementById('miniSearch')?document.getElementById('miniSearch').value:'');
-    });
-  }catch(e){ console.warn('subscribeLeaderboard failed', e); }
-}
-
-// lightweight network ping to check connectivity
-async function pingConnection(){
-  const start = performance.now();
-  try{
-    // use a fast URL that returns 204; mode 'no-cors' avoids CORS issues but still times the request
-    await fetch('https://www.gstatic.com/generate_204', {cache:'no-store', mode:'no-cors'});
-    const ms = Math.round(performance.now()-start);
-    document.getElementById('connMs').textContent = ms + ' ms';
-    document.getElementById('connIndicator').style.background = '#2ecc40';
-    if(window.fbDB){ document.getElementById('connText').textContent = 'Online · Firebase'; document.getElementById('startOnlineBtn').disabled = false; }
-    else { document.getElementById('connText').textContent = 'Online · No Firebase'; document.getElementById('startOnlineBtn').disabled = false; }
-    return true;
-  }catch(e){
-    document.getElementById('connIndicator').style.background = '#999';
-    document.getElementById('connText').textContent = 'Offline';
-    document.getElementById('connMs').textContent = '';
-    document.getElementById('startOnlineBtn').disabled = true;
-    return false;
-  }
-}
-
-// minimal Firebase connect routine (best-effort). It reads config from localStorage and loads compat SDKs.
-async function ensureFirebaseConnected(){
-  // prefer user-provided config, fall back to hardcoded
-  let cfgStr = localStorage.getItem('firebaseConfig');
-  let obj = null;
-  try{ obj = cfgStr ? JSON.parse(cfgStr) : HARDCODED_FIREBASE_CONFIG; }catch(e){ obj = HARDCODED_FIREBASE_CONFIG; }
-  try{
-    // load SDKs if missing
-    if(!window.firebase || !window.firebase.app){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-    if(!window.firebase || !window.firebase.database){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-    if(!window.firebase.apps || window.firebase.apps.length===0){ window.fbApp = firebase.initializeApp(obj); window.fbDB = firebase.database(); }
-    // write/read a test key to estimate latency
-    const key = 'ping_test/' + (Math.random().toString(36).slice(2,9)); const t0 = Date.now(); await window.fbDB.ref(key).set({ ts: firebase.database.ServerValue.TIMESTAMP }); await window.fbDB.ref(key).get(); const t1 = Date.now(); const ms = t1 - t0; document.getElementById('connMs').textContent = ms + ' ms (fb)'; document.getElementById('connIndicator').style.background='#2ecc40'; document.getElementById('connText').textContent='Firebase OK';
-    // ensure auth & presence & subscriptions
-    try{ await setupFirebaseAuthAndPresence(); }catch(e){}
-    try{ subscribeLeaderboard(); }catch(e){}
-    return true;
-  }catch(e){ console.error(e); showToast('Firebase connection failed: '+(e && e.message?e.message:'error')); document.getElementById('connIndicator').style.background='#ff4136'; document.getElementById('connText').textContent='FB Error'; return false; }
-}
-
-// wire mini-search and toggle controls
-try{ const ms = document.getElementById('miniSearch'); if(ms){ ms.addEventListener('input', ()=>{ renderMiniLeaderboard(window._latestLeaderboardItems, ms.value); }); }
-  const mt = document.getElementById('miniToggle'); if(mt){ mt.addEventListener('click', ()=>{ const el = document.getElementById('miniLeaderboard'); if(el) el.classList.toggle('small'); renderMiniLeaderboard(window._latestLeaderboardItems, document.getElementById('miniSearch')?document.getElementById('miniSearch').value:''); }); }
-}catch(e){}
-
-// keep trying to auto-setup auth/presence when firebase DB becomes available
-setInterval(()=>{ try{ if(window.fbDB && !fbAuthInitialized) setupFirebaseAuthAndPresence(); }catch(e){} }, 2000);
-
-// ensure initial auth setup if fbDB already exists
-try{ if(window.fbDB) setupFirebaseAuthAndPresence(); }catch(e){};
-
-// make boost button more responsive across input types across input types
-if(typeof boostBtn !== 'undefined' && boostBtn){ try{ boostBtn.addEventListener('mousedown', ()=>{ boosting=true; }); boostBtn.addEventListener('mouseup', ()=>{ boosting=false; }); boostBtn.addEventListener('mouseleave', ()=>{ boosting=false; }); boostBtn.addEventListener('touchstart', (e)=>{ boosting=true; e.preventDefault(); }, {passive:false}); boostBtn.addEventListener('touchend', ()=>{ boosting=false; }); }catch(e){}
-}
-
-
-
-document.getElementById('infoBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.remove('hidden'); document.getElementById('shopPanel').classList.add('hidden'); });
+// ---------- UI actions & spawn/reset ----------
+document.getElementById('startOfflineBtn').addEventListener('click', ()=>{ startGame(false); });
+document.getElementById('startOnlineBtn').addEventListener('click', ()=>{ startGame(true); });
+document.getElementById('fbSetupBtn').addEventListener('click', ()=>{ ensureFirebaseConnected().then(ok=>{ if(ok) showToast('Firebase connected'); else showToast('Failed to connect to Firebase'); }); });
+document.getElementById('infoBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.remove('hidden'); document.getElementById('shopPanel').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.add('hidden'); });
 document.getElementById('shopBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('shopPanel').classList.remove('hidden'); renderShop(document.getElementById('shopSearch').value||'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); });
+document.getElementById('leaderboardBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.remove('hidden'); rebuildLeaderboards(); });
 
-// --- Added minimal handlers to wire start/online/firebase/leaderboard buttons ---
-(function wireMenuButtons(){
-  const startOffline = document.getElementById('startOfflineBtn');
-  const startOnline = document.getElementById('startOnlineBtn');
-  const fbBtn = document.getElementById('fbSetupBtn');
-  const lbBtn = document.getElementById('leaderboardBtn');
-  // ensure online start disabled until connectivity checked
-  if(startOnline) startOnline.disabled = true;
-
-  function startGame(mode){
-    const saved = localStorage.getItem('playerName') || 'Guest';
-    if(!saved || saved === 'Guest'){ showToast('Please set a username before starting.',2200); return; }
-    document.getElementById('overlay').classList.add('hidden');
-    // reset world and spawn at a random location (not 0,0)
-    foods = []; enemies = []; bubbles = []; currents = [];
-    player.x = randBetween(-WORLD_BOUND*0.6, WORLD_BOUND*0.6);
-    player.y = randBetween(-WORLD_BOUND*0.6, WORLD_BOUND*0.6);
-    player.size = 8 + Math.random()*8;
-    player.hunger = 100; player.score = 0; player.coins = 0; player.alive = true; deathHandled = false; pausedByContext = false; cameraFrozen = false; deathCameraX = 0; deathCameraY = 0;
-    camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX = null; pointerY = null; keys = {};
-    for(let i=0;i<120;i++) spawnFoodAround(player.x, player.y);
-    for(let i=0;i<14;i++) spawnEnemyRelative(player.x, player.y);
-    for(let i=0;i<100;i++) spawnBubbleAround(player.x, player.y);
-    ensureAudioStarted(); setRunning(true);
-    if(mode === 'online'){
-      ensureFirebaseConnected().then(ok=>{
-        if(!ok){ showToast('Could not fully connect to Firebase — continuing in offline mode'); }
-        else { try{ setupFirebaseAuthAndPresence(); writePlayerStateToFirebase(); }catch(e){} }
-      });
-    }
+// play start helper
+function startGame(online){
+  // read control preference from home control
+  controlMode = document.getElementById('homeControlMode').value; document.getElementById('controlMode').value = controlMode; mobileStyle = document.getElementById('mobileStyle')?document.getElementById('mobileStyle').value:'floating'; localStorage.setItem('controlMode', controlMode); localStorage.setItem('mobileStyle', mobileStyle); updateControlUI();
+  // require a valid username before starting
+  const saved = localStorage.getItem('playerName') || 'Guest'; if(!saved || saved==='Guest'){ showToast('Please set a username before starting.',2200); return; }
+  document.getElementById('overlay').classList.add('hidden'); // fully reset world and camera
+  foods=[]; enemies=[]; bubbles=[]; currents=[]; setRandomSpawn(); player.size=8 + Math.random()*8; player.hunger=100; player.score=0; player.coins=0; player.alive=true; deathHandled=false; pausedByContext=false; cameraFrozen=false; deathCameraX=0; deathCameraY=0; camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX=null; pointerY=null; keys={}; // repopulate
+  for(let i=0;i<120;i++) spawnFoodAround(player.x, player.y); for(let i=0;i<14;i++) spawnEnemyRelative(player.x, player.y); for(let i=0;i<100;i++) spawnBubbleAround(player.x, player.y); ensureAudioStarted(); setRunning(true);
+  // if online requested, try connect
+  if(online){
+    ensureFirebaseConnected().then(ok=>{
+      if(ok){
+        showToast('Online mode: connected to Firebase',1600);
+        // upload initial state
+        uploadPlayerState();
+      } else {
+        showToast('Could not connect to Firebase — starting offline',2600);
+      }
+    });
+  } else {
+    // offline mode uses local bots only
+    rebuildLeaderboards();
   }
-
-  if(startOffline) startOffline.addEventListener('click', ()=> startGame('offline'));
-  if(startOnline) startOnline.addEventListener('click', ()=>{
-    // guard: must be online and firebase available (pingConnection will enable button)
-    if(startOnline.disabled){ showToast('Online start is not available (offline)'); return; }
-    startGame('online');
-  });
-  if(fbBtn) fbBtn.addEventListener('click', ()=>{ ensureFirebaseConnected(); });
-  if(lbBtn) lbBtn.addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('shopPanel').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.remove('hidden'); });
-})();
-
-// --- mini leaderboard renderer (used by Firebase subscription and UI) ---
-function renderMiniLeaderboard(items, filter){
-  try{
-    items = items || window._latestLeaderboardItems || [];
-    const q = (filter||'').trim().toLowerCase();
-    const listEl = document.getElementById('miniList');
-    if(!listEl) return;
-    listEl.innerHTML = '';
-    const shown = items.filter(it=>{ if(!q) return true; return (it.name||'').toLowerCase().includes(q); }).slice(0,10);
-    for(const it of shown){ const row = document.createElement('div'); row.className='lb-row'; row.innerHTML = `<div style="font-weight:800">${escapeHtml(it.name||'Guest')}</div><div style="opacity:0.95">${it.score||0}</div>`; listEl.appendChild(row); }
-    const youEl = document.getElementById('miniYou'); if(youEl){ const me = items.find(it=> it.uid === fbUid) || {name: localStorage.getItem('playerName')||'Guest', score: player.score}; youEl.textContent = `You: ${me.name} · ${me.score||0}`; }
-    const countEl = document.getElementById('miniCount'); if(countEl) countEl.textContent = items.length;
-  }catch(e){ console.warn('renderMiniLeaderboard error', e); }
 }
-
-// quick ping and enable startOnline when online
-pingConnection(); setInterval(pingConnection, 5000);
-
-// helper to escape HTML
-function escapeHtml(s){ return (''+s).replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
-
-// render initial local mini leaderboard (empty)
-renderMiniLeaderboard(window._latestLeaderboardItems, '');
 
 document.getElementById('btnLeave').addEventListener('click', ()=>{ setRunning(false); document.getElementById('overlay').classList.remove('hidden'); });
 
-// Pause disabled for gameplay — keep control via Start/Exit only
-try{ const _pb = document.getElementById('btnPause'); if(_pb){ _pb.disabled = true; _pb.textContent = 'Pause (disabled)'; } }catch(e){}
+document.getElementById('btnPause').addEventListener('click', ()=>{ setRunning(!running); });
 
 // start paused on home
 document.getElementById('overlay').classList.remove('hidden'); setRunning(false);
@@ -773,9 +821,10 @@ window.runTests = function(){
 };
 
 // expose debug
-window.__game = {player, foods, enemies, bubbles};
-// small injection: ensure offline bots spawn when Play Offline is clicked (minimal, non-invasive)
-(function(){ try{ const btn = document.getElementById('startOfflineBtn'); if(btn){ btn.addEventListener('click', ()=>{ setTimeout(()=>{ try{ const extra = 8; for(let i=0;i<extra;i++) spawnEnemyRelative(player.x + randBetween(-1200,1200), player.y + randBetween(-1200,1200)); }catch(e){} }, 120); }); } }catch(e){} })();
+window.__game = {player, foods, enemies, bubbles, localBots, onlinePlayers};
+
+// initial mini leaderboard render
+rebuildLeaderboards();
 </script>
 </body>
 </html>
