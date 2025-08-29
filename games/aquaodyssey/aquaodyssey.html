@@ -23,9 +23,9 @@
   .side{position:absolute;left:14px;bottom:14px;display:flex;gap:12px;align-items:flex-end;z-index:50}
   .joy{width:120px;height:120px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;position:fixed;left:14px;bottom:14px}
   .stick{width:56px;height:56px;border-radius:999px;background:rgba(255,255,255,0.12);transform:translate(0,0)}
-  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:80}
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;pointer-events:auto}
   .overlay.hidden{display:none}
-  .card{width:100%;max-width:820px;pointer-events:all;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));padding:22px;border-radius:16px;backdrop-filter:blur(6px);text-align:center}
+  .card{width:100%;max-width:820px;pointer-events:all;position:relative;z-index:10000;background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03));padding:22px;border-radius:16px;backdrop-filter:blur(6px);text-align:center}
   .card h2{font-size:20px;margin-bottom:8px}
   .primary{background:linear-gradient(90deg,var(--accent),#ff9a66);border-radius:12px;padding:10px 14px;color:#1a1a1a;font-weight:800;cursor:pointer;border:none}
   .secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;margin-left:8px}
@@ -55,6 +55,12 @@
   #miniLeaderboard .search{flex:1;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white}
   #miniLeaderboard.small{min-width:160px}
 </style>
+
+<!-- Firebase compat SDKs (ensure loaded so `firebase` exists) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
@@ -63,7 +69,7 @@
     <div class="logo" aria-hidden><svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 32c8-12 24-16 36-10 12 6 12 18 0 24C30 54 14 48 6 32z" fill="#fff" opacity="0.18"/><path d="M8 32c8-10 22-14 34-9 9 4 9 12 0 17C30 51 14 44 8 32z" fill="#fff"/></svg></div>
     <div style="display:flex;flex-direction:column"><div class="app-title">Aqua Odyssey</div><div id="usernameDisplay" class="username-display">Guest</div></div>
   </div>
-  <div class="panel stats"><div class="stat">Size<br><strong id="size">1.0</strong></div><div class="stat">Score<br><strong id="score">0</strong></div><div class="stat">High<br><strong id="highscore">0</strong></div><div class="stat">Coins<br><strong id="coins">0</strong></div><div class="stat">Depth<br><strong id="depthVal">0 m</strong></div></div>
+  <div class="panel stats"><div class="stat">Size<br><strong id="size">1.0</strong></div><div class="stat">Score<br><strong id="score">0</strong></div><div class="stat">High<br><strong id="highscore">0</strong></div><div class="stat">Coins<br><strong id="coins">0</strong></div><div class="stat">Depth<br><strong id="depthVal">0 m</strong></div><div class="stat">Coords<br><strong id="coords">0,0</strong></div></div>
   <div class="controls"><div class="panel"><div style="font-size:12px;opacity:0.85">Hunger</div><div class="bar" style="width:120px;margin-top:6px"><i id="hungerBar" style="width:100%"></i></div></div>
     <div class="mode-select panel" style="align-items:center">Control: <select id="controlMode" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="mouse">Mouse</option><option value="keyboard">Keyboard</option><option value="mobile">Mobile</option></select></div>
     <button id="btnPause" class="btn panel">Pause</button>
@@ -96,6 +102,8 @@
   <div class="card" id="homeCard">
     <h2>Aqua Odyssey</h2>
     <p>Survive as long as possible — larger fish eat smaller fish. You get hungrier the bigger you are. New things keep spawning: the sea is endless.</p>
+
+    <!-- Play / room controls -->
     <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
       <button id="startOfflineBtn" class="primary">Play Offline</button>
       <button id="startOnlineBtn" class="primary" style="margin-left:8px">Play Online</button>
@@ -109,10 +117,23 @@
         <div id="connMs" style="font-size:12px;opacity:0.9;margin-left:6px"></div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Controls on Home: <select id="homeControlMode" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="mouse">Mouse</option><option value="keyboard">Keyboard</option><option value="mobile">Mobile</option></select></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;justify-content:center"><label style="font-size:13px">Enable Mobile Testing (shows Mobile option on non-touch devices): <input id="allowMobileTest" type="checkbox" style="margin-left:8px"/></label></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Mobile Mode: <select id="mobileStyle" style="margin-left:8px;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06)"><option value="floating">Floating Joystick</option><option value="touch">Touch Anywhere</option></select></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">Choose Username: <input id="usernameInput" type="text" placeholder="Enter username" style="margin-left:8px;min-width:180px"/><button id="setNameBtn" class="secondary">Set</button></div>
+
+    <!-- Room creation / join -->
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <input id="roomCodeInput" placeholder="Room code (6 chars)" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white;min-width:160px"/>
+      <button id="generateRoomBtn" class="secondary">Generate</button>
+      <label style="display:flex;align-items:center;gap:6px"><input id="friendsOnlyCheckbox" type="checkbox"/> Friends-only</label>
+      <button id="createRoomBtn" class="primary">Create Room</button>
+      <button id="joinRoomBtn" class="primary" style="background:linear-gradient(90deg,#9ae66a,#66d9ff)">Join Room</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <button id="spectateToggleBtn" class="secondary">Spectate Mode</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;justify-content:center;flex-wrap:wrap">
+      <input id="usernameInput" type="text" placeholder="Enter username" style="margin-left:8px;min-width:180px"/><button id="setNameBtn" class="secondary">Set</button>
+    </div>
     <div id="nameErr" class="err"></div>
     <div id="homeInfo" class="info"><strong>History &amp; Lore</strong><div id="loreList"><p>The ocean rose and swallowed the lands — the whole world flooded. Only the fish survived. Their descendants now roam the endless water.</p></div><strong>Controls</strong><ul><li>Mouse: move with cursor</li><li>Keyboard: WASD / Arrow keys, Hold Shift to boost (loses size)</li><li>Mobile: tap anywhere and drag to move (Roblox-like). Pick Mobile and then choose "Floating Joystick" or "Touch Anywhere".</li></ul></div>
     <div id="shopPanel" class="info hidden"><strong>Shop</strong>
@@ -120,7 +141,7 @@
     <div id="leaderboardPanel" class="info hidden"><strong>Leaderboard</strong>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center;margin-bottom:8px">
         <input id="leaderboardSearch" placeholder="Search players" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/>
-        <select id="leaderboardFilter" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"><option value="all">All</option><option value="online">Online only</option><option value="offline">Offline only</option><option value="bots">Bots only</option></select>
+        <select id="leaderboardFilter" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"><option value="all">All</option><option value="online">Online only</option><option value="offline">Offline only</option></select>
         <button id="findMeBtn" class="secondary">Find Me</button>
       </div>
       <div id="leaderboardList" style="margin-top:8px"></div>
@@ -130,10 +151,16 @@
   </div>
 </div>
 
-<!-- Firebase compat SDKs (minimal) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Hidden fallback elements (these IDs were referenced by JS previously but were not present) -->
+<select id="homeControlMode" class="hidden" style="display:none;">
+  <option value="mouse">Mouse</option>
+  <option value="keyboard">Keyboard</option>
+  <option value="mobile">Mobile</option>
+</select>
+<select id="mobileStyle" class="hidden" style="display:none;">
+  <option value="floating">floating</option>
+  <option value="touch">touch</option>
+</select>
 
 <script>
 // ---------- setup ----------
@@ -141,7 +168,15 @@ const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getCont
 function resize(){ DPR = Math.max(1, window.devicePixelRatio || 1); canvas.width = Math.floor(window.innerWidth * DPR); canvas.height = Math.floor(window.innerHeight * DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
 window.addEventListener('resize', resize); window.addEventListener('orientationchange', resize); resize();
 
+// Move Firebase-related variables up-front so functions that reference them do not run before they exist
+let firebaseApp = null, firebaseDB = null, firebaseAuth = null;
+let firebaseConnected = false, firebaseUid = null;
+
+// other global basics
 function overlayVisible(){ const o = document.getElementById('overlay'); return o && !o.classList.contains('hidden'); }
+
+// prevent default context menu on canvas (we use right-click to boost)
+canvas.addEventListener('contextmenu', (e)=>{ e.preventDefault(); });
 
 // toast
 function showToast(msg, ms=2200){ const t = document.createElement('div'); t.className='toast'; t.textContent = msg; document.getElementById('toastArea').appendChild(t); setTimeout(()=>{ t.style.transition='opacity 400ms'; t.style.opacity='0'; setTimeout(()=>t.remove(),420); }, ms); }
@@ -155,7 +190,7 @@ let cameraFrozen = false; let deathCameraX = 0, deathCameraY = 0; // when frozen
 function screenToWorld(sx, sy){ return { x: camera.x + sx / camera.scale, y: camera.y + sy / camera.scale }; }
 
 let running = false, lastTime = performance.now(), fpsCounter = 0, fpsTimer = 0;
-const ui = { sizeEl: document.getElementById('size'), scoreEl: document.getElementById('score'), highEl: document.getElementById('highscore'), coinsEl: document.getElementById('coins'), hungerEl: document.getElementById('hungerBar'), fpsEl: document.getElementById('fps'), depthEl: document.getElementById('depthVal'), depthFill: document.getElementById('depthFill'), usernameDisplay: document.getElementById('usernameDisplay') };
+const ui = { sizeEl: document.getElementById('size'), scoreEl: document.getElementById('score'), highEl: document.getElementById('highscore'), coinsEl: document.getElementById('coins'), hungerEl: document.getElementById('hungerBar'), fpsEl: document.getElementById('fps'), depthEl: document.getElementById('depthVal'), depthFill: document.getElementById('depthFill'), usernameDisplay: document.getElementById('usernameDisplay'), coordsDisplay: document.getElementById('coords') };
 
 // define setRunning to control game loop & pause button label
 function setRunning(v){ const was = running; running = !!v; const btn = document.getElementById('btnPause'); if(btn) btn.textContent = running ? 'Pause' : 'Resume'; if(running && !was){ lastTime = performance.now(); requestAnimationFrame(mainLoop); } }
@@ -178,7 +213,7 @@ const LORE = [
   {id:5,title:'The Currents Pact',text:'Some ancient currents stabilized into predictable routes. Fish learned these paths like highways: migrating predators follow them, schools use them to conserve energy, and entrepreneurs — if fish had them — would have found trade lanes.'},
   {id:6,title:'The Singing',text:'Fish developed complex calls — not words, but vibrations and light patterns — to mark territories and warn kin. These songs encode memory: where a reef used to be, which shoal vanished, which bubble of air remains deep below.'}
 ];
-function renderLore(){ const el = document.getElementById('loreList'); el.innerHTML = ''; for(const entry of LORE){ const d=document.createElement('div'); d.style.marginBottom='8px'; d.innerHTML = `<strong>${entry.title}</strong><div style="font-size:13px;opacity:0.95">${entry.text}</div>`; el.appendChild(d); } }
+function renderLore(){ const el = document.getElementById('loreList'); if(!el) return; el.innerHTML = ''; for(const entry of LORE){ const d=document.createElement('div'); d.style.marginBottom='8px'; d.innerHTML = `<strong>${entry.title}</strong><div style="font-size:13px;opacity:0.95">${entry.text}</div>`; el.appendChild(d); } }
 renderLore();
 
 // skins & shop (SKINS still exist but skins UI removed; shop will show skins as purchasable/equippable items)
@@ -201,11 +236,9 @@ const SHOP_ITEMS = [
   {id:'speed_up',name:'Engine Upgrade',type:'upgrade',desc:'Permanent +40 base speed',price:2500,effect:()=>{ player.baseSpeed += 40 }},
   {id:'bubble_trail',name:'Bubble Trail',type:'cosmetic',desc:'Leaves a small bubble trail',price:900,effect:()=>{ player.trail='bubbles' }},
   {id:'deep_theme',name:'Abyss Theme',type:'theme',desc:'Darker deep-ocean background',price:3500,effect:()=>{ document.documentElement.style.setProperty('--bg-top','#0b3b5a'); document.documentElement.style.setProperty('--bg-bottom','#001428'); }},
-  // new items
   {id:'meal_box',name:'Meal Box',type:'consumable',desc:'Restores hunger +40',price:800,effect:()=>{ player.hunger = Math.min(100, player.hunger + 40); }},
   {id:'magnet',name:'Coin Magnet (30s)',type:'consumable',desc:'Attract small coins for 30s',price:1800,effect:()=>{ player.magnetUntil = Date.now()+30000; }},
   {id:'mega_pack',name:'Mega Coin Pack: 10,000',type:'consumable',desc:'Big coin boost',price:15000,effect:()=>{ player.coins += 10000 }},
-  // a couple more small items for variety
   {id:'skin_pack',name:'Starter Skins',type:'bundle',desc:'Unlocks 2 skins',price:900,effect:()=>{ owned.add('azure'); owned.add('coral'); saveOwned(); }},
   {id:'speed_small',name:'Speed +15',type:'upgrade',desc:'Permanent +15 base speed',price:1200,effect:()=>{ player.baseSpeed += 15 }}
 ];
@@ -214,66 +247,68 @@ const owned = new Set(JSON.parse(localStorage.getItem('ownedSkins')||'["classic"
 let equipped = localStorage.getItem('equippedSkin') || 'classic';
 function saveOwned(){ localStorage.setItem('ownedSkins', JSON.stringify(Array.from(owned))); localStorage.setItem('equippedSkin', equipped); }
 
-// username handling + profanity filter (unchanged) — ensure input is populated on load
+// username handling + profanity filter
 const usernameInput = document.getElementById('usernameInput'); const setNameBtn = document.getElementById('setNameBtn'); const nameErr = document.getElementById('nameErr');
-let username = localStorage.getItem('playerName') || 'Guest'; ui.usernameDisplay.textContent = username; if(usernameInput) usernameInput.value = (username==='Guest' ? '' : username);
+let username = localStorage.getItem('playerName') || 'Guest'; if(ui.usernameDisplay) ui.usernameDisplay.textContent = username; if(usernameInput) usernameInput.value = (username==='Guest' ? '' : username);
 const BANNED = ['fuck','shit','bitch','cunt','asshole','dick','bastard','damn','whore','motherfucker','nigger','faggot'];
 function normalizeName(s){ s = s.toLowerCase(); const map = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s' }; let out=''; for(const ch of s){ if(map[ch]) out += map[ch]; else if(/[a-z0-9]/.test(ch)) out += ch; } return out; }
 function levenshtein(a,b){ if(a===b) return 0; const m=a.length, n=b.length; const dp = Array.from({length:m+1},(_,i)=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost = a[i-1]===b[j-1]?0:1; dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost); } } return dp[m][n]; }
 function isNameAllowed(raw){ if(!raw || raw.trim().length<2) return {ok:false,reason:'Name too short'}; if(raw.length>20) return {ok:false,reason:'Name too long'}; if(/[!@#\$%\^&*\(\)\+={}\[\]|\;:'"<>,\?~`]/.test(raw)) return {ok:false,reason:'Name contains invalid symbols'}; const norm = normalizeName(raw); for(const bad of BANNED){ if(norm.includes(bad)) return {ok:false,reason:'Name contains disallowed word'}; const dist = levenshtein(norm, bad); if(dist <= 1) return {ok:false,reason:'Name contains disallowed or obfuscated word'}; } return {ok:true}; }
-setNameBtn.addEventListener('click', ()=>{ const val = (usernameInput.value||'').trim(); const ok = isNameAllowed(val); if(!ok.ok){ nameErr.textContent = ok.reason; return; } username = val; localStorage.setItem('playerName', username); ui.usernameDisplay.textContent = username; nameErr.textContent=''; showToast('Username accepted: ' + username, 1800); if(usernameInput) usernameInput.value = username; uploadPlayerState(); });
+if(setNameBtn){
+  setNameBtn.addEventListener('click', ()=>{
+    const val = (usernameInput && usernameInput.value || '').trim();
+    const ok = isNameAllowed(val);
+    if(!ok.ok){ if(nameErr) nameErr.textContent = ok.reason; return; }
+    username = val;
+    localStorage.setItem('playerName', username);
+    if(ui.usernameDisplay) ui.usernameDisplay.textContent = username;
+    if(nameErr) nameErr.textContent='';
+    showToast('Username accepted: ' + username, 1800);
+    if(usernameInput) usernameInput.value = username;
+    uploadPlayerState();
+  });
+}
 
 // Mobile control style handling: floating joystick vs touch-anywhere
-let mobileStyle = localStorage.getItem('mobileStyle') || (document.getElementById('mobileStyle') ? document.getElementById('mobileStyle').value : 'floating'); if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').value = mobileStyle; if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').addEventListener('change',(e)=>{ mobileStyle = e.target.value; localStorage.setItem('mobileStyle', mobileStyle); updateControlUI(); });
+let mobileStyle = localStorage.getItem('mobileStyle') || (document.getElementById('mobileStyle') ? document.getElementById('mobileStyle').value : 'floating');
+if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').value = mobileStyle;
+if(document.getElementById('mobileStyle')) document.getElementById('mobileStyle').addEventListener('change',(e)=>{ mobileStyle = e.target.value; localStorage.setItem('mobileStyle', mobileStyle); updateControlUI(); });
 
 // whether device supports touch
 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints>0);
 // allow user to enable mobile testing on desktop
 const allowTestCheckbox = document.getElementById('allowMobileTest'); if(allowTestCheckbox){ allowTestCheckbox.checked = localStorage.getItem('allowMobileTest') === '1'; allowTestCheckbox.addEventListener('change',(e)=>{ localStorage.setItem('allowMobileTest', e.target.checked ? '1' : '0'); updateMobileOptionVisibility(); updateControlUI(); }); }
-function updateMobileOptionVisibility(){ const show = isTouch || (allowTestCheckbox && allowTestCheckbox.checked); document.querySelectorAll('#controlMode option, #homeControlMode option').forEach(opt=>{ if(opt.value==='mobile'){ opt.style.display = show ? 'block' : 'none'; } }); // if current selection is mobile but it's hidden, fallback
-  const cm = document.getElementById('controlMode'); if(cm && cm.value==='mobile' && !show){ cm.value = 'mouse'; controlMode = 'mouse'; localStorage.setItem('controlMode','mouse'); }
-}
-
-// global touchmove to support mobile tap-and-drag for pointing at the world
-let touchAnywhereStart = null; // used when mobileStyle === 'touch'
-window.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; const t = e.touches[0]; if(!t) return; // if a joystick is active it will update pointerX/pointerY; otherwise allow tap-to-point
-  pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); }, {passive:false});
-window.addEventListener('touchend', (e)=>{ if(overlayVisible()) return; pointerX = null; pointerY = null; touchAnywhereStart = null; });
+function updateMobileOptionVisibility(){ const show = isTouch || (allowTestCheckbox && allowTestCheckbox.checked); const cmEl = document.getElementById('controlMode'); if(cmEl){ for(const opt of cmEl.options){ if(opt.value==='mobile'){ opt.style.display = show ? 'block' : 'none'; } } if(cmEl.value==='mobile' && !show){ cmEl.value='mouse'; controlMode='mouse'; localStorage.setItem('controlMode','mouse'); } } }
 
 // helper: generate enemy names
 function genEnemyName(){ const adj = ['Drift','Wave','Coral','Reef','Bram','Glim','Scale','Torrent','Murk','Glint']; const suf = Math.floor(Math.random()*999); return adj[Math.floor(Math.random()*adj.length)] + '_' + suf; }
 
 // shop rendering (with small color thumbnails for skins)
-function renderShop(filter='',sortBy='price-asc'){ shopItemsEl.innerHTML=''; let list = SHOP_ITEMS.concat(SKINS.map(s=>Object.assign({type:'skin'},s))).filter(i=>i.name.toLowerCase().includes((filter||'').toLowerCase())); if(sortBy==='price-asc') list.sort((a,b)=>a.price-b.price); if(sortBy==='price-desc') list.sort((a,b)=>b.price-a.price); if(sortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+function renderShop(filter='',sortBy='price-asc'){ const shopItemsEl = document.getElementById('shopItems'); if(!shopItemsEl) return; shopItemsEl.innerHTML=''; let list = SHOP_ITEMS.concat(SKINS.map(s=>Object.assign({type:'skin'},s))).filter(i=>i.name.toLowerCase().includes((filter||'').toLowerCase())); if(sortBy==='price-asc') list.sort((a,b)=>a.price-b.price); if(sortBy==='price-desc') list.sort((a,b)=>b.price-a.price); if(sortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
  for(const it of list){ const row = document.createElement('div'); row.className='shop-row'; const left = document.createElement('div');
-    // thumbnail for skins
     let thumb = '';
     if(it.type==='skin' || it.color){ thumb = `<div style="width:56px;height:40px;border-radius:8px;background:${it.color||'#999'};display:inline-block;margin-right:8px;vertical-align:middle;border:2px solid rgba(255,255,255,0.06)"></div>`; }
     left.innerHTML = `${thumb}<div style="display:inline-block;vertical-align:middle"><div style=\"font-weight:800\">${it.name}</div><div style=\"font-size:12px;opacity:0.9\">${it.desc||''}</div></div>`;
     const right = document.createElement('div'); const price = document.createElement('div'); price.style.fontWeight='800'; price.style.marginRight='8px'; price.textContent = it.price + ' c'; const btn = document.createElement('button'); btn.className='btn';
     const affordable = player.coins >= it.price;
-    if(it.type==='skin'){ btn.textContent = owned.has(it.id)?(equipped===it.id?'Equipped':'Equip'):'Buy'; if(!owned.has(it.id) && !affordable) btn.disabled=true; btn.onclick=()=>{ if(owned.has(it.id)){ equipped = it.id; player.color = it.color; saveOwned(); showToast(it.name + ' equipped'); renderShop(document.getElementById('shopSearch').value, document.getElementById('shopSort').value); } else { if(player.coins >= it.price){ player.coins -= it.price; owned.add(it.id); equipped = it.id; player.color = it.color; saveOwned(); showToast('Purchased and equipped ' + it.name); renderShop(document.getElementById('shopSearch').value, document.getElementById('shopSort').value); ui.coinsEl.textContent = player.coins; } else showToast('Not enough coins'); } };
-    } else { btn.textContent = 'Buy'; if(!affordable) btn.disabled=true; btn.onclick = ()=>{ if(player.coins >= it.price){ player.coins -= it.price; // apply effect if available
-          try{ if(it.effect) it.effect(); }catch(e){}
-          showToast('Purchased ' + it.name);
-          ui.coinsEl.textContent = player.coins;
-        } else showToast('Not enough coins'); } }
+    if(it.type==='skin'){ btn.textContent = owned.has(it.id)?(equipped===it.id?'Equipped':'Equip'):'Buy'; if(!owned.has(it.id) && !affordable) btn.disabled=true; btn.onclick=()=>{ if(owned.has(it.id)){ equipped = it.id; player.color = it.color; saveOwned(); showToast(it.name + ' equipped'); renderShop(document.getElementById('shopSearch')?document.getElementById('shopSearch').value:'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); } else { if(player.coins >= it.price){ player.coins -= it.price; owned.add(it.id); equipped = it.id; player.color = it.color; saveOwned(); showToast('Purchased and equipped ' + it.name); renderShop(document.getElementById('shopSearch')?document.getElementById('shopSearch').value:'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); ui.coinsEl.textContent = player.coins; } else showToast('Not enough coins'); } };
+    } else { btn.textContent = 'Buy'; if(!affordable) btn.disabled=true; btn.onclick = ()=>{ if(player.coins >= it.price){ player.coins -= it.price; try{ if(it.effect) it.effect(); }catch(e){} showToast('Purchased ' + it.name); ui.coinsEl.textContent = player.coins; } else showToast('Not enough coins'); } }
     right.style.display='flex'; right.style.alignItems='center'; right.appendChild(price); right.appendChild(btn); row.appendChild(left); row.appendChild(right); shopItemsEl.appendChild(row); }
 }
 
-const shopItemsEl = document.getElementById('shopItems'); if(document.getElementById('shopSearch')) document.getElementById('shopSearch').addEventListener('input',(e)=>renderShop(e.target.value, document.getElementById('shopSort').value)); if(document.getElementById('shopSort')) document.getElementById('shopSort').addEventListener('change',(e)=>renderShop(document.getElementById('shopSearch').value, e.target.value));
+if(document.getElementById('shopSearch')) document.getElementById('shopSearch').addEventListener('input',(e)=>renderShop(e.target.value, document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'));
+if(document.getElementById('shopSort')) document.getElementById('shopSort').addEventListener('change',(e)=>renderShop(document.getElementById('shopSearch')?document.getElementById('shopSearch').value:'', e.target.value));
 renderShop();
 
 // ---------- spawning & world management (infinite-ish) ----------
 function randBetween(a,b){ return a + Math.random()*(b-a); }
 function spawnFoodAround(cx,cy){ if(foods.length>MAX_FOOD) return; const angle = Math.random()*Math.PI*2; const dist = 300 + Math.random()*1200; const f={ x: cx + Math.cos(angle)*dist, y: cy + Math.sin(angle)*dist, size: 3 + Math.random()*6, wobble: Math.random()*Math.PI*2, color:'#fff59d' }; foods.push(f); }
-function spawnEnemyRelative(cx,cy){ const base = 10 + Math.random()*36; const rel = Math.random()*player.size*0.9; const size = Math.max(8, Math.min(player.size*2.2, base + rel)); const e = { id: enemyIdCounter++, x: cx + (Math.random()-0.5)*1600, y: cy + (Math.random()-0.5)*1600, size, speed: 30 + Math.random()*110, angle: Math.random()*Math.PI*2, color: '#ff6b6b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot:true }; enemies.push(e); }
+function spawnEnemyRelative(cx,cy,opts={offlineBot:true}){ const base = 10 + Math.random()*36; const rel = Math.random()*player.size*0.9; const size = Math.max(8, Math.min(player.size*2.2, base + rel)); const e = { id: enemyIdCounter++, x: cx + (Math.random()-0.5)*1600, y: cy + (Math.random()-0.5)*1600, size, speed: 30 + Math.random()*110, angle: Math.random()*Math.PI*2, color: '#ff6b6b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot: !!opts.offlineBot }; enemies.push(e); }
 function spawnBubbleAround(cx,cy){ bubbles.push({ x: cx + (Math.random()-0.5)*800, y: cy + (Math.random()-0.5)*800, r: 3+Math.random()*8, vy: 20+Math.random()*60, alpha: 0.08+Math.random()*0.18 }); }
 
 // ensure there's always at least one fish larger than player but not absurd
 let lastLargeSpawn = 0;
-function ensureLargerExists(nearbyCount){ let largest = player.size; for(const e of enemies) if(e.size>largest) largest=e.size; const refSize = Math.max(player.size, 8); const now = performance.now(); if(largest <= refSize * 1.05){ // avoid spawning too often or when area is dense
-    if(now - lastLargeSpawn > 3500 && nearbyCount < 28){ const sz = Math.min(refSize*1.9, refSize * (1.2 + Math.random()*0.6)); const e = { id: enemyIdCounter++, x: player.x + (Math.random()-0.5)*1200, y: player.y + (Math.random()-0.5)*1200, size: Math.max(sz, refSize+6), speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#d45b5b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot:true }; enemies.push(e); lastLargeSpawn = now; } } }
+function ensureLargerExists(nearbyCount, allowBots){ if(!allowBots) return; let largest = player.size; for(const e of enemies) if(e.size>largest) largest=e.size; const refSize = Math.max(player.size, 8); const now = performance.now(); if(largest <= refSize * 1.05){ if(now - lastLargeSpawn > 3500 && nearbyCount < 28){ const sz = Math.min(refSize*1.9, refSize * (1.2 + Math.random()*0.6)); const e = { id: enemyIdCounter++, x: player.x + (Math.random()-0.5)*1200, y: player.y + (Math.random()-0.5)*1200, size: Math.max(sz, refSize+6), speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#d45b5b', state:'wander', target:null, hunger:100, name: genEnemyName(), offlineBot:true }; enemies.push(e); lastLargeSpawn = now; } } }
 
 // trim distant entities to keep runtime manageable
 function trimEntities(){ const R = Math.max(window.innerWidth, window.innerHeight) * 4; foods = foods.filter(f=>Math.hypot(f.x-player.x,f.y-player.y) < R); enemies = enemies.filter(e=>Math.hypot(e.x-player.x,e.y-player.y) < R*1.5); bubbles = bubbles.filter(b=>Math.hypot(b.x-player.x,b.y-player.y) < R); }
@@ -284,8 +319,10 @@ for(let i=0;i<12;i++) spawnEnemyRelative(player.x, player.y);
 for(let i=0;i<80;i++) spawnBubbleAround(player.x, player.y);
 
 // ---------- input ----------
-let controlMode = localStorage.getItem('controlMode') || document.getElementById('controlMode').value; document.getElementById('controlMode').value = controlMode; document.getElementById('controlMode').addEventListener('change', e=>{ controlMode = e.target.value; document.getElementById('homeControlMode').value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); });
-const homeControl = document.getElementById('homeControlMode'); homeControl.value = controlMode; homeControl.addEventListener('change', e=>{ controlMode = e.target.value; document.getElementById('controlMode').value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); });
+let controlMode = localStorage.getItem('controlMode') || 'mouse';
+const controlModeSelect = document.getElementById('controlMode');
+if(controlModeSelect){ controlModeSelect.value = controlMode; controlModeSelect.addEventListener('change', e=>{ controlMode = e.target.value; const homeControl = document.getElementById('homeControlMode'); if(homeControl) homeControl.value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); }); }
+const homeControl = document.getElementById('homeControlMode'); if(homeControl){ homeControl.value = controlMode; homeControl.addEventListener('change', e=>{ controlMode = e.target.value; if(controlModeSelect) controlModeSelect.value = controlMode; localStorage.setItem('controlMode', controlMode); updateControlUI(); }); }
 
 let pointerX=null,pointerY=null; let keys = {};
 
@@ -295,59 +332,35 @@ function updateControlUI(){ const joy = document.getElementById('joystick'); con
 setTimeout(()=>{ updateMobileOptionVisibility(); updateControlUI(); }, 10);
 
 window.addEventListener('mousemove', e=>{ if(overlayVisible()) return; if(controlMode==='mouse'){ pointerX = e.clientX; pointerY = e.clientY; } });
-window.addEventListener('mousedown', e=>{ if(overlayVisible()) return; }); window.addEventListener('mouseup', e=>{ if(overlayVisible()) return; });
+window.addEventListener('mousedown', e=>{ if(overlayVisible()) return; if(e.button===2){ boosting = true; } });
+window.addEventListener('mouseup', e=>{ if(overlayVisible()) return; if(e.button===2){ boosting = false; } });
 
-// --- MOBILE DRAG: support both floating joystick and touch-anywhere styles ---
-window.addEventListener('touchstart',e=>{ if(overlayVisible()) return; const t=e.touches[0]; if(t){ pointerX=t.clientX; pointerY=t.clientY; }
-  try{ const target = e.target; const joy = document.getElementById('joystick'); if(joy && controlMode === 'mobile' && mobileStyle === 'floating' && !joy.contains(target)){ // move joystick to finger (floating)
-      if(!joy._orig) joy._orig = {left: joy.style.left || '', bottom: joy.style.bottom || '', top: joy.style.top || '', position: joy.style.position || ''};
-      joy.style.position = 'fixed'; joy.style.left = (t.clientX - joy.offsetWidth/2) + 'px'; joy.style.top = (t.clientY - joy.offsetHeight/2) + 'px'; joy.style.bottom = '';
-      usingJoy = true; joy._touch = true; const rect = joy.getBoundingClientRect(); joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2}; pointerX = joyCenter.x; pointerY = joyCenter.y; stick.style.transform = 'translate(0,0)'; lastJoyStrength = 0; }
-    else if(controlMode === 'mobile' && mobileStyle === 'touch'){ // start touch-anywhere tracking
-      touchAnywhereStart = {x: t.clientX, y: t.clientY}; lastJoyStrength = 0; }
-  }catch(err){}
-}, {passive:false});
-
-window.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; const t = e.touches[0]; if(!t) return; try{ const joy = document.getElementById('joystick'); if(usingJoy && joy && joyCenter && controlMode==='mobile' && mobileStyle==='floating'){ const dx = Math.max(-36, Math.min(36, t.clientX - joyCenter.x)); const dy = Math.max(-36, Math.min(36, t.clientY - joyCenter.y)); stick.style.transform = `translate(${dx}px,${dy}px)`; pointerX = joyCenter.x + dx*1.6; pointerY = joyCenter.y + dy*1.6; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/36); e.preventDefault(); return; } }catch(err){}
-  // touch-anywhere: compute strength based on displacement from touch start
-  if(controlMode === 'mobile' && mobileStyle === 'touch' && touchAnywhereStart){ const dx = t.clientX - touchAnywhereStart.x; const dy = t.clientY - touchAnywhereStart.y; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/160); pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); return; }
-  // default tap-to-point behavior
-  if(controlMode === 'mouse' || controlMode === 'mobile'){ pointerX = t.clientX; pointerY = t.clientY; }
-  e.preventDefault(); }, {passive:false});
-
-window.addEventListener('touchend', (e)=>{ if(overlayVisible()) return; pointerX = null; pointerY = null; touchAnywhereStart = null; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; }
-    if(joy) { delete joy._touch; }
-    usingJoy = false; lastJoyStrength = 0;
-  }catch(err){}
-});
-
-window.addEventListener('touchcancel', (e)=>{ try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; } usingJoy = false; pointerX = null; pointerY = null; lastJoyStrength = 0; touchAnywhereStart = null; }catch(err){} }, {passive:false});
+// --- MOBILE DRAG & pointer handling (kept) ---
+let touchAnywhereStart = null;
+window.addEventListener('touchmove', (e)=>{ if(overlayVisible()) return; const t = e.touches[0]; if(!t) return; pointerX = t.clientX; pointerY = t.clientY; e.preventDefault(); }, {passive:false});
+window.addEventListener('touchend', (e)=>{ if(overlayVisible()) return; pointerX = null; pointerY = null; touchAnywhereStart = null; });
+window.addEventListener('touchcancel', (e)=>{ pointerX = null; pointerY = null; touchAnywhereStart = null; }, {passive:false});
 
 window.addEventListener('keydown', e=>{ if(overlayVisible()) return; keys[e.key.toLowerCase()] = true; if(e.key===' '){ e.preventDefault(); boosting=true; } if(e.key==='Shift'){ boosting=true; } }); window.addEventListener('keyup', e=>{ if(overlayVisible()) return; keys[e.key.toLowerCase()] = false; if(e.key===' '){ boosting=false; } if(e.key==='Shift'){ boosting=false; } });
 
 // boost button supports pointer events for reliability
-const boostBtn = document.getElementById('boostMobile'); if(boostBtn){ boostBtn.addEventListener('pointerdown', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }); boostBtn.addEventListener('pointerup', ()=>{ boosting=false; }); boostBtn.addEventListener('pointercancel', ()=>{ boosting=false; }); // touch events for devices that prefer touch
-  boostBtn.addEventListener('touchstart', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }, {passive:false}); boostBtn.addEventListener('touchend', ()=>{ boosting=false; }); boostBtn.addEventListener('touchcancel', ()=>{ boosting=false; }); }
+const boostBtn = document.getElementById('boostMobile'); if(boostBtn){ boostBtn.addEventListener('pointerdown', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }); boostBtn.addEventListener('pointerup', ()=>{ boosting=false; }); boostBtn.addEventListener('pointercancel', ()=>{ boosting=false; }); boostBtn.addEventListener('touchstart', (e)=>{ if(overlayVisible()) return; boosting=true; e.preventDefault(); }, {passive:false}); boostBtn.addEventListener('touchend', ()=>{ boosting=false; }); boostBtn.addEventListener('touchcancel', ()=>{ boosting=false; }); }
 let boosting=false;
 
 // joystick: pointer events for better cross-device support
 const joystick = document.getElementById('joystick'); const stick = document.getElementById('stick'); let usingJoy=false; let joyCenter = null; let joyPointerId = null; let lastJoyStrength = 0;
 function joyPointerDown(e){ if(overlayVisible()) return; if(controlMode !== 'mobile' || mobileStyle !== 'floating') return; usingJoy=true; joyPointerId = e.pointerId; e.preventDefault(); const rect = joystick.getBoundingClientRect(); joyCenter = {x: rect.left+rect.width/2, y: rect.top+rect.height/2}; }
 function joyPointerMove(e){ if(!usingJoy) return; if(joyPointerId!=null && e.pointerId !== joyPointerId) return; e.preventDefault(); const cx = joyCenter.x, cy = joyCenter.y; const dx = Math.max(-36, Math.min(36, e.clientX - cx)); const dy = Math.max(-36, Math.min(36, e.clientY - cy)); stick.style.transform = `translate(${dx}px,${dy}px)`; pointerX = cx + dx*1.6; pointerY = cy + dy*1.6; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/36); }
-function joyPointerUp(e){ if(joyPointerId!=null && e.pointerId !== joyPointerId) return; usingJoy=false; joyPointerId = null; stick.style.transform='translate(0,0)'; pointerX=null; pointerY=null; lastJoyStrength = 0; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; }
-  }catch(err){} }
+function joyPointerUp(e){ if(joyPointerId!=null && e.pointerId !== joyPointerId) return; usingJoy=false; joyPointerId = null; stick.style.transform='translate(0,0)'; pointerX=null; pointerY=null; lastJoyStrength = 0; try{ const joy = document.getElementById('joystick'); if(joy && joy._orig){ joy.style.position = joy._orig.position; joy.style.left = joy._orig.left; joy.style.top = joy._orig.top; joy.style.bottom = joy._orig.bottom; delete joy._orig; } if(joy) delete joy._touch; }catch(err){} }
 if(joystick){ joystick.addEventListener('pointerdown', joyPointerDown); window.addEventListener('pointermove', joyPointerMove); window.addEventListener('pointerup', joyPointerUp); }
 
-// --- Pointer-event fallback for mobile/touch devices ---
-// These handlers unify pointer events with the existing touch handlers so mobile control is robust.
+// pointer fallback
 window.addEventListener('pointerdown', (e)=>{
   try{
     if(overlayVisible()) return;
-    // only handle touch pointers here
     if(e.pointerType === 'touch'){
       if(controlMode === 'mobile'){
         pointerX = e.clientX; pointerY = e.clientY;
-        // if floating joystick style, move joystick to finger unless the touch was on the joystick itself
         const joyEl = document.getElementById('joystick');
         if(mobileStyle === 'floating' && joyEl && !joyEl.contains(e.target) && !joyEl._touch){
           if(!joyEl._orig) joyEl._orig = {left: joyEl.style.left || '', bottom: joyEl.style.bottom || '', top: joyEl.style.top || '', position: joyEl.style.position || ''};
@@ -360,7 +373,6 @@ window.addEventListener('pointerdown', (e)=>{
     }
   }catch(err){}
 }, {passive:false});
-
 window.addEventListener('pointermove', (e)=>{
   try{
     if(overlayVisible()) return;
@@ -373,7 +385,6 @@ window.addEventListener('pointermove', (e)=>{
         e.preventDefault();
         return;
       }
-      // touch-anywhere
       if(controlMode === 'mobile' && mobileStyle === 'touch' && touchAnywhereStart){
         const dx = e.clientX - touchAnywhereStart.x; const dy = e.clientY - touchAnywhereStart.y; lastJoyStrength = Math.min(1, Math.hypot(dx,dy)/160);
         pointerX = e.clientX; pointerY = e.clientY; e.preventDefault(); return;
@@ -382,7 +393,6 @@ window.addEventListener('pointermove', (e)=>{
     }
   }catch(err){}
 }, {passive:false});
-
 window.addEventListener('pointerup', (e)=>{
   try{
     if(e.pointerType === 'touch'){
@@ -395,16 +405,16 @@ window.addEventListener('pointerup', (e)=>{
 // ---------- audio (WebAudio improved) ----------
 const AudioContext = window.AudioContext || window.webkitAudioContext; let audioCtx=null, masterGain=null, ambGain=null;
 function ensureAudio(){ if(!audioCtx){ audioCtx = new AudioContext(); masterGain = audioCtx.createGain(); masterGain.gain.value = 0.07; masterGain.connect(audioCtx.destination);
-    // ambient pad
     ambGain = audioCtx.createGain(); ambGain.gain.value = 0.02; ambGain.connect(masterGain);
     const pad = audioCtx.createOscillator(); pad.type = 'sine'; pad.frequency.value = 80; const padFilter = audioCtx.createBiquadFilter(); padFilter.type = 'lowpass'; padFilter.frequency.value = 600; pad.connect(padFilter); padFilter.connect(ambGain); pad.start();
-    // gentle noise for water
     const bufferSize = 2*audioCtx.sampleRate; const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate); const data = noiseBuffer.getChannelData(0); for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1)*0.02; } const nb = audioCtx.createBufferSource(); nb.buffer = noiseBuffer; nb.loop=true; const nGain = audioCtx.createGain(); nGain.gain.value = 0.01; nb.connect(nGain); nGain.connect(masterGain); nb.start(); } }
 function playEat(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(700, now); o.frequency.exponentialRampToValueAtTime(330, now+0.12); g.gain.setValueAtTime(0.12, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.14); }
 function playBoost(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(720, now+0.12); g.gain.setValueAtTime(0.06, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.12); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.16); }
 function playDeath(){ if(!audioCtx) return; const now = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sawtooth'; o.frequency.setValueAtTime(240, now); o.frequency.exponentialRampToValueAtTime(40, now+0.9); g.gain.setValueAtTime(0.28, now); g.gain.exponentialRampToValueAtTime(0.001, now+0.9); o.connect(g); g.connect(masterGain); o.start(now); o.stop(now+0.95); }
+function ensureAudioStarted(){ try{ ensureAudio(); } catch(e){} }
 
 // ---------- Firebase (compat) ----------
+// keep firebaseConfig as before (update to your project values if needed)
 const firebaseConfig = {
   apiKey: "AIzaSyCK2mIqOVp1d0VV3C6dycHTvnVtaE4CspQ",
   authDomain: "aqua-odyssey.firebaseapp.com",
@@ -416,48 +426,70 @@ const firebaseConfig = {
   measurementId: "G-ZZBZERRPCH"
 };
 
-let firebaseApp = null, firebaseDB = null, firebaseAuth = null, firebaseConnected=false, firebaseUid=null;
-let onlinePlayers = {}; // map uid -> {username,score,timestamp}
+let onlinePlayers = {}; // map uid -> {username,score,timestamp,x,y,room}
 let remotePlayers = {}; // uid -> enemy object reference for rendering in-world
-let firebaseUploadIntervalId = null; // <-- new: periodic uploader id
+
+// current room state for this client (null = public)
+let currentRoom = { code: null, friendsOnly: false, owner: null, center: null };
+let allowBots = true; // toggled off when in friends-only rooms
+
+// spectating state
+let spectatingUid = null;
+let spectateModeEnabled = false;
+
 function updateConnUI(connected, pingMs=null){
   const dot = document.getElementById('connIndicator'); const text = document.getElementById('connText'); const msEl = document.getElementById('connMs');
-  if(connected){ dot.style.background='#4caf50'; text.textContent='Online'; if(msEl) msEl.textContent = pingMs ? `${Math.round(pingMs)} ms` : ''; }
-  else { dot.style.background='#999'; text.textContent='Offline'; if(msEl) msEl.textContent = ''; }
+  if(dot && text){
+    if(connected){ dot.style.background='#4caf50'; text.textContent='Online'; if(msEl) msEl.textContent = pingMs ? `${Math.round(pingMs)} ms` : ''; }
+    else { dot.style.background='#999'; text.textContent='Offline'; if(msEl) msEl.textContent = ''; }
+  }
 }
 
 // init firebase and auth anonymously, subscribe to players
 function ensureFirebaseConnected(){
   if(firebaseConnected) return Promise.resolve(true);
   try{
+    if(typeof firebase === 'undefined'){ throw new Error('firebase SDK is not loaded'); }
     firebaseApp = firebase.initializeApp(firebaseConfig);
     firebaseAuth = firebase.auth();
     firebaseDB = firebase.database();
     return firebaseAuth.signInAnonymously().then(cred=>{
       firebaseUid = cred.user.uid;
-      // ping test (attempt write to /ping_test/$uid)
+      console.log('Signed into Firebase as', firebaseUid);
       const pingPath = '/ping_test/'+firebaseUid;
       const start = performance.now();
       return firebaseDB.ref(pingPath).set({ts:Date.now()}).then(()=>{
         const pingMs = performance.now() - start;
         firebaseConnected = true;
         updateConnUI(true, pingMs);
-        // listen for players list
-        firebaseDB.ref('/players').on('value', snap=>{
-          const val = snap.val() || {};
-          onlinePlayers = val;
-          // sync remote players for in-world rendering
-          syncRemotePlayers(onlinePlayers);
-          rebuildLeaderboards();
-        });
-        // set onDisconnect to remove our entry
+        // subscribe to players; handle permission errors gracefully
         try{
-          firebaseDB.ref('/players/'+firebaseUid).onDisconnect().remove();
+          firebaseDB.ref('/players').on('value', snap=>{
+            const val = snap.val() || {};
+            onlinePlayers = val;
+            syncRemotePlayers(onlinePlayers);
+            rebuildLeaderboards();
+          }, err=>{
+            console.error('players.on error', err);
+            // if permission denied, mark disconnected (UI + local)
+            if(err && err.code === 'PERMISSION_DENIED'){
+              firebaseConnected = false; updateConnUI(false);
+              showToast('Firebase permission denied: check your RTDB rules and auth.', 3500);
+            }
+          });
+        } catch(e){
+          console.error('subscribe failed', e);
+        }
+        // try to write initial player object (safe)
+        try{
+          firebaseDB.ref('/players/'+firebaseUid).set({username: username || 'Guest', score: player.score||0, ts: Date.now(), x: player.x, y: player.y, size: player.size, room: currentRoom.code || null}).catch(err=>{
+            console.error('write players failed', err);
+            if(err && err.code === 'PERMISSION_DENIED'){
+              firebaseConnected = false; updateConnUI(false); showToast('Firebase permission denied — offline mode.',2200);
+            }
+          });
         }catch(e){}
-        // write initial presence object for this player (will be updated by uploadPlayer)
-        return firebaseDB.ref('/players/'+firebaseUid).set({username: username || 'Guest', score: player.score||0, ts: Date.now(), x: player.x, y: player.y, size: player.size}).catch(err=>{
-          console.error('write players failed', err);
-        });
+        return true;
       }).catch(err=>{
         console.error('ping failed', err);
         firebaseConnected = false;
@@ -476,6 +508,7 @@ function ensureFirebaseConnected(){
     console.error('firebase init error', e);
     firebaseConnected = false;
     updateConnUI(false);
+    showToast('Firebase not available — offline mode.',2000);
     return Promise.resolve(false);
   }
 }
@@ -483,25 +516,23 @@ function ensureFirebaseConnected(){
 // upload local player state to firebase (if connected)
 function uploadPlayerState(){
   if(!firebaseConnected || !firebaseDB || !firebaseUid) return;
-  const p = {username: username || 'Guest', score: player.score||0, ts: Date.now(), size: player.size||0, x: player.x||0, y: player.y||0};
+  const p = {username: username || 'Guest', score: player.score||0, ts: Date.now(), size: player.size||0, x: player.x||0, y: player.y||0, room: currentRoom.code || null};
   firebaseDB.ref('/players/' + firebaseUid).set(p).catch(err=>{
     console.error('upload player failed', err);
     if(err && err.code === 'PERMISSION_DENIED'){
       updateConnUI(false);
       firebaseConnected = false;
       showToast('Firebase permission denied — offline mode.',2200);
-      // stop periodic uploads if permission denied
-      stopFirebaseUploads();
     }
   });
-}
-
-// stop periodic uploads & cleanup remote markers
-function stopFirebaseUploads(){
-  if(firebaseUploadIntervalId){ clearInterval(firebaseUploadIntervalId); firebaseUploadIntervalId = null; }
-  // remove remote displayed players if we want: keep them until new snapshot removes them
-  // but clear our entry if we are offline now
-  try{ if(firebaseConnected && firebaseDB && firebaseUid){ firebaseDB.ref('/players/'+firebaseUid).remove().catch(()=>{}); } }catch(e){}
+  try{
+    firebaseDB.ref('/bestScores/' + firebaseUid).transaction(curr=>{
+      if(!curr || (player.score || 0) > (curr.best || 0)){
+        return { best: player.score || 0, username: username || 'Guest', uid: firebaseUid, ts: Date.now() };
+      }
+      return;
+    }).catch(err=>{ console.warn('bestScores transaction failed', err); });
+  }catch(e){}
 }
 
 // remove player from online list when leaving (best effort)
@@ -509,70 +540,66 @@ function removePlayerOnLeave(){
   if(firebaseConnected && firebaseDB && firebaseUid){
     try{ firebaseDB.ref('/players/'+firebaseUid).remove(); }catch(e){}
   }
-  stopFirebaseUploads();
 }
 window.addEventListener('beforeunload', ()=>{ removePlayerOnLeave(); });
 
-// ---------- remote player sync: show other online players in the world ----------
+// ---------- Remote player sync: only show players in same room ----------
+function isSameRoomForClient(playerObj){
+  const theirRoom = playerObj && (playerObj.room===undefined ? null : playerObj.room);
+  const myRoom = currentRoom.code || null;
+  if(myRoom === null || myRoom === undefined) {
+    return (theirRoom === null || theirRoom === undefined || theirRoom === '');
+  }
+  return theirRoom === myRoom;
+}
+
 function syncRemotePlayers(playersObj){
-  // playersObj: uid -> {username,score,x,y,size}
   const seen = new Set();
   for(const uid in playersObj){
-    if(uid === firebaseUid) continue; // skip ourselves
+    if(uid === firebaseUid) continue;
     const p = playersObj[uid];
+    if(!isSameRoomForClient(p)) continue;
     seen.add(uid);
     if(remotePlayers[uid]){
-      // update
       const ent = remotePlayers[uid]; ent.x = p.x !== undefined ? p.x : ent.x; ent.y = p.y !== undefined ? p.y : ent.y; ent.size = p.size || ent.size; ent.name = p.username || ent.name; ent.color = ent.color || '#66ccff';
     } else {
-      // create a lightweight entity and add to enemies array for rendering/interaction (but flagged as remote so they don't affect leaderboard offline bots)
       const ent = { id: 'rp_' + uid, x: (p.x!==undefined? p.x : player.x + (Math.random()-0.5)*300), y: (p.y!==undefined? p.y : player.y + (Math.random()-0.5)*300), size: p.size || 12, speed: 40 + Math.random()*80, angle: Math.random()*Math.PI*2, color: '#66ccff', state:'wander', name: p.username || 'Player', remoteUid: uid, isRemote:true };
       enemies.push(ent); remotePlayers[uid] = ent;
     }
   }
-  // remove any remote players that disappeared
-  for(const uid in remotePlayers){ if(!seen.has(uid)){ const ent = remotePlayers[uid]; // remove from enemies
-      const idx = enemies.indexOf(ent); if(idx>=0) enemies.splice(idx,1); delete remotePlayers[uid]; }
-  }
+  for(const uid in remotePlayers){ if(!seen.has(uid)){ const ent = remotePlayers[uid]; const idx = enemies.indexOf(ent); if(idx>=0) enemies.splice(idx,1); delete remotePlayers[uid]; } }
 }
 
-// ---------- Leaderboard handling (offline bots + online players) ----------
-let localBots = [];
-function generateLocalBots(count=8){
-  localBots = [];
-  for(let i=0;i<count;i++){
-    localBots.push({
-      id: 'bot_' + i + '_' + Math.floor(Math.random()*9999),
-      username: genEnemyName(),
-      score: Math.round(5 + Math.random()*300),
-      offlineBot: true
-    });
-  }
-}
-generateLocalBots(12);
-
-// builder: merges online players and local bots and sorts by score
+// ---------- Leaderboard handling (NO BOTS IN UI) ----------
 function rebuildLeaderboards(){
-  const merged = [];
-  // Add online players
-  for(const uid in onlinePlayers){
-    const p = onlinePlayers[uid];
-    merged.push({id: uid, username: (p.username||'Guest'), score: p.score||0, online:true});
+  // Only include real online players from Firebase (if connected). Always include the local player's row (me).
+  const list = [];
+  if(firebaseConnected){
+    for(const uid in onlinePlayers){
+      const p = onlinePlayers[uid];
+      if(isSameRoomForClient(p)){
+        list.push({id: uid, username: (p.username||'Guest'), score: p.score||0, online:true});
+      }
+    }
   }
-  // Add local bots (they might conflict with online IDs; keep offlineBot flag)
-  for(const b of localBots) merged.push(b);
-  // Add current player as well
-  merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
-  merged.sort((a,b)=>b.score - a.score);
-  // update mini + full
-  renderMiniLeader(merged.slice(0,10));
-  renderFullLeader(merged);
+  // Always add your own local entry so player sees their score
+  list.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
+  // Sort by score descending
+  list.sort((a,b)=>b.score - a.score);
+  // Render mini and full leader now
+  renderMiniLeader(list.slice(0,10));
+  renderFullLeaderFullHistoric(list);
 }
 
-// render mini leaderboard list (compact)
 function renderMiniLeader(list){
-  const miniList = document.getElementById('miniList');
+  const miniList = document.getElementById('miniList'); if(!miniList) return;
   miniList.innerHTML = '';
+  if(!list || list.length===0){
+    miniList.innerHTML = '<div style="opacity:0.9;padding:6px">No players online</div>';
+    const miniYou = document.getElementById('miniYou'); if(miniYou) miniYou.textContent = `You: ${player.score||0}`;
+    const miniCount = document.getElementById('miniCount'); if(miniCount) miniCount.textContent = `0`;
+    return;
+  }
   list.forEach((p, idx)=>{
     const row = document.createElement('div'); row.className='lb-row';
     const left = document.createElement('div'); left.style.fontWeight = p.me ? '800' : '600'; left.style.fontSize='13px';
@@ -581,76 +608,86 @@ function renderMiniLeader(list){
     row.appendChild(left); row.appendChild(right); miniList.appendChild(row);
   });
   const myEntry = list.find(i=>i.me) || list.find(i=>i.username === username);
-  document.getElementById('miniYou').textContent = myEntry ? `You: ${myEntry.score}` : `You: ${player.score||0}`;
-  document.getElementById('miniCount').textContent = `${list.length}`;
+  const miniYou = document.getElementById('miniYou'); if(miniYou) miniYou.textContent = myEntry ? `You: ${myEntry.score}` : `You: ${player.score||0}`;
+  const miniCount = document.getElementById('miniCount'); if(miniCount) miniCount.textContent = `${list.length}`;
 }
 
-// render full leaderboard UI (with search/filter)
-function renderFullLeader(all){
-  const el = document.getElementById('leaderboardList');
-  if(!el) return;
+function renderFullLeaderFullHistoric(prebuiltList){
+  const el = document.getElementById('leaderboardList'); if(!el) return;
   el.innerHTML = '';
   const search = (document.getElementById('leaderboardSearch') && document.getElementById('leaderboardSearch').value) || '';
   const filter = (document.getElementById('leaderboardFilter') && document.getElementById('leaderboardFilter').value) || 'all';
-  let arr = all.slice();
+  // Use provided list (from rebuild) or compute from onlinePlayers
+  let merged = prebuiltList || [];
+  if(!merged || merged.length===0){
+    if(firebaseConnected){
+      for(const uid in onlinePlayers){
+        merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
+      }
+    }
+    merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
+  }
+  let arr = merged.slice();
   if(search) arr = arr.filter(x=>x.username.toLowerCase().includes(search.toLowerCase()));
   if(filter==='online') arr = arr.filter(x=>x.online);
-  if(filter==='offline') arr = arr.filter(x=>!x.online && !x.offlineBot);
-  if(filter==='bots') arr = arr.filter(x=>x.offlineBot);
-  // display top 200
+  if(filter==='offline') arr = arr.filter(x=>!x.online && !x.me);
+  // Note: bots are deliberately NOT included in the UI lists
   arr.slice(0,200).forEach((p,idx)=>{
     const r = document.createElement('div'); r.style.display='flex'; r.style.justifyContent='space-between'; r.style.padding='6px 0'; r.style.borderBottom='1px solid rgba(255,255,255,0.03)';
-    r.innerHTML = `<div style="font-weight:${p.me?800:600}">${idx+1}. ${p.username}${p.online?'<span style="opacity:0.7;margin-left:6px">(online)</span>':''}${p.offlineBot?'<span style="opacity:0.6;margin-left:6px"> bot</span>':''}</div><div style="opacity:0.95">${p.score}</div>`;
+    const leftWrap = document.createElement('div'); leftWrap.style.display='flex'; leftWrap.style.alignItems='center'; leftWrap.style.gap='8px';
+    const nameDiv = document.createElement('div'); nameDiv.style.fontWeight = p.me ? '800' : '600'; nameDiv.innerHTML = `${idx+1}. ${p.username}${p.online?'<span style="opacity:0.7;margin-left:6px">(online)</span>':''}`;
+    leftWrap.appendChild(nameDiv);
+    const rightDiv = document.createElement('div'); rightDiv.style.opacity=0.95; rightDiv.textContent = p.score;
+    const btnWrap = document.createElement('div'); btnWrap.style.display='flex'; btnWrap.style.gap='6px'; btnWrap.style.alignItems='center';
+    if(p.id !== '__me' && p.id && typeof p.id === 'string' && p.id.indexOf('bot_') === -1){
+      const specBtn = document.createElement('button'); specBtn.className='btn'; specBtn.textContent = 'Spectate'; specBtn.style.padding='6px 8px';
+      specBtn.onclick = ()=>{ if(!firebaseConnected){ showToast('Connect Firebase to spectate players.'); return; } if(p.id === firebaseUid){ showToast('Cannot spectate yourself'); return; } spectatePlayer(p.id); };
+      btnWrap.appendChild(specBtn);
+    }
+    r.appendChild(leftWrap);
+    const rightArea = document.createElement('div'); rightArea.style.display='flex'; rightArea.style.alignItems='center'; rightArea.style.gap='8px';
+    rightArea.appendChild(rightDiv);
+    rightArea.appendChild(btnWrap);
+    r.appendChild(rightArea);
     el.appendChild(r);
   });
 }
 
 // search handler for mini
-document.getElementById('miniSearch').addEventListener('input',(e)=>{
+const miniSearchEl = document.getElementById('miniSearch'); if(miniSearchEl) miniSearchEl.addEventListener('input',(e)=>{
   const q = e.target.value.toLowerCase();
   const merged = [];
-  for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
-  for(const b of localBots) merged.push(b);
+  if(firebaseConnected){
+    for(const uid in onlinePlayers){
+      const p = onlinePlayers[uid];
+      if(isSameRoomForClient(p)){
+        merged.push({id:uid, username:p.username||'Guest', score:p.score||0, online:true});
+      }
+    }
+  }
   merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
   const res = merged.filter(x=>x.username.toLowerCase().includes(q)).sort((a,b)=>b.score-a.score).slice(0,10);
   renderMiniLeader(res);
 });
 
 // mini toggle (collapse/expand)
-document.getElementById('miniToggle').addEventListener('click', ()=>{
+const miniToggle = document.getElementById('miniToggle'); if(miniToggle){ miniToggle.addEventListener('click', ()=>{
   const mini = document.getElementById('miniLeaderboard');
+  if(!mini) return;
   mini.classList.toggle('small');
   const t = document.getElementById('miniToggle');
   t.textContent = mini.classList.contains('small') ? '▼' : '▲';
-});
+}); }
 
 // find myself in full leaderboard
-function findMeInFull(){
-  document.getElementById('leaderboardPanel').classList.remove('hidden');
-  document.getElementById('homeInfo').classList.add('hidden');
-  const merged = [];
-  for(const uid in onlinePlayers) merged.push({id:uid, username:onlinePlayers[uid].username||'Guest', score:onlinePlayers[uid].score||0, online:true});
-  for(const b of localBots) merged.push(b);
-  merged.push({id:'__me', username: username || 'Guest', score: player.score||0, me:true});
-  merged.sort((a,b)=>b.score - a.score);
-  renderFullLeader(merged);
-}
+function findMeInFull(){ const panel = document.getElementById('leaderboardPanel'); if(!panel) return; panel.classList.remove('hidden'); const homeInfoE = document.getElementById('homeInfo'); if(homeInfoE) homeInfoE.classList.add('hidden'); renderFullLeaderFullHistoric(); }
+const findMeBtn = document.getElementById('findMeBtn'); if(findMeBtn) findMeBtn.addEventListener('click', ()=>{ findMeInFull(); });
 
-document.getElementById('findMeBtn').addEventListener('click', ()=>{ findMeInFull(); });
-
-// ---------- ensure bots appear in offline mode ----------
-function ensureOfflineBotsVisible(){
-  if(Math.random() < 0.06) {
-    generateLocalBots(10);
-    rebuildLeaderboards();
-  }
-}
+// ---------- ensure bots appear in-game only (not UI) ----------
+function ensureOfflineBotsVisible(){ if(Math.random() < 0.06) { if(enemies.length < 40) for(let i=0;i<4;i++) spawnEnemyRelative(player.x, player.y); } }
 
 // ---------- spawning tweaks: spawn player randomly near center (not always 0,0) ----------
-function setRandomSpawn(){
-  player.x = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5);
-  player.y = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5);
-}
+function setRandomSpawn(){ player.x = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5); player.y = (Math.random()*2 - 1) * (WORLD_BOUND * 0.5); }
 
 // ---------- update & AI ----------
 function handleBounds(){ let clamped=false; if(player.x < -WORLD_BOUND){ player.x = -WORLD_BOUND; clamped=true; } if(player.x > WORLD_BOUND){ player.x = WORLD_BOUND; clamped=true; } if(player.y < -WORLD_BOUND){ player.y = -WORLD_BOUND; clamped=true; } if(player.y > WORLD_BOUND){ player.y = WORLD_BOUND; clamped=true; } if(clamped){ for(let i=0;i<2;i++) spawnEnemyRelative(player.x + randBetween(-200,200), player.y + randBetween(-200,200)); player.hunger = Math.max(0, player.hunger - 8); } }
@@ -660,8 +697,11 @@ function update(dt){ if(!running) return;
   const densityFactor = Math.max(0.08, 1 - nearbyCount/80);
   const spawnSpeedFactor = player.speed < 3 ? 0.32 : 1;
   const spawnFactor = player.alive ? spawnSpeedFactor : 0.06;
+
+  const allowSpawnBots = allowBots;
+
   if(Math.random() < 0.12 * spawnFactor * densityFactor) spawnFoodAround(player.x, player.y);
-  if(Math.random() < 0.004 * spawnFactor * densityFactor) spawnEnemyRelative(player.x, player.y);
+  if(allowSpawnBots && Math.random() < 0.004 * spawnFactor * densityFactor) spawnEnemyRelative(player.x, player.y);
   if(Math.random() < 0.08 * spawnFactor * densityFactor) spawnBubbleAround(player.x, player.y);
 
   let vx=0, vy=0;
@@ -690,21 +730,20 @@ function update(dt){ if(!running) return;
   const baseDecay = dt/5000 * Math.max(0.6, player.size/24);
   const movementDecay = (player.speed/80) * (dt/1000) * Math.max(0.8, player.size/24);
   player.hunger -= baseDecay + movementDecay;
-  ui.hungerEl.style.width = Math.max(0, player.hunger) + '%';
+  if(ui.hungerEl) ui.hungerEl.style.width = Math.max(0, player.hunger) + '%';
   if(player.hunger <= 0 && player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } }
 
   for(const f of foods) f.wobble += 0.02 * dt/16;
   for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; b.y -= b.vy * dt/1000; if(Math.hypot(b.x-player.x,b.y-player.y)>8000) bubbles.splice(i,1); }
 
-  // simple AI & remote player position smoothing
   for(const e of enemies){
-    if(e.isRemote){ // gentle idle movement so remote players aren't static if no updates
+    if(e.isRemote){
       e.x += Math.cos(e.angle) * (e.speed*0.05) * dt/1000; e.y += Math.sin(e.angle) * (e.speed*0.05) * dt/1000; if(Math.random()<0.008) e.angle += (Math.random()-0.5)*1.2; continue;
     }
     e.hunger = (e.hunger||100) - dt/12000 * (e.size/24);
     let prey=null; let preyDist=1e9;
     let threat=null; let threatDist=1e9;
-    const dToPlayer = Math.hypot(player.x-e.x, player.y-e.y);
+    const dToPlayer = Math.hypot(player.x-e.x,player.y-e.y);
     if(player.alive){ if(player.size <= e.size * 1.05 && dToPlayer < preyDist){ prey = {type:'player',ref:player,x:player.x,y:player.y,size:player.size}; preyDist = dToPlayer; } if(player.size > e.size * 1.05 && dToPlayer < threatDist){ threat = {type:'player',ref:player,x:player.x,y:player.y,size:player.size}; threatDist = dToPlayer; } }
     for(const other of enemies){ if(other===e) continue; const d = Math.hypot(other.x-e.x, other.y-e.y); if(other.size <= e.size * 1.05 && d < preyDist){ prey = {type:'enemy',ref:other,x:other.x,y:other.y,size:other.size}; preyDist = d; } if(other.size > e.size * 1.05 && d < threatDist){ threat = {type:'enemy',ref:other,x:other.x,y:other.y,size:other.size}; threatDist = d; } }
     if(threat && threatDist < 420){ e.state='flee'; const ang = Math.atan2(e.y - threat.y, e.x - threat.x); e.x += Math.cos(ang) * (e.speed*0.9) * dt/1000; e.y += Math.sin(ang) * (e.speed*0.9) * dt/1000; e.angle = ang;
@@ -712,138 +751,195 @@ function update(dt){ if(!running) return;
     } else { e.state='wander'; e.x += Math.cos(e.angle) * (e.speed*0.18) * dt/1000; e.y += Math.sin(e.angle) * (e.speed*0.18) * dt/1000; if(Math.random()<0.01) e.angle += (Math.random()-0.5)*1.2; }
   }
 
-  // collisions: player-food
   for(let i=foods.length-1;i>=0;i--){ const f=foods[i]; const d=Math.hypot(player.x-f.x,player.y-f.y); if(d < player.size + f.size*0.7){ foods.splice(i,1); player.size += f.size*0.08; player.score += 1; player.coins += 1; player.hunger = Math.min(100, player.hunger + 6); playEat(); } }
-  // player-enemy
   for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d < player.size + e.size*0.6){ if(e.size > player.size * 1.05){ if(player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; deathCameraX = player.x; deathCameraY = player.y; cameraFrozen = true; deathSequence(); playDeath(); } } } else if(player.size > e.size * 1.05){ player.size += e.size*0.18; player.score += Math.round(e.size/6); player.coins += Math.round(e.size/8); enemies.splice(i,1); playEat(); } } }
-  // enemy vs enemy
+
   for(let i=enemies.length-1;i>=0;i--){ for(let j=enemies.length-1;j>=0;j--){ if(i===j) continue; const a=enemies[i], b=enemies[j]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(d < a.size + b.size){ if(a.size > b.size * 1.05){ a.size += b.size*0.14; enemies.splice(j,1); if(j<i) i--; break; } } } }
 
-  ensureLargerExists(nearbyCount);
+  ensureLargerExists(nearbyCount, allowSpawnBots);
   trimEntities();
   ensureOfflineBotsVisible();
 
   const depthSigned = -Math.round(player.y);
   const sign = depthSigned >= 0 ? '+' : '-';
-  ui.depthEl.textContent = `${sign}${Math.abs(depthSigned)} m`;
+  if(ui.depthEl) ui.depthEl.textContent = `${sign}${Math.abs(depthSigned)} m`;
   const maxDepth = 3000; const pct = Math.min(1, Math.max(0, depthSigned) / maxDepth);
-  ui.depthFill.style.height = `${Math.max(4, pct*100)}%`;
+  if(ui.depthFill) ui.depthFill.style.height = `${Math.max(4, pct*100)}%`;
 
-  ui.sizeEl.textContent = player.size.toFixed(1);
-  ui.scoreEl.textContent = player.score;
+  if(ui.sizeEl) ui.sizeEl.textContent = player.size.toFixed(1);
+  if(ui.scoreEl) ui.scoreEl.textContent = player.score;
   const highKey = 'aqua_highscore_' + (localStorage.getItem('playerName')||'Guest');
   let high = parseInt(localStorage.getItem(highKey) || '0',10);
   if(player.score > high){ high = player.score; localStorage.setItem(highKey, high); }
-  ui.highEl.textContent = high;
-  ui.coinsEl.textContent = player.coins;
+  if(ui.highEl) ui.highEl.textContent = high;
+  if(ui.coinsEl) ui.coinsEl.textContent = player.coins;
 
-  // upload to firebase occasionally (safeguard additional uploads if not using periodic uploader)
-  if(firebaseConnected && Math.random() < 0.03){
+  if(spectatingUid && (remotePlayers[spectatingUid] || onlinePlayers[spectatingUid])){
+    const target = remotePlayers[spectatingUid] || onlinePlayers[spectatingUid];
+    if(target) ui.coordsDisplay.textContent = `${Math.round(target.x||0)}, ${Math.round(target.y||0)} (sp:${target.name||spectatingUid})`;
+  } else {
+    ui.coordsDisplay.textContent = `${Math.round(player.x)}, ${Math.round(player.y)}`;
+  }
+
+  if(firebaseConnected && Math.random() < 0.06){
     uploadPlayerState();
   }
-  // keep mini leaderboard refreshed occasionally
   if(Math.random() < 0.06) rebuildLeaderboards();
 }
 
 // ---------- rendering & background ----------
-function updateCamera(dt){ const scale = Math.max(0.22, Math.min(1.3, (28)/(player.size+6))); camera.scale += (scale - camera.scale) * 0.08; const vw = window.innerWidth / camera.scale, vh = window.innerHeight / camera.scale; if(cameraFrozen){ camera.x = deathCameraX - vw/2; camera.y = deathCameraY - vh/2; } else { camera.x = player.x - vw/2; camera.y = player.y - vh/2; } }
+function updateCamera(dt){ const scale = Math.max(0.22, Math.min(1.3, (28)/(player.size+6))); camera.scale += (scale - camera.scale) * 0.08; const vw = window.innerWidth / camera.scale, vh = window.innerHeight / camera.scale; if(cameraFrozen){ camera.x = deathCameraX - vw/2; camera.y = deathCameraY - vh/2; } else if(spectatingUid && spectateModeEnabled){ const remote = remotePlayers[spectatingUid] || onlinePlayers[spectatingUid]; if(remote && typeof remote.x === 'number'){ camera.x += ((remote.x - vw/2) - camera.x) * 0.12; camera.y += ((remote.y - vh/2) - camera.y) * 0.12; return; } camera.x = player.x - vw/2; camera.y = player.y - vh/2; } else { camera.x = player.x - vw/2; camera.y = player.y - vh/2; } }
 function clear(){ ctx.clearRect(0,0,canvas.width/ DPR, canvas.height/ DPR); }
 function worldToScreen(wx,wy){ return { x: (wx - camera.x) * camera.scale, y: (wy - camera.y) * camera.scale }; }
-
-// color utils: interpolate towards yellow for smaller and red for larger, fading smoothly
 function hexToRgb(hex){ hex = hex.replace('#',''); const num = parseInt(hex,16); return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 }; }
 function rgbToHex(r,g,b){ return '#'+((1<<24)+(Math.round(r)<<16)+(Math.round(g)<<8)+Math.round(b)).toString(16).slice(1); }
 function mixColors(c1,c2,t){ const a=hexToRgb(c1); const b=hexToRgb(c2); const r=a.r + (b.r-a.r)*t; const g=a.g + (b.g-a.g)*t; const bl=a.b + (b.b-a.b)*t; return rgbToHex(r,g,bl); }
-
-function displayColorForFish(f){ const base = f.color || '#ff9a66'; const yellow = '#fff59d'; const red = '#ff6b6b';
-  const ratio = (f.size - player.size) / Math.max(1, player.size);
-  const t = Math.min(1, Math.abs(ratio) );
-  if(f === player) return base; // player's own skin
-  if(f.size < player.size){ // smaller -> fade towards yellow
-    return mixColors(base, yellow, Math.min(1, t*1.1));
-  } else { // larger -> fade towards red
-    return mixColors(base, red, Math.min(1, t*1.1));
-  }
-}
-
+function displayColorForFish(f){ const base = f.color || '#ff9a66'; const yellow = '#fff59d'; const red = '#ff6b6b'; const ratio = (f.size - player.size) / Math.max(1, player.size); const t = Math.min(1, Math.abs(ratio) ); if(f === player) return base; if(f.size < player.size){ return mixColors(base, yellow, Math.min(1, t*1.1)); } else { return mixColors(base, red, Math.min(1, t*1.1)); } }
 function drawFish(x,y,r,angle,opts={color:'#ff9a66',eye:'#0b1b2b'}, entityRef=null){ ctx.save(); const s = worldToScreen(x,y); ctx.translate(s.x, s.y); ctx.rotate(angle); const rr = r * camera.scale; ctx.beginPath(); ctx.ellipse(0,0,rr*1.25, rr, 0,0,Math.PI*2); const fillC = entityRef ? displayColorForFish(entityRef) : opts.color; ctx.fillStyle = fillC; ctx.fill(); ctx.beginPath(); ctx.moveTo(-rr*0.9,0); ctx.lineTo(-rr*1.7,-rr*0.7); ctx.lineTo(-rr*1.7,rr*0.7); ctx.closePath(); ctx.fillStyle = shade(fillC,-12); ctx.fill(); ctx.beginPath(); ctx.moveTo(rr*0.2,-rr*0.7); ctx.quadraticCurveTo(rr*0.6,-rr*1.4,rr*1.1,-rr*0.6); ctx.closePath(); ctx.fillStyle = shade(fillC,6); ctx.fill(); ctx.beginPath(); ctx.arc(rr*0.6,-rr*0.15, Math.max(2, rr*0.18),0,Math.PI*2); ctx.fillStyle = opts.eye; ctx.fill(); ctx.beginPath(); ctx.arc(rr*0.68,-rr*0.15, Math.max(1.2, rr*0.08),0,Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
-  // draw name labels: for player show username when stopped; for enemies show their name
   const screen = worldToScreen(x,y);
-  ctx.save(); ctx.font = `${Math.max(10,12*camera.scale)}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.lineWidth=3; if(entityRef === player){ if(player.speed < 8){ // show username when stopped/slow
-      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#ffffff'; ctx.strokeText(username, screen.x, screen.y - (rr*1.2)); ctx.fillText(username, screen.x, screen.y - (rr*1.2)); }
-  } else if(entityRef && entityRef.name){ ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#fff'; ctx.strokeText(entityRef.name, screen.x, screen.y - (rr*1.2)); ctx.fillText(entityRef.name, screen.x, screen.y - (rr*1.2)); }
-  ctx.restore(); }
+  ctx.save(); ctx.font = `${Math.max(10,12*camera.scale)}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.lineWidth=3; if(entityRef === player){ if(player.speed < 8){ ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#ffffff'; ctx.strokeText(username, screen.x, screen.y - (rr*1.2)); ctx.fillText(username, screen.x, screen.y - (rr*1.2)); } } else if(entityRef && entityRef.name){ ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.fillStyle = '#fff'; ctx.strokeText(entityRef.name, screen.x, screen.y - (rr*1.2)); ctx.fillText(entityRef.name, screen.x, screen.y - (rr*1.2)); } ctx.restore(); }
 function drawFood(f){ const t = performance.now()/600 + f.wobble; const wig = Math.sin(t)*2; drawFish(f.x, f.y + wig, f.size, Math.sin(t)*0.6 + Math.PI/6, {color:f.color, eye:'#222'}, f); }
 function drawEnemy(e){ drawFish(e.x, e.y, e.size, e.angle, {color:e.color, eye:'#000'}, e); }
 function drawBubble(b){ const s = worldToScreen(b.x,b.y); ctx.beginPath(); ctx.arc(s.x, s.y, b.r * camera.scale, 0, Math.PI*2); ctx.fillStyle = `rgba(255,255,255,${b.alpha})`; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${Math.min(0.4,b.alpha)})`; ctx.stroke(); }
 function shade(hex,percent){ const c = hex.replace('#',''); const num = parseInt(c,16); let r=(num>>16)+Math.round(255*percent/100); let g=((num>>8)&0x00FF)+Math.round(255*percent/100); let b=(num&0x0000FF)+Math.round(255*percent/100); r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b)); return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1); }
 
-function renderBackground(){ // full-viewport gradient only (removed lines/waves per request)
-  const w = canvas.width/DPR, h = canvas.height/DPR;
-  const g = ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,getComputedStyle(document.documentElement).getPropertyValue('--bg-top').trim()||'#7ee8fa'); g.addColorStop(1,getComputedStyle(document.documentElement).getPropertyValue('--bg-bottom').trim()||'#0b2f55'); ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
-}
+function renderBackground(){ const w = canvas.width/DPR, h = canvas.height/DPR; const g = ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,getComputedStyle(document.documentElement).getPropertyValue('--bg-top').trim()||'#7ee8fa'); g.addColorStop(1,getComputedStyle(document.documentElement).getPropertyValue('--bg-bottom').trim()||'#0b2f55'); ctx.fillStyle = g; ctx.fillRect(0,0,w,h); }
 
 function render(){ clear(); renderBackground(); updateCamera(16);
-  // draw world objects
   for(const f of foods) drawFood(f);
   for(const e of enemies) drawEnemy(e);
   for(const b of bubbles) drawBubble(b);
-  // always draw player so corpse is visible where you died; movement is frozen when dead
   drawFish(player.x, player.y, player.size, player.angle, {color:player.color, eye:player.eyeColor}, player);
 }
 
 // ---------- death animation & sequences ----------
-function deathSequence(){ const startSize = player.size; const dur = 1200; const t0 = performance.now(); function anim(){ const t = performance.now() - t0; const p = Math.min(1, t/dur); // animate size down but DO NOT move player coordinates
-    player.size = startSize * (1 - p);
-    clear(); render(); ctx.save(); ctx.globalAlpha = p*0.9; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.restore(); if(p<1) requestAnimationFrame(anim); else { // show menu but do NOT pause world (camera frozen at death coords)
-      document.getElementById('overlay').classList.remove('hidden'); document.getElementById('homeInfo').innerHTML = `<h3>You Died</h3><p>Score: ${player.score} — press Start to reset.</p>`; document.getElementById('shopPanel').classList.add('hidden'); } } requestAnimationFrame(anim); }
+function deathSequence(){ const startSize = player.size; const dur = 1200; const t0 = performance.now(); function anim(){ const t = performance.now() - t0; const p = Math.min(1, t/dur); player.size = startSize * (1 - p); clear(); render(); ctx.save(); ctx.globalAlpha = p*0.9; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.restore(); if(p<1) requestAnimationFrame(anim); else { const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.remove('hidden'); const hi = document.getElementById('homeInfo'); if(hi) hi.innerHTML = `<h3>You Died</h3><p>Score: ${player.score} — press Start to reset.</p>`; const shopPanel = document.getElementById('shopPanel'); if(shopPanel) shopPanel.classList.add('hidden'); } } requestAnimationFrame(anim); }
 
 // ---------- main loop ----------
-function mainLoop(now){ if(!running) return; const dt = Math.min(60, now - lastTime); update(dt); render(); lastTime = now; fpsTimer += dt; fpsCounter++; if(fpsTimer >= 500){ ui.fpsEl.textContent = Math.round(fpsCounter / (fpsTimer/1000)); fpsTimer = 0; fpsCounter = 0; } requestAnimationFrame(mainLoop); }
+function mainLoop(now){ if(!running) return; const dt = Math.min(60, now - lastTime); update(dt); render(); lastTime = now; fpsTimer += dt; fpsCounter++; if(fpsTimer >= 500){ if(ui.fpsEl) ui.fpsEl.textContent = Math.round(fpsCounter / (fpsTimer/1000)); fpsTimer = 0; fpsCounter = 0; } requestAnimationFrame(mainLoop); }
 
-// ---------- UI actions & spawn/reset ----------
-document.getElementById('startOfflineBtn').addEventListener('click', ()=>{ startGame(false); });
-document.getElementById('startOnlineBtn').addEventListener('click', ()=>{ startGame(true); });
-document.getElementById('fbSetupBtn').addEventListener('click', ()=>{ ensureFirebaseConnected().then(ok=>{ if(ok) showToast('Firebase connected'); else showToast('Failed to connect to Firebase'); }); });
-document.getElementById('infoBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.remove('hidden'); document.getElementById('shopPanel').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.add('hidden'); });
-document.getElementById('shopBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('shopPanel').classList.remove('hidden'); renderShop(document.getElementById('shopSearch').value||'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); });
-document.getElementById('leaderboardBtn').addEventListener('click', ()=>{ document.getElementById('homeInfo').classList.add('hidden'); document.getElementById('leaderboardPanel').classList.remove('hidden'); rebuildLeaderboards(); });
+// ---------- Room helpers ----------
+function generateRoomCode(){ const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let out=''; for(let i=0;i<6;i++) out += chars.charAt(Math.floor(Math.random()*chars.length)); return out; }
+
+const generateRoomBtn = document.getElementById('generateRoomBtn'); if(generateRoomBtn) generateRoomBtn.addEventListener('click', ()=>{ const roomInput = document.getElementById('roomCodeInput'); if(roomInput) roomInput.value = generateRoomCode(); });
+
+function createRoom(code, friendsOnly){
+  if(!firebaseConnected || !firebaseDB || !firebaseUid){
+    showToast('Connect to Firebase first to create a room.');
+    return Promise.resolve(false);
+  }
+  const ref = firebaseDB.ref('/rooms/' + code);
+  return ref.once('value').then(snap=>{
+    if(snap.exists()){
+      showToast('Room code already exists, generate another.');
+      return false;
+    }
+    const center = { x: player.x, y: player.y };
+    return ref.set({ owner: firebaseUid, created: Date.now(), friendsOnly: !!friendsOnly, center }).then(()=>{
+      showToast('Room created: ' + code, 2200);
+      currentRoom = { code, friendsOnly: !!friendsOnly, owner: firebaseUid, center };
+      allowBots = !currentRoom.friendsOnly;
+      uploadPlayerState();
+      return true;
+    }).catch(err=>{
+      console.error('createRoom failed', err);
+      showToast('Could not create room: ' + (err && err.message ? err.message : 'unknown'));
+      return false;
+    });
+  }).catch(err=>{
+    console.error('createRoom check failed', err);
+    showToast('Could not check room: ' + (err && err.message ? err.message : 'unknown'));
+    return false;
+  });
+}
+
+function joinRoom(code){
+  if(!firebaseConnected || !firebaseDB || !firebaseUid){
+    showToast('Connect to Firebase first to join a room.');
+    return Promise.resolve(false);
+  }
+  const ref = firebaseDB.ref('/rooms/' + code);
+  return ref.once('value').then(snap=>{
+    if(!snap.exists()){
+      showToast('Room not found: ' + code, 2200);
+      return false;
+    }
+    const obj = snap.val();
+    currentRoom = { code, friendsOnly: !!obj.friendsOnly, owner: obj.owner||null, center: obj.center || null };
+    allowBots = !currentRoom.friendsOnly;
+    if(currentRoom.center && typeof currentRoom.center.x === 'number'){
+      player.x = currentRoom.center.x + (Math.random()-0.5)*180;
+      player.y = currentRoom.center.y + (Math.random()-0.5)*180;
+    } else {
+      setRandomSpawn();
+    }
+    uploadPlayerState();
+    showToast('Joined room: ' + code, 1800);
+    return true;
+  }).catch(err=>{
+    console.error('joinRoom failed', err);
+    showToast('Could not join room: ' + (err && err.message ? err.message : 'unknown'));
+    return false;
+  });
+}
+
+const createRoomBtn = document.getElementById('createRoomBtn'); if(createRoomBtn) createRoomBtn.addEventListener('click', ()=>{
+  const code = (document.getElementById('roomCodeInput').value||'').trim().toUpperCase();
+  if(!code || code.length < 3){ showToast('Enter a room code (3-6 chars) or generate one.'); return; }
+  const friendsOnly = !!document.getElementById('friendsOnlyCheckbox').checked;
+  ensureFirebaseConnected().then(ok=>{
+    if(ok) createRoom(code, friendsOnly).then(ok2=>{ if(ok2) { const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.add('hidden'); setRunning(true); } });
+  });
+});
+const joinRoomBtn = document.getElementById('joinRoomBtn'); if(joinRoomBtn) joinRoomBtn.addEventListener('click', ()=>{
+  const code = (document.getElementById('roomCodeInput').value||'').trim().toUpperCase();
+  if(!code){ showToast('Enter a room code to join.'); return; }
+  ensureFirebaseConnected().then(ok=>{
+    if(ok) joinRoom(code).then(ok2=>{ if(ok2){ const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.add('hidden'); setRunning(true); } });
+  });
+});
+
+// ---------- UI actions & spawn/reset (start buttons) ----------
+const startOfflineBtn = document.getElementById('startOfflineBtn'); if(startOfflineBtn) startOfflineBtn.addEventListener('click', ()=>{ startGame(false); });
+const startOnlineBtn = document.getElementById('startOnlineBtn'); if(startOnlineBtn) startOnlineBtn.addEventListener('click', ()=>{ startGame(true); });
+const fbSetupBtn = document.getElementById('fbSetupBtn'); if(fbSetupBtn) fbSetupBtn.addEventListener('click', ()=>{ ensureFirebaseConnected().then(ok=>{ if(ok) showToast('Firebase connected'); else showToast('Failed to connect to Firebase'); }); });
+const infoBtn = document.getElementById('infoBtn'); if(infoBtn) infoBtn.addEventListener('click', ()=>{ const hi = document.getElementById('homeInfo'); if(hi) hi.classList.remove('hidden'); const shopPanel = document.getElementById('shopPanel'); if(shopPanel) shopPanel.classList.add('hidden'); const lbPanel = document.getElementById('leaderboardPanel'); if(lbPanel) lbPanel.classList.add('hidden'); });
+const shopBtn = document.getElementById('shopBtn'); if(shopBtn) shopBtn.addEventListener('click', ()=>{ const hi = document.getElementById('homeInfo'); if(hi) hi.classList.add('hidden'); const shopPanel = document.getElementById('shopPanel'); if(shopPanel) shopPanel.classList.remove('hidden'); renderShop(document.getElementById('shopSearch')?document.getElementById('shopSearch').value:'', document.getElementById('shopSort')?document.getElementById('shopSort').value:'price-asc'); });
+const leaderboardBtn = document.getElementById('leaderboardBtn'); if(leaderboardBtn) leaderboardBtn.addEventListener('click', ()=>{ const hi = document.getElementById('homeInfo'); if(hi) hi.classList.add('hidden'); const lbPanel = document.getElementById('leaderboardPanel'); if(lbPanel) lbPanel.classList.remove('hidden'); renderFullLeaderFullHistoric(); });
+
+// spectate toggle button toggles spectate-mode UI (doesn't pick a player)
+const spectateToggleBtn = document.getElementById('spectateToggleBtn'); if(spectateToggleBtn) spectateToggleBtn.addEventListener('click', ()=>{
+  spectateModeEnabled = !spectateModeEnabled;
+  if(spectateToggleBtn) spectateToggleBtn.textContent = spectateModeEnabled ? 'Spectate: ON' : 'Spectate Mode';
+  if(!spectateModeEnabled){ spectatingUid = null; showToast('Spectate mode disabled'); }
+});
+
+// helper to begin spectating a specific uid
+function spectatePlayer(uid){
+  if(!firebaseConnected){ showToast('Connect to Firebase to spectate'); return; }
+  if(uid === firebaseUid){ showToast('Cannot spectate yourself'); return; }
+  const target = onlinePlayers[uid];
+  if(!target){ showToast('Player not available to spectate'); return; }
+  if(!isSameRoomForClient(target)){ showToast('Player is not in your room / public area'); return; }
+  spectatingUid = uid;
+  spectateModeEnabled = true;
+  if(spectateToggleBtn) spectateToggleBtn.textContent = 'Spectate: ON';
+  showToast('Now spectating ' + (target.username || uid), 2200);
+}
 
 // play start helper
 function startGame(online){
-  controlMode = document.getElementById('homeControlMode').value; document.getElementById('controlMode').value = controlMode; mobileStyle = document.getElementById('mobileStyle')?document.getElementById('mobileStyle').value:'floating'; localStorage.setItem('controlMode', controlMode); localStorage.setItem('mobileStyle', mobileStyle); updateControlUI();
+  const homeControl = document.getElementById('homeControlMode'); if(homeControl) controlMode = homeControl.value; const controlModeEl = document.getElementById('controlMode'); if(controlModeEl) controlModeEl.value = controlMode; const mobileEl = document.getElementById('mobileStyle'); if(mobileEl) mobileStyle = mobileEl.value; localStorage.setItem('controlMode', controlMode); localStorage.setItem('mobileStyle', mobileStyle); updateControlUI();
   const saved = localStorage.getItem('playerName') || 'Guest'; if(!saved || saved==='Guest'){ showToast('Please set a username before starting.',2200); return; }
-  document.getElementById('overlay').classList.add('hidden'); // fully reset world and camera
-  foods=[]; enemies=[]; bubbles=[]; currents=[]; setRandomSpawn(); player.size=8 + Math.random()*8; player.hunger=100; player.score=0; player.coins=0; player.alive=true; deathHandled=false; pausedByContext=false; cameraFrozen=false; deathCameraX=0; deathCameraY=0; camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX=null; pointerY=null; keys={}; // repopulate
+  const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.add('hidden');
+  foods=[]; enemies=[]; bubbles=[]; currents=[]; setRandomSpawn(); player.size=8 + Math.random()*8; player.hunger=100; player.score=0; player.coins=0; player.alive=true; deathHandled=false; pausedByContext=false; cameraFrozen=false; deathCameraX=0; deathCameraY=0; camera.scale = 1; camera.x = player.x - (window.innerWidth/(2*camera.scale)); camera.y = player.y - (window.innerHeight/(2*camera.scale)); pointerX=null; pointerY=null; keys={};
   for(let i=0;i<120;i++) spawnFoodAround(player.x, player.y); for(let i=0;i<14;i++) spawnEnemyRelative(player.x, player.y); for(let i=0;i<100;i++) spawnBubbleAround(player.x, player.y); ensureAudioStarted(); setRunning(true);
-  // if online requested, try connect
-  if(online){
-    ensureFirebaseConnected().then(ok=>{
-      if(ok){
-        showToast('Online mode: connected to Firebase',1600);
-        // immediate upload so others see you at spawn
-        uploadPlayerState();
-        // start periodic uploads every 1.5s
-        if(firebaseUploadIntervalId) clearInterval(firebaseUploadIntervalId);
-        firebaseUploadIntervalId = setInterval(()=>{
-          uploadPlayerState();
-        }, 1500);
-        // ensure onDisconnect is registered (extra safety)
-        try{ firebaseDB.ref('/players/'+firebaseUid).onDisconnect().remove(); }catch(e){}
-      } else {
-        showToast('Could not connect to Firebase — starting offline',2600);
-        rebuildLeaderboards();
-      }
-    });
-  } else {
-    // offline mode uses local bots only
-    rebuildLeaderboards();
-  }
+  if(online){ ensureFirebaseConnected().then(ok=>{ if(ok){ showToast('Online mode: connected to Firebase',1600); uploadPlayerState(); } else { showToast('Could not connect to Firebase — starting offline',2600); } }); } else { rebuildLeaderboards(); }
 }
 
-document.getElementById('btnLeave').addEventListener('click', ()=>{ setRunning(false); document.getElementById('overlay').classList.remove('hidden'); removePlayerOnLeave(); });
+const btnLeave = document.getElementById('btnLeave'); if(btnLeave) btnLeave.addEventListener('click', ()=>{ currentRoom = { code: null, friendsOnly:false, owner:null, center:null }; allowBots = true; if(firebaseConnected && firebaseDB && firebaseUid){ try{ firebaseDB.ref('/players/' + firebaseUid + '/room').set(null); }catch(e){} } setRunning(false); const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.remove('hidden'); });
 
-document.getElementById('btnPause').addEventListener('click', ()=>{ setRunning(!running); });
+const btnPause = document.getElementById('btnPause'); if(btnPause) btnPause.addEventListener('click', ()=>{ if(firebaseConnected && currentRoom.code){ showToast('Pausing disabled in online rooms. Use Exit to leave.'); return; } setRunning(!running); });
 
 // start paused on home
 document.getElementById('overlay').classList.remove('hidden'); setRunning(false);
@@ -852,7 +948,7 @@ document.getElementById('overlay').classList.remove('hidden'); setRunning(false)
 (function initShopInputs(){ const search = document.getElementById('shopSearch'); const sort = document.getElementById('shopSort'); if(search) search.addEventListener('input', e=>renderShop(e.target.value, sort?sort.value:'price-asc')); if(sort) sort.addEventListener('change', e=>renderShop(search?search.value:'', e.target.value)); })();
 
 // restore saved username display
-const savedName = localStorage.getItem('playerName'); if(savedName){ ui.usernameDisplay.textContent = savedName; if(usernameInput) usernameInput.value = savedName; }
+const savedName = localStorage.getItem('playerName'); if(savedName && ui.usernameDisplay){ ui.usernameDisplay.textContent = savedName; if(usernameInput) usernameInput.value = savedName; }
 
 // hide mobile option on non-touch by default (unless testing allowed)
 updateMobileOptionVisibility();
@@ -866,7 +962,7 @@ window.runTests = function(){
 };
 
 // expose debug
-window.__game = {player, foods, enemies, bubbles, localBots, onlinePlayers, remotePlayers};
+window.__game = {player, foods, enemies, bubbles, onlinePlayers, remotePlayers, currentRoom};
 
 // initial mini leaderboard render
 rebuildLeaderboards();
