@@ -785,7 +785,7 @@
     }
   }
 
-  // ===== Input (REPLACEMENT - intuitive drag/hold/zoom/click-forward) =====
+// ===== Input (REPLACEMENT - no zoom, smoother drag/turn, better tap logic) =====
 
 /* Keyboard (unchanged) */
 window.addEventListener('keydown', (e) => {
@@ -804,12 +804,7 @@ window.addEventListener('keydown', (e) => {
   if (k === 'arrowleft' || k === 'a') move(3);
 });
 
-/* Pointer (mouse + touch) - improved intuitive behavior:
-   - change direction while holding and dragging (no release required)
-   - drag further to zoom (CSS scale on canvas)
-   - click/tap near center -> move in that direction
-   - multi-square drag with repeated moves
-*/
+/* Pointer (mouse + touch) - intuitive turning without zoom, improved dragging/tap rules */
 
 let _ptr = {
   down: false,
@@ -819,15 +814,14 @@ let _ptr = {
   holdTimeoutId: null,
   repeatIntervalId: null,
   dragRepeatIntervalId: null,
-  // thresholds & timings
-  initialTapThreshold: 12,   // px: considered a tap if total move < this
-  dragThreshold: 20,         // px: initial drag threshold
-  stepDragPixels: 40,        // px moved since last step to fire another move
-  holdMs: 2000,              // ms to start hold auto-repeat (kept for compatibility)
-  repeatMs: 150,             // ms between auto-steps when repeating
-  zoomThreshold: 150,        // px drag distance to start zooming
-  maxZoom: 1.6,              // maximum scale
-  baseScale: 1.0
+  movedDuringDown: false,
+  lastDragAt: 0, // timestamp of last drag end to ignore immediate clicks
+  // thresholds & timings (tweak these if you want it more/less sensitive)
+  initialTapThreshold: 10,   // px: considered a tap if total move < this
+  dragThreshold: 12,         // px: initial drag threshold to start "drag mode"
+  stepDragPixels: 32,        // px moved since last step to fire another move
+  holdMs: 1200,              // ms to start hold auto-repeat (kept for compatibility)
+  repeatMs: 120              // ms between auto-steps when repeating
 };
 
 function _getCanvasPosFromEvent(e) {
@@ -840,7 +834,6 @@ function _getCanvasPosFromEvent(e) {
 // map angle -> dir: 0=up,1=right,2=down,3=left
 function _angleToDir(angleRad) {
   const deg = angleRad * 180 / Math.PI;
-  // angle from x-axis: -180..180
   if (deg >= -45 && deg <= 45) return 1;           // right
   if (deg > 45 && deg < 135) return 2;             // down
   if (deg >= 135 || deg <= -135) return 3;         // left
@@ -858,23 +851,6 @@ function _clearTimers() {
   _ptr.lastDir = null;
 }
 
-function _applyZoomForDistance(dist) {
-  // dist: distance from start point
-  const t = Math.max(0, dist - _ptr.zoomThreshold);
-  const range = 300; // px over which zoom ramps up to max
-  const factor = Math.min(1, t / range);
-  const scale = _ptr.baseScale + ( _ptr.maxZoom - _ptr.baseScale ) * factor;
-  // apply transform smoothly
-  gameCanvas.style.transition = 'transform 180ms ease-out';
-  gameCanvas.style.transformOrigin = '50% 50%';
-  gameCanvas.style.transform = `scale(${scale})`;
-}
-
-function _resetZoom() {
-  gameCanvas.style.transition = 'transform 220ms ease-out';
-  gameCanvas.style.transform = `scale(${_ptr.baseScale})`;
-}
-
 function _startAutoRepeat(dir) {
   _clearTimers();
   move(dir);
@@ -887,8 +863,9 @@ function _startPointer(x, y) {
   _ptr.startX = x; _ptr.startY = y;
   _ptr.lastX = x; _ptr.lastY = y;
   _ptr.lastDir = null;
+  _ptr.movedDuringDown = false;
 
-  // hold-to-repeat (legacy): if user holds without moving much, start auto-repeat in direction from center to start
+  // hold-to-repeat (if user just presses and holds) - direction chosen relative to canvas center
   _ptr.holdTimeoutId = setTimeout(() => {
     const r = gameCanvas.getBoundingClientRect();
     const cx = r.width / 2, cy = r.height / 2;
@@ -904,36 +881,42 @@ function _updatePointer(x, y) {
   const dxTotal = x - _ptr.startX, dyTotal = y - _ptr.startY;
   const distTotal = Math.hypot(dxTotal, dyTotal);
 
-  // zoom behavior when dragging far
-  if (distTotal >= _ptr.zoomThreshold) {
-    _applyZoomForDistance(distTotal);
-  } else {
-    // if we had zoomed previously and moved back inside threshold, reset
-    _resetZoom();
-  }
-
   // continuous turning: compute direction from overall delta (start -> current)
-  if (Math.hypot(dxTotal, dyTotal) >= _ptr.dragThreshold) {
+  // use a small threshold so you can nudge/turn without big movements
+  if (distTotal >= _ptr.dragThreshold) {
+    // we've moved enough to be considered dragging
+    _ptr.movedDuringDown = true;
     if (_ptr.holdTimeoutId) { clearTimeout(_ptr.holdTimeoutId); _ptr.holdTimeoutId = null; }
+
     const dir = _determineDirFromDelta(dxTotal, dyTotal);
-    // if dir changed from lastDir, immediately move/turn
     if (dir !== _ptr.lastDir) {
+      // immediate turn/move when direction changes
       move(dir);
       _ptr.lastDir = dir;
-      // clear any dragging repeat and start new small repeat for smooth multi-step dragging in same direction
+
+      // restart a small repeating interval to make continuous drag movement feel smooth
       if (_ptr.dragRepeatIntervalId) { clearInterval(_ptr.dragRepeatIntervalId); _ptr.dragRepeatIntervalId = null; }
       _ptr.dragRepeatIntervalId = setInterval(() => {
-        // continue moving while still in drag and same overall direction
         if (_ptr.down) move(dir);
       }, _ptr.repeatMs);
-      // update lastX/lastY to current so quick further drags also register additional moves
+
+      // reset lastX/lastY so further dragging triggers step-based moves
       _ptr.lastX = x; _ptr.lastY = y;
     } else {
-      // if same direction, but user moved far since lastX/lastY we can optionally trigger extra moves
+      // same direction: if we've dragged further since lastX/lastY, fire another step
       const dxSince = x - _ptr.lastX, dySince = y - _ptr.lastY;
       if (Math.max(Math.abs(dxSince), Math.abs(dySince)) >= _ptr.stepDragPixels) {
         move(dir);
         _ptr.lastX = x; _ptr.lastY = y;
+      }
+    }
+  } else {
+    // not yet considered dragging: still allow subtle turning if user moves a little
+    if (distTotal >= 6) {
+      const dir = _determineDirFromDelta(dxTotal, dyTotal);
+      if (dir !== _ptr.lastDir) {
+        move(dir);
+        _ptr.lastDir = dir;
       }
     }
   }
@@ -941,23 +924,25 @@ function _updatePointer(x, y) {
 
 function _endPointer(x, y) {
   if (!_ptr.down) return;
+
+  const endX = (x !== undefined) ? x : _ptr.lastX;
+  const endY = (y !== undefined) ? y : _ptr.lastY;
+  const totalMove = Math.hypot(endX - _ptr.startX, endY - _ptr.startY);
+
   // If it was a short tap/click (didn't move much), interpret as click-forward (direction from center->tap)
-  const totalMove = Math.hypot((x || _ptr.lastX) - _ptr.startX, (y || _ptr.lastY) - _ptr.startY);
   if (totalMove < _ptr.initialTapThreshold) {
-    // compute direction relative to canvas center so clicking forward works in the intended direction
     const rect = gameCanvas.getBoundingClientRect();
     const cx = rect.width / 2, cy = rect.height / 2;
-    const clickX = (x !== undefined) ? x : _ptr.lastX;
-    const clickY = (y !== undefined) ? y : _ptr.lastY;
-    const dx = clickX - cx, dy = clickY - cy;
-    // if the click is very close to center treat it as 'forward' (up) as a fallback
+    const dx = endX - cx, dy = endY - cy;
     const dir = (Math.hypot(dx, dy) < 8) ? 0 : _determineDirFromDelta(dx, dy);
     move(dir);
   }
 
+  // mark last drag time to avoid immediate click after drag
+  if (_ptr.movedDuringDown) _ptr.lastDragAt = Date.now();
+
   _ptr.down = false;
   _clearTimers();
-  _resetZoom();
 }
 
 /* Mouse events */
@@ -993,21 +978,20 @@ gameCanvas.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 gameCanvas.addEventListener('touchend', (e) => {
-  // touchend lacks coordinates; use last known values
+  // touchend lacks coords; use last known values
   _endPointer(_ptr.lastX, _ptr.lastY);
 }, { passive: false });
 
 /* Click handler for clicking near center to move (covers simple mouse click cases) */
 gameCanvas.addEventListener('click', (e) => {
-  // If a drag happened recently, ignore the click (prevents duplicate move)
-  if (_ptr.down) return;
+  // ignore click if it happened immediately after a drag to prevent duplicate moves
+  if (Date.now() - (_ptr.lastDragAt || 0) < 350) return;
+
   const p = _getCanvasPosFromEvent(e);
   const rect = p.rect;
   const cx = rect.width / 2, cy = rect.height / 2;
   const dx = p.x - cx, dy = p.y - cy;
   const dist = Math.hypot(dx, dy);
-  // If click is too far from canvas, still respect direction calculation
-  // small clicks near center will be treated as forward if very close
   const dir = (dist < 8) ? 0 : _determineDirFromDelta(dx, dy);
   move(dir);
 });
@@ -1015,7 +999,7 @@ gameCanvas.addEventListener('click', (e) => {
 /* Prevent context menu on canvas */
 gameCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
-  //End input
+//End input
 
   // Buttons & Panels
   const overlay = $('#overlay');
