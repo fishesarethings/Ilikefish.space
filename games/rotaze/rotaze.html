@@ -785,31 +785,185 @@
     }
   }
 
-  // ===== Input =====
-  window.addEventListener('keydown', (e)=>{
-    const k=e.key.toLowerCase();
-    if(k==='escape'){ // toggle menu
-      if(document.getElementById('panelMenu').classList.contains('show')){ closeAll(); }
-      else openMenu(state.run);
-      return;
-    }
-    if(k==='r') { // restart current level
-      restartLevel(); return;
-    }
-    if(k==='arrowup'||k==='w') move(0);
-    if(k==='arrowright'||k==='d') move(1);
-    if(k==='arrowdown'||k==='s') move(2);
-    if(k==='arrowleft'||k==='a') move(3);
-  });
+  // ===== Input (REPLACEMENT - bare-minimum changes, adds mouse/touch hold & drag repeat) =====
 
-  // Touch drag / mouse drag directions
-  let dragStart=null; function startDrag(x,y){ if(state.mapExpanded) return; dragStart={x,y}; }
-  function endDrag(x,y){ if(!dragStart) return; const dx=x-dragStart.x, dy=y-dragStart.y; const ax=Math.abs(dx), ay=Math.abs(dy); if(Math.max(ax,ay)<20){ dragStart=null; return; } if(ax>ay){ move(dx>0?1:3); } else { move(dy>0?2:0);} dragStart=null; }
-  function canvasPos(e){ const r=gameCanvas.getBoundingClientRect(); return {x:(e.clientX||e.touches?.[0].clientX)-r.left, y:(e.clientY||e.touches?.[0].clientY)-r.top}; }
-  gameCanvas.addEventListener('mousedown', e=> startDrag(...Object.values(canvasPos(e))));
-  window.addEventListener('mouseup', e=> endDrag(...Object.values(canvasPos(e))));
-  gameCanvas.addEventListener('touchstart', e=> {const p=canvasPos(e); startDrag(p.x,p.y)});
-  gameCanvas.addEventListener('touchend', e=> {const p=canvasPos(e); endDrag(p.x||0,p.y||0)});
+/* Keyboard */
+window.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'escape') { // toggle menu
+    if (document.getElementById('panelMenu').classList.contains('show')) { closeAll(); }
+    else openMenu(state.run);
+    return;
+  }
+  if (k === 'r') { // restart current level
+    restartLevel(); return;
+  }
+  if (k === 'arrowup' || k === 'w') move(0);
+  if (k === 'arrowright' || k === 'd') move(1);
+  if (k === 'arrowdown' || k === 's') move(2);
+  if (k === 'arrowleft' || k === 'a') move(3);
+});
+
+/* Pointer (mouse + touch) drag/hold with continuous movement
+   Behavior:
+   - Short drag: immediate single move in detected cardinal direction.
+   - Drag repeatedly across canvas: each time you drag past a small pixel threshold a new move fires
+     (so you can drag across multiple squares).
+   - Click/touch-and-hold (no large drag): after 2000ms starts automatic repeating moves in that direction.
+   - Works for mouse and touch. Minimal, self-contained; uses existing `move(dir)` calls.
+*/
+
+let _ptr = {
+  down: false,
+  startX: 0, startY: 0,
+  lastX: 0, lastY: 0,
+  lastMoveDir: null,
+  holdTimeoutId: null,
+  repeatIntervalId: null,
+  // configurable thresholds (pixels & ms)
+  dragThreshold: 20,      // pixels required to count as a drag (initial)
+  stepDragPixels: 40,     // pixels moved before firing another move while dragging
+  holdMs: 2000,           // ms hold before auto-repeat starts
+  repeatMs: 150           // ms between auto-steps when repeating
+};
+
+function _getCanvasPosFromEvent(e) {
+  const r = gameCanvas.getBoundingClientRect();
+  // support touch and mouse
+  const cx = (e.clientX !== undefined) ? e.clientX : (e.touches && e.touches[0] && e.touches[0].clientX);
+  const cy = (e.clientY !== undefined) ? e.clientY : (e.touches && e.touches[0] && e.touches[0].clientY);
+  return { x: (cx || 0) - r.left, y: (cy || 0) - r.top, rect: r };
+}
+
+function _determineDirFromDelta(dx, dy) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (ax >= ay) return dx > 0 ? 1 : 3; // right : left
+  return dy > 0 ? 2 : 0; // down : up
+}
+
+function _clearPointerTimers() {
+  if (_ptr.holdTimeoutId) { clearTimeout(_ptr.holdTimeoutId); _ptr.holdTimeoutId = null; }
+  if (_ptr.repeatIntervalId) { clearInterval(_ptr.repeatIntervalId); _ptr.repeatIntervalId = null; }
+  _ptr.lastMoveDir = null;
+}
+
+function _startAutoRepeat(dir) {
+  // start repeating the same direction every repeatMs
+  _clearPointerTimers();
+  // immediate move (useful if hold just finished)
+  move(dir);
+  _ptr.repeatIntervalId = setInterval(() => {
+    move(dir);
+  }, _ptr.repeatMs);
+}
+
+function _startPointer(x, y) {
+  if (state.mapExpanded) return;
+  _ptr.down = true;
+  _ptr.startX = x; _ptr.startY = y;
+  _ptr.lastX = x; _ptr.lastY = y;
+  _ptr.lastMoveDir = null;
+
+  // schedule hold-to-repeat (if user doesn't drag beyond dragThreshold)
+  _ptr.holdTimeoutId = setTimeout(() => {
+    // if user hasn't dragged significantly, determine a direction for holding
+    const r = gameCanvas.getBoundingClientRect();
+    // choose direction based on pointer start relative to canvas center
+    const cx = r.width / 2, cy = r.height / 2;
+    const dx = _ptr.startX - cx, dy = _ptr.startY - cy;
+    // if dx/dy very small (tap center), default to up
+    const dir = (Math.abs(dx) < 5 && Math.abs(dy) < 5) ? 0 : _determineDirFromDelta(dx, dy);
+    _startAutoRepeat(dir);
+  }, _ptr.holdMs);
+}
+
+function _updatePointer(x, y) {
+  if (!_ptr.down || state.mapExpanded) return;
+  const dxTotal = x - _ptr.startX, dyTotal = y - _ptr.startY;
+  const ax = Math.abs(dxTotal), ay = Math.abs(dyTotal);
+
+  // If we've crossed the initial drag threshold -> treat as drag (cancel hold timer)
+  if (Math.max(ax, ay) >= _ptr.dragThreshold) {
+    if (_ptr.holdTimeoutId) { clearTimeout(_ptr.holdTimeoutId); _ptr.holdTimeoutId = null; }
+    // Determine direction from movement since last registered move position
+    const dxSince = x - _ptr.lastX, dySince = y - _ptr.lastY;
+    const axSince = Math.abs(dxSince), aySince = Math.abs(dySince);
+    if (Math.max(axSince, aySince) >= _ptr.stepDragPixels) {
+      const dir = _determineDirFromDelta(dxSince, dySince);
+      // Avoid flooding same direction too rapidly: only trigger when direction changed or enough pixels moved
+      move(dir);
+      _ptr.lastMoveDir = dir;
+      _ptr.lastX = x; _ptr.lastY = y;
+      // Start a short repeating interval while still dragging in the same direction (gives smooth continuous dragging)
+      if (_ptr.repeatIntervalId) { clearInterval(_ptr.repeatIntervalId); _ptr.repeatIntervalId = null; }
+      _ptr.repeatIntervalId = setInterval(() => {
+        // keep moving in the same dir while pointer still down
+        move(dir);
+      }, _ptr.repeatMs);
+    }
+  }
+}
+
+function _endPointer() {
+  if (!_ptr.down) return;
+  _ptr.down = false;
+  _clearPointerTimers();
+}
+
+// Helper for single quick drags (when user releases after moving a short amount)
+function _handleQuickRelease(x, y) {
+  const dx = x - _ptr.startX, dy = y - _ptr.startY;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) >= _ptr.dragThreshold) {
+    const dir = _determineDirFromDelta(dx, dy);
+    move(dir);
+  }
+}
+
+/* Mouse events */
+gameCanvas.addEventListener('mousedown', (e) => {
+  const p = _getCanvasPosFromEvent(e);
+  _startPointer(p.x, p.y);
+  // start listening to mousemove on window to track dragging outside canvas
+  function _onMouseMove(ev) {
+    const q = _getCanvasPosFromEvent(ev);
+    _updatePointer(q.x, q.y);
+  }
+  function _onMouseUp(ev) {
+    const q = _getCanvasPosFromEvent(ev);
+    // if we never crossed big drag threshold, allow quick release single move
+    _handleQuickRelease(q.x, q.y);
+    _endPointer();
+    window.removeEventListener('mousemove', _onMouseMove);
+    window.removeEventListener('mouseup', _onMouseUp);
+  }
+  window.addEventListener('mousemove', _onMouseMove);
+  window.addEventListener('mouseup', _onMouseUp, { once: true });
+});
+
+/* Touch events (mobile) */
+gameCanvas.addEventListener('touchstart', (e) => {
+  // prevent page scroll while interacting with the game canvas
+  e.preventDefault();
+  const p = _getCanvasPosFromEvent(e);
+  _startPointer(p.x, p.y);
+}, { passive: false });
+
+gameCanvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  const p = _getCanvasPosFromEvent(e);
+  _updatePointer(p.x, p.y);
+}, { passive: false });
+
+gameCanvas.addEventListener('touchend', (e) => {
+  // touchend doesn't have coordinates reliably; use last known lastX/lastY
+  // allow quick release single move if it was a short drag
+  _handleQuickRelease(_ptr.lastX, _ptr.lastY);
+  _endPointer();
+}, { passive: false });
+
+/* Prevent mouse context menu if desired (optional, minimal change) */
+gameCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
 
   // Buttons & Panels
   const overlay = $('#overlay');
