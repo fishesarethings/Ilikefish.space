@@ -787,21 +787,46 @@
 
 // ===== Input (REPLACEMENT - no zoom, smoother drag/turn, better tap logic) =====
 
-/* Keyboard (unchanged) */
+// ===== Keyboard (FULL replacement) =====
 window.addEventListener('keydown', (e) => {
-  const k = e.key.toLowerCase();
+  // ignore while typing in inputs/contenteditable
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+
+  const k = (e.key || '').toLowerCase();
+
+  // Helper fallback to toggle a minimap element if no function exists
+  function _fallbackToggleMinimap() {
+    const mm = document.getElementById('minimap')
+            || document.getElementById('panelMinimap')
+            || document.getElementById('panelMap');
+    if (mm) mm.classList.toggle('show');
+  }
+
   if (k === 'escape') { // toggle menu
-    if (document.getElementById('panelMenu').classList.contains('show')) { closeAll(); }
+    const panel = document.getElementById('panelMenu');
+    if (panel && panel.classList.contains('show')) { closeAll(); }
     else openMenu(state.run);
     return;
   }
+
   if (k === 'r') { // restart current level
-    restartLevel(); return;
+    restartLevel();
+    return;
   }
-  if (k === 'arrowup' || k === 'w') move(0);
-  if (k === 'arrowright' || k === 'd') move(1);
-  if (k === 'arrowdown' || k === 's') move(2);
-  if (k === 'arrowleft' || k === 'a') move(3);
+
+  if (k === 'm') { // toggle minimap (uses toggleMinimap() if present, falls back to element toggle)
+    e.preventDefault?.();
+    if (typeof toggleMinimap === 'function') toggleMinimap();
+    else _fallbackToggleMinimap();
+    return;
+  }
+
+  // Movement keys — prevent default so arrow keys don't scroll the page
+  if (k === 'arrowup' || k === 'w') { e.preventDefault?.(); move(0); return; }
+  if (k === 'arrowright' || k === 'd') { e.preventDefault?.(); move(1); return; }
+  if (k === 'arrowdown' || k === 's') { e.preventDefault?.(); move(2); return; }
+  if (k === 'arrowleft' || k === 'a') { e.preventDefault?.(); move(3); return; }
 });
 
 /* Pointer (mouse + touch) - intuitive turning without zoom, improved dragging/tap rules */
