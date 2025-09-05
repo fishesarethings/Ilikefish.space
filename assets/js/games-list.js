@@ -53,7 +53,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (feat) {
     for (const game of featuredGames) {
       console.log('[games-list] rendering featured:', game.name);
-      feat.append(renderGameCard(game, true)); // true = cloneable
+      feat.append(renderGameCard(game));
     }
   } else {
     console.warn('[games-list] featured-games container not found');
@@ -61,7 +61,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Render all games to home + games.html
   for (const game of allGames) {
-    const card = renderGameCard(game, false);
+    const card = renderGameCard(game);
 
     // All on home
     const allHome = document.getElementById('all-games');
@@ -77,28 +77,27 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function renderGameCard(game, forFeatured) {
+function renderGameCard(game) {
   if (!game.folder || !game.icon || !game.entry || !game.name) {
     console.error('[games-list] ❌ invalid config.json missing required fields:', game);
     return document.createTextNode('');
   }
 
-  const card = document.createElement('div');
-  card.className = 'game-card';
-  
-  // Create anchor tag to wrap the image and button for the "Play" action
-  const playLink = document.createElement('a');
-  playLink.href = `/games/${game.folder}/${game.entry}`;
-  playLink.target = '_blank'; // Open in a new tab
+  // Wrap whole card in <a> so search engines see it as a link
+  const link = document.createElement('a');
+  link.href = `/games/${game.folder}/${game.entry}`;
+  link.target = '_blank'; // open in new tab
+  link.className = 'game-card';
+  link.style.textDecoration = 'none'; // remove underline
+  link.style.color = 'inherit'; // inherit text color
 
-  playLink.innerHTML = `
+  link.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button>Play</button>
+      <button type="button">Play</button>
     </div>
   `;
 
-  card.append(playLink);
-  return card;
+  return link;
 }
