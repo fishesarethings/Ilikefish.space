@@ -1,0 +1,161 @@
+name: Generate Sitemap (safe)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-sitemap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate sitemap.xml and ensure robots.txt
+        env:
+          BASE_URL: "https://ilikefish.space"
+        run: |
+          set -euo pipefail
+
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+
+          const BASE = process.env.BASE_URL || 'https://ilikefish.space';
+          const staticPages = ['/', '/games.html', '/gamepack.html', '/terms.html'];
+
+          const xmlEscape = s => String(s)
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/\"/g,'&quot;')
+            .replace(/'/g,'&apos;');
+
+          const urls = [];
+
+          // Add static pages
+          for (const p of staticPages) {
+            urls.push({ loc: BASE + p, changefreq: 'weekly', priority: '0.8' });
+          }
+
+          // Read games/index.json if exists
+          const indexPath = path.join(process.cwd(), 'games', 'index.json');
+          let index = null;
+          if (fs.existsSync(indexPath)) {
+            try {
+              index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
+            } catch (e) {
+              console.error('Warning: games/index.json parse failed:', e.message);
+              index = null;
+            }
+          }
+
+          if (index && Array.isArray(index.folders)) {
+            for (const slug of index.folders) {
+              try {
+                const cfgPath = path.join('games', slug, 'config.json');
+                if (fs.existsSync(cfgPath)) {
+                  const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+                  // prefer explicit entry path if provided, else fall back to folder root
+                  let entry = cfg.entry && String(cfg.entry).trim() ? String(cfg.entry).trim() : '';
+                  // Normalize entry path
+                  if (entry) {
+                    // remove leading slashes
+                    entry = entry.replace(/^\\/+/, '');
+                    urls.push({
+                      loc: BASE + '/games/' + slug + '/' + entry,
+                      changefreq: 'monthly',
+                      priority: '0.7'
+                    });
+                  } else {
+                    urls.push({
+                      loc: BASE + '/games/' + slug + '/',
+                      changefreq: 'monthly',
+                      priority: '0.6'
+                    });
+                  }
+                } else {
+                  // no config.json — still add folder root
+                  urls.push({
+                    loc: BASE + '/games/' + slug + '/',
+                    changefreq: 'monthly',
+                    priority: '0.5'
+                  });
+                }
+              } catch (err) {
+                console.error('Warning: failed to handle game', slug, err && err.message);
+              }
+            }
+          }
+
+          // Create XML
+          const now = new Date().toISOString();
+          const header = '<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n' +
+            '<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\\n';
+          const footer = '</urlset>\\n';
+          const body = urls.map(u => {
+            return '  <url>\\n' +
+                   '    <loc>' + xmlEscape(u.loc) + '</loc>\\n' +
+                   '    <lastmod>' + now + '</lastmod>\\n' +
+                   '    <changefreq>' + u.changefreq + '</changefreq>\\n' +
+                   '    <priority>' + u.priority + '</priority>\\n' +
+                   '  </url>';
+          }).join('\\n');
+          const xml = header + body + '\\n' + footer;
+
+          fs.writeFileSync('sitemap.xml', xml, 'utf8');
+          console.log('Wrote sitemap.xml with', urls.length, 'entries');
+
+          // Ensure robots.txt exists and contains a Sitemap line
+          const robotsPath = path.join(process.cwd(), 'robots.txt');
+          const sitemapLine = 'Sitemap: ' + BASE + '/sitemap.xml\\n';
+          let robotsContent = '';
+          if (fs.existsSync(robotsPath)) {
+            robotsContent = fs.readFileSync(robotsPath, 'utf8');
+            if (!robotsContent.includes('Sitemap:')) {
+              robotsContent = robotsContent.trim() + '\\n\\n' + sitemapLine;
+              fs.writeFileSync(robotsPath, robotsContent, 'utf8');
+              console.log('Updated robots.txt with Sitemap line');
+            } else {
+              console.log('robots.txt already contains Sitemap');
+            }
+          } else {
+            robotsContent = 'User-agent: *\\nAllow: /\\n\\n' + sitemapLine;
+            fs.writeFileSync(robotsPath, robotsContent, 'utf8');
+            console.log('Created robots.txt');
+          }
+          ";
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add sitemap.xml robots.txt || true
+          # exit code 0 if no staged changes, non-zero if staged changes exist
+          if git diff --cached --quiet; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit & push if changed
+        if: steps.check_changes.outputs.no_changes == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(sitemap): update sitemap.xml and robots.txt [skip ci]" || echo "nothing to commit"
+          git push origin HEAD:main
+
+      - name: Done
+        run: echo "Sitemap workflow finished."
