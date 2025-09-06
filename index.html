@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
+  
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
   <script>
@@ -28,6 +31,7 @@
   <meta property="og:title" content="ILikeFish.Space – Free Games to Play Online or Offline">
   <meta property="og:description" content="Quick, fun, and free mini-games. Play instantly in your browser, offline, or download locally to enjoy anytime.">
   <meta property="og:image" content="https://ilikefish.space/assets/img/bg-home.jpg">
+  <meta property="og:site_name" content="ILikeFish.Space">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -37,7 +41,11 @@
   <meta property="twitter:image" content="https://ilikefish.space/assets/img/bg-home.jpg">
 
   <title>I like fishes _</title>
-  <link rel="icon" href="/assets/img/ilikefishes.ico">
+  <link rel="icon" href="/assets/img/ilikefishes-500px.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/ilikefishes-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/ilikefishes-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/ilikefishes-180.png">
+  <meta name="theme-color" content="#0b0f14">
   <link rel="manifest" href="/manifest.json">
 
   <!-- Core CSS -->
@@ -59,7 +67,28 @@
   <script src="/assets/js/graphs.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
 
-  <link rel="canonical" href="https://ilikefish.space/index.html">
+  <link rel="canonical" href="https://ilikefish.space/">
+
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ILikeFish.Space",
+  "url": "https://ilikefish.space/",
+  "description": "Play free browser-based mini-games instantly, offline, or download them locally. Casual fun for everyone at ILikeFish.Space.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "fishesarethings",
+    "url": "https://ilikefish.space/"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://ilikefish.space/games.html?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
 
   <style>
     /* center modal (old style) */
@@ -241,7 +270,8 @@
     </p>
     <p>
       Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank">Unlicense</a>.<br>
+      <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
+
       © 2025 fishesarethings — No rights reserved.
       <a href="/terms.html">Terms & Conditions</a>
     </p>
