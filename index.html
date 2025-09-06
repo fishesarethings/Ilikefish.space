@@ -3,20 +3,15 @@
 <head>
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-  
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config','G-ZV53VVVSK3');
-  </script>
 
-  <!-- AdSense -->
-  <script async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
-    crossorigin="anonymous"></script>
+  <!-- Consent blocker — prevent analytics/ads from loading until user gives consent -->
+  <script>
+    // keep GA disabled until explicit consent
+    window['ga-disable-G-ZV53VVVSK3'] = true;
+    // vendor loaded flags
+    window.__ilf_vendor_loaded = window.__ilf_vendor_loaded || false;
+    window.__ilf_ads_loaded = window.__ilf_ads_loaded || false;
+  </script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -54,13 +49,13 @@
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
-  <!-- Chart.js -->
+  <!-- Chart.js (non-tracking lib) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-  <!-- Locomotive, AOS -->
+  <!-- Locomotive, AOS libraries -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
 
-  <!-- Local scripts -->
+  <!-- Local scripts (deferred) -->
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
@@ -69,26 +64,26 @@
 
   <link rel="canonical" href="https://ilikefish.space/">
 
+  <!-- Structured data: Website-level search action -->
   <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "ILikeFish.Space",
-  "url": "https://ilikefish.space/",
-  "description": "Play free browser-based mini-games instantly, offline, or download them locally. Casual fun for everyone at ILikeFish.Space.",
-  "publisher": {
-    "@type": "Organization",
-    "name": "fishesarethings",
-    "url": "https://ilikefish.space/"
-  },
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://ilikefish.space/games.html?q={search_term_string}",
-    "query-input": "required name=search_term_string"
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "ILikeFish.Space",
+    "url": "https://ilikefish.space/",
+    "description": "Play free browser-based mini-games instantly, offline, or download them locally. Casual fun for everyone at ILikeFish.Space.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "fishesarethings",
+      "url": "https://ilikefish.space/"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://ilikefish.space/games.html?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
   }
-}
-</script>
-
+  </script>
 
   <style>
     /* center modal (old style) */
@@ -273,7 +268,8 @@
       <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
 
       © 2025 fishesarethings — No rights reserved.
-      <a href="/terms.html">Terms & Conditions</a>
+      <a href="/terms.html">Terms & Conditions</a> •
+      <a href="#" id="cookie-settings-link">Cookie settings</a>
     </p>
   </footer>
 
@@ -528,6 +524,286 @@
         }
       });
     });
+  </script>
+
+  <!-- Cookie consent UI & logic (loads GA / AdSense on consent) -->
+  <style id="ilf-cookie-style">
+  /* Banner */
+  #ilf-cookie-banner {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    max-width: 920px;
+    width: calc(100% - 40px);
+    background: rgba(255,255,255,0.98);
+    box-shadow: 0 8px 30px rgba(3,22,55,0.12);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    z-index: 99999;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color: #0b0f14;
+  }
+  #ilf-cookie-banner .ilf-text { flex: 1; font-size: 14px; line-height: 1.4; }
+  #ilf-cookie-banner .ilf-text a { color: #007aff; text-decoration: none; font-weight:600; }
+  #ilf-cookie-banner .ilf-actions { display:flex; gap:10px; align-items:center; }
+
+  .ilf-btn { padding: 10px 14px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; }
+  .ilf-btn-accept { background: linear-gradient(90deg,#007aff,#0057d9); color: #fff; }
+  .ilf-btn-reject { background: transparent; border:1px solid #ddd; color:#111; }
+  .ilf-btn-manage { background:#fff; color:#111; border:1px solid #e6e6e9; }
+
+  #ilf-cookie-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:none; align-items: center; justify-content:center; z-index:100000; }
+  #ilf-cookie-modal { width: 92%; max-width: 720px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 20px 60px rgba(3,22,55,0.16); font-size:14px; }
+  #ilf-cookie-modal h3 { margin: 0 0 8px; font-size: 18px; color:#0b0f14; }
+  #ilf-cookie-modal p { margin:0 0 12px; color:#444; }
+  .ilf-preference { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid #f5f5f7; }
+  .ilf-preference:first-of-type { border-top: none; }
+  .switch { --w:46px; --h:26px; width:var(--w); height:var(--h); background:#e9ecef; border-radius:999px; position:relative; cursor:pointer; }
+  .switch .knob { position:absolute; top:3px; left:3px; width:20px; height:20px; background:#fff; border-radius:50%; box-shadow:0 2px 6px rgba(3,22,55,0.08); transition:left .18s ease; }
+  .switch.on { background:#dbeeff; }
+  .switch.on .knob { left:calc(var(--w) - 23px); }
+  #ilf-cookie-modal .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; }
+  @media (max-width:560px){
+    #ilf-cookie-banner { padding:12px; bottom:12px; }
+    .ilf-text { font-size:13px; }
+    .ilf-btn { font-size:13px; padding:9px 11px; }
+  }
+  </style>
+
+  <div id="ilf-cookie-banner" aria-live="polite">
+    <div class="ilf-text">
+      By using this site you accept our <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms & Conditions</a> and usage of data. We use necessary cookies for site functionality. We may use analytics and ads only if you consent. We do not use personalised profiling unless you enable it.
+    </div>
+    <div class="ilf-actions">
+      <button class="ilf-btn ilf-btn-reject" id="ilf-reject-all">Reject</button>
+      <button class="ilf-btn ilf-btn-manage" id="ilf-manage">Manage</button>
+      <button class="ilf-btn ilf-btn-accept" id="ilf-accept-all">Accept</button>
+    </div>
+  </div>
+
+  <div id="ilf-cookie-modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div id="ilf-cookie-modal" role="document" aria-labelledby="ilf-modal-title">
+      <h3 id="ilf-modal-title">Cookie preferences</h3>
+      <p>Choose which cookies you allow. Necessary cookies are required for the website to work.</p>
+
+      <div class="ilf-preference" data-key="necessary">
+        <div>
+          <strong>Necessary</strong>
+          <div style="color:#666;font-size:13px;">Required for basic site functionality</div>
+        </div>
+        <div style="opacity:.7">Always on</div>
+      </div>
+
+      <div class="ilf-preference" data-key="analytics">
+        <div>
+          <strong>Analytics</strong>
+          <div style="color:#666;font-size:13px;">Help us improve by collecting anonymous usage data (Google Analytics)</div>
+        </div>
+        <div>
+          <div class="switch" id="ilf-switch-analytics" role="switch" tabindex="0" aria-checked="false" aria-label="Analytics toggle">
+            <div class="knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ilf-preference" data-key="ads">
+        <div>
+          <strong>Ads</strong>
+          <div style="color:#666;font-size:13px;">Serve ads (non-personalised by default)</div>
+        </div>
+        <div>
+          <div class="switch" id="ilf-switch-ads" role="switch" tabindex="0" aria-checked="false" aria-label="Ads toggle">
+            <div class="knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="ilf-btn ilf-btn-reject" id="ilf-modal-reject">Reject All</button>
+        <button class="ilf-btn ilf-btn-manage" id="ilf-modal-save">Save preferences</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const KEY = 'ilf_cookie_consent';
+    const COOKIE_NAME = 'ilf_cookie_consent';
+    const COOKIE_EXPIRE_DAYS = 365;
+
+    function getStored() {
+      try {
+        const ls = localStorage.getItem(KEY);
+        if (ls) return JSON.parse(ls);
+        // fallback to cookie:
+        const cookie = document.cookie.split('; ').find(r => r.startsWith(COOKIE_NAME+'='));
+        if (cookie) {
+          const val = decodeURIComponent(cookie.split('=')[1] || '');
+          return JSON.parse(val);
+        }
+        return null;
+      } catch (e) { return null; }
+    }
+    function saveStored(obj) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(obj));
+        const value = encodeURIComponent(JSON.stringify(obj));
+        const expires = new Date(Date.now() + COOKIE_EXPIRE_DAYS*24*60*60*1000).toUTCString();
+        document.cookie = COOKIE_NAME + '=' + value + '; path=/; expires=' + expires + '; SameSite=Lax';
+      } catch (e) {}
+    }
+
+    function hideBanner() { document.getElementById('ilf-cookie-banner').style.display = 'none'; }
+    function showBanner() { document.getElementById('ilf-cookie-banner').style.display = 'flex'; }
+
+    function loadGtag() {
+      if (window.__ilf_vendor_loaded) return;
+      window.__ilf_vendor_loaded = true;
+      window['ga-disable-G-ZV53VVVSK3'] = false;
+      const s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3';
+      s.async = true;
+      s.onload = function() {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){window.dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-ZV53VVVSK3', { 'anonymize_ip': true });
+      };
+      document.head.appendChild(s);
+    }
+
+    function loadAdsense() {
+      if (window.__ilf_ads_loaded) return;
+      window.__ilf_ads_loaded = true;
+      const s = document.createElement('script');
+      s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881';
+      s.async = true;
+      s.setAttribute('crossorigin','anonymous');
+      s.onload = function() {
+        try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){}
+      };
+      document.head.appendChild(s);
+    }
+
+    function applyConsent(consent) {
+      if (!consent) return;
+      if (consent.analytics) loadGtag();
+      if (consent.ads) loadAdsense();
+    }
+
+    const defaultConsent = { necessary: true, analytics: false, ads: false, notice: true, ts: Date.now() };
+
+    const banner = document.getElementById('ilf-cookie-banner');
+    const modalBackdrop = document.getElementById('ilf-cookie-modal-backdrop');
+    const switchAnalytics = document.getElementById('ilf-switch-analytics');
+    const switchAds = document.getElementById('ilf-switch-ads');
+    const btnAccept = document.getElementById('ilf-accept-all');
+    const btnReject = document.getElementById('ilf-reject-all');
+    const btnManage = document.getElementById('ilf-manage');
+    const btnModalSave = document.getElementById('ilf-modal-save');
+    const btnModalReject = document.getElementById('ilf-modal-reject');
+    const cookieSettingsLink = document.getElementById('cookie-settings-link');
+
+    function setSwitch(el, on) {
+      if (!el) return;
+      if (on) { el.classList.add('on'); el.setAttribute('aria-checked','true'); }
+      else { el.classList.remove('on'); el.setAttribute('aria-checked','false'); }
+    }
+
+    function openModal() {
+      const current = getStored() || defaultConsent;
+      setSwitch(switchAnalytics, !!current.analytics);
+      setSwitch(switchAds, !!current.ads);
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('aria-hidden','false');
+      setTimeout(()=> switchAnalytics.focus(), 50);
+    }
+    function closeModal() {
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden','true');
+    }
+
+    btnAccept.addEventListener('click', () => {
+      const consent = { necessary:true, analytics:true, ads:true, notice:false, ts: Date.now() };
+      saveStored(consent);
+      applyConsent(consent);
+      hideBanner();
+    });
+
+    btnReject.addEventListener('click', () => {
+      const consent = { necessary:true, analytics:false, ads:false, notice:false, ts: Date.now() };
+      window['ga-disable-G-ZV53VVVSK3'] = true;
+      saveStored(consent);
+      hideBanner();
+    });
+
+    btnManage.addEventListener('click', openModal);
+    cookieSettingsLink && cookieSettingsLink.addEventListener('click', (e)=>{ e.preventDefault(); openModal(); });
+
+    function toggleSwitch(el) {
+      const on = !el.classList.contains('on');
+      setSwitch(el, on);
+    }
+    switchAnalytics.addEventListener('click', () => toggleSwitch(switchAnalytics));
+    switchAds.addEventListener('click', () => toggleSwitch(switchAds));
+
+    [switchAnalytics, switchAds].forEach(el=>{
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSwitch(el); }
+        else if (e.key === 'Escape') { closeModal(); }
+      });
+    });
+
+    btnModalReject.addEventListener('click', () => {
+      const consent = { necessary:true, analytics:false, ads:false, notice:false, ts: Date.now() };
+      window['ga-disable-G-ZV53VVVSK3'] = true;
+      saveStored(consent);
+      applyConsent(consent);
+      closeModal();
+      hideBanner();
+    });
+
+    btnModalSave.addEventListener('click', () => {
+      const consent = {
+        necessary: true,
+        analytics: switchAnalytics.classList.contains('on'),
+        ads: switchAds.classList.contains('on'),
+        notice: false,
+        ts: Date.now()
+      };
+      if (consent.analytics) window['ga-disable-G-ZV53VVVSK3'] = false;
+      else window['ga-disable-G-ZV53VVVSK3'] = true;
+      saveStored(consent);
+      applyConsent(consent);
+      closeModal();
+      hideBanner();
+    });
+
+    modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+    // Initialize: check stored consent
+    const stored = getStored();
+    if (stored && typeof stored === 'object') {
+      applyConsent(stored);
+      // hide banner if notice already accepted or a stored preference exists
+      if (!stored.notice) hideBanner();
+    } else {
+      // show banner
+      showBanner();
+    }
+
+    // Expose small API to change consent programmatically
+    window.ilfConsent = {
+      get: getStored,
+      save: (obj) => { saveStored(obj); applyConsent(obj); },
+      reset: () => { saveStored(defaultConsent); window['ga-disable-G-ZV53VVVSK3'] = true; }
+    };
+  })();
   </script>
 
   <!-- Init chart + update button -->
