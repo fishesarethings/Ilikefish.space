@@ -4,6 +4,18 @@
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
 
+  <!-- ==== EZOIC: Privacy + Header (insert near top of <head>, before other ad scripts) ==== -->
+<!-- Load privacy scripts first (Gatekeeper) -->
+<script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
+<script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
+
+<!-- Ezoic header script -->
+<script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
+<script>
+  window.ezstandalone = window.ezstandalone || {};
+  ezstandalone.cmd = ezstandalone.cmd || [];
+</script>
+<!-- ==== END EZOIC ==== -->
   <!-- NOTE: Google Analytics & AdSense will be injected dynamically AFTER consent.
        The script tags below use data-src and will not load automatically. -->
   <script id="gtag-placeholder" type="text/plain" data-category="analytics" data-src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
@@ -45,6 +57,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/ilikefishes-180.png">
   <meta name="theme-color" content="#0b0f14">
   <link rel="manifest" href="/manifest.json">
+
+  <!-- Structured Data (auto-updated by GitHub Actions) -->
+  <script type="application/ld+json" src="/structured-data.json"></script>
 
   <!-- Core CSS -->
   <link rel="stylesheet" href="/assets/css/styles.css">

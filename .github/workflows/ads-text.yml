@@ -1,0 +1,39 @@
+name: Update ads.txt
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # daily at 04:00 UTC
+  workflow_dispatch: # allow manual run
+
+permissions:
+  contents: write
+
+jobs:
+  update-ads-txt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch Ezoic ads.txt
+        run: |
+          curl -sL https://srv.adstxtmanager.com/19390/ilikefish.space > ezoic_ads.txt
+          echo "google.com, pub-9929753961924881, DIRECT, f08c47fec0942fa0" > ads.txt
+          echo "" >> ads.txt
+          echo "# Ezoic Ads.txt entries" >> ads.txt
+          cat ezoic_ads.txt >> ads.txt
+          rm ezoic_ads.txt
+          echo "Generated ads.txt:"
+          cat ads.txt
+
+      - name: Commit & Push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ads.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update ads.txt [skip ci]"
+            git push
+          fi
