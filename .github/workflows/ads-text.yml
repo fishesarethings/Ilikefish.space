@@ -17,7 +17,15 @@ jobs:
 
       - name: Fetch Ezoic ads.txt
         run: |
+          echo "Fetching Ezoic ads.txt..."
           curl -sL https://srv.adstxtmanager.com/19390/ilikefish.space > ezoic_ads.txt
+          echo "Fetched ads.txt:"
+          cat ezoic_ads.txt
+          # If the file is empty, exit the workflow
+          if [ ! -s ezoic_ads.txt ]; then
+            echo "Error: The fetched ads.txt is empty!"
+            exit 1
+          fi
           > ads.txt
           echo "# Ezoic Ads.txt entries" >> ads.txt
           cat ezoic_ads.txt >> ads.txt
