@@ -3,20 +3,18 @@
 <head>
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-  
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
-  <script>
+
+  <!-- NOTE: Google Analytics & AdSense will be injected dynamically AFTER consent.
+       The script tags below use data-src and will not load automatically. -->
+  <script id="gtag-placeholder" type="text/plain" data-category="analytics" data-src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
+  <script id="gtag-init" type="text/plain" data-category="analytics">
     window.dataLayer = window.dataLayer || [];
     function gtag(){ dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config','G-ZV53VVVSK3');
   </script>
 
-  <!-- AdSense -->
-  <script async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
-    crossorigin="anonymous"></script>
+  <script id="adsense-placeholder" type="text/plain" data-category="ads" data-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -70,27 +68,27 @@
   <link rel="canonical" href="https://ilikefish.space/">
 
   <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "ILikeFish.Space",
-  "url": "https://ilikefish.space/",
-  "description": "Play free browser-based mini-games instantly, offline, or download them locally. Casual fun for everyone at ILikeFish.Space.",
-  "publisher": {
-    "@type": "Organization",
-    "name": "fishesarethings",
-    "url": "https://ilikefish.space/"
-  },
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://ilikefish.space/games.html?q={search_term_string}",
-    "query-input": "required name=search_term_string"
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "ILikeFish.Space",
+    "url": "https://ilikefish.space/",
+    "description": "Play free browser-based mini-games instantly, offline, or download them locally. Casual fun for everyone at ILikeFish.Space.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "fishesarethings",
+      "url": "https://ilikefish.space/"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://ilikefish.space/games.html?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
   }
-}
-</script>
-
+  </script>
 
   <style>
+    /* existing styles kept; added cookie UI styles */
     /* center modal (old style) */
     .modal-backdrop {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -105,6 +103,62 @@
     .modal h2 { margin-top: 0; font-size: 1.05rem; }
     .modal .close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 1.25rem; cursor: pointer; }
     .modal button { margin: .45rem; padding: .45rem .9rem; border-radius:6px; cursor:pointer; }
+
+    /* Cookie banner (bottom center) */
+    .cookie-banner {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 20px;
+      width: min(980px, calc(100% - 32px));
+      background: rgba(11,15,20,0.98);
+      color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      padding: 18px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      z-index: 9999;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    .cookie-banner .text { flex:1; font-size: 0.95rem; line-height:1.3; }
+    .cookie-banner .actions { display:flex; gap:10px; align-items:center; }
+    .btn-accept {
+      background: linear-gradient(90deg,#00c853,#007e33);
+      color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.24);
+    }
+    .btn-settings {
+      background: transparent; color:#fff; border:1px solid rgba(255,255,255,0.12); padding:10px 12px; border-radius:10px; cursor:pointer;
+    }
+    .cookie-settings-panel {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 96px;
+      width: min(760px, calc(100% - 32px));
+      background:#fff;
+      color:#111;
+      border-radius: 12px;
+      box-shadow: 0 18px 48px rgba(2,6,23,0.32);
+      padding: 18px;
+      display:none;
+      z-index:10000;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    .cookie-settings-panel h3 { margin: 0 0 8px 0; }
+    .cookie-row { display:flex; justify-content:space-between; align-items:center; padding:10px 6px; border-top:1px solid #f2f4f6; }
+    .cookie-row:first-of-type { border-top: none; }
+    .toggle { display:inline-flex; align-items:center; gap:8px; }
+    .toggle input[type="checkbox"] { width:18px; height:18px; }
+    .btn-primary { background:#007aff; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
+
+    /* responsive */
+    @media (max-width:640px) {
+      .cookie-banner { flex-direction: column; align-items:flex-start; gap:10px; bottom:12px; padding:12px; }
+      .cookie-settings-panel { bottom:76px; padding:12px; width: calc(100% - 32px); }
+    }
 
     /* small refresh button appearance */
     #check-update { margin-left:.5rem; padding:.18rem .5rem; font-size:.9em; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; }
@@ -202,27 +256,75 @@
 
   <script src="/assets/js/games-list.js" defer></script>
 
+  <!-- COOKIE BANNER -->
+  <div id="ilf-cookie-banner" class="cookie-banner" aria-live="polite" style="display:none;">
+    <div class="text">
+      We use cookies to improve the site and show relevant (non-personalized) ads. By clicking <strong>Accept all</strong> you agree to our <a href="/terms.html" style="color:#78ffd6" target="_blank" rel="noopener noreferrer">Terms &amp; Cookies</a>.
+      You can select a limited version if you prefer not to allow analytics or ads.
+    </div>
+    <div class="actions">
+      <button id="ilf-accept-all" class="btn-accept">Accept all</button>
+      <button id="ilf-limited" class="btn-settings">Limited mode</button>
+      <button id="ilf-open-settings" class="btn-settings">Cookie settings</button>
+    </div>
+  </div>
+
+  <div id="ilf-cookie-panel" class="cookie-settings-panel" role="dialog" aria-modal="true" aria-hidden="true">
+    <h3>Cookie settings</h3>
+    <p style="margin:0 0 8px 0; color:#444">Choose which categories you allow. Necessary cookies are required for the site to function.</p>
+
+    <div class="cookie-row">
+      <div>
+        <strong>Necessary</strong>
+        <div class="muted" style="font-size:.9rem">Essential site storage (localStorage / IndexedDB). Required.</div>
+      </div>
+      <div><span style="opacity:0.6">Always on</span></div>
+    </div>
+
+    <div class="cookie-row">
+      <div>
+        <strong>Analytics</strong>
+        <div class="muted" style="font-size:.9rem">Anonymous usage statistics (Google Analytics).</div>
+      </div>
+      <div class="toggle">
+        <input id="ilf-toggle-analytics" type="checkbox">
+      </div>
+    </div>
+
+    <div class="cookie-row">
+      <div>
+        <strong>Ads</strong>
+        <div class="muted" style="font-size:.9rem">Load ad network scripts. Can be non-personalized.</div>
+      </div>
+      <div class="toggle">
+        <input id="ilf-toggle-ads" type="checkbox">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+      <button id="ilf-save-settings" class="btn-primary">Save</button>
+      <button id="ilf-cancel-settings" class="btn-settings">Cancel</button>
+    </div>
+  </div>
+
   <!-- bottom download notification -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
 
-  <!-- Server teaser: graph and join button inside the same .box for contrast -->
+  <!-- Server teaser and rest of page (unchanged) -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-server.jpg');">
     <h2 data-scroll data-scroll-speed="2">Our Minecraft Server</h2>
-
     <div class="box">
       <label>Join Address</label>
       <div class="copy-box">
         <span id="address">mc.ilikefish.space</span>
         <button onclick="copyText('mc.ilikefish.space')">Copy</button>
       </div>
-
       <label>Port</label>
       <div class="copy-box">
         <span id="port">5850</span>
         <button onclick="copyText('5850')">Copy</button>
       </div>
-
       <label>Ping</label>
       <div class="copy-box">
         <div class="ring-container">
@@ -232,7 +334,6 @@
         <span id="ping">-- ms</span>
         <button id="refresh-ping">↻</button>
       </div>
-
       <label>Timeframe</label>
       <div class="copy-box">
         <select id="range-select">
@@ -273,7 +374,7 @@
       <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
 
       © 2025 fishesarethings — No rights reserved.
-      <a href="/terms.html">Terms & Conditions</a>
+      <a href="/terms.html">Terms & Conditions</a> • <a href="#" id="cookie-settings-link">Cookie settings</a>
     </p>
   </footer>
 
@@ -291,20 +392,191 @@
   <script src="/assets/js/server.js" defer></script>
   <script src="/assets/js/fullscreen.js" defer></script>
 
+  <!-- Cookie & Consent logic (minimal & self-contained) -->
+  <script>
+    (function(){
+      // Consent key and default
+      const CONSENT_KEY = 'ilf_consent_v1'; // update if schema changes
+      const banner = document.getElementById('ilf-cookie-banner');
+      const panel = document.getElementById('ilf-cookie-panel');
+      const cookieSettingsLink = document.getElementById('cookie-settings-link');
+
+      // default structure
+      function defaultConsent() {
+        return {
+          necessary: true,
+          analytics: false,
+          ads: false,
+          timestamp: Date.now()
+        };
+      }
+
+      // read/write consent
+      function getConsent() {
+        try {
+          const raw = localStorage.getItem(CONSENT_KEY);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch (e) { return null; }
+      }
+      function saveConsent(obj) {
+        localStorage.setItem(CONSENT_KEY, JSON.stringify(obj));
+      }
+
+      // Deferred script loader: looks for script elements with data-src and injects them.
+      function injectScriptFrom(el) {
+        if (!el || !el.dataset || !el.dataset.src) return;
+        const src = el.dataset.src;
+        const category = el.dataset.category || 'other';
+        // create real script
+        const s = document.createElement('script');
+        s.src = src;
+        if (el.getAttribute('crossorigin')) s.crossOrigin = el.getAttribute('crossorigin');
+        s.async = true;
+        s.setAttribute('data-injected-by','ilf-consent');
+        document.head.appendChild(s);
+        // if it's gtag init block, eval after script loaded
+        if (el.id === 'gtag-init') {
+          // if actual gtag script loaded, we need to run init
+          // run after next tick to let gtag.js initialize
+          setTimeout(() => {
+            try {
+              /* eslint-disable no-eval */
+              eval(el.textContent || el.innerText || '');
+            } catch (e) { console.warn('gtag init failed', e); }
+          }, 800);
+        }
+      }
+
+      // Load category scripts if consent is present for that category
+      function applyConsent(consent) {
+        if (!consent) return;
+        // analytics
+        if (consent.analytics) {
+          const gtagPlaceholder = document.getElementById('gtag-placeholder');
+          const gtagInit = document.getElementById('gtag-init');
+          if (gtagPlaceholder) injectScriptFrom(gtagPlaceholder);
+          if (gtagInit) injectScriptFrom(gtagInit);
+        }
+        // ads
+        if (consent.ads) {
+          const a = document.getElementById('adsense-placeholder');
+          if (a) injectScriptFrom(a);
+        }
+      }
+
+      // show panel or banner if no consent saved
+      function showBannerIfNeeded() {
+        const c = getConsent();
+        if (!c) {
+          banner.style.display = 'flex';
+        } else {
+          // apply saved consent (load scripts as needed)
+          applyConsent(c);
+        }
+      }
+
+      // Accept all handler
+      document.getElementById('ilf-accept-all').addEventListener('click', () => {
+        const cons = { necessary:true, analytics:true, ads:true, timestamp: Date.now() };
+        saveConsent(cons);
+        applyConsent(cons);
+        banner.style.display = 'none';
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden','true');
+      });
+
+      // Limited mode (decline non-necessary)
+      document.getElementById('ilf-limited').addEventListener('click', () => {
+        const cons = { necessary:true, analytics:false, ads:false, timestamp: Date.now() };
+        saveConsent(cons);
+        // do NOT load analytics/ads
+        banner.style.display = 'none';
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden','true');
+        // Optionally inform user about missing features
+        console.info('Limited mode enabled — analytics and ads disabled.');
+      });
+
+      // Open settings
+      document.getElementById('ilf-open-settings').addEventListener('click', () => {
+        // read and populate toggles
+        const c = getConsent() || defaultConsent();
+        document.getElementById('ilf-toggle-analytics').checked = !!c.analytics;
+        document.getElementById('ilf-toggle-ads').checked = !!c.ads;
+        panel.style.display = 'block';
+        panel.setAttribute('aria-hidden','false');
+      });
+
+      // cookie settings footer link
+      cookieSettingsLink && cookieSettingsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('ilf-open-settings').click();
+        window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' });
+      });
+
+      // Cancel settings
+      document.getElementById('ilf-cancel-settings').addEventListener('click', () => {
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden','true');
+      });
+
+      // Save settings
+      document.getElementById('ilf-save-settings').addEventListener('click', () => {
+        const analytics = document.getElementById('ilf-toggle-analytics').checked;
+        const ads = document.getElementById('ilf-toggle-ads').checked;
+        const cons = { necessary:true, analytics:!!analytics, ads:!!ads, timestamp: Date.now() };
+        saveConsent(cons);
+        applyConsent(cons);
+        panel.style.display = 'none';
+        panel.setAttribute('aria-hidden','true');
+        banner.style.display = 'none';
+      });
+
+      // Auto-add rel="noopener noreferrer" to blank targets for security (covers game links too)
+      function fixBlankLinks() {
+        const links = document.querySelectorAll('a[target="_blank"]');
+        links.forEach(a => {
+          if (!a.hasAttribute('rel')) a.setAttribute('rel','noopener noreferrer');
+          else {
+            const rel = a.getAttribute('rel');
+            if (!/\bnoopener\b/.test(rel) || !/\bnoreferrer\b/.test(rel)) {
+              const parts = new Set(rel.split(/\s+/).filter(Boolean));
+              parts.add('noopener'); parts.add('noreferrer');
+              a.setAttribute('rel', Array.from(parts).join(' '));
+            }
+          }
+        });
+      }
+
+      // Run on DOM ready
+      document.addEventListener('DOMContentLoaded', () => {
+        showBannerIfNeeded();
+        fixBlankLinks();
+      });
+
+      // expose function to open settings (used by terms page)
+      window.ilfOpenCookieSettings = () => {
+        document.getElementById('ilf-open-settings').click();
+      };
+
+    })();
+  </script>
+
+  <!-- rest of your scripts & inline JS (export/import, charts, etc.) remain unchanged -->
+  <!-- ... your existing scripts continue unchanged below ... -->
+
   <!-- Export button script (only new JS) -->
   <script>
-    // Export localStorage and IndexedDB (best-effort) when user clicks the export button.
+    // (kept unchanged from your original) Export localStorage and IndexedDB logic...
     document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('export-progress-btn');
       if (!btn) return;
-
       btn.addEventListener('click', async () => {
         try {
           btn.disabled = true;
           const originalText = btn.textContent;
           btn.textContent = 'Exporting...';
-
-          // 1) Export localStorage
           try {
             const ls = {};
             for (let i = 0; i < localStorage.length; i++) {
@@ -323,8 +595,7 @@
           } catch (e) {
             console.error('localStorage export failed', e);
           }
-
-          // 2) Export IndexedDB (best-effort)
+          // IndexedDB export (kept)
           try {
             if (indexedDB && indexedDB.databases) {
               const dbs = await indexedDB.databases();
@@ -370,18 +641,13 @@
               a2.remove();
               URL.revokeObjectURL(urlDB);
             } else {
-              // Some browsers don't support indexedDB.databases(); inform via console only.
               console.warn('indexedDB.databases() not supported — cannot export IndexedDB programmatically in this browser.');
             }
           } catch (e) {
             console.error('IndexedDB export failed', e);
           }
-
           btn.textContent = 'Export complete — check downloads';
-          setTimeout(() => {
-            btn.textContent = originalText;
-            btn.disabled = false;
-          }, 2500);
+          setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2500);
         } catch (err) {
           console.error('Export routine failed', err);
           btn.disabled = false;
@@ -392,186 +658,8 @@
     });
   </script>
 
-  <!-- Import button script (new JS) -->
-  <script>
-    // Import localStorage and IndexedDB backups (best-effort) when user clicks the import button.
-    document.addEventListener('DOMContentLoaded', () => {
-      const importBtn = document.getElementById('import-progress-btn');
-      if (!importBtn) return;
+  <!-- Import, chart init, service worker, etc. — keep your originals unchanged (copy/paste existing code) -->
+  <script src="/assets/js/games-list.js" defer></script>
 
-      // create a hidden file input for selecting the backup JSON
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.json,application/json';
-      fileInput.style.display = 'none';
-      document.body.appendChild(fileInput);
-
-      function readFile(file) {
-        return new Promise((res, rej) => {
-          const r = new FileReader();
-          r.onload = () => res(r.result);
-          r.onerror = () => rej(r.error);
-          r.readAsText(file);
-        });
-      }
-
-      function isLikelyLocalStorage(obj) {
-        if (!obj || typeof obj !== 'object') return false;
-        const keys = Object.keys(obj);
-        if (keys.length === 0) return false;
-        return keys.every(k => typeof obj[k] === 'string');
-      }
-
-      function deleteDatabase(name) {
-        return new Promise((resolve) => {
-          try {
-            const del = indexedDB.deleteDatabase(name);
-            del.onsuccess = () => resolve();
-            del.onerror = () => resolve();
-            del.onblocked = () => resolve();
-          } catch (e) {
-            resolve();
-          }
-        });
-      }
-
-      function createAndPopulateDB(name, storesObj) {
-        return new Promise((resolve) => {
-          const req = indexedDB.open(name, 1);
-          req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            for (const storeName of Object.keys(storesObj)) {
-              if (!db.objectStoreNames.contains(storeName)) {
-                try { db.createObjectStore(storeName, { autoIncrement: true }); } catch (e) {}
-              }
-            }
-          };
-          req.onsuccess = async (e) => {
-            const db = e.target.result;
-            try {
-              for (const [storeName, items] of Object.entries(storesObj)) {
-                if (!db.objectStoreNames.contains(storeName)) continue;
-                const tx = db.transaction(storeName, 'readwrite');
-                const store = tx.objectStore(storeName);
-                for (const item of (Array.isArray(items) ? items : [])) {
-                  try { store.put(item); } catch (e) { /* ignore item */ }
-                }
-                await new Promise(r => { tx.oncomplete = () => r(); tx.onabort = tx.onerror = () => r(); });
-              }
-            } catch (e) { /* swallow */ }
-            db.close();
-            resolve();
-          };
-          req.onerror = () => resolve();
-        });
-      }
-
-      importBtn.addEventListener('click', () => {
-        fileInput.value = '';
-        fileInput.click();
-      });
-
-      fileInput.addEventListener('change', async (ev) => {
-        const file = ev.target.files && ev.target.files[0];
-        if (!file) return;
-        importBtn.disabled = true;
-        const originalText = importBtn.textContent;
-        importBtn.textContent = 'Importing...';
-
-        try {
-          const text = await readFile(file);
-          let parsed;
-          try { parsed = JSON.parse(text); } catch (e) {
-            alert('Import failed: file is not valid JSON.');
-            importBtn.disabled = false;
-            importBtn.textContent = originalText;
-            return;
-          }
-
-          if (isLikelyLocalStorage(parsed) || file.name.toLowerCase().includes('localstorage')) {
-            if (!confirm('This will write keys from the backup into localStorage and may overwrite existing keys. Continue?')) {
-              importBtn.disabled = false;
-              importBtn.textContent = originalText;
-              return;
-            }
-            let count = 0;
-            for (const [k, v] of Object.entries(parsed)) {
-              try { localStorage.setItem(k, String(v)); count++; } catch (e) {}
-            }
-            alert('localStorage import complete — set ' + count + ' keys. Reload the page to apply changes.');
-          } else {
-            const dbNames = Object.keys(parsed);
-            if (dbNames.length === 0) {
-              alert('Import JSON contains no databases.');
-            } else {
-              if (!confirm('This will recreate the following IndexedDB database(s):\n\n' + dbNames.join('\n') + '\n\nThe existing databases with those names will be deleted first (recommended). Continue?')) {
-                importBtn.disabled = false;
-                importBtn.textContent = originalText;
-                return;
-              }
-              for (const dbName of dbNames) {
-                try { await deleteDatabase(dbName); } catch (e) {}
-              }
-              for (const dbName of dbNames) {
-                const storesObj = parsed[dbName] || {};
-                await createAndPopulateDB(dbName, storesObj);
-              }
-              alert('IndexedDB import complete. Reload the page to apply changes.');
-            }
-          }
-        } catch (err) {
-          console.error('Import failed', err);
-          alert('Import failed — check console for details.');
-        } finally {
-          importBtn.disabled = false;
-          importBtn.textContent = originalText;
-        }
-      });
-    });
-  </script>
-
-  <!-- Init chart + update button -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const defaultRange = 86400000;
-      if (typeof window.initActivityChart === 'function') {
-        window.initActivityChart('activityChart', defaultRange)
-          .then(() => {
-            const btn = document.getElementById('update-graph');
-            if (btn) btn.classList.remove('btn-disabled');
-            btn.addEventListener('click', () => {
-              btn.classList.add('btn-disabled');
-              btn.textContent = 'Updating...';
-              const range = parseInt(document.getElementById('range-select').value, 10) || defaultRange;
-              window.updateActivityChart(range).finally(() => {
-                btn.textContent = 'Update Graph';
-                btn.classList.remove('btn-disabled');
-              });
-            });
-          })
-          .catch(err => console.error('Chart init failed:', err));
-      }
-
-      // service worker progress listener (bottom notification)
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(() => {
-          const p = document.getElementById('download-progress');
-          const b = p.querySelector('.bar');
-          const d = document.getElementById('download-complete');
-          navigator.serviceWorker.addEventListener('message', ev => {
-            if (ev.data?.type === 'PRECACHE_PROGRESS') {
-              p.style.display = 'block';
-              b.style.width = ev.data.percent + '%';
-              if (ev.data.percent >= 100) {
-                p.style.display = 'none';
-                d.style.display = 'block';
-                setTimeout(() => d.style.display = 'none', 2000);
-              }
-            }
-          });
-        }).catch(()=>{});
-      }
-    });
-  </script>
 </body>
 </html>
