@@ -1,4 +1,4 @@
-name: Generate Sitemap (safe)
+name: Generate Sitemap
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-sitemap:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -29,7 +29,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          node -e "
+          mkdir -p .github/tmp
+          cat > .github/tmp/generate-sitemap.js <<'NODE'
           const fs = require('fs');
           const path = require('path');
 
@@ -40,26 +41,20 @@ jobs:
             .replace(/&/g,'&amp;')
             .replace(/</g,'&lt;')
             .replace(/>/g,'&gt;')
-            .replace(/\"/g,'&quot;')
+            .replace(/"/g,'&quot;')
             .replace(/'/g,'&apos;');
 
           const urls = [];
 
-          // Add static pages
           for (const p of staticPages) {
             urls.push({ loc: BASE + p, changefreq: 'weekly', priority: '0.8' });
           }
 
-          // Read games/index.json if exists
           const indexPath = path.join(process.cwd(), 'games', 'index.json');
           let index = null;
           if (fs.existsSync(indexPath)) {
-            try {
-              index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
-            } catch (e) {
-              console.error('Warning: games/index.json parse failed:', e.message);
-              index = null;
-            }
+            try { index = JSON.parse(fs.readFileSync(indexPath, 'utf8')); }
+            catch (e) { console.warn('games/index.json parse failed:', e.message); index = null; }
           }
 
           if (index && Array.isArray(index.folders)) {
@@ -68,12 +63,9 @@ jobs:
                 const cfgPath = path.join('games', slug, 'config.json');
                 if (fs.existsSync(cfgPath)) {
                   const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-                  // prefer explicit entry path if provided, else fall back to folder root
                   let entry = cfg.entry && String(cfg.entry).trim() ? String(cfg.entry).trim() : '';
-                  // Normalize entry path
+                  entry = entry.replace(/^\/+/, '');
                   if (entry) {
-                    // remove leading slashes
-                    entry = entry.replace(/^\\/+/, '');
                     urls.push({
                       loc: BASE + '/games/' + slug + '/' + entry,
                       changefreq: 'monthly',
@@ -87,7 +79,6 @@ jobs:
                     });
                   }
                 } else {
-                  // no config.json — still add folder root
                   urls.push({
                     loc: BASE + '/games/' + slug + '/',
                     changefreq: 'monthly',
@@ -95,54 +86,53 @@ jobs:
                   });
                 }
               } catch (err) {
-                console.error('Warning: failed to handle game', slug, err && err.message);
+                console.warn('Warning: failed to handle game', slug, err && err.message);
               }
             }
           }
 
-          // Create XML
           const now = new Date().toISOString();
-          const header = '<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n' +
-            '<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\\n';
-          const footer = '</urlset>\\n';
+          const header = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+          const footer = '</urlset>\n';
           const body = urls.map(u => {
-            return '  <url>\\n' +
-                   '    <loc>' + xmlEscape(u.loc) + '</loc>\\n' +
-                   '    <lastmod>' + now + '</lastmod>\\n' +
-                   '    <changefreq>' + u.changefreq + '</changefreq>\\n' +
-                   '    <priority>' + u.priority + '</priority>\\n' +
+            return '  <url>\n' +
+                   '    <loc>' + xmlEscape(u.loc) + '</loc>\n' +
+                   '    <lastmod>' + now + '</lastmod>\n' +
+                   '    <changefreq>' + u.changefreq + '</changefreq>\n' +
+                   '    <priority>' + u.priority + '</priority>\n' +
                    '  </url>';
-          }).join('\\n');
-          const xml = header + body + '\\n' + footer;
+          }).join('\n');
+          const xml = header + body + '\n' + footer;
 
           fs.writeFileSync('sitemap.xml', xml, 'utf8');
           console.log('Wrote sitemap.xml with', urls.length, 'entries');
 
-          // Ensure robots.txt exists and contains a Sitemap line
           const robotsPath = path.join(process.cwd(), 'robots.txt');
-          const sitemapLine = 'Sitemap: ' + BASE + '/sitemap.xml\\n';
+          const sitemapLine = 'Sitemap: ' + BASE + '/sitemap.xml\n';
           let robotsContent = '';
           if (fs.existsSync(robotsPath)) {
             robotsContent = fs.readFileSync(robotsPath, 'utf8');
-            if (!robotsContent.includes('Sitemap:')) {
-              robotsContent = robotsContent.trim() + '\\n\\n' + sitemapLine;
+            if (!/Sitemap:/i.test(robotsContent)) {
+              robotsContent = robotsContent.trim() + '\n\n' + sitemapLine;
               fs.writeFileSync(robotsPath, robotsContent, 'utf8');
               console.log('Updated robots.txt with Sitemap line');
             } else {
-              console.log('robots.txt already contains Sitemap');
+              console.log('robots.txt already contains a Sitemap entry');
             }
           } else {
-            robotsContent = 'User-agent: *\\nAllow: /\\n\\n' + sitemapLine;
+            robotsContent = 'User-agent: *\nAllow: /\n\n' + sitemapLine;
             fs.writeFileSync(robotsPath, robotsContent, 'utf8');
             console.log('Created robots.txt');
           }
-          ";
+          NODE
+
+          node .github/tmp/generate-sitemap.js
 
       - name: Check for changes
         id: check_changes
         run: |
           git add sitemap.xml robots.txt || true
-          # exit code 0 if no staged changes, non-zero if staged changes exist
           if git diff --cached --quiet; then
             echo "no_changes=true" >> $GITHUB_OUTPUT
           else
