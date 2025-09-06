@@ -18,8 +18,7 @@ jobs:
       - name: Fetch Ezoic ads.txt
         run: |
           curl -sL https://srv.adstxtmanager.com/19390/ilikefish.space > ezoic_ads.txt
-          echo "google.com, pub-9929753961924881, DIRECT, f08c47fec0942fa0" > ads.txt
-          echo "" >> ads.txt
+          > ads.txt
           echo "# Ezoic Ads.txt entries" >> ads.txt
           cat ezoic_ads.txt >> ads.txt
           rm ezoic_ads.txt
@@ -36,4 +35,3 @@ jobs:
           else
             git commit -m "chore: update ads.txt [skip ci]"
             git push
-          fi
