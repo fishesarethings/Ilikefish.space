@@ -13,14 +13,14 @@
     {
       "@type": "ListItem",
       "position": 2,
-      "url": "https://ilikefish.space/games/emojimatch/",
-      "name": "emojimatch"
+      "url": "https://ilikefish.space/games/fishclimbracing/",
+      "name": "fishclimbracing"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/why-chicken-crossed/",
-      "name": "why-chicken-crossed"
+      "url": "https://ilikefish.space/games/lawnmower-simulator/",
+      "name": "lawnmower-simulator"
     },
     {
       "@type": "ListItem",
@@ -31,8 +31,8 @@
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
-      "name": "DiceRollIdleEmpires2"
+      "url": "https://ilikefish.space/games/Tower-Defense/",
+      "name": "Tower-Defense"
     }
   ]
 }
