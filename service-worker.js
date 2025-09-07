@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   '/assets/js/fullscreen.js',
   '/assets/img/bg-home.jpg',
   '/assets/img/bg-games.jpg',
+  '/assets/img/bg-server.jpg',
   '/assets/img/bg-gamepack.jpg',
   '/assets/img/ilikefishes.ico',
 
