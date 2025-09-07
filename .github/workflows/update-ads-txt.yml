@@ -1,0 +1,73 @@
+name: Update ads.txt from Ezoic
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'   # daily at 02:00 UTC (adjust if you like)
+
+permissions:
+  contents: write
+
+jobs:
+  update-ads:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Ezoic ads.txt and merge with local entries
+        env:
+          EZOIC_URL: "https://srv.adstxtmanager.com/19390/ilikefish.space"
+          GOOGLE_LINE: "google.com, pub-9929753961924881, DIRECT, f08c47fec0942fa0"
+        run: |
+          set -euo pipefail
+          echo "Fetching Ezoic ads.txt from ${EZOIC_URL} ..."
+          curl --fail --location --silent --show-error "${EZOIC_URL}" -o /tmp/ezo_ads.txt || { echo "Failed to fetch Ezoic file"; exit 2; }
+
+          # Sanity: ensure content not empty
+          if [ ! -s /tmp/ezo_ads.txt ]; then
+            echo "Ezoic ads.txt appears empty; aborting to avoid overwriting a valid ads.txt"
+            exit 3
+          fi
+
+          # Create merged ads.txt: start with any manual lines (current ads.txt if exists)
+          # Keep a guaranteed Google line at top then append Ezoic content and dedupe.
+          if [ -f ads.txt ]; then
+            cp ads.txt /tmp/ads_current.txt
+          else
+            touch /tmp/ads_current.txt
+          fi
+
+          echo "$GOOGLE_LINE" > /tmp/ads_merged_unsorted.txt
+          # Append existing local manual lines (except google line duplicates)
+          grep -v -F "$GOOGLE_LINE" /tmp/ads_current.txt >> /tmp/ads_merged_unsorted.txt || true
+          # Append Ezoic content (avoid adding google line twice)
+          grep -v -F "$GOOGLE_LINE" /tmp/ezo_ads.txt >> /tmp/ads_merged_unsorted.txt || true
+
+          # Normalize: remove empty lines, trim whitespace, dedupe preserving first occurrence
+          awk 'NF { gsub(/^[ \t]+|[ \t]+$/, ""); if (!seen[$0]++) print $0 }' /tmp/ads_merged_unsorted.txt > ads.txt
+
+          echo "Resulting ads.txt:"
+          sed -n '1,120p' ads.txt || true
+
+          git add ads.txt
+          git status --porcelain
+      - name: Commit & push if changed
+        id: commit
+        run: |
+          if git diff --cached --quiet; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(ads): update ads.txt from Ezoic [skip ci]" || true
+            git push origin HEAD:main
+            echo "no_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Finish
+        run: echo "Done updating ads.txt"
