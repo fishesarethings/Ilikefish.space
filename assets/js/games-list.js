@@ -2,7 +2,6 @@
 
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('[games-list] DOM ready, fetching /games/index.json…');
-
   let index;
   try {
     index = await fetch('/games/index.json').then(r => {
@@ -11,13 +10,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
     console.log('[games-list] got index.json →', index);
   } catch (err) {
-    console.error('[games-list] ❌ failed to load /games/index.json:', err);
-    return;
+    return console.error('[games-list] ❌ failed to load /games/index.json:', err);
   }
 
   if (!Array.isArray(index.folders)) {
-    console.error('[games-list] ❌ index.json.folders is not an Array');
-    return;
+    return console.error('[games-list] ❌ index.json.folders is not an Array');
   }
 
   const featuredGames = [];
@@ -31,28 +28,27 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const game = await resp.json();
 
-      // Ensure required field fallback
+      // fallback: make sure folder is set
       game.folder = game.folder || slug;
 
       console.log(`[games-list] loaded game config:`, game);
 
       allGames.push(game);
-      if (game.featured) {
-        featuredGames.push(game);
-      }
+      if (game.featured) featuredGames.push(game);
+
     } catch (e) {
       console.error(`[games-list] ❌ failed to load config.json for "${slug}":`, e);
     }
   }
 
-  // Sort featured games by featuredOrder (default to 999 if not set)
+  // Sort featured games by featuredOrder (default = 999 if not set)
   featuredGames.sort((a, b) => {
     const aOrder = typeof a.featuredOrder === 'number' ? a.featuredOrder : 999;
     const bOrder = typeof b.featuredOrder === 'number' ? b.featuredOrder : 999;
     return aOrder - bOrder;
   });
 
-  // Render featured games
+  // Render featured
   const feat = document.getElementById('featured-games');
   if (feat) {
     for (const game of featuredGames) {
@@ -63,17 +59,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.warn('[games-list] featured-games container not found');
   }
 
-  // Render all games to both home and games.html
+  // Render all games to home + games.html
   for (const game of allGames) {
     const card = renderGameCard(game);
 
-    // Append to home (if exists)
+    // All on home
     const allHome = document.getElementById('all-games');
     if (allHome) {
       allHome.append(card.cloneNode(true));
     }
 
-    // Append to games.html (if exists)
+    // All on games.html
     const allPage = document.getElementById('games-container');
     if (allPage) {
       allPage.append(card);
@@ -84,15 +80,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 function renderGameCard(game) {
   if (!game.folder || !game.icon || !game.entry || !game.name) {
     console.error('[games-list] ❌ invalid config.json missing required fields:', game);
-    return document.createTextNode(''); // Return empty node on error
+    return document.createTextNode('');
   }
 
+  // Wrap whole card in <a> so search engines see it as a link
   const link = document.createElement('a');
   link.href = `/games/${game.folder}/${game.entry}`;
-  link.target = '_blank';
+  link.target = '_blank'; // open in new tab
   link.className = 'game-card';
-  link.style.textDecoration = 'none';
-  link.style.color = 'inherit';
+  link.style.textDecoration = 'none'; // remove underline
+  link.style.color = 'inherit'; // inherit text color
 
   link.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
