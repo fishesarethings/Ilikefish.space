@@ -2,6 +2,17 @@
 
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('[games-list] DOM ready, fetching /games/index.json…');
+
+  // Clear containers to prevent duplicate renders if script runs twice
+  const feat = document.getElementById('featured-games');
+  if (feat) feat.innerHTML = '';
+
+  const allHome = document.getElementById('all-games');
+  if (allHome) allHome.innerHTML = '';
+
+  const allPage = document.getElementById('games-container');
+  if (allPage) allPage.innerHTML = '';
+
   let index;
   try {
     index = await fetch('/games/index.json').then(r => {
@@ -49,7 +60,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Render featured
-  const feat = document.getElementById('featured-games');
   if (feat) {
     for (const game of featuredGames) {
       console.log('[games-list] rendering featured:', game.name);
@@ -63,14 +73,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   for (const game of allGames) {
     const card = renderGameCard(game);
 
-    // All on home
-    const allHome = document.getElementById('all-games');
     if (allHome) {
       allHome.append(card.cloneNode(true));
     }
 
-    // All on games.html
-    const allPage = document.getElementById('games-container');
     if (allPage) {
       allPage.append(card);
     }
