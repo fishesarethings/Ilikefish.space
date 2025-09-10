@@ -73,13 +73,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   for (const game of allGames) {
     const card = renderGameCard(game);
 
-    if (allHome) {
-      allHome.append(card.cloneNode(true));
-    }
+if (allHome) {
+  allHome.append(card);
+} else if (allPage) {
+  allPage.append(card);
+}
 
-    if (allPage) {
-      allPage.append(card);
-    }
   }
 });
 
