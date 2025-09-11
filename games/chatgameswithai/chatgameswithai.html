@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Chat Games with AI</title>
 <style>
+/* (All CSS is identical to your last working version except a couple tiny additions for the new buttons)
+   I preserved your CRT, scanlines, themes, ambient, keystroke etc.
+*/
 :root{
   --neon: #00ff66;
   --neon2: #66e0ff;
@@ -17,98 +20,55 @@
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
   --ambient-thumb: #9fe6a4;
 }
-
-/* ---- base ---- */
 html,body{height:100%;margin:0;font-family:var(--mono);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100vh;}
-
-/* header */
 header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg, rgba(0,0,0,0.05), transparent)}
 .title{font-weight:900;letter-spacing:0.6px}
 .header-right{display:flex;gap:12px;align-items:center}
-
-/* main layout */
 #main{display:flex;flex:1;overflow:hidden}
 #left{width:340px;border-right:1px solid rgba(0,0,0,0.18);padding:14px;box-sizing:border-box;background:linear-gradient(180deg, rgba(0,0,0,0.04), transparent)}
 .card{background:var(--panel);border-radius:12px;padding:10px;border:1px solid rgba(0,0,0,0.12);box-shadow: inset 0 -6px 14px rgba(0,0,0,0.2)}
 #chatlist{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:6px 2px;max-height:48vh}
-
-/* chat item */
 .chat-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.06))}
 .chat-item.active{box-shadow:0 10px 40px rgba(0,255,100,0.04), inset 0 -6px 10px rgba(0,0,0,0.25);border-color:rgba(0,255,120,0.18)}
 .chat-left{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .chat-name{font-weight:700}
 .chat-meta{font-size:12px;color:var(--muted)}
-
-/* chat inline rename */
 .icon-input{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%}
-
-/* left controls */
 .left-controls{display:flex;gap:8px;margin-top:12px}
 .left-controls button{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06));color:var(--text);cursor:pointer}
-
-/* right column */
 #right{flex:1;display:flex;flex-direction:column;gap:12px;padding:12px}
 .menu-row{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
 #menu{flex:1;display:flex;flex-wrap:wrap;gap:12px;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06))}
 .grid-card{min-width:180px;flex:0 0 200px;border-radius:10px;padding:12px;background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.05));border:1px solid rgba(255,255,255,0.02);cursor:pointer}
 .grid-title{font-weight:800}
 .grid-sub{font-size:12px;color:var(--muted)}
-
-/* terminal */
 #terminal{flex:1;padding:18px;overflow:auto;border-radius:12px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
 .message{max-width:78%;padding:10px 12px;border-radius:10px;margin-bottom:8px;word-wrap:break-word;opacity:0;transform:translateY(14px);position:relative}
-/* message entry animation */
 .message.enter { animation: msgEnter 360ms cubic-bezier(.2,.9,.3,1) forwards; }
 @keyframes msgEnter { 0% { opacity:0; transform:translateY(14px) } 60% { opacity:1; transform:translateY(-4px) } 100% { opacity:1; transform:translateY(0) } }
-
 .msg-system{background:rgba(0,0,0,0.06);border-left:4px solid rgba(0,255,110,0.18);color:var(--text);font-weight:700}
 .msg-ai{background:rgba(0,0,0,0.04);border-left:4px solid rgba(105,200,255,0.14);color:var(--neon2)}
 .msg-user{background:rgba(0,0,0,0.04);border-left:4px solid rgba(255,215,90,0.12);color:var(--user);align-self:flex-start}
-
-/* timestamp */
 .msg-ts{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--muted);opacity:0.9}
-
-/* user message controls (edit) */
 .msg-controls{position:absolute;right:8px;top:6px;display:flex;gap:6px}
 .msg-controls button{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:4px}
-
-/* editing UI inside message */
 .edit-row{display:flex;gap:6px;margin-top:8px}
 .edit-input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
-
-/* typing cursor effect for AI (block) */
-.ai-typing::after{
-  content: "█";
-  display:inline-block;
-  margin-left:6px;
-  animation: blinkCursor 600ms steps(1, end) infinite;
-  color: var(--neon);
-  font-weight:900;
-}
+.ai-typing::after{ content: "█"; display:inline-block; margin-left:6px; animation: blinkCursor 600ms steps(1, end) infinite; color: var(--neon); font-weight:900; }
 @keyframes blinkCursor { 0% { opacity: 1 } 50% { opacity: 0 } 100% { opacity: 1 } }
-
-/* input */
 #inputbar{display:flex;gap:12px;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent)}
 #input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:#031403;color:var(--text);outline:none;font-size:14px;z-index:2}
 #sendBtn{padding:12px 16px;border-radius:10px;background:linear-gradient(180deg,#003a12,#012207);color:var(--text);border:1px solid rgba(0,0,0,0.12);cursor:pointer}
-
-/* progress */
 #progressWrap{position:fixed;left:50%;top:12px;transform:translateX(-50%);min-width:420px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,120,0.06);padding:10px;border-radius:10px;display:none;z-index:140}
 #progressBarOuter{height:12px;background:#001200;border-radius:8px;overflow:hidden}
 #progressBar{width:0%;height:100%;background:linear-gradient(90deg,#06f,#0f6);}
-
-/* theme controls & CRT & ambient control */
 #themeSwitcher{position:fixed;right:14px;top:12px;display:flex;flex-direction:column;gap:8px;z-index:160;align-items:center}
 .themebtn{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg, rgba(0,0,0,0.04), transparent);border:1px solid rgba(255,255,255,0.03);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.02);padding:8px;border-radius:8px;color:var(--text);cursor:pointer}
 #crtToggle{font-size:13px;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text);cursor:pointer}
-
-/* ambient controls */
 .ambient-controls{display:flex;flex-direction:column;gap:6px;align-items:center}
 .ambient-controls input[type="range"]{width:88px;accent-color:var(--ambient-thumb);}
-
-/* CRT overlay: stronger, animated scanlines and moving grid */
 .crt-overlay{pointer-events:none;position:fixed;inset:0;z-index:120}
 .scanlines{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom, rgba(0,255,110,0.18) 0px, rgba(0,255,110,0.18) 3px, transparent 3px, transparent 6px);opacity:0.98;mix-blend-mode:overlay;background-size:100% 6px;animation:moveScan 6s linear infinite}
 @keyframes moveScan { 0% { background-position:0 0 } 100% { background-position:0 48px } }
@@ -117,23 +77,15 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 80%)}
 .sweep{position:absolute;left:-60%;top:0;width:40%;height:100%;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.26), rgba(255,255,255,0.06));transform:skewX(-16deg);opacity:0.08;animation:sweep 6s linear infinite}
 @keyframes sweep {0%{left:-60%}50%{left:120%}100%{left:120%}}
-
-/* toast (non-blocking) */
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px 14px;border-radius:8px;color:var(--text);border:1px solid rgba(0,255,120,0.06);display:none;z-index:200}
 #toast .undo{color:var(--neon);text-decoration:underline;cursor:pointer;margin-left:10px}
-
-/* small */
 .small{font-size:12px;color:var(--muted)}
 .kv{font-size:12px;color:var(--muted);display:block;margin-top:6px}
-
-/* themes */
 body.hacker{ background: linear-gradient(180deg,#041403,#021205 70%); color:var(--text); }
 body.dark{ background:#08101a; color:#dfeaff }
 body.light{ background:#fff; color:#0c1720 }
 body.light #input{background:#fff;color:#111;border:1px solid rgba(0,0,0,0.06)}
 body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); color:#111}
-
-/* responsive */
 @media (max-width:900px){ #left{display:none} }
 </style>
 </head>
@@ -174,18 +126,30 @@ body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); col
       <div class="card" style="margin-top:12px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div style="font-weight:800">Free Chat & Model (UI)</div>
-          <div class="small">placeholders only</div>
+          <div class="small">placeholders + runtime</div>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
           <button id="btnFreeChat" class="icon-btn">Free Chat</button>
           <button id="btnDownload" class="icon-btn">Simulate DL</button>
           <button id="btnPlace" class="icon-btn">Placeholders</button>
         </div>
+
+        <!-- NEW: model/runtime controls (minimal UI additions) -->
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <button id="btnInstallRuntime" class="icon-btn" title="Load a local runtime from ./vendor/">Install Runtime</button>
+          <button id="btnDownloadModel" class="icon-btn" title="Fetch manifest & blobs and store to IndexedDB">Download Model</button>
+          <button id="btnLoadModel" class="icon-btn" title="Load model into runtime from IndexedDB">Load Model</button>
+        </div>
+
         <div style="margin-top:10px" class="small">Copy manifest / blobs to clipboard for later server-side download</div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button id="copyManifest" class="icon-btn">Copy Manifest</button>
           <button id="copyBlobs" class="icon-btn">Copy Blobs</button>
         </div>
+
+        <div style="margin-top:10px" id="runtimeStatus" class="small">Runtime: <span id="runtimeLabel">not installed</span></div>
+        <div style="margin-top:6px" id="modelStatus" class="small">Model: <span id="modelLabel">not loaded</span></div>
+
       </div>
 
       <div style="height:12px"></div>
@@ -254,17 +218,22 @@ body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); col
 <div id="toast"></div>
 
 <script>
-/* ===============================
-   Chat Games with AI — single file
-   - Timestamps added
-   - Ctrl+F -> Free Chat (overrides browser find)
-   - Free Chat button in header + existing buttons
-   - Edit user messages inline (updates timestamp)
-   - Ambient sound, typing cursor, keystrokes, CRT effects
-   - Persistent via localStorage
-   =============================== */
+/*
+  Minimal-change integration to attempt using a real in-browser LLM runtime.
+  - It will try to import runtimes (wllama or llama-cpp-wasm) from ./vendor/
+  - It can download model manifest+blobs into IndexedDB (using blob URLs).
+  - It attempts to call runtime APIs to load the model and generate text.
+  - If runtime or model missing the UI falls back to the original "simulated AI" behavior.
 
-/* --- storage keys & placeholders --- */
+  What you must host (recommended):
+    - vendor/wllama.esm.min.js   OR   vendor/llama-cpp-wasm.mjs (+ wasm if required)
+    - vendor/llama-cpp-wasm.wasm (if using that build)
+    - Alternatively: host a file-serving path to the model /modelname/ parts or let the page download blobs and store them locally.
+
+  The code below is defensive: it will log detailed info to console and display messages in the terminal.
+*/
+
+/* ---------- Storage keys and placeholders ---------- */
 const CHATS_KEY = "chatgames_chats";
 const SETTINGS_KEY = "chatgames_settings";
 const DUMMY_MANIFEST = "https://registry.ollama.ai/v2/library/llama3.2/manifests/latest";
@@ -277,7 +246,7 @@ const DUMMY_BLOBS = [
   "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb"
 ];
 
-/* --- data initialization --- */
+/* ---------- App state (unchanged core UI features preserved) ---------- */
 let chats = JSON.parse(localStorage.getItem(CHATS_KEY) || "null");
 if(!Array.isArray(chats) || chats.length === 0){
   chats = [{
@@ -292,7 +261,7 @@ let lastDeleted = null;
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
 if(!settings) settings = { theme: "hacker", crt: true, keystroke: true, ambientOn: false, ambientVol: 0.06 }, localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 
-/* --- DOM refs --- */
+/* ---------- DOM refs ---------- */
 const chatlistEl = document.getElementById("chatlist");
 const menuEl = document.getElementById("menu");
 const terminalEl = document.getElementById("terminal");
@@ -302,102 +271,337 @@ const toastEl = document.getElementById("toast");
 const progressWrap = document.getElementById("progressWrap");
 const progressBar = document.getElementById("progressBar");
 const progressText = document.getElementById("progressText");
-const crtOverlay = document.getElementById("crtOverlay");
-const themeBtn = document.getElementById("themeBtn");
-const crtToggle = document.getElementById("crtToggle");
-const ambientToggle = document.getElementById("ambientToggle");
-const ambientVol = document.getElementById("ambientVol");
-const headerFreeChat = document.getElementById("headerFreeChat");
+const runtimeLabel = document.getElementById("runtimeLabel");
+const modelLabel = document.getElementById("modelLabel");
+const btnInstall = document.getElementById("btnInstallRuntime");
+const btnDownloadModel = document.getElementById("btnDownloadModel");
+const btnLoadModel = document.getElementById("btnLoadModel");
 
-/* --- audio (keystroke & ambient) using WebAudio --- */
-let audioCtx = null;
-let ambientNode = null;
-let ambientRunning = false;
-
-function ensureAudio(){
-  if(!audioCtx){
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ audioCtx = null; }
-  }
+/* ---------- Simple IndexedDB helper for storing blobs ---------- */
+function openDB(){
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open("chatgames-models", 1);
+    r.onupgradeneeded = ()=> {
+      const db = r.result;
+      if(!db.objectStoreNames.contains("blobs")) db.createObjectStore("blobs");
+    };
+    r.onsuccess = ()=> resolve(r.result);
+    r.onerror = ()=> reject(r.error);
+  });
 }
-function playKeystroke(volume = 0.06, type = "square", durationMs=18){
-  if(!settings.keystroke) return;
-  ensureAudio(); if(!audioCtx) return;
+async function idbPut(key, value){
+  const db = await openDB();
+  return new Promise((res, rej)=> {
+    const tx = db.transaction("blobs", "readwrite");
+    const s = tx.objectStore("blobs");
+    const req = s.put(value, key);
+    req.onsuccess = ()=> { res(true); db.close(); };
+    req.onerror = ()=> { rej(req.error); db.close(); };
+  });
+}
+async function idbGet(key){
+  const db = await openDB();
+  return new Promise((res, rej)=> {
+    const tx = db.transaction("blobs", "readonly");
+    const s = tx.objectStore("blobs");
+    const req = s.get(key);
+    req.onsuccess = ()=> { res(req.result); db.close(); };
+    req.onerror = ()=> { rej(req.error); db.close(); };
+  });
+}
+
+/* ---------- Runtime / model integration points (defensive) ---------- */
+let runtime = null;      // will hold the imported runtime (module) or runtime client
+let modelLoaded = false; // boolean
+
+// Try to dynamically import typical runtime files that you should place in /vendor/
+// The page will attempt a few names (wllama, llama-cpp-wasm) and pick the first that works.
+async function installRuntime() {
+  logToTerminal("System: Attempting to import local runtime from ./vendor/ ...");
+  runtimeLabel.textContent = "installing...";
+  // list of candidate module paths (you will host one of these)
+  const candidates = [
+    "./vendor/wllama.esm.min.js",        // wllama (ngxson) style
+    "./vendor/wllama.mjs",
+    "./vendor/llama-cpp-wasm.mjs",       // tangledgroup llama-cpp-wasm
+    "./vendor/llama-cpp-wasm.js"
+  ];
+  for(const p of candidates){
+    try {
+      // dynamic import
+      const mod = await import(p);
+      console.log("Imported runtime module:", p, mod);
+      runtime = mod;
+      runtimeLabel.textContent = "runtime installed (" + p.split("/").pop() + ")";
+      logToTerminal(`System: runtime imported: ${p.split("/").pop()}`);
+      // try to detect API and show hints
+      detectRuntimeAPI(mod);
+      return true;
+    } catch(e){
+      console.warn("Import failed for", p, e);
+      // keep trying
+    }
+  }
+  runtimeLabel.textContent = "not installed";
+  logToTerminal("System: runtime import failed. Put a WASM runtime bundle in ./vendor/ (see console).");
+  console.error("Runtime import failed. Try hosting one of: wllama.esm.min.js or llama-cpp-wasm.mjs in ./vendor/");
+  return false;
+}
+
+// Very small heuristic to figure out how to talk to the runtime
+function detectRuntimeAPI(mod){
+  // wllama export style: likely 'Wllama' or default export which has loadModelFromUrl, loadModelFromFiles, etc.
+  // llama-cpp-wasm: may export 'LlamaCpp' constructor
+  if(mod?.Wllama || mod?.default?.Wllama){
+    logToTerminal("System: Detected Wllama runtime API.");
+    runtime.clientType = "wllama";
+  } else if(mod?.LlamaCpp || mod?.default?.LlamaCpp || mod?.Llama){
+    logToTerminal("System: Detected LlamaCpp / llama-cpp-wasm API.");
+    runtime.clientType = "llama-cpp-wasm";
+  } else {
+    // fallback
+    logToTerminal("System: Unknown runtime API shape - check console and runtime docs.");
+    runtime.clientType = "unknown";
+  }
+  console.log("Runtime detection result:", runtime.clientType);
+}
+
+/* Download manifest + blobs (simplified) -- stores each blob under IndexedDB key 'blob:<filename>'.
+   NOTE: This is a helper for the UI. In practice you may prefer to host model files statically on your site.
+*/
+async function downloadManifestAndBlobs(manifestUrl = DUMMY_MANIFEST, blobUrls = DUMMY_BLOBS){
+  logToTerminal("System: downloading manifest and blobs (will store in browser IndexedDB)...");
+  progressWrap.style.display = "block";
+  progressBar.style.width = '0%';
+  progressText.innerText = '0%';
   try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type;
-    o.frequency.value = 1200 + Math.random()*300;
-    g.gain.value = volume;
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    const now = audioCtx.currentTime;
-    o.start(now);
-    g.gain.setValueAtTime(volume, now);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + durationMs/1000);
-    o.stop(now + durationMs/1000 + 0.02);
-  } catch(e){}
-}
-function playTypeSound(){ playKeystroke(0.04, "sine", 14); }
+    // if user-provided blob list empty, attempt to fetch manifest (best-effort)
+    let urls = Array.isArray(blobUrls) && blobUrls.length ? blobUrls.slice() : [];
+    if(urls.length === 0 && manifestUrl){
+      const r = await fetch(manifestUrl);
+      if(!r.ok) throw new Error("manifest fetch failed: " + r.status);
+      const manifest = await r.json();
+      // try to extract layers -> create blob urls with registry base if manifest follows OCI pattern
+      if(manifest.layers && manifest.layers.length){
+        const base = (new URL(manifestUrl)).origin;
+        urls = manifest.layers.map(layer => base + "/v2/library/llama3.2/blobs/" + layer.digest);
+      }
+    }
 
-/* ambient sound functions (subtle hacker drone) */
-function startAmbient(vol = 0.06){
-  ensureAudio();
-  if(!audioCtx) { showToast("Audio unavailable"); return; }
-  if(ambientRunning) return;
-  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
-  const gain = audioCtx.createGain(); gain.gain.value = vol;
-  gain.connect(audioCtx.destination);
-
-  const base = audioCtx.createOscillator(); base.type = "sine"; base.frequency.value = 70 + Math.random()*20;
-  const baseGain = audioCtx.createGain(); baseGain.gain.value = 0.6;
-  base.connect(baseGain); baseGain.connect(gain);
-
-  const top = audioCtx.createOscillator(); top.type = "triangle"; top.frequency.value = 220 + Math.random()*40;
-  const topGain = audioCtx.createGain(); topGain.gain.value = 0.12;
-  top.connect(topGain); topGain.connect(gain);
-
-  const bufferSize = 2 * audioCtx.sampleRate;
-  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.007;
-  const noise = audioCtx.createBufferSource(); noise.buffer = noiseBuffer; noise.loop = true;
-  const noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.05;
-  noise.connect(noiseGain); noiseGain.connect(gain);
-
-  const filter = audioCtx.createBiquadFilter(); filter.type = "bandpass"; filter.frequency.value = 800; filter.Q.value = 0.9;
-  gain.disconnect(); gain.connect(filter); filter.connect(audioCtx.destination);
-
-  base.start(); top.start(); noise.start();
-  ambientNode = { base, top, noise, filter, gain };
-  ambientRunning = true;
-}
-function stopAmbient(){
-  if(!ambientRunning || !ambientNode) return;
-  try { ambientNode.base.stop(); ambientNode.top.stop(); ambientNode.noise.stop(); } catch(e){}
-  ambientNode = null; ambientRunning = false;
-}
-function setAmbientVolume(v){
-  if(ambientNode && ambientNode.gain) ambientNode.gain.gain.value = v;
-}
-
-/* --- toast --- */
-let toastTimer = null;
-function showToast(text, undoCallback){
-  toastEl.innerHTML = "";
-  const span = document.createElement("span"); span.textContent = text;
-  toastEl.appendChild(span);
-  if(typeof undoCallback === "function"){
-    const undo = document.createElement("span"); undo.textContent = "  Undo"; undo.className = "undo";
-    undo.onclick = ()=>{ undoCallback(); hideToast(); };
-    toastEl.appendChild(undo);
+    const total = urls.length;
+    for(let i=0;i<urls.length;i++){
+      const u = urls[i];
+      try {
+        const rr = await fetch(u);
+        if(!rr.ok) throw new Error('blob fetch failed: ' + rr.status);
+        const data = await rr.arrayBuffer();
+        // store using the last path segment as key (safe)
+        const key = "blob:" + u.split("/").pop();
+        await idbPut(key, data);
+        const pct = Math.round(((i+1)/total) * 100);
+        progressBar.style.width = pct + '%';
+        progressText.innerText = pct + '%';
+        logToTerminal(`System: saved blob ${key}`);
+      } catch(e){
+        console.error("failed blob", u, e);
+        logToTerminal("System: failed to download blob: " + u.split("/").pop());
+      }
+    }
+    progressWrap.style.display = "none";
+    modelLabel.textContent = "downloaded (in IndexedDB)";
+    logToTerminal("System: manifest+blobs stored to IndexedDB. Now press 'Load Model'.");
+    return true;
+  } catch(e){
+    console.error(e);
+    progressWrap.style.display = "none";
+    logToTerminal("System: failed to download manifest/blobs: " + e.message);
+    return false;
   }
-  toastEl.style.display = "block";
-  if(toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>{ hideToast(); }, 5000);
 }
-function hideToast(){ toastEl.style.display = "none"; if(toastTimer) clearTimeout(toastTimer); }
 
-/* --- render chat list --- */
+/* Attempt to instruct runtime to load the model from IndexedDB (best-effort).
+   Different runtimes expose different APIs — this is a safe, flexible attempt.
+*/
+async function loadModelFromIndexedDB(modelName = "llama3.2"){
+  if(!runtime){
+    logToTerminal("System: runtime not installed. Press 'Install Runtime' first.");
+    return false;
+  }
+  modelLabel.textContent = "loading...";
+  logToTerminal("System: attempting to load model into runtime (best-effort)...");
+  // Try several strategies depending on runtime detection:
+  try {
+    if(runtime.clientType === "wllama" || runtime?.Wllama || runtime.default?.Wllama){
+      // example: Wllama.loadModelFromUrl or Wllama.loadModelFromFiles
+      // many Wllama wrappers accept a list of URLs or a config object
+      // We'll try to call loadModelFromUrl with an array of blob URLs if available locally on server,
+      // otherwise try a storage-backed approach (some wrappers support allowOffline + reading IndexDB)
+      const Wll = runtime.Wllama || runtime.default?.Wllama || runtime.default || runtime;
+      // best-effort: call loadModelFromFiles or loadModelFromUrl if present
+      if(typeof Wll.loadModelFromUrl === "function"){
+        logToTerminal("System: using Wllama.loadModelFromUrl (user-provided url path required).");
+        // user must host model file(s) statically. We can't guess paths — provide instruction.
+        logToTerminal("System: please host model files under /models/<modelname>/ and call Load Model again.");
+        modelLabel.textContent = "needs hosted model files";
+        return false;
+      }
+      if(typeof Wll.loadModelFromFiles === "function"){
+        // Some wrappers accept File or ArrayBuffer list. We'll attempt to read from IndexedDB keys and pass them.
+        // Prepare list of keys saved earlier under 'blob:<name>'
+        modelLabel.textContent = "loading from IndexedDB...";
+        // naive attempt: read all blobs in IndexedDB. We don't have a list — attempt to fetch known keys from DUMMY_BLOBS names
+        const keys = DUMMY_BLOBS.map(u => "blob:" + u.split("/").pop());
+        const parts = [];
+        for(const k of keys){
+          const data = await idbGet(k);
+          if(data) parts.push(new Uint8Array(data));
+        }
+        if(parts.length === 0){
+          logToTerminal("System: no blobs found in IndexedDB. Please run Download Model first or host files.");
+          modelLabel.textContent = "no blobs in IndexedDB";
+          return false;
+        }
+        // call runtime - usage may vary; this is a best-effort attempt
+        const client = await Wll.loadModelFromFiles(parts);
+        runtime.client = client;
+        modelLoaded = true;
+        modelLabel.textContent = "loaded (wllama)";
+        logToTerminal("System: model loaded into wllama runtime (best-effort).");
+        return true;
+      }
+    }
+
+    if(runtime.clientType === "llama-cpp-wasm" || runtime.LlamaCpp || runtime.default?.LlamaCpp){
+      // tangledgroup llama-cpp-wasm typically uses LlamaCpp class with a constructor or load options.
+      const LlamaConstructor = runtime.LlamaCpp || runtime.default?.LlamaCpp || runtime.Llama;
+      if(typeof LlamaConstructor === "function"){
+        // Many examples do: const app = new LlamaCpp(urlOrCfg, onLoaded, onMessageChunk, onComplete)
+        // We attempt to pass a URL if you hosted the model at /models/<name>/model.gguf
+        const hostedUrl = `/models/${modelName}/model.gguf`; // convention for static host
+        logToTerminal(`System: attempting LlamaCpp with hosted path ${hostedUrl}. If you haven't hosted the model, this will fail—host model files under /models/${modelName}/ and try again.`);
+        // Create callbacks to display progress
+        const onLoad = ()=>{ modelLoaded = true; modelLabel.textContent = "loaded (llama-cpp-wasm)"; logToTerminal("System: model loaded (llama-cpp-wasm)."); };
+        const onChunk = (txt)=>{ appendRuntimeChunk(txt); }; // called for streaming text
+        const onComplete = ()=>{ logToTerminal("System: generation complete."); };
+        // NOTE: constructor signatures vary; attempt to create an instance defensively
+        try {
+          const app = new LlamaConstructor(hostedUrl, onLoad, onChunk, onComplete);
+          runtime.client = app;
+          logToTerminal("System: LlamaCpp constructor invoked; waiting for onLoad...");
+          // onLoad will set modelLoaded
+          return true;
+        } catch(err){
+          console.error("Llama constructor failed", err);
+          logToTerminal("System: LlamaCpp constructor attempt failed. Check which runtime build you hosted and update the connector if necessary.");
+          modelLabel.textContent = "load failed";
+          return false;
+        }
+      } else {
+        // if runtime exports a helper load function
+        if(typeof runtime.loadModelFromUrl === "function"){
+          const hostedUrl = `/models/${modelName}/model.gguf`;
+          await runtime.loadModelFromUrl(hostedUrl);
+          runtime.client = runtime; modelLoaded = true; modelLabel.textContent = "loaded";
+          logToTerminal("System: model loaded via runtime.loadModelFromUrl");
+          return true;
+        }
+      }
+    }
+
+    // fallback: unknown runtime API
+    logToTerminal("System: unknown runtime API shape — cannot load model automatically. See console for the runtime module exports.");
+    console.log("Runtime module content:", runtime);
+    modelLabel.textContent = "unknown runtime API";
+    return false;
+
+  } catch(e){
+    console.error("Load model error:", e);
+    logToTerminal("System: error while loading model: " + (e.message || e));
+    modelLabel.textContent = "load error";
+    return false;
+  }
+}
+
+/* Append streaming chunk text from runtime if available */
+function appendRuntimeChunk(text){
+  // append to last AI message (if it's streaming) or create one
+  chats[active].messages.push({ role: "ai", msg: text, ts: new Date().toISOString() });
+  persist();
+}
+
+/* When the user sends a chat and runtime.modelLoaded, route to runtime (best-effort) */
+async function sendToRuntime(prompt){
+  if(!runtime || !modelLoaded || !runtime.client){
+    logToTerminal("System: model/runtime not available — using fallback response.");
+    return null;
+  }
+  try {
+    // For wllama-style: runtime.client.generate(prompt, options) or runtime.client.complete
+    if(runtime.clientType === "wllama" && typeof runtime.client.generate === "function"){
+      logToTerminal("System: generating via wllama.generate...");
+      const out = await runtime.client.generate(prompt, { max_tokens: 256 });
+      return out;
+    }
+    // For LlamaCpp: app.run({ prompt }) -> streaming via callbacks; many demos use app.run({...})
+    if(runtime.clientType === "llama-cpp-wasm" && typeof runtime.client.run === "function"){
+      logToTerminal("System: generating via LlamaCpp.run (streaming)...");
+      // The example LlamaCpp.run often triggers the onChunk callback passed earlier; we return null because streaming handled separately
+      runtime.client.run({ prompt, n_predict: 128 });
+      return ""; // streaming will populate UI via appendRuntimeChunk
+    }
+    // fallback: try a generic generate or complete function
+    if(typeof runtime.client.generate === "function"){
+      return await runtime.client.generate(prompt);
+    }
+    if(typeof runtime.client.complete === "function"){
+      return await runtime.client.complete(prompt);
+    }
+    logToTerminal("System: runtime client doesn't expose a known generate/complete API. See console.");
+    console.log("runtime.client exports:", Object.keys(runtime.client || {}));
+    return null;
+  } catch(e){
+    console.error("Runtime generation error:", e);
+    logToTerminal("System: runtime generation error: " + (e.message || e));
+    return null;
+  }
+}
+
+/* ---------- UI and Chat logic (mostly unchanged) ---------- */
+/* Small helper to log into the terminal area (system messages). */
+function logToTerminal(msg){
+  chats[active].messages.push({ role: "system", msg, ts: new Date().toISOString() });
+  persist();
+}
+
+/* The append typing + commit function (keystroke sound + cursor) — unchanged from prior version but
+   generates AI text either from runtime or fallback content. */
+function appendTypingAndCommit(role, text){
+  const typingEl = document.createElement("div"); typingEl.className = "message msg-ai ai-typing";
+  terminalEl.appendChild(typingEl);
+  terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
+  let i = 0;
+  const speed = 12;
+  return new Promise(res=>{
+    const iv = setInterval(()=>{
+      if(i < text.length){
+        typingEl.textContent = (role === "ai" ? "AI: " : "") + text.slice(0, i+1);
+        i++;
+        if(settings.keystroke && Math.random() > 0.45) playTypeSound();
+        terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
+      } else {
+        clearInterval(iv);
+        typingEl.classList.remove("ai-typing");
+        typingEl.classList.add("enter");
+        const ts = new Date().toISOString();
+        chats[active].messages.push({ role, msg: text, ts });
+        persist(true);
+        res();
+      }
+    }, speed);
+  });
+}
+
+/* Render functions and previous UI behaviors (preserved) */
 function renderChatList(){
   chatlistEl.innerHTML = "";
   chats.forEach((c,i)=>{
@@ -421,25 +625,9 @@ function renderChatList(){
     chatlistEl.appendChild(item);
   });
 }
+function finishRename(idx, newName){ if(!newName || typeof newName !== "string") return; chats[idx].name = newName.trim(); persist(); }
+function doDelete(idx){ lastDeleted = { idx, chat: chats[idx] }; chats.splice(idx,1); if(chats.length === 0) chats.push({ name:"Chat 1", messages:[{role:"system", msg:"Welcome", ts:new Date().toISOString()}], gameState:null }); active = Math.max(0, Math.min(active, chats.length-1)); persist(); showToast("Chat deleted.", ()=>{ if(!lastDeleted) return; chats.splice(lastDeleted.idx,0,lastDeleted.chat); lastDeleted = null; persist(); showToast("Undo successful."); }); }
 
-/* finish rename inline */
-function finishRename(idx, newName){
-  if(!newName || typeof newName !== "string") return;
-  chats[idx].name = newName.trim();
-  persist();
-}
-
-/* delete with undo */
-function doDelete(idx){
-  lastDeleted = { idx, chat: chats[idx] };
-  chats.splice(idx,1);
-  if(chats.length === 0) chats.push({ name:"Chat 1", messages:[{role:"system", msg:"Welcome", ts:new Date().toISOString()}], gameState:null });
-  active = Math.max(0, Math.min(active, chats.length-1));
-  persist();
-  showToast("Chat deleted.", ()=>{ if(!lastDeleted) return; chats.splice(lastDeleted.idx,0,lastDeleted.chat); lastDeleted = null; persist(); showToast("Undo successful."); });
-}
-
-/* --- menu (games + free chat) --- */
 const GAMES = [
   "Reel In - Fishing Simulator",
   "Space Explorer",
@@ -465,98 +653,69 @@ function renderMenu(){
   free.onclick = ()=> openFreeChat();
   menuEl.appendChild(free);
 }
-
-/* --- terminal rendering and message entry animation; includes edit controls for user messages --- */
 function renderTerminal(scrollSmooth = true){
   terminalEl.innerHTML = "";
   const msgs = chats[active].messages || [];
   for(let i=0;i<msgs.length;i++){
     const m = msgs[i];
     const div = document.createElement("div"); div.className = "message";
-    // set base class based on role
     if(m.role === "system"){ div.classList.add("msg-system"); div.textContent = "System: " + m.msg; }
-    else if(m.role === "ai"){
-      div.classList.add("msg-ai");
-      div.textContent = "AI: " + m.msg;
-    }
-    else {
-      div.classList.add("msg-user");
-      const content = document.createElement("div"); content.textContent = m.msg; div.appendChild(content);
-      const controls = document.createElement("div"); controls.className = "msg-controls";
-      const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Edit"; editBtn.innerText = "✏️";
-      editBtn.onclick = (ev)=>{ ev.stopPropagation(); startEditMessage(i, div, m.msg); };
-      controls.appendChild(editBtn);
-      div.appendChild(controls);
-    }
-    // timestamp
-    const ts = document.createElement("div"); ts.className = "msg-ts small";
-    ts.textContent = formatTS(m.ts || new Date().toISOString()) + (m.edited ? " · edited" : "");
-    div.appendChild(ts);
-
+    else if(m.role === "ai"){ div.classList.add("msg-ai"); div.textContent = "AI: " + m.msg; }
+    else { div.classList.add("msg-user"); const content = document.createElement("div"); content.textContent = m.msg; div.appendChild(content); const controls = document.createElement("div"); controls.className = "msg-controls"; const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Edit"; editBtn.innerText = "✏️"; editBtn.onclick = (ev)=>{ ev.stopPropagation(); startEditMessage(i, div, m.msg); }; controls.appendChild(editBtn); div.appendChild(controls); }
+    const ts = document.createElement("div"); ts.className = "msg-ts small"; ts.textContent = formatTS(m.ts || new Date().toISOString()) + (m.edited ? " · edited" : ""); div.appendChild(ts);
     terminalEl.appendChild(div);
     requestAnimationFrame(()=>{ div.classList.add("enter"); });
   }
   if(scrollSmooth) terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' }); else terminalEl.scrollTop = terminalEl.scrollHeight;
 }
+function formatTS(iso){ try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; } }
+function startEditMessage(msgIndex, messageDiv, currentText){ messageDiv.innerHTML = ""; const input = document.createElement("input"); input.className = "edit-input"; input.value = currentText; const saveBtn = document.createElement("button"); saveBtn.className = "icon-btn"; saveBtn.textContent = "Save"; const cancelBtn = document.createElement("button"); cancelBtn.className = "icon-btn"; cancelBtn.textContent = "Cancel"; const row = document.createElement("div"); row.className = "edit-row"; row.appendChild(input); row.appendChild(saveBtn); row.appendChild(cancelBtn); messageDiv.appendChild(row); input.focus(); input.select(); saveBtn.onclick = ()=>{ const val = input.value.trim(); if(val.length === 0) { showToast("Cannot save empty message"); return; } chats[active].messages[msgIndex].msg = val; chats[active].messages[msgIndex].ts = new Date().toISOString(); chats[active].messages[msgIndex].edited = true; persist(); }; cancelBtn.onclick = ()=>{ persist(); }; input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") saveBtn.click(); if(e.key === "Escape") cancelBtn.click(); }); }
 
-/* format timestamp to local readable string */
-function formatTS(iso){
-  try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; }
-}
+/* keystroke / ambient audio (unchanged) */
+let audioCtx = null;
+let ambientNode = null;
+let ambientRunning = false;
+function ensureAudio(){ if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ audioCtx = null; } } }
+function playKeystroke(volume = 0.06, type = "square", durationMs=18){ if(!settings.keystroke) return; ensureAudio(); if(!audioCtx) return; try { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = type; o.frequency.value = 1200 + Math.random()*300; g.gain.value = volume; o.connect(g); g.connect(audioCtx.destination); const now = audioCtx.currentTime; o.start(now); g.gain.setValueAtTime(volume, now); g.gain.exponentialRampToValueAtTime(0.0001, now + durationMs/1000); o.stop(now + durationMs/1000 + 0.02); } catch(e){} }
+function playTypeSound(){ playKeystroke(0.04, "sine", 14); }
+function startAmbient(vol = 0.06){ ensureAudio(); if(!audioCtx){ showToast("Audio unavailable"); return; } if(ambientRunning) return; if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{}); const gain = audioCtx.createGain(); gain.gain.value = vol; gain.connect(audioCtx.destination); const base = audioCtx.createOscillator(); base.type = "sine"; base.frequency.value = 70 + Math.random()*20; const baseGain = audioCtx.createGain(); baseGain.gain.value = 0.6; base.connect(baseGain); baseGain.connect(gain); const top = audioCtx.createOscillator(); top.type = "triangle"; top.frequency.value = 220 + Math.random()*40; const topGain = audioCtx.createGain(); topGain.gain.value = 0.12; top.connect(topGain); topGain.connect(gain); const bufferSize = 2 * audioCtx.sampleRate; const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate); const output = noiseBuffer.getChannelData(0); for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.007; const noise = audioCtx.createBufferSource(); noise.buffer = noiseBuffer; noise.loop = true; const noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.05; noise.connect(noiseGain); noiseGain.connect(gain); const filter = audioCtx.createBiquadFilter(); filter.type = "bandpass"; filter.frequency.value = 800; filter.Q.value = 0.9; gain.disconnect(); gain.connect(filter); filter.connect(audioCtx.destination); base.start(); top.start(); noise.start(); ambientNode = { base, top, noise, filter, gain }; ambientRunning = true; }
+function stopAmbient(){ if(!ambientRunning || !ambientNode) return; try { ambientNode.base.stop(); ambientNode.top.stop(); ambientNode.noise.stop(); } catch(e){} ambientNode = null; ambientRunning = false; }
+function setAmbientVolume(v){ if(ambientNode && ambientNode.gain) ambientNode.gain.gain.value = v; }
 
-/* start editing a user message inline (updates timestamp on save) */
-function startEditMessage(msgIndex, messageDiv, currentText){
-  messageDiv.innerHTML = "";
-  const input = document.createElement("input"); input.className = "edit-input"; input.value = currentText;
-  const saveBtn = document.createElement("button"); saveBtn.className = "icon-btn"; saveBtn.textContent = "Save";
-  const cancelBtn = document.createElement("button"); cancelBtn.className = "icon-btn"; cancelBtn.textContent = "Cancel";
-  const row = document.createElement("div"); row.className = "edit-row";
-  row.appendChild(input); row.appendChild(saveBtn); row.appendChild(cancelBtn);
-  messageDiv.appendChild(row);
-  input.focus(); input.select();
-  saveBtn.onclick = ()=>{ const val = input.value.trim(); if(val.length === 0) { showToast("Cannot save empty message"); return; } chats[active].messages[msgIndex].msg = val; chats[active].messages[msgIndex].ts = new Date().toISOString(); chats[active].messages[msgIndex].edited = true; persist(); };
-  cancelBtn.onclick = ()=>{ persist(); };
-  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") saveBtn.click(); if(e.key === "Escape") cancelBtn.click(); });
-}
+/* toast (unchanged) */
+let toastTimer = null;
+function showToast(text, undoCallback){ toastEl.innerHTML = ""; const span = document.createElement("span"); span.textContent = text; toastEl.appendChild(span); if(typeof undoCallback === "function"){ const undo = document.createElement("span"); undo.textContent = "  Undo"; undo.className = "undo"; undo.onclick = ()=>{ undoCallback(); hideToast(); }; toastEl.appendChild(undo); } toastEl.style.display = "block"; if(toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ hideToast(); }, 5000); }
+function hideToast(){ toastEl.style.display = "none"; if(toastTimer) clearTimeout(toastTimer); }
 
-/* typing animation with keystroke sounds during typing + AI typing cursor effect; commit with timestamp */
-function appendTypingAndCommit(role, text){
-  const typingEl = document.createElement("div"); typingEl.className = "message msg-ai ai-typing";
-  terminalEl.appendChild(typingEl);
-  terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
-  let i = 0;
-  const speed = 12;
-  return new Promise(res=>{
-    const iv = setInterval(()=>{
-      if(i < text.length){
-        typingEl.textContent = "AI: " + text.slice(0, i+1);
-        i++;
-        if(settings.keystroke && Math.random() > 0.45) playTypeSound();
-        terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
-      } else {
-        clearInterval(iv);
-        typingEl.classList.remove("ai-typing");
-        typingEl.classList.add("enter");
-        const ts = new Date().toISOString();
-        chats[active].messages.push({ role, msg: text, ts });
-        persist(true);
-        res();
-      }
-    }, speed);
-  });
-}
-
-/* --- input interactions --- */
+/* --- input and command handling (minimal changes to route to runtime when available) --- */
 inputEl.addEventListener("keydown", (e)=>{ if(settings.keystroke) playKeystroke(0.06, "square", 14); if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); } });
 sendBtn.addEventListener("click", async ()=>{
   const txt = inputEl.value.trim(); if(!txt) return; inputEl.value = ""; inputEl.focus();
   chats[active].messages.push({ role: "user", msg: txt, ts: new Date().toISOString() });
   persist();
-  await handleUserCommand(txt);
+  // If model is loaded, send prompt to runtime
+  if(modelLoaded && runtime && runtime.client){
+    logToTerminal("System: routing your prompt to local model...");
+    const result = await sendToRuntime(txt);
+    // result may be null (streaming) or a string
+    if(typeof result === "string" && result.length){
+      // show generated text using typing animation
+      await appendTypingAndCommit("ai", result);
+    } else {
+      // streaming may populate UI via onChunk/appendRuntimeChunk or runtime.client callbacks
+      // if nothing happened, fallback to previous UI fallback
+      if(result === null){
+        await appendTypingAndCommit("ai", "Model did not produce output. See console for runtime logs.");
+      }
+    }
+  } else {
+    // fallback simulated AI behavior
+    await handleUserCommandFallback(txt);
+  }
 });
 
-/* --- command handling & fallback gameplay --- */
-async function handleUserCommand(cmd){
+/* fallback simple game responses (unchanged) */
+async function handleUserCommandFallback(cmd){
   const lc = cmd.trim().toLowerCase();
   if(lc === "help"){
     chats[active].messages.push({ role:"ai", msg: "Help: click a game or use Free Chat. Type 'simulate download' to see progress UI.", ts: new Date().toISOString() });
@@ -586,108 +745,56 @@ async function handleUserCommand(cmd){
   await appendTypingAndCommit("ai", reply);
 }
 
-/* --- game helpers --- */
-function startGame(idx){
-  chats[active].gameState = { id: idx, name: GAMES[idx], state: {} };
-  persist();
-  menuEl.style.display = "none";
-  appendTypingAndCommit("ai", `You started "${GAMES[idx]}". ${gamePrompt(idx)}`);
-}
-function gamePrompt(i){
-  switch(i){
-    case 0: return "You're on a pier. Commands: 'cast','upgrade','move'.";
-    case 1: return "Pilot your scout: 'explore','scan','jump'.";
-    case 2: return "Maze: 'up','down','left','right','look'.";
-    case 3: return "Treasure: 'dig','scan','map'.";
-    case 4: return "Farm: 'plant','water','harvest','sell'.";
-    case 5: return "Kitchen: 'mix','cook','serve'.";
-    case 6: return "Battle: 'attack','defend','item'.";
-    case 7: return "Puzzle: 'solve','hint'.";
-    case 8: return "Words: 'form [word]','shuffle','hint'.";
-    case 9: return "Race: 'go','brake','boost'.";
-    default: return "Ready.";
-  }
-}
-function openFreeChat(){
-  chats[active].gameState = null;
-  persist();
-  appendTypingAndCommit("ai", "Free chat started. Ask me anything.");
-}
+/* --- other UI handlers and initialization (unchanged) --- */
+function startGame(idx){ chats[active].gameState = { id: idx, name: GAMES[idx], state: {} }; persist(); menuEl.style.display = "none"; appendTypingAndCommit("ai", `You started "${GAMES[idx]}". ${gamePrompt(idx)}`); }
+function gamePrompt(i){ switch(i){ case 0: return "You're on a pier. Commands: 'cast','upgrade','move'."; case 1: return "Pilot your scout: 'explore','scan','jump'."; case 2: return "Maze: 'up','down','left','right','look'."; case 3: return "Treasure: 'dig','scan','map'."; case 4: return "Farm: 'plant','water','harvest','sell'."; case 5: return "Kitchen: 'mix','cook','serve'."; case 6: return "Battle: 'attack','defend','item'."; case 7: return "Puzzle: 'solve','hint'."; case 8: return "Words: 'form [word]','shuffle','hint'."; case 9: return "Race: 'go','brake','boost'."; default: return "Ready."; } }
+function openFreeChat(){ chats[active].gameState = null; persist(); appendTypingAndCommit("ai", "Free chat started. Ask me anything."); }
 
-/* --- chat controls (non-blocking) --- */
-document.getElementById("btnNew").addEventListener("click", ()=>{
-  chats.push({ name: `Chat ${chats.length+1}`, messages: [{ role:"system", msg:"New chat created.", ts: new Date().toISOString() }], gameState:null });
-  active = chats.length-1; persist(); setTimeout(()=>inputEl.focus(),80);
-});
+document.getElementById("btnNew").addEventListener("click", ()=>{ chats.push({ name: `Chat ${chats.length+1}`, messages: [{ role:"system", msg:"New chat created.", ts: new Date().toISOString() }], gameState:null }); active = chats.length-1; persist(); setTimeout(()=>inputEl.focus(),80); });
 document.getElementById("btnExport").addEventListener("click", ()=>{ const blob = new Blob([JSON.stringify(chats)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "chatgames_backup.json"; a.click(); showToast("Exported chats"); });
 document.getElementById("btnExportLeft").addEventListener("click", ()=>{ const blob = new Blob([JSON.stringify(chats)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "chatgames_backup.json"; a.click(); showToast("Exported chats"); });
 document.getElementById("btnImport").addEventListener("click", importHandler);
 document.getElementById("btnImport2").addEventListener("click", importHandler);
-function importHandler(){
-  const fi = document.createElement("input"); fi.type = "file"; fi.accept = ".json";
-  fi.onchange = async ()=>{ const f = fi.files[0]; if(!f) return; const txt = await f.text(); try{ const imp = JSON.parse(txt); if(!Array.isArray(imp)) throw 0; chats = imp; active = 0; persist(); showToast("Imported chats"); } catch(e){ showToast("Import failed"); } };
-  fi.click();
-}
+function importHandler(){ const fi = document.createElement("input"); fi.type = "file"; fi.accept = ".json"; fi.onchange = async ()=>{ const f = fi.files[0]; if(!f) return; const txt = await f.text(); try{ const imp = JSON.parse(txt); if(!Array.isArray(imp)) throw 0; chats = imp; active = 0; persist(); showToast("Imported chats"); } catch(e){ showToast("Import failed"); } }; fi.click(); }
 document.getElementById("btnClearFlag").addEventListener("click", ()=>{ localStorage.removeItem("ollama_model_dummy_downloaded"); showToast("Model flag cleared"); });
 
-/* copy placeholders */
 document.getElementById("copyManifest").addEventListener("click", async ()=>{ try { await navigator.clipboard.writeText(DUMMY_MANIFEST); showToast("Manifest copied"); } catch(e){ showToast("Clipboard not available"); }});
 document.getElementById("copyBlobs").addEventListener("click", async ()=>{ try { await navigator.clipboard.writeText(DUMMY_BLOBS.join("\n")); showToast("Blob URLs copied"); } catch(e){ showToast("Clipboard not available"); }});
 document.getElementById("btnPlace").addEventListener("click", ()=>{ chats[active].messages.push({ role:"system", msg:"Placeholder manifest and blobs (copied if clipboard allowed).", ts: new Date().toISOString() }); persist(); showToast("Placeholders appended"); });
 
-/* simulate download */
 document.getElementById("btnDownload").addEventListener("click", simulateDownload);
-function simulateDownload(){
-  progressWrap.style.display = "block";
-  let p = 0; progressBar.style.width = '0%'; progressText.innerText = '0%';
-  const iv = setInterval(()=>{ p += Math.random()*0.14; if(p>1)p=1; progressBar.style.width = Math.floor(p*100) + '%'; progressText.innerText = Math.floor(p*100) + '%'; if(p>=1){ clearInterval(iv); setTimeout(()=>{ progressWrap.style.display='none'; localStorage.setItem("ollama_model_dummy_downloaded", "1"); showToast("Simulated model downloaded"); chats[active].messages.push({ role:"system", msg:"Simulated model downloaded (UI-only).", ts: new Date().toISOString() }); persist(); }, 450); } }, 160);
-}
+function simulateDownload(){ progressWrap.style.display = "block"; let p = 0; progressBar.style.width = '0%'; progressText.innerText = '0%'; const iv = setInterval(()=>{ p += Math.random()*0.14; if(p>1)p=1; progressBar.style.width = Math.floor(p*100) + '%'; progressText.innerText = Math.floor(p*100) + '%'; if(p>=1){ clearInterval(iv); setTimeout(()=>{ progressWrap.style.display='none'; localStorage.setItem("ollama_model_dummy_downloaded", "1"); showToast("Simulated model downloaded"); chats[active].messages.push({ role:"system", msg:"Simulated model downloaded (UI-only).", ts: new Date().toISOString() }); persist(); }, 450); } }, 160); }
 
-/* theme & CRT toggles */
 const THEMES = ["hacker","dark","light"];
 function applyTheme(name){ document.body.classList.remove(...THEMES); document.body.classList.add(name); themeBtn.textContent = name === "hacker" ? "🧑‍💻" : (name === "dark" ? "🌕" : "☀️"); settings.theme = name; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 themeBtn.addEventListener("click", ()=>{ const cur = settings.theme || "hacker"; const i = THEMES.indexOf(cur); const next = THEMES[(i+1)%THEMES.length]; applyTheme(next); showToast("Theme: "+next); });
-function applyCRT(on){ crtOverlay.style.display = on ? "block" : "none"; crtToggle.textContent = on ? "CRT ON" : "CRT OFF"; settings.crt = !!on; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
-crtToggle.addEventListener("click", ()=>{ settings.crt = !settings.crt; applyCRT(settings.crt); showToast("CRT "+(settings.crt ? "enabled" : "disabled")); });
+function applyCRT(on){ document.getElementById("crtOverlay").style.display = on ? "block" : "none"; document.getElementById("crtToggle").textContent = on ? "CRT ON" : "CRT OFF"; settings.crt = !!on; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+document.getElementById("crtToggle").addEventListener("click", ()=>{ settings.crt = !settings.crt; applyCRT(settings.crt); showToast("CRT "+(settings.crt ? "enabled" : "disabled")); });
 
-/* ambient controls */
-ambientToggle.addEventListener("click", ()=>{ ensureAudio(); if(!audioCtx){ showToast("Audio not available in this browser"); return; } if(!ambientRunning){ if(audioCtx.state === 'suspended'){ audioCtx.resume().catch(()=>{}); } startAmbient(parseFloat(ambientVol.value)); ambientToggle.textContent = "Pause"; settings.ambientOn = true; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } else { stopAmbient(); ambientToggle.textContent = "Play"; settings.ambientOn = false; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }});
-ambientVol.addEventListener("input", ()=>{ const v = parseFloat(ambientVol.value); settings.ambientVol = v; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); setAmbientVolume(v); });
+document.getElementById("ambientToggle").addEventListener("click", ()=>{ ensureAudio(); if(!audioCtx){ showToast("Audio not available"); return; } if(!ambientRunning){ if(audioCtx.state === 'suspended'){ audioCtx.resume().catch(()=>{}); } startAmbient(parseFloat(document.getElementById("ambientVol").value)); document.getElementById("ambientToggle").textContent = "Pause"; settings.ambientOn = true; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } else { stopAmbient(); document.getElementById("ambientToggle").textContent = "Play"; settings.ambientOn = false; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }});
+document.getElementById("ambientVol").addEventListener("input", ()=>{ const v = parseFloat(document.getElementById("ambientVol").value); settings.ambientVol = v; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); setAmbientVolume(v); });
 
-/* toggle keystroke with k key */
+/* Install runtime / Download Model / Load Model buttons handlers */
+btnInstall.addEventListener("click", async ()=>{ await installRuntime(); });
+btnDownloadModel.addEventListener("click", async ()=>{ // use DUMMY_MANIFEST + DUMMY_BLOBS as default
+  await downloadManifestAndBlobs(DUMMY_MANIFEST, DUMMY_BLOBS);
+});
+btnLoadModel.addEventListener("click", async ()=>{ await loadModelFromIndexedDB("llama3.2"); });
+
+/* Ctrl+F -> Free Chat override */
+window.addEventListener("keydown", (e)=>{ if(e.ctrlKey && e.key.toLowerCase() === 'f'){ e.preventDefault(); openFreeChat(); showToast("Free Chat opened (Ctrl+F)"); } });
+document.getElementById("headerFreeChat").addEventListener("click", ()=>{ openFreeChat(); });
+
+/* other small features */
 window.addEventListener("keydown", (e)=>{ if(e.key === 'k'){ settings.keystroke = !settings.keystroke; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); showToast("Keystroke sound " + (settings.keystroke ? "on" : "off")); } });
 
-/* Ctrl+F -> Free Chat override (prevents default find) */
-window.addEventListener("keydown", (e)=>{ if(e.ctrlKey && e.key.toLowerCase() === 'f'){ e.preventDefault(); openFreeChat(); showToast("Free Chat opened (Ctrl+F)"); } });
-
-/* header free chat button */
-headerFreeChat.addEventListener("click", ()=>{ openFreeChat(); });
-
-/* --- initialization & persist --- */
-function persist(scroll=true){
-  localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
-  renderChatList();
-  renderMenu();
-  renderTerminal(scroll);
-}
-function init(){
-  applyTheme(settings.theme || "hacker");
-  applyCRT(settings.crt !== false);
-  ambientVol.value = settings.ambientVol || 0.06;
-  ambientToggle.textContent = settings.ambientOn ? "Pause" : "Play";
-  renderChatList();
-  renderMenu();
-  renderTerminal(false);
-  setTimeout(()=> inputEl.focus(), 140);
-  if(!localStorage.getItem("ollama_model_dummy_downloaded")){
-    chats[active].messages.push({ role:"system", msg:"Model placeholder not downloaded. Use 'Simulate DL' to exercise UI.", ts: new Date().toISOString() });
-    persist();
-  }
-}
+/* Persist/render */
+function persist(scroll=true){ localStorage.setItem(CHATS_KEY, JSON.stringify(chats)); renderChatList(); renderMenu(); renderTerminal(scroll); }
+function init(){ applyTheme(settings.theme || "hacker"); applyCRT(settings.crt !== false); document.getElementById("ambientVol").value = settings.ambientVol || 0.06; document.getElementById("ambientToggle").textContent = settings.ambientOn ? "Pause" : "Play"; renderChatList(); renderMenu(); renderTerminal(false); setTimeout(()=> inputEl.focus(), 140); if(!localStorage.getItem("ollama_model_dummy_downloaded")){ chats[active].messages.push({ role:"system", msg:"Model placeholder not downloaded. Use 'Simulate DL' or Download Model to exercise Model UI.", ts: new Date().toISOString() }); persist(); } }
 init();
 
-/* expose small debug */
-window._chatgames = { chats, persist, simulateDownload, openFreeChat };
+/* Expose small utilities for debug in console */
+window._chatgames_runtime = { installRuntime, downloadManifestAndBlobs, loadModelFromIndexedDB, runtime, chats };
 
 </script>
 </body>
