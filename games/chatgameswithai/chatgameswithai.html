@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Chat Games with AI</title>
+<style>
+:root{
+  --neon: #00ff66;
+  --neon2: #66e0ff;
+  --bg: #021205;
+  --panel: rgba(0,0,0,0.22);
+  --muted: rgba(175,255,185,0.5);
+  --text: #caffd1;
+  --user: #fff8a3;
+  --radius: 10px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+  --ambient-thumb: #9fe6a4;
+}
+
+/* ---- base ---- */
+html,body{height:100%;margin:0;font-family:var(--mono);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;}
+
+/* header */
+header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg, rgba(0,0,0,0.05), transparent)}
+.title{font-weight:900;letter-spacing:0.6px}
+.header-right{display:flex;gap:12px;align-items:center}
+
+/* main layout */
+#main{display:flex;flex:1;overflow:hidden}
+#left{width:340px;border-right:1px solid rgba(0,0,0,0.18);padding:14px;box-sizing:border-box;background:linear-gradient(180deg, rgba(0,0,0,0.04), transparent)}
+.card{background:var(--panel);border-radius:12px;padding:10px;border:1px solid rgba(0,0,0,0.12);box-shadow: inset 0 -6px 14px rgba(0,0,0,0.2)}
+#chatlist{display:flex;flex-direction:column;gap:8px;overflow:auto;padding:6px 2px;max-height:48vh}
+
+/* chat item */
+.chat-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.06))}
+.chat-item.active{box-shadow:0 10px 40px rgba(0,255,100,0.04), inset 0 -6px 10px rgba(0,0,0,0.25);border-color:rgba(0,255,120,0.18)}
+.chat-left{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.chat-name{font-weight:700}
+.chat-meta{font-size:12px;color:var(--muted)}
+
+/* chat inline rename */
+.icon-input{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%}
+
+/* left controls */
+.left-controls{display:flex;gap:8px;margin-top:12px}
+.left-controls button{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06));color:var(--text);cursor:pointer}
+
+/* right column */
+#right{flex:1;display:flex;flex-direction:column;gap:12px;padding:12px}
+.menu-row{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
+#menu{flex:1;display:flex;flex-wrap:wrap;gap:12px;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.12);background:linear-gradient(180deg, rgba(0,0,0,0.03), rgba(0,0,0,0.06))}
+.grid-card{min-width:180px;flex:0 0 200px;border-radius:10px;padding:12px;background:linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.05));border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+.grid-title{font-weight:800}
+.grid-sub{font-size:12px;color:var(--muted)}
+
+/* terminal */
+#terminal{flex:1;padding:18px;overflow:auto;border-radius:12px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.message{max-width:78%;padding:10px 12px;border-radius:10px;margin-bottom:8px;word-wrap:break-word;opacity:0;transform:translateY(14px);position:relative}
+/* message entry animation */
+.message.enter { animation: msgEnter 360ms cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes msgEnter { 0% { opacity:0; transform:translateY(14px) } 60% { opacity:1; transform:translateY(-4px) } 100% { opacity:1; transform:translateY(0) } }
+
+.msg-system{background:rgba(0,0,0,0.06);border-left:4px solid rgba(0,255,110,0.18);color:var(--text);font-weight:700}
+.msg-ai{background:rgba(0,0,0,0.04);border-left:4px solid rgba(105,200,255,0.14);color:var(--neon2)}
+.msg-user{background:rgba(0,0,0,0.04);border-left:4px solid rgba(255,215,90,0.12);color:var(--user);align-self:flex-start}
+
+/* timestamp */
+.msg-ts{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--muted);opacity:0.9}
+
+/* user message controls (edit) */
+.msg-controls{position:absolute;right:8px;top:6px;display:flex;gap:6px}
+.msg-controls button{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:4px}
+
+/* editing UI inside message */
+.edit-row{display:flex;gap:6px;margin-top:8px}
+.edit-input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text)}
+
+/* typing cursor effect for AI (block) */
+.ai-typing::after{
+  content: "█";
+  display:inline-block;
+  margin-left:6px;
+  animation: blinkCursor 600ms steps(1, end) infinite;
+  color: var(--neon);
+  font-weight:900;
+}
+@keyframes blinkCursor { 0% { opacity: 1 } 50% { opacity: 0 } 100% { opacity: 1 } }
+
+/* input */
+#inputbar{display:flex;gap:12px;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent)}
+#input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:#031403;color:var(--text);outline:none;font-size:14px;z-index:2}
+#sendBtn{padding:12px 16px;border-radius:10px;background:linear-gradient(180deg,#003a12,#012207);color:var(--text);border:1px solid rgba(0,0,0,0.12);cursor:pointer}
+
+/* progress */
+#progressWrap{position:fixed;left:50%;top:12px;transform:translateX(-50%);min-width:420px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,120,0.06);padding:10px;border-radius:10px;display:none;z-index:140}
+#progressBarOuter{height:12px;background:#001200;border-radius:8px;overflow:hidden}
+#progressBar{width:0%;height:100%;background:linear-gradient(90deg,#06f,#0f6);}
+
+/* theme controls & CRT & ambient control */
+#themeSwitcher{position:fixed;right:14px;top:12px;display:flex;flex-direction:column;gap:8px;z-index:160;align-items:center}
+.themebtn{width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg, rgba(0,0,0,0.04), transparent);border:1px solid rgba(255,255,255,0.03);color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.02);padding:8px;border-radius:8px;color:var(--text);cursor:pointer}
+#crtToggle{font-size:13px;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--text);cursor:pointer}
+
+/* ambient controls */
+.ambient-controls{display:flex;flex-direction:column;gap:6px;align-items:center}
+.ambient-controls input[type="range"]{width:88px;accent-color:var(--ambient-thumb);}
+
+/* CRT overlay: stronger, animated scanlines and moving grid */
+.crt-overlay{pointer-events:none;position:fixed;inset:0;z-index:120}
+.scanlines{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom, rgba(0,255,110,0.18) 0px, rgba(0,255,110,0.18) 3px, transparent 3px, transparent 6px);opacity:0.98;mix-blend-mode:overlay;background-size:100% 6px;animation:moveScan 6s linear infinite}
+@keyframes moveScan { 0% { background-position:0 0 } 100% { background-position:0 48px } }
+.gridlines{position:absolute;inset:0;background-image:linear-gradient(90deg, rgba(0,255,110,0.06) 1px, transparent 1px), linear-gradient(rgba(0,255,110,0.06) 1px, transparent 1px);background-size:200px 200px;opacity:0.2;animation:shiftGrid 18s linear infinite}
+@keyframes shiftGrid { 0% { background-position:0 0, 0 0 } 50% { background-position:-60px -30px, 40px 20px } 100% { background-position:0 0, 0 0 } }
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 80%)}
+.sweep{position:absolute;left:-60%;top:0;width:40%;height:100%;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.26), rgba(255,255,255,0.06));transform:skewX(-16deg);opacity:0.08;animation:sweep 6s linear infinite}
+@keyframes sweep {0%{left:-60%}50%{left:120%}100%{left:120%}}
+
+/* toast (non-blocking) */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:10px 14px;border-radius:8px;color:var(--text);border:1px solid rgba(0,255,120,0.06);display:none;z-index:200}
+#toast .undo{color:var(--neon);text-decoration:underline;cursor:pointer;margin-left:10px}
+
+/* small */
+.small{font-size:12px;color:var(--muted)}
+.kv{font-size:12px;color:var(--muted);display:block;margin-top:6px}
+
+/* themes */
+body.hacker{ background: linear-gradient(180deg,#041403,#021205 70%); color:var(--text); }
+body.dark{ background:#08101a; color:#dfeaff }
+body.light{ background:#fff; color:#0c1720 }
+body.light #input{background:#fff;color:#111;border:1px solid rgba(0,0,0,0.06)}
+body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); color:#111}
+
+/* responsive */
+@media (max-width:900px){ #left{display:none} }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div class="title">Chat Games with AI</div>
+      <button id="headerFreeChat" class="icon-btn" title="Open Free Chat">Free Chat</button>
+    </div>
+    <div class="header-right">
+      <div class="small">AI (local) • credit: Ollama</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="btnExport" class="icon-btn">Export</button>
+        <button id="btnImport" class="icon-btn">Import</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="main">
+    <div id="left">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-weight:800">Chats</div>
+          <div class="small">Inline rename • Undo delete</div>
+        </div>
+        <div id="chatlist"></div>
+        <div class="left-controls" style="margin-top:12px">
+          <button id="btnNew" class="left-btn">+ New</button>
+          <button id="btnClearFlag" class="left-btn">Clear Flag</button>
+          <button id="btnExportLeft" class="left-btn">Export</button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:800">Free Chat & Model (UI)</div>
+          <div class="small">placeholders only</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <button id="btnFreeChat" class="icon-btn">Free Chat</button>
+          <button id="btnDownload" class="icon-btn">Simulate DL</button>
+          <button id="btnPlace" class="icon-btn">Placeholders</button>
+        </div>
+        <div style="margin-top:10px" class="small">Copy manifest / blobs to clipboard for later server-side download</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="copyManifest" class="icon-btn">Copy Manifest</button>
+          <button id="copyBlobs" class="icon-btn">Copy Blobs</button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="font-weight:800">Ambient</div>
+          <div class="small">Hacker soundscape</div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <button id="ambientToggle" class="icon-btn">Play</button>
+          <div class="ambient-controls">
+            <input id="ambientVol" type="range" min="0" max="1" step="0.01" value="0.06">
+            <div class="small">Volume</div>
+          </div>
+        </div>
+        <div style="margin-top:8px" class="small">Press 'k' to toggle keystroke sounds.</div>
+      </div>
+
+    </div>
+
+    <div id="right">
+      <div class="menu-row">
+        <div id="menu" class="card"></div>
+        <div style="width:180px;display:flex;flex-direction:column;gap:10px">
+          <div class="card" style="display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center">
+            <div style="font-weight:700">Actions</div>
+            <button id="btnExport2" class="icon-btn">Export</button>
+            <button id="btnImport2" class="icon-btn">Import</button>
+            <div style="height:6px"></div>
+            <button id="themeBtn" class="themebtn">🧑‍💻</button>
+            <button id="crtToggle" class="icon-btn">CRT ON</button>
+          </div>
+          <div class="card small">Tip: This is a UI prototype; it accepts a real model loader later (server-side blobs + wasm).</div>
+        </div>
+      </div>
+
+      <div id="terminal" class="card" aria-live="polite"></div>
+
+      <div id="inputbar">
+        <input id="input" placeholder="Type — e.g. cast / explore / help / simulate download" autocomplete="off" />
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CRT overlay -->
+<div class="crt-overlay" id="crtOverlay">
+  <div class="scanlines"></div>
+  <div class="gridlines"></div>
+  <div class="vignette"></div>
+  <div class="sweep"></div>
+</div>
+
+<!-- progress -->
+<div id="progressWrap">
+  <div style="font-size:13px;color:var(--muted)">Model download (simulated)</div>
+  <div id="progressBarOuter" style="margin-top:8px">
+    <div id="progressBar"></div>
+  </div>
+  <div id="progressText" class="small" style="margin-top:6px;color:var(--muted)">0%</div>
+</div>
+
+<!-- toast -->
+<div id="toast"></div>
+
+<script>
+/* ===============================
+   Chat Games with AI — single file
+   - Timestamps added
+   - Ctrl+F -> Free Chat (overrides browser find)
+   - Free Chat button in header + existing buttons
+   - Edit user messages inline (updates timestamp)
+   - Ambient sound, typing cursor, keystrokes, CRT effects
+   - Persistent via localStorage
+   =============================== */
+
+/* --- storage keys & placeholders --- */
+const CHATS_KEY = "chatgames_chats";
+const SETTINGS_KEY = "chatgames_settings";
+const DUMMY_MANIFEST = "https://registry.ollama.ai/v2/library/llama3.2/manifests/latest";
+const DUMMY_BLOBS = [
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:34bb5ab01051a11372a91f95f3fbbc51173eed8e7f13ec395b9ae9b8bd0e242b",
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:dde5aa3fc5ffc17176b5e8bdc82f587b24b2678c6c66101bf7da77af9f7ccdff",
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:966de95ca8a62200913e3f8bfbf84c8494536f1b94b49166851e76644e966396",
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:fcc5a6bec9daf9b561a68827b67ab6088e1dba9d1fa2a50d7bbcc8384e0a265d",
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:a70ff7e570d97baaf4e62ac6e6ad9975e04caa6d900d3742d37698494479e0cd",
+  "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb"
+];
+
+/* --- data initialization --- */
+let chats = JSON.parse(localStorage.getItem(CHATS_KEY) || "null");
+if(!Array.isArray(chats) || chats.length === 0){
+  chats = [{
+    name: "Chat 1",
+    messages: [{ role:"system", msg:"Welcome. Use Free Chat or select a game. Simulated model download available.", ts: new Date().toISOString() }],
+    gameState: null
+  }];
+  localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
+}
+let active = 0;
+let lastDeleted = null;
+let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
+if(!settings) settings = { theme: "hacker", crt: true, keystroke: true, ambientOn: false, ambientVol: 0.06 }, localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+
+/* --- DOM refs --- */
+const chatlistEl = document.getElementById("chatlist");
+const menuEl = document.getElementById("menu");
+const terminalEl = document.getElementById("terminal");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("sendBtn");
+const toastEl = document.getElementById("toast");
+const progressWrap = document.getElementById("progressWrap");
+const progressBar = document.getElementById("progressBar");
+const progressText = document.getElementById("progressText");
+const crtOverlay = document.getElementById("crtOverlay");
+const themeBtn = document.getElementById("themeBtn");
+const crtToggle = document.getElementById("crtToggle");
+const ambientToggle = document.getElementById("ambientToggle");
+const ambientVol = document.getElementById("ambientVol");
+const headerFreeChat = document.getElementById("headerFreeChat");
+
+/* --- audio (keystroke & ambient) using WebAudio --- */
+let audioCtx = null;
+let ambientNode = null;
+let ambientRunning = false;
+
+function ensureAudio(){
+  if(!audioCtx){
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ audioCtx = null; }
+  }
+}
+function playKeystroke(volume = 0.06, type = "square", durationMs=18){
+  if(!settings.keystroke) return;
+  ensureAudio(); if(!audioCtx) return;
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.value = 1200 + Math.random()*300;
+    g.gain.value = volume;
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    o.start(now);
+    g.gain.setValueAtTime(volume, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + durationMs/1000);
+    o.stop(now + durationMs/1000 + 0.02);
+  } catch(e){}
+}
+function playTypeSound(){ playKeystroke(0.04, "sine", 14); }
+
+/* ambient sound functions (subtle hacker drone) */
+function startAmbient(vol = 0.06){
+  ensureAudio();
+  if(!audioCtx) { showToast("Audio unavailable"); return; }
+  if(ambientRunning) return;
+  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  const gain = audioCtx.createGain(); gain.gain.value = vol;
+  gain.connect(audioCtx.destination);
+
+  const base = audioCtx.createOscillator(); base.type = "sine"; base.frequency.value = 70 + Math.random()*20;
+  const baseGain = audioCtx.createGain(); baseGain.gain.value = 0.6;
+  base.connect(baseGain); baseGain.connect(gain);
+
+  const top = audioCtx.createOscillator(); top.type = "triangle"; top.frequency.value = 220 + Math.random()*40;
+  const topGain = audioCtx.createGain(); topGain.gain.value = 0.12;
+  top.connect(topGain); topGain.connect(gain);
+
+  const bufferSize = 2 * audioCtx.sampleRate;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.007;
+  const noise = audioCtx.createBufferSource(); noise.buffer = noiseBuffer; noise.loop = true;
+  const noiseGain = audioCtx.createGain(); noiseGain.gain.value = 0.05;
+  noise.connect(noiseGain); noiseGain.connect(gain);
+
+  const filter = audioCtx.createBiquadFilter(); filter.type = "bandpass"; filter.frequency.value = 800; filter.Q.value = 0.9;
+  gain.disconnect(); gain.connect(filter); filter.connect(audioCtx.destination);
+
+  base.start(); top.start(); noise.start();
+  ambientNode = { base, top, noise, filter, gain };
+  ambientRunning = true;
+}
+function stopAmbient(){
+  if(!ambientRunning || !ambientNode) return;
+  try { ambientNode.base.stop(); ambientNode.top.stop(); ambientNode.noise.stop(); } catch(e){}
+  ambientNode = null; ambientRunning = false;
+}
+function setAmbientVolume(v){
+  if(ambientNode && ambientNode.gain) ambientNode.gain.gain.value = v;
+}
+
+/* --- toast --- */
+let toastTimer = null;
+function showToast(text, undoCallback){
+  toastEl.innerHTML = "";
+  const span = document.createElement("span"); span.textContent = text;
+  toastEl.appendChild(span);
+  if(typeof undoCallback === "function"){
+    const undo = document.createElement("span"); undo.textContent = "  Undo"; undo.className = "undo";
+    undo.onclick = ()=>{ undoCallback(); hideToast(); };
+    toastEl.appendChild(undo);
+  }
+  toastEl.style.display = "block";
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ hideToast(); }, 5000);
+}
+function hideToast(){ toastEl.style.display = "none"; if(toastTimer) clearTimeout(toastTimer); }
+
+/* --- render chat list --- */
+function renderChatList(){
+  chatlistEl.innerHTML = "";
+  chats.forEach((c,i)=>{
+    const item = document.createElement("div"); item.className = "chat-item" + (i === active ? " active" : "");
+    item.onclick = ()=>{ active = i; persist(); };
+    const left = document.createElement("div"); left.className = "chat-left";
+    const name = document.createElement("div"); name.className = "chat-name"; name.textContent = c.name || `Chat ${i+1}`;
+    const nameInput = document.createElement("input"); nameInput.className = "icon-input"; nameInput.style.display = "none"; nameInput.value = c.name || `Chat ${i+1}`;
+    nameInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ finishRename(i, nameInput.value); } if(e.key === "Escape"){ nameInput.style.display = 'none'; name.style.display = 'block'; }});
+    const meta = document.createElement("div"); meta.className = "chat-meta"; meta.textContent = (c.messages?.length || 0) + " msgs";
+    left.appendChild(name); left.appendChild(nameInput); left.appendChild(meta);
+
+    const actions = document.createElement("div"); actions.className = "chat-actions";
+    const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Rename";
+    editBtn.textContent = "✏️"; editBtn.onclick = (ev)=>{ ev.stopPropagation(); name.style.display='none'; nameInput.style.display='inline-block'; nameInput.focus(); nameInput.select(); };
+    const delBtn = document.createElement("button"); delBtn.className = "icon-btn"; delBtn.title = "Delete";
+    delBtn.textContent = "🗑️"; delBtn.onclick = (ev)=>{ ev.stopPropagation(); doDelete(i); };
+    actions.appendChild(editBtn); actions.appendChild(delBtn);
+
+    item.appendChild(left); item.appendChild(actions);
+    chatlistEl.appendChild(item);
+  });
+}
+
+/* finish rename inline */
+function finishRename(idx, newName){
+  if(!newName || typeof newName !== "string") return;
+  chats[idx].name = newName.trim();
+  persist();
+}
+
+/* delete with undo */
+function doDelete(idx){
+  lastDeleted = { idx, chat: chats[idx] };
+  chats.splice(idx,1);
+  if(chats.length === 0) chats.push({ name:"Chat 1", messages:[{role:"system", msg:"Welcome", ts:new Date().toISOString()}], gameState:null });
+  active = Math.max(0, Math.min(active, chats.length-1));
+  persist();
+  showToast("Chat deleted.", ()=>{ if(!lastDeleted) return; chats.splice(lastDeleted.idx,0,lastDeleted.chat); lastDeleted = null; persist(); showToast("Undo successful."); });
+}
+
+/* --- menu (games + free chat) --- */
+const GAMES = [
+  "Reel In - Fishing Simulator",
+  "Space Explorer",
+  "Maze Runner",
+  "Treasure Hunt",
+  "Farm Life",
+  "Cooking Craze",
+  "Monster Battle",
+  "Puzzle Quest",
+  "Word Wizard",
+  "Race Track"
+];
+function renderMenu(){
+  menuEl.innerHTML = "";
+  GAMES.forEach((g,i)=>{
+    const card = document.createElement("div"); card.className = "grid-card";
+    card.innerHTML = `<div class="grid-title">${g}</div><div class="grid-sub">Play with AI narration</div>`;
+    card.onclick = ()=> startGame(i);
+    menuEl.appendChild(card);
+  });
+  const free = document.createElement("div"); free.className = "grid-card"; free.style.border="2px dashed rgba(255,255,255,0.03)";
+  free.innerHTML = `<div class="grid-title">Free Chat</div><div class="grid-sub">Open an unscripted chat</div>`;
+  free.onclick = ()=> openFreeChat();
+  menuEl.appendChild(free);
+}
+
+/* --- terminal rendering and message entry animation; includes edit controls for user messages --- */
+function renderTerminal(scrollSmooth = true){
+  terminalEl.innerHTML = "";
+  const msgs = chats[active].messages || [];
+  for(let i=0;i<msgs.length;i++){
+    const m = msgs[i];
+    const div = document.createElement("div"); div.className = "message";
+    // set base class based on role
+    if(m.role === "system"){ div.classList.add("msg-system"); div.textContent = "System: " + m.msg; }
+    else if(m.role === "ai"){
+      div.classList.add("msg-ai");
+      div.textContent = "AI: " + m.msg;
+    }
+    else {
+      div.classList.add("msg-user");
+      const content = document.createElement("div"); content.textContent = m.msg; div.appendChild(content);
+      const controls = document.createElement("div"); controls.className = "msg-controls";
+      const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Edit"; editBtn.innerText = "✏️";
+      editBtn.onclick = (ev)=>{ ev.stopPropagation(); startEditMessage(i, div, m.msg); };
+      controls.appendChild(editBtn);
+      div.appendChild(controls);
+    }
+    // timestamp
+    const ts = document.createElement("div"); ts.className = "msg-ts small";
+    ts.textContent = formatTS(m.ts || new Date().toISOString()) + (m.edited ? " · edited" : "");
+    div.appendChild(ts);
+
+    terminalEl.appendChild(div);
+    requestAnimationFrame(()=>{ div.classList.add("enter"); });
+  }
+  if(scrollSmooth) terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' }); else terminalEl.scrollTop = terminalEl.scrollHeight;
+}
+
+/* format timestamp to local readable string */
+function formatTS(iso){
+  try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; }
+}
+
+/* start editing a user message inline (updates timestamp on save) */
+function startEditMessage(msgIndex, messageDiv, currentText){
+  messageDiv.innerHTML = "";
+  const input = document.createElement("input"); input.className = "edit-input"; input.value = currentText;
+  const saveBtn = document.createElement("button"); saveBtn.className = "icon-btn"; saveBtn.textContent = "Save";
+  const cancelBtn = document.createElement("button"); cancelBtn.className = "icon-btn"; cancelBtn.textContent = "Cancel";
+  const row = document.createElement("div"); row.className = "edit-row";
+  row.appendChild(input); row.appendChild(saveBtn); row.appendChild(cancelBtn);
+  messageDiv.appendChild(row);
+  input.focus(); input.select();
+  saveBtn.onclick = ()=>{ const val = input.value.trim(); if(val.length === 0) { showToast("Cannot save empty message"); return; } chats[active].messages[msgIndex].msg = val; chats[active].messages[msgIndex].ts = new Date().toISOString(); chats[active].messages[msgIndex].edited = true; persist(); };
+  cancelBtn.onclick = ()=>{ persist(); };
+  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") saveBtn.click(); if(e.key === "Escape") cancelBtn.click(); });
+}
+
+/* typing animation with keystroke sounds during typing + AI typing cursor effect; commit with timestamp */
+function appendTypingAndCommit(role, text){
+  const typingEl = document.createElement("div"); typingEl.className = "message msg-ai ai-typing";
+  terminalEl.appendChild(typingEl);
+  terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
+  let i = 0;
+  const speed = 12;
+  return new Promise(res=>{
+    const iv = setInterval(()=>{
+      if(i < text.length){
+        typingEl.textContent = "AI: " + text.slice(0, i+1);
+        i++;
+        if(settings.keystroke && Math.random() > 0.45) playTypeSound();
+        terminalEl.scrollTo({ top: terminalEl.scrollHeight, behavior: 'smooth' });
+      } else {
+        clearInterval(iv);
+        typingEl.classList.remove("ai-typing");
+        typingEl.classList.add("enter");
+        const ts = new Date().toISOString();
+        chats[active].messages.push({ role, msg: text, ts });
+        persist(true);
+        res();
+      }
+    }, speed);
+  });
+}
+
+/* --- input interactions --- */
+inputEl.addEventListener("keydown", (e)=>{ if(settings.keystroke) playKeystroke(0.06, "square", 14); if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); } });
+sendBtn.addEventListener("click", async ()=>{
+  const txt = inputEl.value.trim(); if(!txt) return; inputEl.value = ""; inputEl.focus();
+  chats[active].messages.push({ role: "user", msg: txt, ts: new Date().toISOString() });
+  persist();
+  await handleUserCommand(txt);
+});
+
+/* --- command handling & fallback gameplay --- */
+async function handleUserCommand(cmd){
+  const lc = cmd.trim().toLowerCase();
+  if(lc === "help"){
+    chats[active].messages.push({ role:"ai", msg: "Help: click a game or use Free Chat. Type 'simulate download' to see progress UI.", ts: new Date().toISOString() });
+    persist();
+    return;
+  }
+  if(lc === "simulate download" || lc === "download model"){
+    simulateDownload();
+    return;
+  }
+  const gs = chats[active].gameState;
+  if(!gs){
+    chats[active].messages.push({ role:"ai", msg: "No active game. Click a game to start or use Free Chat.", ts: new Date().toISOString() });
+    persist();
+    return;
+  }
+  let reply = "";
+  switch(gs.id){
+    case 0:
+      if(lc === "cast"){ const r=Math.random(); reply = r<0.7 ? "You caught a small sardine (+10 coins)." : (r<0.95? "You caught a medium trout (+50)." : "You pulled a giant tuna (+200)!"); }
+      else if(lc === "upgrade") reply = "You upgraded your rod. Catch rate improved.";
+      else reply = "Fishing commands: 'cast','upgrade','move'.";
+      break;
+    default:
+      reply = `Command '${cmd}' executed for ${gs.name} (UI fallback).`;
+  }
+  await appendTypingAndCommit("ai", reply);
+}
+
+/* --- game helpers --- */
+function startGame(idx){
+  chats[active].gameState = { id: idx, name: GAMES[idx], state: {} };
+  persist();
+  menuEl.style.display = "none";
+  appendTypingAndCommit("ai", `You started "${GAMES[idx]}". ${gamePrompt(idx)}`);
+}
+function gamePrompt(i){
+  switch(i){
+    case 0: return "You're on a pier. Commands: 'cast','upgrade','move'.";
+    case 1: return "Pilot your scout: 'explore','scan','jump'.";
+    case 2: return "Maze: 'up','down','left','right','look'.";
+    case 3: return "Treasure: 'dig','scan','map'.";
+    case 4: return "Farm: 'plant','water','harvest','sell'.";
+    case 5: return "Kitchen: 'mix','cook','serve'.";
+    case 6: return "Battle: 'attack','defend','item'.";
+    case 7: return "Puzzle: 'solve','hint'.";
+    case 8: return "Words: 'form [word]','shuffle','hint'.";
+    case 9: return "Race: 'go','brake','boost'.";
+    default: return "Ready.";
+  }
+}
+function openFreeChat(){
+  chats[active].gameState = null;
+  persist();
+  appendTypingAndCommit("ai", "Free chat started. Ask me anything.");
+}
+
+/* --- chat controls (non-blocking) --- */
+document.getElementById("btnNew").addEventListener("click", ()=>{
+  chats.push({ name: `Chat ${chats.length+1}`, messages: [{ role:"system", msg:"New chat created.", ts: new Date().toISOString() }], gameState:null });
+  active = chats.length-1; persist(); setTimeout(()=>inputEl.focus(),80);
+});
+document.getElementById("btnExport").addEventListener("click", ()=>{ const blob = new Blob([JSON.stringify(chats)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "chatgames_backup.json"; a.click(); showToast("Exported chats"); });
+document.getElementById("btnExportLeft").addEventListener("click", ()=>{ const blob = new Blob([JSON.stringify(chats)], { type: "application/json" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "chatgames_backup.json"; a.click(); showToast("Exported chats"); });
+document.getElementById("btnImport").addEventListener("click", importHandler);
+document.getElementById("btnImport2").addEventListener("click", importHandler);
+function importHandler(){
+  const fi = document.createElement("input"); fi.type = "file"; fi.accept = ".json";
+  fi.onchange = async ()=>{ const f = fi.files[0]; if(!f) return; const txt = await f.text(); try{ const imp = JSON.parse(txt); if(!Array.isArray(imp)) throw 0; chats = imp; active = 0; persist(); showToast("Imported chats"); } catch(e){ showToast("Import failed"); } };
+  fi.click();
+}
+document.getElementById("btnClearFlag").addEventListener("click", ()=>{ localStorage.removeItem("ollama_model_dummy_downloaded"); showToast("Model flag cleared"); });
+
+/* copy placeholders */
+document.getElementById("copyManifest").addEventListener("click", async ()=>{ try { await navigator.clipboard.writeText(DUMMY_MANIFEST); showToast("Manifest copied"); } catch(e){ showToast("Clipboard not available"); }});
+document.getElementById("copyBlobs").addEventListener("click", async ()=>{ try { await navigator.clipboard.writeText(DUMMY_BLOBS.join("\n")); showToast("Blob URLs copied"); } catch(e){ showToast("Clipboard not available"); }});
+document.getElementById("btnPlace").addEventListener("click", ()=>{ chats[active].messages.push({ role:"system", msg:"Placeholder manifest and blobs (copied if clipboard allowed).", ts: new Date().toISOString() }); persist(); showToast("Placeholders appended"); });
+
+/* simulate download */
+document.getElementById("btnDownload").addEventListener("click", simulateDownload);
+function simulateDownload(){
+  progressWrap.style.display = "block";
+  let p = 0; progressBar.style.width = '0%'; progressText.innerText = '0%';
+  const iv = setInterval(()=>{ p += Math.random()*0.14; if(p>1)p=1; progressBar.style.width = Math.floor(p*100) + '%'; progressText.innerText = Math.floor(p*100) + '%'; if(p>=1){ clearInterval(iv); setTimeout(()=>{ progressWrap.style.display='none'; localStorage.setItem("ollama_model_dummy_downloaded", "1"); showToast("Simulated model downloaded"); chats[active].messages.push({ role:"system", msg:"Simulated model downloaded (UI-only).", ts: new Date().toISOString() }); persist(); }, 450); } }, 160);
+}
+
+/* theme & CRT toggles */
+const THEMES = ["hacker","dark","light"];
+function applyTheme(name){ document.body.classList.remove(...THEMES); document.body.classList.add(name); themeBtn.textContent = name === "hacker" ? "🧑‍💻" : (name === "dark" ? "🌕" : "☀️"); settings.theme = name; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+themeBtn.addEventListener("click", ()=>{ const cur = settings.theme || "hacker"; const i = THEMES.indexOf(cur); const next = THEMES[(i+1)%THEMES.length]; applyTheme(next); showToast("Theme: "+next); });
+function applyCRT(on){ crtOverlay.style.display = on ? "block" : "none"; crtToggle.textContent = on ? "CRT ON" : "CRT OFF"; settings.crt = !!on; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+crtToggle.addEventListener("click", ()=>{ settings.crt = !settings.crt; applyCRT(settings.crt); showToast("CRT "+(settings.crt ? "enabled" : "disabled")); });
+
+/* ambient controls */
+ambientToggle.addEventListener("click", ()=>{ ensureAudio(); if(!audioCtx){ showToast("Audio not available in this browser"); return; } if(!ambientRunning){ if(audioCtx.state === 'suspended'){ audioCtx.resume().catch(()=>{}); } startAmbient(parseFloat(ambientVol.value)); ambientToggle.textContent = "Pause"; settings.ambientOn = true; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } else { stopAmbient(); ambientToggle.textContent = "Play"; settings.ambientOn = false; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }});
+ambientVol.addEventListener("input", ()=>{ const v = parseFloat(ambientVol.value); settings.ambientVol = v; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); setAmbientVolume(v); });
+
+/* toggle keystroke with k key */
+window.addEventListener("keydown", (e)=>{ if(e.key === 'k'){ settings.keystroke = !settings.keystroke; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); showToast("Keystroke sound " + (settings.keystroke ? "on" : "off")); } });
+
+/* Ctrl+F -> Free Chat override (prevents default find) */
+window.addEventListener("keydown", (e)=>{ if(e.ctrlKey && e.key.toLowerCase() === 'f'){ e.preventDefault(); openFreeChat(); showToast("Free Chat opened (Ctrl+F)"); } });
+
+/* header free chat button */
+headerFreeChat.addEventListener("click", ()=>{ openFreeChat(); });
+
+/* --- initialization & persist --- */
+function persist(scroll=true){
+  localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
+  renderChatList();
+  renderMenu();
+  renderTerminal(scroll);
+}
+function init(){
+  applyTheme(settings.theme || "hacker");
+  applyCRT(settings.crt !== false);
+  ambientVol.value = settings.ambientVol || 0.06;
+  ambientToggle.textContent = settings.ambientOn ? "Pause" : "Play";
+  renderChatList();
+  renderMenu();
+  renderTerminal(false);
+  setTimeout(()=> inputEl.focus(), 140);
+  if(!localStorage.getItem("ollama_model_dummy_downloaded")){
+    chats[active].messages.push({ role:"system", msg:"Model placeholder not downloaded. Use 'Simulate DL' to exercise UI.", ts: new Date().toISOString() });
+    persist();
+  }
+}
+init();
+
+/* expose small debug */
+window._chatgames = { chats, persist, simulateDownload, openFreeChat };
+
+</script>
+</body>
+</html>
