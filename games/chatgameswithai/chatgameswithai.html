@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Chat Games with AI</title>
 <style>
-/* (All CSS is identical to your last working version except a couple tiny additions for the new modal)
-   I preserved your CRT, scanlines, themes, ambient, keystroke etc.
-*/
 :root{
   --neon: #00ff66;
   --neon2: #66e0ff;
@@ -20,7 +17,8 @@
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
   --ambient-thumb: #9fe6a4;
 }
-/* base UI (unchanged) */
+
+/* base UI */
 html,body{height:100%;margin:0;font-family:var(--mono);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
 #app{display:flex;flex-direction:column;height:100vh;}
 header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg, rgba(0,0,0,0.05), transparent)}
@@ -84,21 +82,35 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .kv{font-size:12px;color:var(--muted);display:block;margin-top:6px}
 body.hacker{ background: linear-gradient(180deg,#041403,#021205 70%); color:var(--text); }
 body.dark{ background:#08101a; color:#dfeaff }
-body.light{ background:#fff; color:#0c1720 }
-body.light #input{background:#fff;color:#111;border:1px solid rgba(0,0,0,0.06)}
-body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); color:#111}
+body.light{
+  /* improved light-mode contrast: override vars for high readability */
+  --bg: #ffffff;
+  --panel: rgba(255,255,255,0.94);
+  --muted: #5b6b76;
+  --text: #0b1720;        /* darker main text */
+  --user: #0b3a2b;
+  --neon: #006633;
+  --neon2: #0b63ff;
+  background: var(--bg);
+  color: var(--text);
+}
+/* specific light-mode element overrides */
+body.light #input{background:#fff;color:var(--text);border:1px solid rgba(10,20,30,0.06)}
+body.light .grid-card, body.light .chat-item{border-color: rgba(10,20,30,0.06); color:var(--text)}
+body.light .icon-btn{border-color:rgba(10,20,30,0.06)}
+body.light .card{background:var(--panel);color:var(--text);border:1px solid rgba(10,20,30,0.06)}
 @media (max-width:900px){ #left{display:none} }
 
-/* Consent modal (small addition) */
+/* Consent modal */
 #consentModal{
   position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:300;
-  background:rgba(2,18,5,0.98);border-radius:12px;padding:18px;border:1px solid rgba(0,255,120,0.08);width:540px;max-width:92%;
-  display:none; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  background:rgba(255,255,255,0.98);border-radius:12px;padding:18px;border:1px solid rgba(10,20,30,0.08);width:540px;max-width:92%;
+  display:none; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
 }
-#consentModal h3{margin:0 0 8px 0}
+#consentModal h3{margin:0 0 8px 0;color:var(--text)}
 #consentModal p{margin:6px 0;color:var(--muted);font-size:13px}
 #consentModal .row{display:flex;justify-content:flex-end;margin-top:12px;gap:8px}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:var(--text);cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid rgba(10,20,30,0.06);padding:8px 12px;border-radius:8px;color:var(--text);cursor:pointer}
 .btn-primary{background:linear-gradient(90deg,#007b34,#00aa55);border:0;padding:8px 12px;border-radius:8px;color:#022;border-radius:8px;cursor:pointer}
 </style>
 </head>
@@ -147,7 +159,7 @@ body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); col
           <button id="btnPlace" class="icon-btn">Placeholders</button>
         </div>
 
-        <!-- NEW: model/runtime controls (minimal UI additions) -->
+        <!-- model/runtime controls -->
         <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
           <button id="btnInstallRuntime" class="icon-btn" title="Load a local runtime from ./vendor/">Install Runtime</button>
           <button id="btnDownloadModel" class="icon-btn" title="Fetch manifest & blobs and store to IndexedDB">Download Model</button>
@@ -243,15 +255,6 @@ body.light .grid-card, body.light .chat-item{border-color: rgba(0,0,0,0.06); col
 <div id="toast"></div>
 
 <script>
-/*
-  Minimal-change integration: ensure model download only happens after explicit user consent.
-  - Consent modal (in-page)
-  - Storage estimate check (navigator.storage.estimate)
-  - Streaming download -> IndexedDB with progress
-  - Delete model button
-  - No auto-import or auto-download on page load
-*/
-
 /* ---------- Storage keys and placeholders ---------- */
 const CHATS_KEY = "chatgames_chats";
 const SETTINGS_KEY = "chatgames_settings";
@@ -265,7 +268,7 @@ const DUMMY_BLOBS = [
   "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb"
 ];
 
-/* ---------- App state (unchanged core UI features preserved) ---------- */
+/* ---------- App state ---------- */
 let chats = JSON.parse(localStorage.getItem(CHATS_KEY) || "null");
 if(!Array.isArray(chats) || chats.length === 0){
   chats = [{
@@ -304,7 +307,7 @@ const consentOk = document.getElementById("consentOk");
 const consentCancel = document.getElementById("consentCancel");
 const consentSize = document.getElementById("consentSize");
 
-/* ---------- Simple IndexedDB helper for storing blobs ---------- */
+/* ---------- IndexedDB helpers ---------- */
 function openDB(){
   return new Promise((resolve, reject) => {
     const r = indexedDB.open("chatgames-models", 1);
@@ -336,6 +339,16 @@ async function idbGet(key){
     req.onerror = ()=> { rej(req.error); db.close(); };
   });
 }
+async function idbGetAllKeys(){
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction("blobs", "readonly");
+    const s = tx.objectStore("blobs");
+    const req = s.getAllKeys();
+    req.onsuccess = ()=> { res(req.result); db.close(); };
+    req.onerror = ()=> { rej(req.error); db.close(); };
+  });
+}
 async function idbDeleteDatabase(){
   return new Promise((res, rej) => {
     try {
@@ -347,11 +360,10 @@ async function idbDeleteDatabase(){
   });
 }
 
-/* ---------- Runtime / model integration points (defensive) ---------- */
-let runtime = null;      // will hold the imported runtime (module) or runtime client
-let modelLoaded = false; // boolean
+/* ---------- Runtime integration points ---------- */
+let runtime = null;
+let modelLoaded = false;
 
-// dynamic runtime import (only when user clicks 'Install Runtime')
 async function installRuntime() {
   logToTerminal("System: Attempting to import local runtime from ./vendor/ ...");
   runtimeLabel.textContent = "installing...";
@@ -376,11 +388,9 @@ async function installRuntime() {
   }
   runtimeLabel.textContent = "not installed";
   logToTerminal("System: runtime import failed. Put a WASM runtime bundle in ./vendor/ (see console).");
-  console.error("Runtime import failed. Try hosting one of: wllama.esm.min.js or llama-cpp-wasm.mjs in ./vendor/");
   return false;
 }
 
-/* Runtime API detection (unchanged) */
 function detectRuntimeAPI(mod){
   if(mod?.Wllama || mod?.default?.Wllama){
     logToTerminal("System: Detected Wllama runtime API.");
@@ -392,12 +402,10 @@ function detectRuntimeAPI(mod){
     logToTerminal("System: Unknown runtime API shape - check console and runtime docs.");
     runtime.clientType = "unknown";
   }
-  console.log("Runtime detection result:", runtime.clientType);
+  console.log("Runtime detection result:", runtime.clientType, runtime);
 }
 
 /* ---------- Consent + storage estimate + streaming download ---------- */
-
-/* Show consent modal, returns true if user confirms */
 function showConsentModal(sizeHintText = "~3–6 GB") {
   return new Promise((resolve) => {
     consentSize.textContent = sizeHintText;
@@ -407,20 +415,13 @@ function showConsentModal(sizeHintText = "~3–6 GB") {
       consentOk.removeEventListener("click", okHandler);
       consentCancel.removeEventListener("click", cancelHandler);
     }
-    function okHandler(){
-      cleanup();
-      resolve(true);
-    }
-    function cancelHandler(){
-      cleanup();
-      resolve(false);
-    }
+    function okHandler(){ cleanup(); resolve(true); }
+    function cancelHandler(){ cleanup(); resolve(false); }
     consentOk.addEventListener("click", okHandler);
     consentCancel.addEventListener("click", cancelHandler);
   });
 }
 
-/* Check browser storage estimate: returns true if free >= minBytesNeeded (best-effort) */
 async function checkStorageEstimate(minBytesNeeded){
   if(!navigator.storage || !navigator.storage.estimate) return true;
   try {
@@ -429,7 +430,6 @@ async function checkStorageEstimate(minBytesNeeded){
     const usage = estimate.usage || 0;
     const free = quota - usage;
     console.log('Storage estimate', {quota, usage, free});
-    // if unknown, allow proceed but warn
     if(quota === 0) return true;
     return free >= minBytesNeeded;
   } catch(e){
@@ -438,11 +438,7 @@ async function checkStorageEstimate(minBytesNeeded){
   }
 }
 
-/* Streaming download + store into IndexedDB (updates progress UI).
-   - manifestUrl: optional manifest (we store it under key 'model:manifest')
-   - blobUrls: array of URLs to fetch (we store each under key 'blob:<name>')
-   - onProgress: optional callback(progress 0..1, filename)
-*/
+/* streaming download -> IndexedDB (stores manifest + blobs under keys 'model:manifest' and 'blob:<name>') */
 async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onProgress = null } = {}){
   logToTerminal("System: starting download & store process...");
   progressWrap.style.display = "block";
@@ -470,7 +466,6 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
       const url = blobUrls[i];
       const fname = url.split("/").pop();
       progressText.innerText = `0% - ${fname}`;
-      // fetch with streaming reader when available
       const resp = await fetch(url);
       if(!resp.ok) {
         logToTerminal("System: failed to fetch blob " + fname + " (status " + resp.status + ")");
@@ -486,7 +481,6 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
           if(done) break;
           chunks.push(value);
           received += value.byteLength || value.length || 0;
-          // estimate progress: (i + bytes_of_current/len) / total
           let curFraction = total ? (i + (contentLength ? (received / contentLength) : 0)) / total : 0;
           curFraction = Math.min(1, Math.max(0, curFraction));
           const pct = Math.round(curFraction * 100);
@@ -494,7 +488,6 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
           progressText.innerText = `${pct}% - ${fname}`;
           onProgress && onProgress(curFraction, fname);
         }
-        // concatenate chunks into single ArrayBuffer
         const size = chunks.reduce((s,c)=>s+(c.byteLength||c.length),0);
         const buf = new Uint8Array(size);
         let offset = 0;
@@ -505,7 +498,6 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
         await idbPut('blob:' + fname, buf.buffer);
         logToTerminal(`System: stored ${fname} to IndexedDB`);
       } else {
-        // fallback non-streaming
         const ab = await resp.arrayBuffer();
         await idbPut('blob:' + fname, ab);
         const pct = Math.round(((i+1)/total)*100);
@@ -516,7 +508,6 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
       }
     }
 
-    // done
     progressBar.style.width = '100%';
     progressText.innerText = '100%';
     setTimeout(()=>{ progressWrap.style.display = "none"; }, 600);
@@ -531,20 +522,33 @@ async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onPro
   }
 }
 
-/* ---------- Delete stored model ---------- */
-async function deleteStoredModel(){
-  try {
-    await idbDeleteDatabase();
-    modelLabel.textContent = "not loaded";
-    logToTerminal("System: model storage cleared (IndexedDB removed).");
-    showToast("Model storage cleared");
-  } catch(e){
-    console.error("deleteStoredModel error", e);
-    showToast("Failed to delete model storage");
+/* ---------- Helper: read all stored blobs and create File/Blob objects ---------- */
+async function getStoredBlobFiles(){
+  const keys = await idbGetAllKeys();
+  // pick keys that start with 'blob:' and keep order if possible
+  const blobKeys = (keys || []).filter(k => typeof k === 'string' && k.startsWith('blob:'));
+  // sort by name for deterministic order (user-provided order may matter)
+  blobKeys.sort();
+  const files = [];
+  for(const k of blobKeys){
+    const data = await idbGet(k);
+    if(!data) continue;
+    const name = k.replace(/^blob:/, '');
+    const blob = new Blob([data], { type: 'application/octet-stream' });
+    // create a File (has name) — many runtimes accept File or Blob
+    try {
+      const file = new File([blob], name, { type: 'application/octet-stream' });
+      files.push(file);
+    } catch(e){
+      // older browsers may not support File constructor — fallback to blob with name attached
+      blob._fname = name;
+      files.push(blob);
+    }
   }
+  return { files, keys: blobKeys };
 }
 
-/* ---------- Loading model into runtime (unchanged logic) ---------- */
+/* ---------- Load model into runtime (more robust now) ---------- */
 async function loadModelFromIndexedDB(modelName = "llama3.2"){
   if(!runtime){
     logToTerminal("System: runtime not installed. Press 'Install Runtime' first.");
@@ -553,66 +557,81 @@ async function loadModelFromIndexedDB(modelName = "llama3.2"){
   modelLabel.textContent = "loading...";
   logToTerminal("System: attempting to load model into runtime (best-effort)...");
   try {
-    if(runtime.clientType === "wllama" || runtime?.Wllama || runtime.default?.Wllama){
+    const { files, keys } = await getStoredBlobFiles();
+    if(files.length === 0){
+      logToTerminal("System: no blobs found in IndexedDB. Please run Download Model first or host files.");
+      modelLabel.textContent = "no blobs in IndexedDB";
+      return false;
+    }
+
+    // Wllama-style: try loadModelFromFiles(files)
+    if(runtime?.Wllama || runtime?.default?.Wllama || runtime.clientType === "wllama"){
       const Wll = runtime.Wllama || runtime.default?.Wllama || runtime.default || runtime;
-      if(typeof Wll.loadModelFromUrl === "function"){
-        logToTerminal("System: using Wllama.loadModelFromUrl (user-hosted model required).");
-        modelLabel.textContent = "needs hosted model files";
-        return false;
-      }
       if(typeof Wll.loadModelFromFiles === "function"){
-        modelLabel.textContent = "loading from IndexedDB...";
-        const keys = DUMMY_BLOBS.map(u => "blob:" + u.split("/").pop());
-        const parts = [];
-        for(const k of keys){
-          const data = await idbGet(k);
-          if(data) parts.push(new Uint8Array(data));
-        }
-        if(parts.length === 0){
-          logToTerminal("System: no blobs found in IndexedDB. Please run Download Model first or host files.");
-          modelLabel.textContent = "no blobs in IndexedDB";
-          return false;
-        }
-        const client = await Wll.loadModelFromFiles(parts);
+        logToTerminal("System: calling Wllama.loadModelFromFiles with stored files...");
+        const client = await Wll.loadModelFromFiles(files);
         runtime.client = client;
         modelLoaded = true;
         modelLabel.textContent = "loaded (wllama)";
-        logToTerminal("System: model loaded into wllama runtime (best-effort).");
+        logToTerminal("System: model loaded into wllama runtime.");
+        return true;
+      }
+      // some Wllama builds accept loadModelFromFiles on runtime.default too
+      if(typeof runtime.loadModelFromFiles === "function"){
+        const client = await runtime.loadModelFromFiles(files);
+        runtime.client = client;
+        modelLoaded = true;
+        modelLabel.textContent = "loaded (wllama)";
+        logToTerminal("System: model loaded.");
         return true;
       }
     }
 
+    // if runtime exposes 'loadFiles' function
+    if(typeof runtime.loadFiles === "function"){
+      logToTerminal("System: calling runtime.loadFiles with stored files...");
+      await runtime.loadFiles(files);
+      runtime.client = runtime;
+      modelLoaded = true;
+      modelLabel.textContent = "loaded";
+      logToTerminal("System: model loaded via runtime.loadFiles.");
+      return true;
+    }
+
+    // LlamaCpp style: try to create an object URL for a combined file or instruct user to host
     if(runtime.clientType === "llama-cpp-wasm" || runtime.LlamaCpp || runtime.default?.LlamaCpp){
       const LlamaConstructor = runtime.LlamaCpp || runtime.default?.LlamaCpp || runtime.Llama;
       if(typeof LlamaConstructor === "function"){
-        const hostedUrl = `/models/${modelName}/model.gguf`;
-        logToTerminal(`System: attempting LlamaCpp with hosted path ${hostedUrl}. If you haven't hosted the model, this will fail—host model files under /models/${modelName}/ and try again.`);
-        const onLoad = ()=>{ modelLoaded = true; modelLabel.textContent = "loaded (llama-cpp-wasm)"; logToTerminal("System: model loaded (llama-cpp-wasm)."); };
-        const onChunk = (txt)=>{ appendRuntimeChunk(txt); };
-        const onComplete = ()=>{ logToTerminal("System: generation complete."); };
-        try {
-          const app = new LlamaConstructor(hostedUrl, onLoad, onChunk, onComplete);
-          runtime.client = app;
-          logToTerminal("System: LlamaCpp constructor invoked; waiting for onLoad...");
-          return true;
-        } catch(err){
-          console.error("Llama constructor failed", err);
-          logToTerminal("System: LlamaCpp constructor attempt failed. Check which runtime build you hosted and update the connector if necessary.");
-          modelLabel.textContent = "load failed";
+        // Many LlamaCpp builds expect a URL to a single GGUF file — we can create a combined blob if there is only one stored blob
+        if(files.length === 1){
+          const blob = files[0];
+          const url = URL.createObjectURL(blob);
+          logToTerminal("System: invoking LlamaCpp with blob URL (object URL created).");
+          const onLoad = ()=>{ modelLoaded = true; modelLabel.textContent = "loaded (llama-cpp-wasm)"; logToTerminal("System: model loaded (llama-cpp-wasm)."); };
+          const onChunk = (txt)=>{ appendRuntimeChunk(txt); };
+          const onComplete = ()=>{ logToTerminal("System: generation complete."); };
+          try {
+            const app = new LlamaConstructor(url, onLoad, onChunk, onComplete);
+            runtime.client = app;
+            logToTerminal("System: invoked LlamaCpp constructor with blob URL; waiting for onLoad...");
+            return true;
+          } catch(err){
+            console.error("Llama constructor failed", err);
+            logToTerminal("System: LlamaCpp constructor attempt failed with blob URL. See console.");
+            modelLabel.textContent = "load failed";
+            return false;
+          }
+        } else {
+          // Multiple blobs: many runtimes won't accept many blob URLs; instruct the user.
+          logToTerminal("System: multiple stored blobs found — some runtimes expect a single GGUF file hosted as a URL. Consider hosting combined model or use a runtime supporting loadModelFromFiles.");
+          modelLabel.textContent = "multiple blobs stored";
           return false;
-        }
-      } else {
-        if(typeof runtime.loadModelFromUrl === "function"){
-          const hostedUrl = `/models/${modelName}/model.gguf`;
-          await runtime.loadModelFromUrl(hostedUrl);
-          runtime.client = runtime; modelLoaded = true; modelLabel.textContent = "loaded";
-          logToTerminal("System: model loaded via runtime.loadModelFromUrl");
-          return true;
         }
       }
     }
 
-    logToTerminal("System: unknown runtime API shape — cannot load model automatically. See console for runtime module exports.");
+    // generic fallback: try runtime.generate if possible (unlikely without model loaded)
+    logToTerminal("System: runtime API not recognized for loading files. See console for runtime exports.");
     console.log("Runtime module content:", runtime);
     modelLabel.textContent = "unknown runtime API";
     return false;
@@ -664,14 +683,12 @@ async function sendToRuntime(prompt){
   }
 }
 
-/* ---------- UI, chat, audio, and the rest (unchanged) ---------- */
-/* helper to log into terminal */
+/* ---------- UI and behavior (unchanged, with export/import, edit, themes, audio) ---------- */
 function logToTerminal(msg){
   chats[active].messages.push({ role: "system", msg, ts: new Date().toISOString() });
   persist();
 }
 
-/* append typing + commit (same as before) */
 function appendTypingAndCommit(role, text){
   const typingEl = document.createElement("div"); typingEl.className = "message msg-ai ai-typing";
   terminalEl.appendChild(typingEl);
@@ -698,7 +715,7 @@ function appendTypingAndCommit(role, text){
   });
 }
 
-/* rest of UI: chat list, edit, messages, audio, theme, etc. (kept identical) */
+/* UI renderers */
 function renderChatList(){
   chatlistEl.innerHTML = "";
   chats.forEach((c,i)=>{
@@ -769,7 +786,7 @@ function renderTerminal(scrollSmooth = true){
 function formatTS(iso){ try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; } }
 function startEditMessage(msgIndex, messageDiv, currentText){ messageDiv.innerHTML = ""; const input = document.createElement("input"); input.className = "edit-input"; input.value = currentText; const saveBtn = document.createElement("button"); saveBtn.className = "icon-btn"; saveBtn.textContent = "Save"; const cancelBtn = document.createElement("button"); cancelBtn.className = "icon-btn"; cancelBtn.textContent = "Cancel"; const row = document.createElement("div"); row.className = "edit-row"; row.appendChild(input); row.appendChild(saveBtn); row.appendChild(cancelBtn); messageDiv.appendChild(row); input.focus(); input.select(); saveBtn.onclick = ()=>{ const val = input.value.trim(); if(val.length === 0) { showToast("Cannot save empty message"); return; } chats[active].messages[msgIndex].msg = val; chats[active].messages[msgIndex].ts = new Date().toISOString(); chats[active].messages[msgIndex].edited = true; persist(); }; cancelBtn.onclick = ()=>{ persist(); }; input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") saveBtn.click(); if(e.key === "Escape") cancelBtn.click(); }); }
 
-/* keystroke / ambient audio (unchanged) */
+/* audio & ambient (unchanged) */
 let audioCtx = null;
 let ambientNode = null;
 let ambientRunning = false;
@@ -780,18 +797,17 @@ function startAmbient(vol = 0.06){ ensureAudio(); if(!audioCtx){ showToast("Audi
 function stopAmbient(){ if(!ambientRunning || !ambientNode) return; try { ambientNode.base.stop(); ambientNode.top.stop(); ambientNode.noise.stop(); } catch(e){} ambientNode = null; ambientRunning = false; }
 function setAmbientVolume(v){ if(ambientNode && ambientNode.gain) ambientNode.gain.gain.value = v; }
 
-/* toast (unchanged) */
+/* toast */
 let toastTimer = null;
 function showToast(text, undoCallback){ toastEl.innerHTML = ""; const span = document.createElement("span"); span.textContent = text; toastEl.appendChild(span); if(typeof undoCallback === "function"){ const undo = document.createElement("span"); undo.textContent = "  Undo"; undo.className = "undo"; undo.onclick = ()=>{ undoCallback(); hideToast(); }; toastEl.appendChild(undo); } toastEl.style.display = "block"; if(toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ hideToast(); }, 5000); }
 function hideToast(){ toastEl.style.display = "none"; if(toastTimer) clearTimeout(toastTimer); }
 
-/* --- input and command handling (unchanged) --- */
+/* input handling & send */
 inputEl.addEventListener("keydown", (e)=>{ if(settings.keystroke) playKeystroke(0.06, "square", 14); if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); } });
 sendBtn.addEventListener("click", async ()=>{
   const txt = inputEl.value.trim(); if(!txt) return; inputEl.value = ""; inputEl.focus();
   chats[active].messages.push({ role: "user", msg: txt, ts: new Date().toISOString() });
   persist();
-  // If model is loaded, send prompt to runtime
   if(modelLoaded && runtime && runtime.client){
     logToTerminal("System: routing your prompt to local model...");
     const result = await sendToRuntime(txt);
@@ -803,12 +819,11 @@ sendBtn.addEventListener("click", async ()=>{
       }
     }
   } else {
-    // fallback simulated AI behavior
     await handleUserCommandFallback(txt);
   }
 });
 
-/* fallback simple game responses (unchanged) */
+/* fallback game responses */
 async function handleUserCommandFallback(cmd){
   const lc = cmd.trim().toLowerCase();
   if(lc === "help"){
@@ -839,7 +854,7 @@ async function handleUserCommandFallback(cmd){
   await appendTypingAndCommit("ai", reply);
 }
 
-/* other UI handlers and initialization (unchanged) */
+/* actions */
 function startGame(idx){ chats[active].gameState = { id: idx, name: GAMES[idx], state: {} }; persist(); menuEl.style.display = "none"; appendTypingAndCommit("ai", `You started "${GAMES[idx]}". ${gamePrompt(idx)}`); }
 function gamePrompt(i){ switch(i){ case 0: return "You're on a pier. Commands: 'cast','upgrade','move'."; case 1: return "Pilot your scout: 'explore','scan','jump'."; case 2: return "Maze: 'up','down','left','right','look'."; case 3: return "Treasure: 'dig','scan','map'."; case 4: return "Farm: 'plant','water','harvest','sell'."; case 5: return "Kitchen: 'mix','cook','serve'."; case 6: return "Battle: 'attack','defend','item'."; case 7: return "Puzzle: 'solve','hint'."; case 8: return "Words: 'form [word]','shuffle','hint'."; case 9: return "Race: 'go','brake','boost'."; default: return "Ready."; } }
 function openFreeChat(){ chats[active].gameState = null; persist(); appendTypingAndCommit("ai", "Free chat started. Ask me anything."); }
@@ -871,40 +886,35 @@ document.getElementById("ambientVol").addEventListener("input", ()=>{ const v = 
 /* Install runtime / Load model / Delete model handlers */
 btnInstall.addEventListener("click", async ()=>{ await installRuntime(); });
 btnLoadModel.addEventListener("click", async ()=>{ await loadModelFromIndexedDB("llama3.2"); });
-btnDeleteModel.addEventListener("click", async ()=>{ const ok = confirm("Delete stored model data from this browser? This permanently removes locally stored model files."); if(ok){ await deleteStoredModel(); } });
+btnDeleteModel.addEventListener("click", async ()=>{ const ok = confirm("Delete stored model data from this browser? This permanently removes locally stored model files."); if(ok){ await idbDeleteDatabase(); modelLabel.textContent = "not loaded"; logToTerminal("System: model storage cleared (IndexedDB removed)."); showToast("Model storage cleared"); } });
 
-/* New: Download Model (consent -> storage check -> streaming download) */
+/* Download Model (consent -> storage check -> streaming download) */
 btnDownloadModel.addEventListener("click", async ()=>{
-  // 1) consent
   const consent = await showConsentModal("~3–6 GB (estimate)");
   if(!consent){ showToast("Download cancelled"); return; }
-  // 2) check storage estimate (require ~3GB free as a safe default)
   const okSpace = await checkStorageEstimate(3 * 1024 * 1024 * 1024);
   if(!okSpace){
     const proceed = confirm("Your browser reports limited free storage. Downloading a large model may fail or prompt you. Continue?");
     if(!proceed){ showToast("Download cancelled due to storage"); return; }
   }
-  // 3) perform streaming download -> IndexedDB
-  const success = await downloadAndStoreModel({ manifestUrl: DUMMY_MANIFEST, blobUrls: DUMMY_BLOBS, onProgress: (p, fname) => {
-    // already updating UI inside function; extra hook if needed
-  }});
+  const success = await downloadAndStoreModel({ manifestUrl: DUMMY_MANIFEST, blobUrls: DUMMY_BLOBS });
   if(success) showToast("Model downloaded to browser storage (IndexedDB). Press 'Load Model' to attempt load.");
 });
 
-/* Ctrl+F -> Free Chat override */
+/* Ctrl+F -> Free Chat */
 window.addEventListener("keydown", (e)=>{ if(e.ctrlKey && e.key.toLowerCase() === 'f'){ e.preventDefault(); openFreeChat(); showToast("Free Chat opened (Ctrl+F)"); } });
 document.getElementById("headerFreeChat").addEventListener("click", ()=>{ openFreeChat(); });
 
-/* other small features */
+/* misc */
 window.addEventListener("keydown", (e)=>{ if(e.key === 'k'){ settings.keystroke = !settings.keystroke; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); showToast("Keystroke sound " + (settings.keystroke ? "on" : "off")); } });
 
-/* Persist/render */
+/* persist/render */
 function persist(scroll=true){ localStorage.setItem(CHATS_KEY, JSON.stringify(chats)); renderChatList(); renderMenu(); renderTerminal(scroll); }
 function init(){ applyTheme(settings.theme || "hacker"); applyCRT(settings.crt !== false); document.getElementById("ambientVol").value = settings.ambientVol || 0.06; document.getElementById("ambientToggle").textContent = settings.ambientOn ? "Pause" : "Play"; renderChatList(); renderMenu(); renderTerminal(false); setTimeout(()=> inputEl.focus(), 140); if(!localStorage.getItem("ollama_model_dummy_downloaded")){ chats[active].messages.push({ role:"system", msg:"Model placeholder not downloaded. Use 'Simulate DL' or Download Model to exercise Model UI.", ts: new Date().toISOString() }); persist(); } }
 init();
 
-/* Expose small utilities for debug in console */
-window._chatgames_runtime = { installRuntime, downloadAndStoreModel, loadModelFromIndexedDB, deleteStoredModel: idbDeleteDatabase, runtime, chats };
+/* debug helpers for console */
+window._chatgames_runtime = { installRuntime, downloadAndStoreModel, loadModelFromIndexedDB, getStoredBlobFiles, idbGetAllKeys, idbGet, idbDeleteDatabase, runtime, chats };
 
 </script>
 </body>
