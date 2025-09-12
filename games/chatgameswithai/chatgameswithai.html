@@ -6,8 +6,8 @@
 <title>Chat Games with AI</title>
 <style>
 :root{
-  --neon: #00ff66;
-  --neon2: #66e0ff;
+  --neon: #00aa44;
+  --neon2: #0077cc;
   --bg: #021205;
   --panel: rgba(0,0,0,0.22);
   --muted: rgba(175,255,185,0.5);
@@ -16,6 +16,8 @@
   --radius: 10px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
   --ambient-thumb: #9fe6a4;
+  --msg-font-size: 15px;
+  --msg-font-weight: 600;
 }
 
 /* base UI */
@@ -43,12 +45,12 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .grid-title{font-weight:800}
 .grid-sub{font-size:12px;color:var(--muted)}
 #terminal{flex:1;padding:18px;overflow:auto;border-radius:12px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
-.message{max-width:78%;padding:10px 12px;border-radius:10px;margin-bottom:8px;word-wrap:break-word;opacity:0;transform:translateY(14px);position:relative}
+.message{max-width:78%;padding:12px 14px;border-radius:10px;margin-bottom:8px;word-wrap:break-word;opacity:0;transform:translateY(14px);position:relative;font-size:var(--msg-font-size);font-weight:var(--msg-font-weight)}
 .message.enter { animation: msgEnter 360ms cubic-bezier(.2,.9,.3,1) forwards; }
 @keyframes msgEnter { 0% { opacity:0; transform:translateY(14px) } 60% { opacity:1; transform:translateY(-4px) } 100% { opacity:1; transform:translateY(0) } }
-.msg-system{background:rgba(0,0,0,0.06);border-left:4px solid rgba(0,255,110,0.18);color:var(--text);font-weight:700}
-.msg-ai{background:rgba(0,0,0,0.04);border-left:4px solid rgba(105,200,255,0.14);color:var(--neon2)}
-.msg-user{background:rgba(0,0,0,0.04);border-left:4px solid rgba(255,215,90,0.12);color:var(--user);align-self:flex-start}
+.msg-system{background:rgba(0,0,0,0.06);border-left:4px solid rgba(0,255,110,0.18);color:var(--text);font-weight:800}
+.msg-ai{background:rgba(0,0,0,0.04);border-left:4px solid rgba(105,200,255,0.14);color:var(--neon2);font-weight:700}
+.msg-user{background:rgba(0,0,0,0.04);border-left:4px solid rgba(255,215,90,0.12);color:var(--user);align-self:flex-start;font-weight:700}
 .msg-ts{position:absolute;right:10px;bottom:6px;font-size:11px;color:var(--muted);opacity:0.9}
 .msg-controls{position:absolute;right:8px;top:6px;display:flex;gap:6px}
 .msg-controls button{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:4px}
@@ -57,7 +59,7 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .ai-typing::after{ content: "█"; display:inline-block; margin-left:6px; animation: blinkCursor 600ms steps(1, end) infinite; color: var(--neon); font-weight:900; }
 @keyframes blinkCursor { 0% { opacity: 1 } 50% { opacity: 0 } 100% { opacity: 1 } }
 #inputbar{display:flex;gap:12px;padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.08);background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent)}
-#input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:#031403;color:var(--text);outline:none;font-size:14px;z-index:2}
+#input{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:#031403;color:var(--text);outline:none;font-size:15px;z-index:2}
 #sendBtn{padding:12px 16px;border-radius:10px;background:linear-gradient(180deg,#003a12,#012207);color:var(--text);border:1px solid rgba(0,0,0,0.12);cursor:pointer}
 #progressWrap{position:fixed;left:50%;top:12px;transform:translateX(-50%);min-width:420px;background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,120,0.06);padding:10px;border-radius:10px;display:none;z-index:140}
 #progressBarOuter{height:12px;background:#001200;border-radius:8px;overflow:hidden}
@@ -69,9 +71,9 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .ambient-controls{display:flex;flex-direction:column;gap:6px;align-items:center}
 .ambient-controls input[type="range"]{width:88px;accent-color:var(--ambient-thumb);}
 .crt-overlay{pointer-events:none;position:fixed;inset:0;z-index:120}
-.scanlines{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom, rgba(0,255,110,0.18) 0px, rgba(0,255,110,0.18) 3px, transparent 3px, transparent 6px);opacity:0.98;mix-blend-mode:overlay;background-size:100% 6px;animation:moveScan 6s linear infinite}
+.scanlines{position:absolute;inset:0;background-image:repeating-linear-gradient(to bottom, rgba(0,255,110,0.14) 0px, rgba(0,255,110,0.14) 3px, transparent 3px, transparent 6px);opacity:0.9;mix-blend-mode:overlay;background-size:100% 6px;animation:moveScan 6s linear infinite}
 @keyframes moveScan { 0% { background-position:0 0 } 100% { background-position:0 48px } }
-.gridlines{position:absolute;inset:0;background-image:linear-gradient(90deg, rgba(0,255,110,0.06) 1px, transparent 1px), linear-gradient(rgba(0,255,110,0.06) 1px, transparent 1px);background-size:200px 200px;opacity:0.2;animation:shiftGrid 18s linear infinite}
+.gridlines{position:absolute;inset:0;background-image:linear-gradient(90deg, rgba(0,255,110,0.04) 1px, transparent 1px), linear-gradient(rgba(0,255,110,0.04) 1px, transparent 1px);background-size:200px 200px;opacity:0.12;animation:shiftGrid 18s linear infinite}
 @keyframes shiftGrid { 0% { background-position:0 0, 0 0 } 50% { background-position:-60px -30px, 40px 20px } 100% { background-position:0 0, 0 0 } }
 .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 80%)}
 .sweep{position:absolute;left:-60%;top:0;width:40%;height:100%;background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.26), rgba(255,255,255,0.06));transform:skewX(-16deg);opacity:0.08;animation:sweep 6s linear infinite}
@@ -82,29 +84,31 @@ header{padding:12px 18px;border-bottom:1px solid rgba(0,0,0,0.22);display:flex;a
 .kv{font-size:12px;color:var(--muted);display:block;margin-top:6px}
 body.hacker{ background: linear-gradient(180deg,#041403,#021205 70%); color:var(--text); }
 body.dark{ background:#08101a; color:#dfeaff }
+
+/* Light mode high-contrast overrides (improved readability) */
 body.light{
-  /* improved light-mode contrast: override vars for high readability */
   --bg: #ffffff;
-  --panel: rgba(255,255,255,0.94);
-  --muted: #5b6b76;
-  --text: #0b1720;        /* darker main text */
+  --panel: #ffffff;
+  --muted: #4a5560;
+  --text: #0b1720;
   --user: #0b3a2b;
-  --neon: #006633;
-  --neon2: #0b63ff;
+  --neon: #007a33;
+  --neon2: #005fa8;
   background: var(--bg);
   color: var(--text);
 }
-/* specific light-mode element overrides */
-body.light #input{background:#fff;color:var(--text);border:1px solid rgba(10,20,30,0.06)}
-body.light .grid-card, body.light .chat-item{border-color: rgba(10,20,30,0.06); color:var(--text)}
-body.light .icon-btn{border-color:rgba(10,20,30,0.06)}
-body.light .card{background:var(--panel);color:var(--text);border:1px solid rgba(10,20,30,0.06)}
-@media (max-width:900px){ #left{display:none} }
+body.light .card{ background: #fff; border: 1px solid rgba(12,18,22,0.06); box-shadow: 0 4px 14px rgba(10,20,30,0.04); }
+body.light #input{ background:#fff;color:var(--text);border:1px solid rgba(12,18,22,0.06) }
+body.light .grid-card, body.light .chat-item{ border-color: rgba(10,20,30,0.06); color:var(--text) }
+body.light .msg-system{ background:#f3f7f3; color:var(--text); border-left:4px solid rgba(0,150,60,0.12); font-weight:800}
+body.light .msg-ai{ background:#eef6ff; color:#053a68; border-left:4px solid rgba(0,120,220,0.18); font-weight:700 }
+body.light .msg-user{ background:#f0fbf5; color:#064028; border-left:4px solid rgba(0,130,90,0.14); font-weight:700 }
+body.light #crtOverlay{ display:none } /* optional: hide CRT in light by default */
 
 /* Consent modal */
 #consentModal{
   position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:300;
-  background:rgba(255,255,255,0.98);border-radius:12px;padding:18px;border:1px solid rgba(10,20,30,0.08);width:540px;max-width:92%;
+  background:rgba(255,255,255,0.98);border-radius:12px;padding:18px;border:1px solid rgba(10,20,30,0.08);width:640px;max-width:96%;
   display:none; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
 }
 #consentModal h3{margin:0 0 8px 0;color:var(--text)}
@@ -112,6 +116,24 @@ body.light .card{background:var(--panel);color:var(--text);border:1px solid rgba
 #consentModal .row{display:flex;justify-content:flex-end;margin-top:12px;gap:8px}
 .btn-ghost{background:transparent;border:1px solid rgba(10,20,30,0.06);padding:8px 12px;border-radius:8px;color:var(--text);cursor:pointer}
 .btn-primary{background:linear-gradient(90deg,#007b34,#00aa55);border:0;padding:8px 12px;border-radius:8px;color:#022;border-radius:8px;cursor:pointer}
+
+/* Blob-status modal */
+#blobStatusModal{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:400;
+  background:var(--panel);border-radius:12px;padding:14px;border:1px solid rgba(0,0,0,0.12);width:740px;max-width:96%;
+  display:none; color:var(--text); box-shadow: 0 16px 60px rgba(0,0,0,0.45);
+}
+#blobStatusModal h4{margin:0 0 8px 0}
+.blob-list{max-height:360px;overflow:auto;padding:6px;border-radius:8px;background:rgba(0,0,0,0.03)}
+.blob-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.blob-item .meta{font-size:13px;color:var(--muted);max-width:56%}
+.blob-actions{display:flex;gap:8px;align-items:center}
+.blob-actions button{padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);cursor:pointer}
+
+/* file input style hidden */
+.file-input{display:none}
+
+@media (max-width:900px){ #left{display:none} }
 </style>
 </head>
 <body>
@@ -242,9 +264,21 @@ body.light .card{background:var(--panel);color:var(--text);border:1px solid rgba
   </div>
 </div>
 
+<!-- blob status modal -->
+<div id="blobStatusModal" aria-hidden="true">
+  <h4>Blob download failures — fix or upload replacements</h4>
+  <div class="small" style="margin-bottom:8px">Some blob URLs failed (404 / network). You can retry, paste an alternate URL, or upload a local file to satisfy the missing blob.</div>
+  <div class="blob-list" id="blobList"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:12px;gap:8px">
+    <button id="closeBlobModal" class="btn-ghost">Close</button>
+  </div>
+  <!-- hidden file input used for upload -->
+  <input id="blobFileInput" class="file-input" type="file" multiple />
+</div>
+
 <!-- progress -->
 <div id="progressWrap">
-  <div style="font-size:13px;color:var(--muted)" id="progressTitle">Model download (simulated)</div>
+  <div style="font-size:13px;color:var(--muted)" id="progressTitle">Model download</div>
   <div id="progressBarOuter" style="margin-top:8px">
     <div id="progressBar"></div>
   </div>
@@ -255,7 +289,14 @@ body.light .card{background:var(--panel);color:var(--text);border:1px solid rgba
 <div id="toast"></div>
 
 <script>
-/* ---------- Storage keys and placeholders ---------- */
+/*
+  Fixes:
+   - improved readability in light mode
+   - robust blob handling: detect failed downloads, present modal to retry/paste/upload replacements
+   - preserves previous behavior: runtime and model only loaded after user clicks buttons
+*/
+
+/* ---------- constants and placeholders ---------- */
 const CHATS_KEY = "chatgames_chats";
 const SETTINGS_KEY = "chatgames_settings";
 const DUMMY_MANIFEST = "https://registry.ollama.ai/v2/library/llama3.2/manifests/latest";
@@ -268,7 +309,7 @@ const DUMMY_BLOBS = [
   "https://registry.ollama.ai/v2/library/llama3.2/blobs/sha256:56bb8bd477a519ffa694fc449c2413c6f0e1d3b1c88fa7e3c9d88d3ae49d4dcb"
 ];
 
-/* ---------- App state ---------- */
+/* ---------- app state ---------- */
 let chats = JSON.parse(localStorage.getItem(CHATS_KEY) || "null");
 if(!Array.isArray(chats) || chats.length === 0){
   chats = [{
@@ -279,7 +320,6 @@ if(!Array.isArray(chats) || chats.length === 0){
   localStorage.setItem(CHATS_KEY, JSON.stringify(chats));
 }
 let active = 0;
-let lastDeleted = null;
 let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
 if(!settings) settings = { theme: "hacker", crt: true, keystroke: true, ambientOn: false, ambientVol: 0.06 }, localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 
@@ -300,12 +340,14 @@ const btnInstall = document.getElementById("btnInstallRuntime");
 const btnDownloadModel = document.getElementById("btnDownloadModel");
 const btnLoadModel = document.getElementById("btnLoadModel");
 const btnDeleteModel = document.getElementById("btnDeleteModel");
-
-/* consent modal elements */
 const consentModal = document.getElementById("consentModal");
 const consentOk = document.getElementById("consentOk");
 const consentCancel = document.getElementById("consentCancel");
 const consentSize = document.getElementById("consentSize");
+const blobStatusModal = document.getElementById("blobStatusModal");
+const blobListEl = document.getElementById("blobList");
+const closeBlobModalBtn = document.getElementById("closeBlobModal");
+const blobFileInput = document.getElementById("blobFileInput");
 
 /* ---------- IndexedDB helpers ---------- */
 function openDB(){
@@ -360,12 +402,13 @@ async function idbDeleteDatabase(){
   });
 }
 
-/* ---------- Runtime integration points ---------- */
+/* ---------- runtime placeholders ---------- */
 let runtime = null;
 let modelLoaded = false;
 
-async function installRuntime() {
-  logToTerminal("System: Attempting to import local runtime from ./vendor/ ...");
+/* Try to import runtime only when requested */
+async function installRuntime(){
+  logToTerminal("System: attempting runtime import from ./vendor/ ...");
   runtimeLabel.textContent = "installing...";
   const candidates = [
     "./vendor/wllama.esm.min.js",
@@ -376,52 +419,38 @@ async function installRuntime() {
   for(const p of candidates){
     try {
       const mod = await import(p);
-      console.log("Imported runtime module:", p, mod);
       runtime = mod;
       runtimeLabel.textContent = "runtime installed (" + p.split("/").pop() + ")";
-      logToTerminal(`System: runtime imported: ${p.split("/").pop()}`);
+      logToTerminal("System: runtime imported: " + p.split("/").pop());
       detectRuntimeAPI(mod);
       return true;
     } catch(e){
-      console.warn("Import failed for", p, e);
+      console.warn("import failed", p, e);
     }
   }
   runtimeLabel.textContent = "not installed";
-  logToTerminal("System: runtime import failed. Put a WASM runtime bundle in ./vendor/ (see console).");
+  logToTerminal("System: runtime import failed. Host a runtime bundle in ./vendor/ and try again.");
   return false;
 }
-
 function detectRuntimeAPI(mod){
-  if(mod?.Wllama || mod?.default?.Wllama){
-    logToTerminal("System: Detected Wllama runtime API.");
-    runtime.clientType = "wllama";
-  } else if(mod?.LlamaCpp || mod?.default?.LlamaCpp || mod?.Llama){
-    logToTerminal("System: Detected LlamaCpp / llama-cpp-wasm API.");
-    runtime.clientType = "llama-cpp-wasm";
-  } else {
-    logToTerminal("System: Unknown runtime API shape - check console and runtime docs.");
-    runtime.clientType = "unknown";
-  }
-  console.log("Runtime detection result:", runtime.clientType, runtime);
+  if(mod?.Wllama || mod?.default?.Wllama) runtime.clientType = "wllama";
+  else if(mod?.LlamaCpp || mod?.default?.LlamaCpp || mod?.Llama) runtime.clientType = "llama-cpp-wasm";
+  else runtime.clientType = "unknown";
+  console.log("runtime.clientType", runtime.clientType, runtime);
 }
 
-/* ---------- Consent + storage estimate + streaming download ---------- */
+/* ---------- consent + storage estimate ---------- */
 function showConsentModal(sizeHintText = "~3–6 GB") {
   return new Promise((resolve) => {
     consentSize.textContent = sizeHintText;
     consentModal.style.display = "block";
-    function cleanup(){
-      consentModal.style.display = "none";
-      consentOk.removeEventListener("click", okHandler);
-      consentCancel.removeEventListener("click", cancelHandler);
-    }
+    function cleanup(){ consentModal.style.display = "none"; consentOk.removeEventListener("click", okHandler); consentCancel.removeEventListener("click", cancelHandler); }
     function okHandler(){ cleanup(); resolve(true); }
     function cancelHandler(){ cleanup(); resolve(false); }
     consentOk.addEventListener("click", okHandler);
     consentCancel.addEventListener("click", cancelHandler);
   });
 }
-
 async function checkStorageEstimate(minBytesNeeded){
   if(!navigator.storage || !navigator.storage.estimate) return true;
   try {
@@ -438,96 +467,216 @@ async function checkStorageEstimate(minBytesNeeded){
   }
 }
 
-/* streaming download -> IndexedDB (stores manifest + blobs under keys 'model:manifest' and 'blob:<name>') */
-async function downloadAndStoreModel({ manifestUrl = null, blobUrls = [] , onProgress = null } = {}){
-  logToTerminal("System: starting download & store process...");
+/* ---------- robust streaming download with failure tracking ---------- */
+
+/*
+  downloadManifestAndBlobs now:
+   - attempts to fetch each blob
+   - if any blob fetch fails (non-ok), it records it to failed[] and shows blob-status modal
+   - user can retry, paste alternative url, or upload a local file that will be stored under the expected key name
+*/
+async function downloadManifestAndBlobs(manifestUrl = null, blobUrls = []) {
+  logToTerminal("System: starting manifest+blob download...");
   progressWrap.style.display = "block";
   progressBar.style.width = '0%';
   progressText.innerText = '0%';
   progressTitle.textContent = 'Model download (storing to browser)';
+  const failed = []; // { url, name, reason }
   try {
     if(manifestUrl){
       try {
-        const resp = await fetch(manifestUrl);
-        if(resp.ok){
-          const txt = await resp.text();
+        const r = await fetch(manifestUrl);
+        if(r.ok){
+          const txt = await r.text();
           await idbPut('model:manifest', txt);
-          logToTerminal("System: manifest saved to IndexedDB");
+          logToTerminal("System: manifest saved");
         } else {
-          logToTerminal("System: manifest fetch failed with status " + resp.status);
+          logToTerminal("System: manifest fetch failed: " + r.status);
         }
       } catch(e){
-        console.warn("manifest fetch failed", e);
+        console.warn("manifest fetch error", e);
       }
     }
 
     const total = blobUrls.length;
-    for(let i = 0; i < blobUrls.length; i++){
+    for(let i=0;i<blobUrls.length;i++){
       const url = blobUrls[i];
       const fname = url.split("/").pop();
-      progressText.innerText = `0% - ${fname}`;
-      const resp = await fetch(url);
-      if(!resp.ok) {
-        logToTerminal("System: failed to fetch blob " + fname + " (status " + resp.status + ")");
-        continue;
-      }
-      const contentLength = parseInt(resp.headers.get("content-length") || "0", 10);
-      if(resp.body && resp.body.getReader){
-        const reader = resp.body.getReader();
-        const chunks = [];
-        let received = 0;
-        while(true){
-          const { done, value } = await reader.read();
-          if(done) break;
-          chunks.push(value);
-          received += value.byteLength || value.length || 0;
-          let curFraction = total ? (i + (contentLength ? (received / contentLength) : 0)) / total : 0;
-          curFraction = Math.min(1, Math.max(0, curFraction));
-          const pct = Math.round(curFraction * 100);
+      try {
+        // Try a light HEAD first to detect obvious 404 quickly (some servers block HEAD; fallback to GET)
+        let ok = false;
+        try {
+          const h = await fetch(url, { method: 'HEAD' });
+          ok = h.ok;
+        } catch(e){ ok = false; }
+        if(!ok){
+          // fallback to GET for checking; we'll stream-get below anyway
+        }
+        const resp = await fetch(url);
+        if(!resp.ok){
+          failed.push({ url, name: fname, reason: `HTTP ${resp.status}` });
+          console.warn("blob fetch failed", fname, resp.status);
+          continue;
+        }
+        // stream into IDB (like before)
+        const contentLength = parseInt(resp.headers.get("content-length") || "0", 10);
+        if(resp.body && resp.body.getReader){
+          const reader = resp.body.getReader();
+          const chunks = [];
+          let received = 0;
+          while(true){
+            const { done, value } = await reader.read();
+            if(done) break;
+            chunks.push(value);
+            received += value.byteLength || 0;
+            let curFraction = total ? (i + (contentLength ? (received/contentLength) : 0)) / total : 0;
+            curFraction = Math.min(1, Math.max(0, curFraction));
+            const pct = Math.round(curFraction * 100);
+            progressBar.style.width = pct + '%';
+            progressText.innerText = `${pct}% - ${fname}`;
+          }
+          const size = chunks.reduce((s,c)=>s+(c.byteLength||0), 0);
+          const buf = new Uint8Array(size);
+          let off = 0;
+          for(const c of chunks){ buf.set(new Uint8Array(c), off); off += c.byteLength || 0; }
+          await idbPut('blob:' + fname, buf.buffer);
+          logToTerminal(`System: saved ${fname}`);
+        } else {
+          const ab = await resp.arrayBuffer();
+          await idbPut('blob:' + fname, ab);
+          const pct = Math.round(((i+1)/total)*100);
           progressBar.style.width = pct + '%';
           progressText.innerText = `${pct}% - ${fname}`;
-          onProgress && onProgress(curFraction, fname);
+          logToTerminal(`System: saved ${fname} (non-stream)`);
         }
-        const size = chunks.reduce((s,c)=>s+(c.byteLength||c.length),0);
-        const buf = new Uint8Array(size);
-        let offset = 0;
-        for(const c of chunks){
-          buf.set(new Uint8Array(c), offset);
-          offset += c.byteLength || c.length;
-        }
-        await idbPut('blob:' + fname, buf.buffer);
-        logToTerminal(`System: stored ${fname} to IndexedDB`);
-      } else {
-        const ab = await resp.arrayBuffer();
-        await idbPut('blob:' + fname, ab);
-        const pct = Math.round(((i+1)/total)*100);
-        progressBar.style.width = pct + '%';
-        progressText.innerText = `${pct}% - ${fname}`;
-        onProgress && onProgress((i+1)/total, fname);
-        logToTerminal(`System: stored ${fname} to IndexedDB (non-stream)`);
+      } catch(e){
+        console.error("download error for", url, e);
+        failed.push({ url, name: fname, reason: e.message || 'network error' });
       }
     }
 
-    progressBar.style.width = '100%';
-    progressText.innerText = '100%';
-    setTimeout(()=>{ progressWrap.style.display = "none"; }, 600);
-    modelLabel.textContent = "downloaded (in IndexedDB)";
-    logToTerminal("System: all blobs stored. Press 'Load Model' to attempt to load into runtime.");
-    return true;
-  } catch(e){
-    console.error("downloadAndStoreModel error", e);
     progressWrap.style.display = "none";
-    logToTerminal("System: download failed: " + (e.message || e));
-    return false;
+    if(failed.length){
+      modelLabel.textContent = "downloaded (partial, failed blobs)";
+      // show modal listing failed blobs and give user options
+      showBlobStatusModal(failed);
+      logToTerminal("System: download finished with failures — see modal or console.");
+      return { success: false, failed };
+    } else {
+      modelLabel.textContent = "downloaded (in IndexedDB)";
+      logToTerminal("System: all blobs saved to IndexedDB.");
+      return { success: true };
+    }
+  } catch(e){
+    console.error("downloadManifestAndBlobs error", e);
+    progressWrap.style.display = "none";
+    logToTerminal("System: download process failed: " + (e.message || e));
+    return { success: false, error: e };
   }
 }
 
-/* ---------- Helper: read all stored blobs and create File/Blob objects ---------- */
+/* ---------- blob-status modal UI & actions ---------- */
+function showBlobStatusModal(failed) {
+  blobListEl.innerHTML = "";
+  // Each failed blob row: name, reason, actions: Retry, Paste URL, Upload file
+  failed.forEach((b, idx) => {
+    const row = document.createElement("div");
+    row.className = "blob-item";
+    const left = document.createElement("div");
+    const title = document.createElement("div"); title.textContent = b.name; title.style.fontWeight = 700;
+    const meta = document.createElement("div"); meta.className = "meta"; meta.textContent = `${b.reason} — ${b.url}`;
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    const actions = document.createElement("div"); actions.className = "blob-actions";
+    const retryBtn = document.createElement("button"); retryBtn.textContent = "Retry"; retryBtn.onclick = async ()=>{
+      retryBtn.disabled = true; retryBtn.textContent = "Retrying...";
+      const result = await attemptSingleBlobDownload(b.url);
+      if(result.ok){
+        showToast(`Downloaded ${b.name}`);
+        row.remove();
+      } else {
+        showToast(`Retry failed: ${result.reason}`);
+        retryBtn.disabled = false;
+        retryBtn.textContent = "Retry";
+      }
+    };
+    const pasteBtn = document.createElement("button"); pasteBtn.textContent = "Paste URL"; pasteBtn.onclick = async ()=>{
+      const altUrl = prompt("Paste alternate URL for " + b.name, b.url);
+      if(!altUrl) return;
+      pasteBtn.disabled = true; pasteBtn.textContent = "Trying...";
+      const r = await attemptSingleBlobDownload(altUrl, b.name);
+      if(r.ok){
+        showToast(`Downloaded ${b.name} from alternate URL`);
+        row.remove();
+      } else {
+        showToast(`Alternate URL failed: ${r.reason}`);
+        pasteBtn.disabled = false; pasteBtn.textContent = "Paste URL";
+      }
+    };
+    const uploadBtn = document.createElement("button"); uploadBtn.textContent = "Upload File"; uploadBtn.onclick = async ()=>{
+      // trigger hidden file input; when files chosen, store file bytes under blob:<name>
+      blobFileInput.dataset.targetName = b.name;
+      blobFileInput.click();
+    };
+
+    actions.appendChild(retryBtn);
+    actions.appendChild(pasteBtn);
+    actions.appendChild(uploadBtn);
+    row.appendChild(left);
+    row.appendChild(actions);
+    blobListEl.appendChild(row);
+  });
+
+  // open modal
+  blobStatusModal.style.display = "block";
+}
+
+/* file input handler: when user selects files to upload as replacement for failed blob(s) */
+blobFileInput.addEventListener("change", async (ev) => {
+  const files = Array.from(ev.target.files || []);
+  const targetName = ev.target.dataset.targetName;
+  if(files.length === 0) return;
+  for(const f of files){
+    const nameToUse = targetName || f.name;
+    try {
+      const ab = await f.arrayBuffer();
+      await idbPut('blob:' + nameToUse, ab);
+      showToast(`Uploaded ${nameToUse} and stored locally`);
+      logToTerminal("System: user uploaded file saved as blob:" + nameToUse);
+      // remove corresponding row from modal if exists
+      const rows = Array.from(blobListEl.querySelectorAll(".blob-item"));
+      rows.forEach(r=>{
+        if(r.querySelector("div").textContent === nameToUse) r.remove();
+      });
+    } catch(e){
+      console.error("file upload error", e);
+      showToast("Upload failed");
+    }
+  }
+  ev.target.value = ""; ev.target.dataset.targetName = "";
+});
+
+closeBlobModalBtn.addEventListener("click", ()=>{ blobStatusModal.style.display = "none"; });
+
+/* attempt single blob download (returns { ok: boolean, reason? }) */
+async function attemptSingleBlobDownload(url, overrideName){
+  try {
+    const fname = overrideName || url.split("/").pop();
+    const resp = await fetch(url);
+    if(!resp.ok) return { ok:false, reason: "HTTP " + resp.status };
+    const ab = await resp.arrayBuffer();
+    await idbPut('blob:' + fname, ab);
+    return { ok:true };
+  } catch(e){
+    return { ok:false, reason: e.message || 'network error' };
+  }
+}
+
+/* ---------- Load model from IndexedDB into runtime (improved) ---------- */
 async function getStoredBlobFiles(){
   const keys = await idbGetAllKeys();
-  // pick keys that start with 'blob:' and keep order if possible
   const blobKeys = (keys || []).filter(k => typeof k === 'string' && k.startsWith('blob:'));
-  // sort by name for deterministic order (user-provided order may matter)
   blobKeys.sort();
   const files = [];
   for(const k of blobKeys){
@@ -535,12 +684,10 @@ async function getStoredBlobFiles(){
     if(!data) continue;
     const name = k.replace(/^blob:/, '');
     const blob = new Blob([data], { type: 'application/octet-stream' });
-    // create a File (has name) — many runtimes accept File or Blob
     try {
       const file = new File([blob], name, { type: 'application/octet-stream' });
       files.push(file);
     } catch(e){
-      // older browsers may not support File constructor — fallback to blob with name attached
       blob._fname = name;
       files.push(blob);
     }
@@ -548,27 +695,18 @@ async function getStoredBlobFiles(){
   return { files, keys: blobKeys };
 }
 
-/* ---------- Load model into runtime (more robust now) ---------- */
 async function loadModelFromIndexedDB(modelName = "llama3.2"){
-  if(!runtime){
-    logToTerminal("System: runtime not installed. Press 'Install Runtime' first.");
-    return false;
-  }
+  if(!runtime){ logToTerminal("System: runtime not installed. Press 'Install Runtime' first."); return false; }
   modelLabel.textContent = "loading...";
-  logToTerminal("System: attempting to load model into runtime (best-effort)...");
+  logToTerminal("System: attempting to load model into runtime...");
   try {
-    const { files, keys } = await getStoredBlobFiles();
-    if(files.length === 0){
-      logToTerminal("System: no blobs found in IndexedDB. Please run Download Model first or host files.");
-      modelLabel.textContent = "no blobs in IndexedDB";
-      return false;
-    }
+    const { files } = await getStoredBlobFiles();
+    if(files.length === 0){ logToTerminal("System: no blobs in IndexedDB. Download model first or upload files."); modelLabel.textContent = "no blobs"; return false; }
 
-    // Wllama-style: try loadModelFromFiles(files)
-    if(runtime?.Wllama || runtime?.default?.Wllama || runtime.clientType === "wllama"){
+    if(runtime?.Wllama || runtime.clientType === "wllama"){
       const Wll = runtime.Wllama || runtime.default?.Wllama || runtime.default || runtime;
       if(typeof Wll.loadModelFromFiles === "function"){
-        logToTerminal("System: calling Wllama.loadModelFromFiles with stored files...");
+        logToTerminal("System: calling Wllama.loadModelFromFiles...");
         const client = await Wll.loadModelFromFiles(files);
         runtime.client = client;
         modelLoaded = true;
@@ -576,20 +714,10 @@ async function loadModelFromIndexedDB(modelName = "llama3.2"){
         logToTerminal("System: model loaded into wllama runtime.");
         return true;
       }
-      // some Wllama builds accept loadModelFromFiles on runtime.default too
-      if(typeof runtime.loadModelFromFiles === "function"){
-        const client = await runtime.loadModelFromFiles(files);
-        runtime.client = client;
-        modelLoaded = true;
-        modelLabel.textContent = "loaded (wllama)";
-        logToTerminal("System: model loaded.");
-        return true;
-      }
     }
 
-    // if runtime exposes 'loadFiles' function
     if(typeof runtime.loadFiles === "function"){
-      logToTerminal("System: calling runtime.loadFiles with stored files...");
+      logToTerminal("System: calling runtime.loadFiles...");
       await runtime.loadFiles(files);
       runtime.client = runtime;
       modelLoaded = true;
@@ -598,64 +726,54 @@ async function loadModelFromIndexedDB(modelName = "llama3.2"){
       return true;
     }
 
-    // LlamaCpp style: try to create an object URL for a combined file or instruct user to host
     if(runtime.clientType === "llama-cpp-wasm" || runtime.LlamaCpp || runtime.default?.LlamaCpp){
       const LlamaConstructor = runtime.LlamaCpp || runtime.default?.LlamaCpp || runtime.Llama;
       if(typeof LlamaConstructor === "function"){
-        // Many LlamaCpp builds expect a URL to a single GGUF file — we can create a combined blob if there is only one stored blob
         if(files.length === 1){
           const blob = files[0];
           const url = URL.createObjectURL(blob);
-          logToTerminal("System: invoking LlamaCpp with blob URL (object URL created).");
-          const onLoad = ()=>{ modelLoaded = true; modelLabel.textContent = "loaded (llama-cpp-wasm)"; logToTerminal("System: model loaded (llama-cpp-wasm)."); };
+          logToTerminal("System: invoking LlamaCpp with blob object URL (single file)...");
+          const onLoad = ()=>{ modelLoaded = true; modelLabel.textContent = "loaded (llama-cpp-wasm)"; logToTerminal("System: model loaded."); };
           const onChunk = (txt)=>{ appendRuntimeChunk(txt); };
           const onComplete = ()=>{ logToTerminal("System: generation complete."); };
           try {
             const app = new LlamaConstructor(url, onLoad, onChunk, onComplete);
             runtime.client = app;
-            logToTerminal("System: invoked LlamaCpp constructor with blob URL; waiting for onLoad...");
             return true;
           } catch(err){
             console.error("Llama constructor failed", err);
-            logToTerminal("System: LlamaCpp constructor attempt failed with blob URL. See console.");
+            logToTerminal("System: Llama constructor failed (see console).");
             modelLabel.textContent = "load failed";
             return false;
           }
         } else {
-          // Multiple blobs: many runtimes won't accept many blob URLs; instruct the user.
-          logToTerminal("System: multiple stored blobs found — some runtimes expect a single GGUF file hosted as a URL. Consider hosting combined model or use a runtime supporting loadModelFromFiles.");
+          logToTerminal("System: multiple blob files present; LlamaCpp usually expects a single .gguf file URL. Consider combining or hosting the model on your site.");
           modelLabel.textContent = "multiple blobs stored";
           return false;
         }
       }
     }
 
-    // generic fallback: try runtime.generate if possible (unlikely without model loaded)
-    logToTerminal("System: runtime API not recognized for loading files. See console for runtime exports.");
-    console.log("Runtime module content:", runtime);
+    logToTerminal("System: runtime API not recognized for loading files. See console.");
+    console.log("Runtime exports:", runtime);
     modelLabel.textContent = "unknown runtime API";
     return false;
 
   } catch(e){
-    console.error("Load model error:", e);
+    console.error("loadModelFromIndexedDB error", e);
     logToTerminal("System: error while loading model: " + (e.message || e));
     modelLabel.textContent = "load error";
     return false;
   }
 }
 
-/* Append streaming chunk text from runtime if available */
+/* ---------- runtime text streaming hook ---------- */
 function appendRuntimeChunk(text){
   chats[active].messages.push({ role: "ai", msg: text, ts: new Date().toISOString() });
   persist();
 }
-
-/* When the user sends a chat and runtime.modelLoaded, route to runtime (best-effort) */
 async function sendToRuntime(prompt){
-  if(!runtime || !modelLoaded || !runtime.client){
-    logToTerminal("System: model/runtime not available — using fallback response.");
-    return null;
-  }
+  if(!runtime || !modelLoaded || !runtime.client){ logToTerminal("System: model/runtime not ready — fallback."); return null; }
   try {
     if(runtime.clientType === "wllama" && typeof runtime.client.generate === "function"){
       logToTerminal("System: generating via wllama.generate...");
@@ -665,7 +783,7 @@ async function sendToRuntime(prompt){
     if(runtime.clientType === "llama-cpp-wasm" && typeof runtime.client.run === "function"){
       logToTerminal("System: generating via LlamaCpp.run (streaming)...");
       runtime.client.run({ prompt, n_predict: 128 });
-      return ""; // streaming populates UI via callbacks
+      return ""; // streaming handled by callbacks
     }
     if(typeof runtime.client.generate === "function"){
       return await runtime.client.generate(prompt);
@@ -673,22 +791,21 @@ async function sendToRuntime(prompt){
     if(typeof runtime.client.complete === "function"){
       return await runtime.client.complete(prompt);
     }
-    logToTerminal("System: runtime client doesn't expose a known generate/complete API. See console.");
-    console.log("runtime.client exports:", Object.keys(runtime.client || {}));
+    logToTerminal("System: runtime client lacks known generate API; see console.");
+    console.log("runtime.client:", runtime.client);
     return null;
   } catch(e){
-    console.error("Runtime generation error:", e);
-    logToTerminal("System: runtime generation error: " + (e.message || e));
+    console.error("sendToRuntime error", e);
+    logToTerminal("System: runtime gen error: " + (e.message || e));
     return null;
   }
 }
 
-/* ---------- UI and behavior (unchanged, with export/import, edit, themes, audio) ---------- */
+/* ---------- UI, chat, audio, themes, etc. ---------- */
 function logToTerminal(msg){
   chats[active].messages.push({ role: "system", msg, ts: new Date().toISOString() });
   persist();
 }
-
 function appendTypingAndCommit(role, text){
   const typingEl = document.createElement("div"); typingEl.className = "message msg-ai ai-typing";
   terminalEl.appendChild(typingEl);
@@ -715,7 +832,6 @@ function appendTypingAndCommit(role, text){
   });
 }
 
-/* UI renderers */
 function renderChatList(){
   chatlistEl.innerHTML = "";
   chats.forEach((c,i)=>{
@@ -729,10 +845,10 @@ function renderChatList(){
     left.appendChild(name); left.appendChild(nameInput); left.appendChild(meta);
 
     const actions = document.createElement("div"); actions.className = "chat-actions";
-    const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Rename";
-    editBtn.textContent = "✏️"; editBtn.onclick = (ev)=>{ ev.stopPropagation(); name.style.display='none'; nameInput.style.display='inline-block'; nameInput.focus(); nameInput.select(); };
-    const delBtn = document.createElement("button"); delBtn.className = "icon-btn"; delBtn.title = "Delete";
-    delBtn.textContent = "🗑️"; delBtn.onclick = (ev)=>{ ev.stopPropagation(); doDelete(i); };
+    const editBtn = document.createElement("button"); editBtn.className = "icon-btn"; editBtn.title = "Rename"; editBtn.textContent = "✏️";
+    editBtn.onclick = (ev)=>{ ev.stopPropagation(); name.style.display='none'; nameInput.style.display='inline-block'; nameInput.focus(); nameInput.select(); };
+    const delBtn = document.createElement("button"); delBtn.className = "icon-btn"; delBtn.title = "Delete"; delBtn.textContent = "🗑️";
+    delBtn.onclick = (ev)=>{ ev.stopPropagation(); doDelete(i); };
     actions.appendChild(editBtn); actions.appendChild(delBtn);
 
     item.appendChild(left); item.appendChild(actions);
@@ -740,7 +856,7 @@ function renderChatList(){
   });
 }
 function finishRename(idx, newName){ if(!newName || typeof newName !== "string") return; chats[idx].name = newName.trim(); persist(); }
-function doDelete(idx){ lastDeleted = { idx, chat: chats[idx] }; chats.splice(idx,1); if(chats.length === 0) chats.push({ name:"Chat 1", messages:[{role:"system", msg:"Welcome", ts:new Date().toISOString()}], gameState:null }); active = Math.max(0, Math.min(active, chats.length-1)); persist(); showToast("Chat deleted.", ()=>{ if(!lastDeleted) return; chats.splice(lastDeleted.idx,0,lastDeleted.chat); lastDeleted = null; persist(); showToast("Undo successful."); }); }
+function doDelete(idx){ const last = { idx, chat: chats[idx] }; chats.splice(idx,1); if(chats.length === 0) chats.push({ name:"Chat 1", messages:[{role:"system", msg:"Welcome", ts:new Date().toISOString()}], gameState:null }); persist(); showToast("Chat deleted", ()=>{ chats.splice(last.idx,0,last.chat); persist(); showToast("Undo successful"); }); }
 
 const GAMES = [
   "Reel In - Fishing Simulator",
@@ -786,7 +902,7 @@ function renderTerminal(scrollSmooth = true){
 function formatTS(iso){ try { const d = new Date(iso); return d.toLocaleString(); } catch(e){ return iso; } }
 function startEditMessage(msgIndex, messageDiv, currentText){ messageDiv.innerHTML = ""; const input = document.createElement("input"); input.className = "edit-input"; input.value = currentText; const saveBtn = document.createElement("button"); saveBtn.className = "icon-btn"; saveBtn.textContent = "Save"; const cancelBtn = document.createElement("button"); cancelBtn.className = "icon-btn"; cancelBtn.textContent = "Cancel"; const row = document.createElement("div"); row.className = "edit-row"; row.appendChild(input); row.appendChild(saveBtn); row.appendChild(cancelBtn); messageDiv.appendChild(row); input.focus(); input.select(); saveBtn.onclick = ()=>{ const val = input.value.trim(); if(val.length === 0) { showToast("Cannot save empty message"); return; } chats[active].messages[msgIndex].msg = val; chats[active].messages[msgIndex].ts = new Date().toISOString(); chats[active].messages[msgIndex].edited = true; persist(); }; cancelBtn.onclick = ()=>{ persist(); }; input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") saveBtn.click(); if(e.key === "Escape") cancelBtn.click(); }); }
 
-/* audio & ambient (unchanged) */
+/* audio */
 let audioCtx = null;
 let ambientNode = null;
 let ambientRunning = false;
@@ -802,14 +918,14 @@ let toastTimer = null;
 function showToast(text, undoCallback){ toastEl.innerHTML = ""; const span = document.createElement("span"); span.textContent = text; toastEl.appendChild(span); if(typeof undoCallback === "function"){ const undo = document.createElement("span"); undo.textContent = "  Undo"; undo.className = "undo"; undo.onclick = ()=>{ undoCallback(); hideToast(); }; toastEl.appendChild(undo); } toastEl.style.display = "block"; if(toastTimer) clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ hideToast(); }, 5000); }
 function hideToast(){ toastEl.style.display = "none"; if(toastTimer) clearTimeout(toastTimer); }
 
-/* input handling & send */
+/* input handling */
 inputEl.addEventListener("keydown", (e)=>{ if(settings.keystroke) playKeystroke(0.06, "square", 14); if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); } });
 sendBtn.addEventListener("click", async ()=>{
   const txt = inputEl.value.trim(); if(!txt) return; inputEl.value = ""; inputEl.focus();
   chats[active].messages.push({ role: "user", msg: txt, ts: new Date().toISOString() });
   persist();
   if(modelLoaded && runtime && runtime.client){
-    logToTerminal("System: routing your prompt to local model...");
+    logToTerminal("System: sending prompt to local model...");
     const result = await sendToRuntime(txt);
     if(typeof result === "string" && result.length){
       await appendTypingAndCommit("ai", result);
@@ -823,11 +939,11 @@ sendBtn.addEventListener("click", async ()=>{
   }
 });
 
-/* fallback game responses */
+/* fallback commands */
 async function handleUserCommandFallback(cmd){
   const lc = cmd.trim().toLowerCase();
   if(lc === "help"){
-    chats[active].messages.push({ role:"ai", msg: "Help: click a game or use Free Chat. Type 'simulate download' to see progress UI.", ts: new Date().toISOString() });
+    chats[active].messages.push({ role:"ai", msg: "Help: click a game or use Free Chat. Type 'simulate download' to see progress UI or 'download model' to try download flow.", ts: new Date().toISOString() });
     persist();
     return;
   }
@@ -854,7 +970,7 @@ async function handleUserCommandFallback(cmd){
   await appendTypingAndCommit("ai", reply);
 }
 
-/* actions */
+/* actions and misc UI wiring */
 function startGame(idx){ chats[active].gameState = { id: idx, name: GAMES[idx], state: {} }; persist(); menuEl.style.display = "none"; appendTypingAndCommit("ai", `You started "${GAMES[idx]}". ${gamePrompt(idx)}`); }
 function gamePrompt(i){ switch(i){ case 0: return "You're on a pier. Commands: 'cast','upgrade','move'."; case 1: return "Pilot your scout: 'explore','scan','jump'."; case 2: return "Maze: 'up','down','left','right','look'."; case 3: return "Treasure: 'dig','scan','map'."; case 4: return "Farm: 'plant','water','harvest','sell'."; case 5: return "Kitchen: 'mix','cook','serve'."; case 6: return "Battle: 'attack','defend','item'."; case 7: return "Puzzle: 'solve','hint'."; case 8: return "Words: 'form [word]','shuffle','hint'."; case 9: return "Race: 'go','brake','boost'."; default: return "Ready."; } }
 function openFreeChat(){ chats[active].gameState = null; persist(); appendTypingAndCommit("ai", "Free chat started. Ask me anything."); }
@@ -886,7 +1002,7 @@ document.getElementById("ambientVol").addEventListener("input", ()=>{ const v = 
 /* Install runtime / Load model / Delete model handlers */
 btnInstall.addEventListener("click", async ()=>{ await installRuntime(); });
 btnLoadModel.addEventListener("click", async ()=>{ await loadModelFromIndexedDB("llama3.2"); });
-btnDeleteModel.addEventListener("click", async ()=>{ const ok = confirm("Delete stored model data from this browser? This permanently removes locally stored model files."); if(ok){ await idbDeleteDatabase(); modelLabel.textContent = "not loaded"; logToTerminal("System: model storage cleared (IndexedDB removed)."); showToast("Model storage cleared"); } });
+btnDeleteModel.addEventListener("click", async ()=>{ const ok = confirm("Delete stored model data from this browser? This permanently removes locally stored model files."); if(ok){ await idbDeleteDatabase(); modelLabel.textContent = "not loaded"; logToTerminal("System: model storage cleared"); showToast("Model storage cleared"); } });
 
 /* Download Model (consent -> storage check -> streaming download) */
 btnDownloadModel.addEventListener("click", async ()=>{
@@ -897,15 +1013,15 @@ btnDownloadModel.addEventListener("click", async ()=>{
     const proceed = confirm("Your browser reports limited free storage. Downloading a large model may fail or prompt you. Continue?");
     if(!proceed){ showToast("Download cancelled due to storage"); return; }
   }
-  const success = await downloadAndStoreModel({ manifestUrl: DUMMY_MANIFEST, blobUrls: DUMMY_BLOBS });
-  if(success) showToast("Model downloaded to browser storage (IndexedDB). Press 'Load Model' to attempt load.");
+  const result = await downloadManifestAndBlobs(DUMMY_MANIFEST, DUMMY_BLOBS);
+  if(result.success) showToast("Model downloaded to browser (IndexedDB). Press Load Model.");
+  else if(result.failed) showToast("Some blobs failed — please check the modal to retry or upload replacements.");
 });
 
 /* Ctrl+F -> Free Chat */
 window.addEventListener("keydown", (e)=>{ if(e.ctrlKey && e.key.toLowerCase() === 'f'){ e.preventDefault(); openFreeChat(); showToast("Free Chat opened (Ctrl+F)"); } });
 document.getElementById("headerFreeChat").addEventListener("click", ()=>{ openFreeChat(); });
 
-/* misc */
 window.addEventListener("keydown", (e)=>{ if(e.key === 'k'){ settings.keystroke = !settings.keystroke; localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); showToast("Keystroke sound " + (settings.keystroke ? "on" : "off")); } });
 
 /* persist/render */
@@ -913,8 +1029,8 @@ function persist(scroll=true){ localStorage.setItem(CHATS_KEY, JSON.stringify(ch
 function init(){ applyTheme(settings.theme || "hacker"); applyCRT(settings.crt !== false); document.getElementById("ambientVol").value = settings.ambientVol || 0.06; document.getElementById("ambientToggle").textContent = settings.ambientOn ? "Pause" : "Play"; renderChatList(); renderMenu(); renderTerminal(false); setTimeout(()=> inputEl.focus(), 140); if(!localStorage.getItem("ollama_model_dummy_downloaded")){ chats[active].messages.push({ role:"system", msg:"Model placeholder not downloaded. Use 'Simulate DL' or Download Model to exercise Model UI.", ts: new Date().toISOString() }); persist(); } }
 init();
 
-/* debug helpers for console */
-window._chatgames_runtime = { installRuntime, downloadAndStoreModel, loadModelFromIndexedDB, getStoredBlobFiles, idbGetAllKeys, idbGet, idbDeleteDatabase, runtime, chats };
+/* debug helpers */
+window._chatgames_runtime = { installRuntime, downloadManifestAndBlobs, loadModelFromIndexedDB, getStoredBlobFiles, idbGetAllKeys, idbGet, idbDeleteDatabase, runtime, chats };
 
 </script>
 </body>
