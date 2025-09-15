@@ -1,9 +1,17 @@
 {
-  "name": "I like fishes",
-  "short_name": "FishSite",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#333333",
-  "icons": []
+    "name": "i like fish.space",
+    "short_name": "ilikefish.space",
+    "theme_color": "#333333",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "https://ilikefish.space/",
+    "description": "Welcome to ilikefish.space with offline games",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/assets/img/ilikefish.space_no_bg_resize.png",
+            "sizes": "1024x1024"
+        }
+    ]
 }
