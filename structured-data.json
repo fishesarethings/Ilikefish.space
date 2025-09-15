@@ -7,8 +7,8 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/fishclimbracing/",
+      "name": "fishclimbracing"
     },
     {
       "@type": "ListItem",
@@ -19,8 +19,8 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/emojimatch/",
-      "name": "emojimatch"
+      "url": "https://ilikefish.space/games/DiceRollIdleEmpires/",
+      "name": "DiceRollIdleEmpires"
     },
     {
       "@type": "ListItem",
@@ -31,8 +31,8 @@
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/Tower-Defense/",
-      "name": "Tower-Defense"
+      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
+      "name": "DiceRollIdleEmpires2"
     }
   ]
 }
