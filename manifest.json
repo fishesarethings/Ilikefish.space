@@ -16,19 +16,33 @@
   ],
   "screenshots": [
   {
-    "src": "assets/img/screenshots/home.webp",
-    "sizes": "1280x720",
-    "type": "image/webp",
+    "src": "assets/img/screenshots/1.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
     "form_factor": "wide",
     "label": "Home screen showing main navigation and featured content"
   },
   {
-    "src": "screenshots/dashboard.webp",
-    "sizes": "1280x720",
-    "type": "image/webp",
+    "src": "/assets/img/screenshots/2.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
     "platform": "ios",
-    "label": "Dashboard view displaying key metrics"
-  }
+    "label": "Lots of fun free to play games"
+  },
+  {
+    "src": "/assets/img/screenshots/3.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
+    "platform": "ios",
+    "label": "Hours of entertainment"
+  },
+  {
+    "src": "/assets/img/screenshots/4.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
+    "platform": "ios",
+    "label": "Lots of fun free to play games"
+  },
 ]
   "dir": "auto",
   "lang": "en",
