@@ -7,8 +7,8 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://ilikefish.space/games/emojimatch/",
-      "name": "emojimatch"
+      "url": "https://ilikefish.space/games/why-chicken-crossed/",
+      "name": "why-chicken-crossed"
     },
     {
       "@type": "ListItem",
@@ -19,20 +19,20 @@
     {
       "@type": "ListItem",
       "position": 3,
+      "url": "https://ilikefish.space/games/rotaze/",
+      "name": "rotaze"
+    },
+    {
+      "@type": "ListItem",
+      "position": 4,
       "url": "https://ilikefish.space/games/timestable-balloons/",
       "name": "timestable-balloons"
     },
     {
       "@type": "ListItem",
-      "position": 4,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
-      "name": "DiceRollIdleEmpires2"
-    },
-    {
-      "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/tetnis/",
+      "name": "tetnis"
     }
   ]
 }
