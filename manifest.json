@@ -37,16 +37,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/assets/img/ilikefish.space-500px.ico",
-      "sizes": "256x256",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "/assets/img/ilikefishes.ico",
-      "sizes": "256x256",
-      "type": "image/x-icon"
     }
   ],
   "screenshots": [
@@ -98,7 +88,7 @@
     "entertainment",
     "games"
   ],
-    "shortcuts": [
+  "shortcuts": [
     {
       "name": "⛏️Mine Tycoon⛏️",
       "url": "https://ilikefish.space/games/minetycoon/minetycoon.html",
