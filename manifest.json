@@ -97,5 +97,22 @@
   "categories": [
     "entertainment",
     "games"
+  ],
+    "shortcuts": [
+    {
+      "name": "⛏️Mine Tycoon⛏️",
+      "url": "https://ilikefish.space/games/minetycoon/minetycoon.html",
+      "description": "Go direct to Mine Tycoon"
+    },
+    {
+      "name": "Games",
+      "url": "https://ilikefish.space/games.html",
+      "description": "Go to games page"
+    },
+    {
+      "name": "Rotaze",
+      "url": "https://ilikefish.space/games/rotaze/rotaze.html",
+      "description": "Go direct to Rotaze"
+    }
   ]
 }
