@@ -31,6 +31,8 @@ const PRECACHE_URLS = [
   '/assets/img/screenshot/4.jpg',
   '/assets/img/screenshot/5.jpg',
   '/assets/img/screenshot/6.jpg',
+  '/assets/img/icon-192.png',
+  '/assets/img/icon-512.png,',
 
   // Games (ensure you add any new game files here when deploying)
   '/games/pong/config.json',
