@@ -1,0 +1,103 @@
+{
+  "name": "i like fish.space",
+  "short_name": "ilikefish.space",
+  "theme_color": "#333333",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "https://ilikefish.space/",
+  "description": "Welcome to ilikefish.space with free-to-play offline games",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/assets/img/ilikefish.space_no_bg_resize.png",
+      "sizes": "500x500",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/img/screenshots/1.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Home screen showing main navigation and featured content"
+    },
+    {
+      "src": "/assets/img/screenshots/2.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Lots of fun free to play games"
+    },
+    {
+      "src": "/assets/img/screenshots/3.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Hours of entertainment"
+    },
+    {
+      "src": "/assets/img/screenshots/4.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Lots of fun puzzles to play"
+    },
+    {
+      "src": "/assets/img/screenshots/5.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Lots of games"
+    },
+    {
+      "src": "/assets/img/screenshots/6.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "label": "Access anywhere any time"
+    }
+  ],
+  "dir": "auto",
+  "lang": "en",
+  "display_override": [
+    "standalone",
+    "fullscreen",
+    "window-controls-overlay"
+  ],
+  "categories": [
+    "entertainment",
+    "games"
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=space.ilikefish.app",
+      "id": "space.ilikefish.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/id1234567890"
+    }
+  ],
+  "prefer_related_applications": false,
+  "platforms": {
+    "android": {
+      "package": "space.ilikefish.app",
+      "min_sdk_version": "21",
+      "target_sdk_version": "34"
+    },
+    "ios": {
+      "bundleIdentifier": "space.ilikefish.app",
+      "appStoreId": "1234567890"
+    }
+  }
+}
