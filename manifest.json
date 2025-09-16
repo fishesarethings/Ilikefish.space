@@ -6,6 +6,7 @@
   "display": "standalone",
   "scope": "/",
   "start_url": "https://ilikefish.space/",
+  "id": "https://ilikefish.space/",
   "description": "Welcome to ilikefish.space with free-to-play offline games",
   "orientation": "any",
   "icons": [
