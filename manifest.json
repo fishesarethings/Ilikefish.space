@@ -41,10 +41,24 @@
     "sizes": "1080x1920",
     "type": "image/jpg",
     "platform": "ios",
-    "label": "Lots of fun free to play games"
+    "label": "Lots of fun puzzles to play"
   },
+  {
+    "src": "/assets/img/screenshots/5.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
+    "platform": "ios",
+    "label": "Lots of games"
+  },
+  {
+    "src": "/assets/img/screenshots/6.jpg",
+    "sizes": "1080x1920",
+    "type": "image/jpg",
+    "platform": "ios",
+    "label": "Accsess anywhere any time"
+  }
 ]
-  "dir": "auto",
+  ,"dir": "auto",
   "lang": "en",
   "display_override": [
     "standalone",
