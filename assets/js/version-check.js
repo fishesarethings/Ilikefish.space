@@ -287,7 +287,7 @@
     els.confirmBtn.onclick = () => {
       els.confirmBtn.disabled = true;
       // step 1
-      runStepCountdown(5, 'Step 1: preparing update', els, async () => {
+      runStepCountdown(3, 'Step 1: preparing update', els, async () => {
         // after step1 complete, present step2
         // show confirm again for final step
         els.confirmBtn.style.display = 'inline-block';
@@ -296,7 +296,7 @@
         // when confirm clicked for step2, start final countdown and run onFinalConfirm at finish
         els.confirmBtn.onclick = () => {
           els.confirmBtn.disabled = true;
-          runStepCountdown(15, 'Finalizing update', els, async () => {
+          runStepCountdown(5, 'Finalizing update', els, async () => {
             // show bottom bar progress while we perform final actions
             try {
               // reveal bottom bar (use existing #download-progress if present)
