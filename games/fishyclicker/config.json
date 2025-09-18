@@ -1,0 +1,9 @@
+{
+  "name": "Fishy Clicker I",
+  "folder": "fishyclicker",
+  "icon": "fishyclicker.png",
+  "entry": "fishyclicker.html",
+  "featured": true,
+  "featuredOrder": 5,
+  "touchInstructions": "Click the fish :D"
+}
