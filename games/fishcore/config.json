@@ -1,0 +1,9 @@
+{
+  "name": "Fishcore: Data Dive",
+  "folder": "fishcore",
+  "icon": "fishcore.png",
+  "entry": "fishcore.html",
+  "featured": true,
+  "featuredOrder": 6,
+  "touchInstructions": "Move the fish with your finger."
+}
