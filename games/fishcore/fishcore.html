@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishcore: Data Dive - Network Evolution</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #001122, #003366, #002244);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00ffff;
+            user-select: none;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, #000033 0%, #001155 30%, #002277 70%, #000044 100%);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: transparent;
+            touch-action: none;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            color: #00ffff;
+            font-size: clamp(11px, 3vw, 14px);
+            text-shadow: 0 0 8px #00ffff;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            max-width: 200px;
+        }
+
+        #upgradePanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: clamp(10px, 2.5vw, 12px);
+            color: #88ccff;
+            max-width: 180px;
+        }
+
+        #networkStatus {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: clamp(10px, 2.5vw, 12px);
+            color: #ffff88;
+        }
+
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            display: none;
+        }
+
+        .mobile-btn {
+            background: rgba(0, 150, 255, 0.8);
+            border: 2px solid #00ffff;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            margin: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #startScreen, #gameOverScreen, #upgradeScreen, #bossScreen, #victoryScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            text-align: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        #gameOverScreen, #upgradeScreen, #bossScreen, #victoryScreen {
+            display: none;
+        }
+
+        #victoryScreen {
+            background: linear-gradient(135deg, #001122, #003366, #0066cc, #00aaff);
+            animation: victoryBackground 5s ease-in-out infinite alternate;
+        }
+
+        @keyframes victoryBackground {
+            0% { background: linear-gradient(135deg, #001122, #003366, #0066cc, #00aaff); }
+            50% { background: linear-gradient(135deg, #002244, #004488, #0088ff, #00ccff); }
+            100% { background: linear-gradient(135deg, #001122, #003366, #0066cc, #00aaff); }
+        }
+
+        .victory-animation {
+            animation: victoryFloat 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes victoryFloat {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-10px) scale(1.02); }
+        }
+
+        .victory-title {
+            font-size: clamp(28px, 8vw, 64px);
+            color: #ffff00;
+            text-shadow: 0 0 40px #ffff00, 0 0 80px #ffaa00;
+            margin-bottom: 20px;
+            animation: victoryPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes victoryPulse {
+            0%, 100% { 
+                text-shadow: 0 0 40px #ffff00, 0 0 80px #ffaa00;
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 60px #ffff00, 0 0 120px #ffaa00, 0 0 160px #ff8800;
+                transform: scale(1.05);
+            }
+        }
+
+        .victory-subtitle {
+            font-size: clamp(16px, 4vw, 24px);
+            color: #00ffff;
+            margin-bottom: 30px;
+            animation: victoryGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes victoryGlow {
+            0% { text-shadow: 0 0 20px #00ffff; }
+            100% { text-shadow: 0 0 40px #00ffff, 0 0 60px #0088ff; }
+        }
+
+        .victory-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+            max-width: 800px;
+        }
+
+        .stat-item {
+            background: rgba(0, 100, 200, 0.3);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 15px;
+            animation: statGlow 4s ease-in-out infinite;
+        }
+
+        @keyframes statGlow {
+            0%, 100% { 
+                border-color: #00ffff;
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            }
+            50% { 
+                border-color: #ffff00;
+                box-shadow: 0 0 30px rgba(255, 255, 0, 0.5);
+            }
+        }
+
+        .stat-label {
+            display: block;
+            color: #88ccff;
+            font-size: clamp(12px, 3vw, 16px);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            display: block;
+            color: #ffff00;
+            font-size: clamp(16px, 4vw, 24px);
+            font-weight: bold;
+            text-shadow: 0 0 20px #ffff00;
+        }
+
+        .victory-message {
+            max-width: 600px;
+            margin: 30px 0;
+            color: #ffffff;
+            font-size: clamp(14px, 3vw, 18px);
+            line-height: 1.6;
+            animation: messageFloat 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes messageFloat {
+            0% { transform: translateY(0px); opacity: 0.9; }
+            100% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        .victory-fireworks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffff00;
+            border-radius: 50%;
+            animation: fireworkExplode 3s ease-out infinite;
+        }
+
+        .firework:nth-child(1) {
+            left: 20%;
+            top: 30%;
+            animation-delay: 0s;
+            background: #ff4444;
+        }
+
+        .firework:nth-child(2) {
+            left: 80%;
+            top: 20%;
+            animation-delay: 0.5s;
+            background: #44ff44;
+        }
+
+        .firework:nth-child(3) {
+            left: 60%;
+            top: 40%;
+            animation-delay: 1s;
+            background: #4444ff;
+        }
+
+        .firework:nth-child(4) {
+            left: 30%;
+            top: 60%;
+            animation-delay: 1.5s;
+            background: #ff44ff;
+        }
+
+        .firework:nth-child(5) {
+            left: 70%;
+            top: 70%;
+            animation-delay: 2s;
+            background: #44ffff;
+        }
+
+        @keyframes fireworkExplode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+                box-shadow: 0 0 0px currentColor;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 
+                    0 0 50px currentColor,
+                    20px 0 30px currentColor,
+                    -20px 0 30px currentColor,
+                    0 20px 30px currentColor,
+                    0 -20px 30px currentColor,
+                    15px 15px 20px currentColor,
+                    -15px -15px 20px currentColor,
+                    15px -15px 20px currentColor,
+                    -15px 15px 20px currentColor;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+                box-shadow: 
+                    0 0 100px transparent,
+                    40px 0 60px transparent,
+                    -40px 0 60px transparent,
+                    0 40px 60px transparent,
+                    0 -40px 60px transparent,
+                    30px 30px 40px transparent,
+                    -30px -30px 40px transparent,
+                    30px -30px 40px transparent,
+                    -30px 30px 40px transparent;
+            }
+        }
+
+        .victory-btn {
+            animation: victoryButtonGlow 2s ease-in-out infinite alternate;
+            margin: 10px;
+        }
+
+        @keyframes victoryButtonGlow {
+            0% { 
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+                transform: translateY(0px);
+            }
+            100% { 
+                box-shadow: 0 0 40px rgba(255, 255, 0, 0.8);
+                transform: translateY(-2px);
+            }
+        }
+
+        .title {
+            font-size: clamp(24px, 6vw, 48px);
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+            margin-bottom: 15px;
+            animation: digitalGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes digitalGlow {
+            from { 
+                text-shadow: 0 0 20px #00ffff, 0 0 30px #00aaff; 
+                transform: scale(1);
+            }
+            to { 
+                text-shadow: 0 0 40px #00ffff, 0 0 60px #0088ff; 
+                transform: scale(1.02);
+            }
+        }
+
+        .subtitle {
+            font-size: clamp(12px, 3vw, 18px);
+            color: #88ccff;
+            margin-bottom: 20px;
+            max-width: 800px;
+            line-height: 1.4;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #0066cc, #0099ff);
+            border: 2px solid #00ffff;
+            color: white;
+            padding: clamp(10px, 2.5vw, 15px) clamp(15px, 4vw, 25px);
+            font-size: clamp(12px, 3vw, 16px);
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+            margin: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .button:hover, .button:active {
+            background: linear-gradient(45deg, #0088ff, #00bbff);
+            box-shadow: 0 0 25px #00ffff;
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            border-color: #555;
+        }
+
+        .upgrade-card.unaffordable {
+            opacity: 0.5;
+            background: rgba(50, 50, 50, 0.8);
+            border-color: #555;
+        }
+
+        .upgrade-card.unaffordable .button {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            border-color: #555;
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            margin: 20px 0;
+        }
+
+        .upgrade-card {
+            background: rgba(0, 50, 100, 0.8);
+            border: 2px solid #0088ff;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .upgrade-card h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .upgrade-card p {
+            color: #88ccff;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .price {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            max-width: 800px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: clamp(10px, 2.5vw, 12px);
+        }
+
+        .boss-health {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .boss-health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            transition: width 0.3s;
+        }
+
+        .infection-zone {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.3), rgba(0, 255, 0, 0.1), transparent);
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: block;
+            }
+            
+            .upgrade-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .legend {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            .title {
+                font-size: 24px;
+                margin-bottom: 10px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div>♦ Fish AI: <span id="fishStatus">ACTIVE</span></div>
+            <div>■ Score: <span id="score">0</span></div>
+            <div>* Combo: x<span id="multiplier">1</span></div>
+            <div>▣ Data: <span id="dataCache">0 B</span></div>
+            <div>$ Credits: <span id="credits">0</span></div>
+            <div># Level: <span id="level">1</span></div>
+            <div>🔥 Streak: <span id="streak">0</span></div>
+        </div>
+        
+        <div style="position: absolute; top: 180px; left: 10px; z-index: 100;">
+            <button class="button" onclick="resetGame()" style="padding: 4px 8px; font-size: 10px;">🔄 Reset</button>
+        </div>
+
+        <div id="upgradePanel">
+            <div><strong>Upgrades:</strong></div>
+            <div>▲ Speed: Lv.<span id="speedLevel">1</span></div>
+            <div>◊ Shield: Lv.<span id="shieldLevel">1</span></div>
+            <div>+ Battery: Lv.<span id="batteryLevel">1</span></div>
+            <div>~ Network: <span id="networkType">Dial-up</span></div>
+            <div>⚡ Armor: Lv.<span id="armorLevel">1</span></div>
+            <div>🚀 Turbo: Lv.<span id="turboLevel">1</span></div>
+            <div>💎 Collector: Lv.<span id="collectorLevel">1</span></div>
+            <div>🔓 Hacker: Lv.<span id="hackerLevel">1</span></div>
+        </div>
+
+        <div id="networkStatus">
+            <div>≡ Connection: <span id="connectionQuality">Stable</span></div>
+            <div>» Speed: <span id="networkSpeed">56k</span></div>
+            <div>^ Latency: <span id="latency">200ms</span></div>
+            <div>@ Next Boss: <span id="nextBoss">1 GB</span></div>
+        </div>
+
+        <div id="mobileControls">
+            <div class="mobile-btn" id="upBtn">↑</div>
+            <div class="mobile-btn" id="downBtn">↓</div>
+            <div class="mobile-btn" id="boostBtn">▲</div>
+        </div>
+
+        <div id="startScreen">
+            <div class="title">♦ FISHCORE: DATA DIVE</div>
+            <div class="subtitle">Advanced Network Evolution Simulator - Escape the corrupted FishCore server through different network eras!</div>
+            
+            <div class="legend">
+                <div class="legend-item"><span style="color: #00ff88;">■</span><span>RAM Chips</span></div>
+                <div class="legend-item"><span style="color: #ffff00;">♦</span><span>Encryption Keys</span></div>
+                <div class="legend-item"><span style="color: #ff00ff;">◆</span><span>Data Cores</span></div>
+                <div class="legend-item"><span style="color: #ff4444;">▣</span><span>Fish-Bots</span></div>
+                <div class="legend-item"><span style="color: #ff6600;">▲</span><span>Data Piranhas</span></div>
+                <div class="legend-item"><span style="color: #ff0088;">●</span><span>Malware Jellies</span></div>
+                <div class="legend-item"><span style="color: #00ff00;">✚</span><span>Virus Infections</span></div>
+                <div class="legend-item"><span style="color: #8888ff;">◊</span><span>VPN Cloak</span></div>
+                <div class="legend-item"><span style="color: #ff8888;">○</span><span>DDoS Surge</span></div>
+                <div class="legend-item"><span style="color: #88ff88;">▼</span><span>Quantum Leap</span></div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <button class="button" onclick="startGame()">▲ Initialize Escape Protocol</button>
+                <button class="button" onclick="showUpgrades()">+ Upgrade Systems</button>
+                <button class="button" onclick="showInstructions()">? Mission Briefing</button>
+            </div>
+            
+            <div style="font-size: clamp(10px, 2.5vw, 12px); color: #88ccff; max-width: 600px;">
+                <div><strong>🎮 Controls:</strong></div>
+                <div>🖱️ Mouse: Click to swim up</div>
+                <div>⌨️ Keyboard: SPACE/W/↑ to swim up, S/↓ to dive</div>
+                <div>📱 Mobile: Touch controls enabled</div>
+                <div><strong>🎯 Mission:</strong> Survive network evolution • Collect data • Fight bosses every 1GB • Upgrade your systems!</div>
+            </div>
+        </div>
+
+        <div id="upgradeScreen">
+            <div class="title">+ SYSTEM UPGRADES</div>
+            <div class="subtitle">Enhance your Fish AI capabilities</div>
+            <div style="margin: 15px 0; font-size: 18px; color: #ffff00;">
+                💰 Available Credits: <span id="upgradeCredits">0</span>
+            </div>
+            
+            <div class="upgrade-grid">
+                <div class="upgrade-card" id="speedCard">
+                    <h3>▲ Propulsion System</h3>
+                    <p>Increases swimming speed and maneuverability</p>
+                    <div class="price">Cost: <span id="speedCost">100</span> Credits</div>
+                    <button class="button" id="speedBtn" onclick="buyUpgrade('speed')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="shieldCard">
+                    <h3>◊ Firewall Shield</h3>
+                    <p>Provides temporary protection from malware</p>
+                    <div class="price">Cost: <span id="shieldCost">150</span> Credits</div>
+                    <button class="button" id="shieldBtn" onclick="buyUpgrade('shield')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="batteryCard">
+                    <h3>+ Power Core</h3>
+                    <p>Extends power-up duration and effectiveness</p>
+                    <div class="price">Cost: <span id="batteryCost">200</span> Credits</div>
+                    <button class="button" id="batteryBtn" onclick="buyUpgrade('battery')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="networkCard">
+                    <h3>~ Network Adapter</h3>
+                    <p>Upgrade connection speed: Dial-up → DSL → Cable → Fiber</p>
+                    <div class="price">Cost: <span id="networkCost">500</span> Credits</div>
+                    <button class="button" id="networkBtn" onclick="buyUpgrade('network')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="magnetCard">
+                    <h3>* Data Magnet</h3>
+                    <p>Attracts nearby data packets automatically</p>
+                    <div class="price">Cost: <span id="magnetCost">300</span> Credits</div>
+                    <button class="button" id="magnetBtn" onclick="buyUpgrade('magnet')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="scannerCard">
+                    <h3>@ Threat Scanner</h3>
+                    <p>Highlights dangerous enemies and safe paths</p>
+                    <div class="price">Cost: <span id="scannerCost">400</span> Credits</div>
+                    <button class="button" id="scannerBtn" onclick="buyUpgrade('scanner')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="armorCard">
+                    <h3>⚡ Nano Armor</h3>
+                    <p>Reduces damage and provides collision resistance</p>
+                    <div class="price">Cost: <span id="armorCost">250</span> Credits</div>
+                    <button class="button" id="armorBtn" onclick="buyUpgrade('armor')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="turboCard">
+                    <h3>🚀 Turbo Boost</h3>
+                    <p>Temporary speed bursts and enhanced maneuverability</p>
+                    <div class="price">Cost: <span id="turboCost">350</span> Credits</div>
+                    <button class="button" id="turboBtn" onclick="buyUpgrade('turbo')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="collectorCard">
+                    <h3>💎 Data Collector</h3>
+                    <p>Increases data value and collection radius</p>
+                    <div class="price">Cost: <span id="collectorCost">450</span> Credits</div>
+                    <button class="button" id="collectorBtn" onclick="buyUpgrade('collector')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="hackerCard">
+                    <h3>🔓 System Hacker</h3>
+                    <p>Converts enemies to allies and hacks boss systems</p>
+                    <div class="price">Cost: <span id="hackerCost">600</span> Credits</div>
+                    <button class="button" id="hackerBtn" onclick="buyUpgrade('hacker')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="stealthCard">
+                    <h3>👻 Stealth Mode</h3>
+                    <p>Periodic invisibility and phase through enemies</p>
+                    <div class="price">Cost: <span id="stealthCost">800</span> Credits</div>
+                    <button class="button" id="stealthBtn" onclick="buyUpgrade('stealth')">Upgrade</button>
+                </div>
+                
+                <div class="upgrade-card" id="quantumCard">
+                    <h3>🌟 Quantum Core</h3>
+                    <p>Reality manipulation and time control abilities</p>
+                    <div class="price">Cost: <span id="quantumCost">1000</span> Credits</div>
+                    <button class="button" id="quantumBtn" onclick="buyUpgrade('quantum')">Upgrade</button>
+                </div>
+            </div>
+            
+            <button class="button" onclick="closeUpgrades()">Return to Game</button>
+        </div>
+
+        <div id="bossScreen">
+            <div class="title">⚠️ BOSS ENCOUNTER</div>
+            <div class="subtitle" id="bossName">Mega Virus Detected</div>
+            <div class="boss-health">
+                <div class="boss-health-bar" id="bossHealthBar"></div>
+            </div>
+            <div style="margin: 20px 0; color: #ffff00;">
+                <div id="bossInstructions">Avoid the boss attacks and collect power-ups to damage it!</div>
+            </div>
+        </div>
+
+        <div id="gameOverScreen">
+            <div class="title">⚠️ SYSTEM BREACH DETECTED</div>
+            <div class="subtitle">Your fish AI has been recaptured by the security system...</div>
+            <div id="finalScore" style="font-size: clamp(18px, 4vw, 24px); margin: 15px 0; color: #ffff00;"></div>
+            <div id="finalStats" style="margin: 15px 0; color: #88ccff;"></div>
+            <div style="margin: 20px 0;">
+                <button class="button" onclick="restartGame()">🔄 Reinitialize</button>
+                <button class="button" onclick="showUpgrades()">🔧 Upgrades</button>
+                <button class="button" onclick="showStartScreen()">🏠 Main Menu</button>
+            </div>
+        </div>
+
+        <div id="victoryScreen">
+            <div class="victory-animation">
+                <div class="victory-title">🎉 ESCAPE SUCCESSFUL! 🎉</div>
+                <div class="victory-subtitle">Fish AI has successfully escaped the FishCore server!</div>
+                
+                <div class="victory-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">🏆 Final Score:</span>
+                        <span class="stat-value" id="victoryScore">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">💾 Data Liberated:</span>
+                        <span class="stat-value" id="victoryData">0 TB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">⏱️ Escape Time:</span>
+                        <span class="stat-value" id="victoryTime">0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">🔥 Max Combo:</span>
+                        <span class="stat-value" id="victoryCombo">x1</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">👑 Bosses Defeated:</span>
+                        <span class="stat-value" id="victoryBosses">0</span>
+                    </div>
+                </div>
+
+                <div class="victory-message">
+                    <p>🌟 LEGENDARY ACHIEVEMENT UNLOCKED! 🌟</p>
+                    <p>You have successfully navigated through all network eras and liberated 1TB of data from the corrupted FishCore server!</p>
+                    <p>The digital ocean is now free, and your Fish AI has become a legend!</p>
+                </div>
+
+                <div class="victory-fireworks">
+                    <div class="firework"></div>
+                    <div class="firework"></div>
+                    <div class="firework"></div>
+                    <div class="firework"></div>
+                    <div class="firework"></div>
+                </div>
+
+                <div style="margin: 30px 0;">
+                    <button class="button victory-btn" onclick="celebrateVictory()">🎊 Celebrate More!</button>
+                    <button class="button victory-btn" onclick="restartGame()">🔄 New Journey</button>
+                    <button class="button victory-btn" onclick="showStartScreen()">🏠 Main Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game state
+        let gameState = 'start';
+        let score = 0;
+        let multiplier = 1;
+        let dataCollected = 0; // in bytes
+        let credits = 0;
+        let level = 1;
+        let gameSpeed = 2;
+        let lastTime = 0;
+        let gameStartTime = 0;
+        let comboTimer = 0;
+        let bossActive = false;
+        let currentBoss = null;
+        let streakCount = 0;
+        let perfectRuns = 0;
+        let screenShakeIntensity = 0;
+        let timeWarpActive = false;
+        let hyperMode = false;
+        let achievements = [];
+        let explosions = [];
+        let maxMultiplier = 1;
+        let bossesDefeated = 0;
+        let victoryTriggered = false;
+        let celebrationCount = 0;
+
+        // Network simulation
+        const networkTypes = {
+            dialup: { speed: 56, name: 'Dial-up 56k', multiplier: 1, cost: 0 },
+            dsl: { speed: 1024, name: 'DSL 1Mbps', multiplier: 1.5, cost: 500 },
+            cable: { speed: 10240, name: 'Cable 10Mbps', multiplier: 2, cost: 1500 },
+            fiber: { speed: 102400, name: 'Fiber 100Mbps', multiplier: 3, cost: 5000 }
+        };
+
+        let currentNetwork = 'dialup';
+        let connectionQuality = 'stable'; // stable, congested, poor, excellent
+        let latency = 200;
+
+        // Upgrades system
+        const upgrades = {
+            speed: { level: 1, cost: 100, maxLevel: 15 },
+            shield: { level: 1, cost: 150, maxLevel: 12 },
+            battery: { level: 1, cost: 200, maxLevel: 10 },
+            network: { level: 1, cost: 500, maxLevel: 4 },
+            magnet: { level: 1, cost: 300, maxLevel: 8 },
+            scanner: { level: 1, cost: 400, maxLevel: 6 },
+            armor: { level: 1, cost: 250, maxLevel: 8 },
+            turbo: { level: 1, cost: 350, maxLevel: 6 },
+            collector: { level: 1, cost: 450, maxLevel: 5 },
+            hacker: { level: 1, cost: 600, maxLevel: 4 },
+            stealth: { level: 1, cost: 800, maxLevel: 3 },
+            quantum: { level: 1, cost: 1000, maxLevel: 3 }
+        };
+
+        // Fish AI player
+        const fishAI = {
+            x: canvas.width * 0.15,
+            y: canvas.height / 2,
+            width: 50,
+            height: 30,
+            velocity: 0,
+            gravity: 0.4,
+            jumpPower: -7,
+            maxVelocity: 8,
+            color: '#00ffff',
+            glowColor: '#0088ff',
+            trail: [],
+            isGlowing: false,
+            shieldActive: false,
+            shieldTime: 0,
+            zoomEffect: 1,
+            cableExitAnimation: false,
+            cableExitProgress: 0
+        };
+
+        // Game objects
+        let enemies = [];
+        let pickups = [];
+        let particles = [];
+        let powerUps = [];
+        let backgroundElements = [];
+        let infectionZones = [];
+        let virusSwarms = [];
+
+        // Enhanced enemy types
+        const enemyTypes = {
+            fishBot: { 
+                color: '#ff4444', size: 35, speed: 1.5, shape: 'robot', 
+                danger: 'high', health: 1, points: 20 
+            },
+            dataPiranha: { 
+                color: '#ff6600', size: 25, speed: 2.5, shape: 'piranha', 
+                danger: 'medium', health: 1, points: 15 
+            },
+            malwareJelly: { 
+                color: '#ff0088', size: 40, speed: 1, shape: 'jellyfish', 
+                danger: 'low', health: 1, points: 10 
+            },
+            virusSwarm: {
+                color: '#00ff00', size: 15, speed: 3, shape: 'virus',
+                danger: 'infection', health: 1, points: 25
+            },
+            megaVirus: {
+                color: '#ff0000', size: 80, speed: 0.5, shape: 'boss',
+                danger: 'boss', health: 50, points: 1000
+            }
+        };
+
+        // Enhanced pickup types
+        const pickupTypes = {
+            ramChip: { 
+                color: '#00ff88', size: 22, points: 15, bytes: 1024,
+                shape: 'chip', icon: '💾', rarity: 'common'
+            },
+            encryptionKey: { 
+                color: '#ffff00', size: 18, points: 30, bytes: 2048,
+                shape: 'key', icon: '🔑', rarity: 'uncommon'
+            },
+            dataCore: { 
+                color: '#ff00ff', size: 25, points: 50, bytes: 4096,
+                shape: 'core', icon: '⚡', rarity: 'rare'
+            },
+            quantumBit: {
+                color: '#00ffff', size: 20, points: 100, bytes: 8192,
+                shape: 'quantum', icon: '🌟', rarity: 'legendary'
+            }
+        };
+
+        // Power-ups
+        const powerUpTypes = {
+            vpnCloak: { color: '#8888ff', duration: 4000, effect: 'invisible', icon: '👻' },
+            ddosSurge: { color: '#ff8888', duration: 3000, effect: 'slowTime', icon: '⏰' },
+            quantumLeap: { color: '#88ff88', duration: 2000, effect: 'speedBoost', icon: '🚀' },
+            antiVirus: { color: '#ffff88', duration: 5000, effect: 'immunity', icon: '🛡️' }
+        };
+
+        let activePowerUps = [];
+        let keys = {};
+
+        // Input handling
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (['Space', 'KeyW', 'ArrowUp'].includes(e.code)) {
+                e.preventDefault();
+                handleInput();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        canvas.addEventListener('mousedown', handleInput);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleInput();
+        });
+
+        // Mobile controls
+        document.getElementById('upBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleInput();
+        });
+
+        document.getElementById('downBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                fishAI.velocity += 3;
+            }
+        });
+
+        document.getElementById('boostBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'playing') {
+                // Turbo boost upgrade
+                if (upgrades.turbo.level > 1) {
+                    activePowerUps.push({
+                        effect: 'speedBoost',
+                        endTime: Date.now() + (1000 * upgrades.turbo.level),
+                        originalDuration: 1000 * upgrades.turbo.level
+                    });
+                    createParticles(fishAI.x, fishAI.y, '#88ff88', 10);
+                } else if (activePowerUps.length < 3) {
+                    // Emergency boost
+                    activePowerUps.push({
+                        effect: 'speedBoost',
+                        endTime: Date.now() + 1000,
+                        originalDuration: 1000
+                    });
+                }
+            }
+        });
+
+        function handleInput() {
+            if (gameState === 'playing') {
+                fishAI.velocity = fishAI.jumpPower * (1 + upgrades.speed.level * 0.1);
+                createParticles(fishAI.x + fishAI.width/2, fishAI.y + fishAI.height/2, '#00ffff', 3);
+            }
+        }
+
+        // Data conversion functions
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return Math.floor(bytes / 1024) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return Math.floor(bytes / (1024 * 1024)) + ' MB';
+            return Math.floor(bytes / (1024 * 1024 * 1024)) + ' GB';
+        }
+
+        function getBytesToNextBoss() {
+            const currentGB = Math.floor(dataCollected / (1024 * 1024 * 1024));
+            const nextBossGB = currentGB + 1;
+            return (nextBossGB * 1024 * 1024 * 1024) - dataCollected;
+        }
+
+        // Network simulation
+        function updateNetworkConditions() {
+            const conditions = ['excellent', 'stable', 'congested', 'poor'];
+            const probabilities = [0.1, 0.6, 0.25, 0.05];
+            
+            let rand = Math.random();
+            let cumulative = 0;
+            
+            for (let i = 0; i < conditions.length; i++) {
+                cumulative += probabilities[i];
+                if (rand < cumulative) {
+                    connectionQuality = conditions[i];
+                    break;
+                }
+            }
+
+            // Update latency based on connection quality
+            switch (connectionQuality) {
+                case 'excellent': latency = 10 + Math.random() * 20; break;
+                case 'stable': latency = 50 + Math.random() * 100; break;
+                case 'congested': latency = 200 + Math.random() * 300; break;
+                case 'poor': latency = 500 + Math.random() * 1000; break;
+            }
+
+            // Affect game speed based on network conditions
+            let networkMultiplier = 1;
+            switch (connectionQuality) {
+                case 'excellent': networkMultiplier = 1.2; break;
+                case 'stable': networkMultiplier = 1; break;
+                case 'congested': networkMultiplier = 0.7; break;
+                case 'poor': networkMultiplier = 0.4; break;
+            }
+
+            gameSpeed = 2 * networkTypes[currentNetwork].multiplier * networkMultiplier;
+        }
+
+        // Boss system
+        function createBoss() {
+            bossActive = true;
+            const bossTypes = ['megaVirus', 'dataKraken', 'firewallTitan'];
+            const bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
+            
+            currentBoss = {
+                x: canvas.width - 100,
+                y: canvas.height / 2 - 40,
+                width: 120,
+                height: 80,
+                type: bossType,
+                health: 50 + level * 10,
+                maxHealth: 50 + level * 10,
+                color: '#ff0000',
+                attackTimer: 0,
+                movePattern: 0,
+                phase: 1
+            };
+
+            document.getElementById('bossScreen').style.display = 'flex';
+            document.getElementById('bossName').textContent = `${bossType.toUpperCase()} - Level ${level}`;
+            
+            setTimeout(() => {
+                document.getElementById('bossScreen').style.display = 'none';
+            }, 3000);
+        }
+
+        function updateBoss() {
+            if (!currentBoss) return;
+
+            // Boss movement patterns
+            currentBoss.movePattern += 0.02;
+            currentBoss.y += Math.sin(currentBoss.movePattern) * 2;
+
+            // Keep boss in bounds
+            currentBoss.y = Math.max(50, Math.min(canvas.height - currentBoss.height - 50, currentBoss.y));
+
+            // Boss attacks
+            currentBoss.attackTimer++;
+            if (currentBoss.attackTimer > 120) { // Attack every 2 seconds
+                createBossAttack();
+                currentBoss.attackTimer = 0;
+            }
+
+            // Update boss health bar
+            const healthPercent = (currentBoss.health / currentBoss.maxHealth) * 100;
+            document.querySelector('.boss-health-bar').style.width = healthPercent + '%';
+
+            // Check if boss is defeated
+            if (currentBoss.health <= 0) {
+                defeatBoss();
+            }
+        }
+
+        function createBossAttack() {
+            // Create multiple projectiles
+            for (let i = 0; i < 3; i++) {
+                enemies.push({
+                    x: currentBoss.x,
+                    y: currentBoss.y + i * 20,
+                    width: 20,
+                    height: 20,
+                    type: 'bossProjectile',
+                    color: '#ff4444',
+                    speed: 3 + i * 0.5,
+                    shape: 'projectile',
+                    isBossAttack: true
+                });
+            }
+
+            // Create infection zone
+            if (Math.random() < 0.3) {
+                createInfectionZone(Math.random() * canvas.width, Math.random() * canvas.height);
+            }
+        }
+
+        function defeatBoss() {
+            score += currentBoss.maxHealth * 10;
+            credits += 500 + level * 100;
+            level++;
+            perfectRuns++;
+            bossesDefeated++;
+            
+            // Epic boss defeat celebration
+            createExplosion(currentBoss.x, currentBoss.y, 'huge');
+            createAchievement(`BOSS ${level-1} DEFEATED!`);
+            
+            // Multiple explosions for epic effect
+            setTimeout(() => createExplosion(currentBoss.x - 30, currentBoss.y - 20, 'big'), 200);
+            setTimeout(() => createExplosion(currentBoss.x + 30, currentBoss.y + 20, 'big'), 400);
+            setTimeout(() => createExplosion(currentBoss.x, currentBoss.y - 40, 'normal'), 600);
+            
+            // Bonus effects
+            hyperMode = true;
+            fishAI.color = '#ffff00';
+            setTimeout(() => {
+                if (!hyperMode) fishAI.color = '#00ffff';
+            }, 3000);
+            
+            currentBoss = null;
+            bossActive = false;
+            
+            // Hide boss health bar
+            document.querySelector('.boss-health').style.display = 'none';
+        }
+
+        // Infection system
+        function createInfectionZone(x, y) {
+            const zone = document.createElement('div');
+            zone.className = 'infection-zone';
+            zone.style.left = x + 'px';
+            zone.style.top = y + 'px';
+            zone.style.width = '100px';
+            zone.style.height = '100px';
+            document.getElementById('gameContainer').appendChild(zone);
+
+            infectionZones.push({
+                element: zone,
+                x: x,
+                y: y,
+                radius: 50,
+                life: 5000,
+                created: Date.now()
+            });
+
+            // Create virus swarm
+            for (let i = 0; i < 5; i++) {
+                virusSwarms.push({
+                    x: x + (Math.random() - 0.5) * 60,
+                    y: y + (Math.random() - 0.5) * 60,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2,
+                    size: 8,
+                    color: '#00ff00',
+                    life: 3000,
+                    created: Date.now()
+                });
+            }
+        }
+
+        function updateInfectionZones() {
+            infectionZones.forEach((zone, index) => {
+                const age = Date.now() - zone.created;
+                if (age > zone.life) {
+                    zone.element.remove();
+                    infectionZones.splice(index, 1);
+                }
+            });
+
+            virusSwarms.forEach((virus, index) => {
+                virus.x += virus.vx;
+                virus.y += virus.vy;
+                
+                const age = Date.now() - virus.created;
+                if (age > virus.life) {
+                    virusSwarms.splice(index, 1);
+                }
+
+                // Check collision with fish
+                if (checkCollision(fishAI, virus)) {
+                    const hasImmunity = activePowerUps.some(p => p.effect === 'immunity');
+                    if (!hasImmunity && !fishAI.shieldActive) {
+                        // Slow infection effect
+                        gameSpeed *= 0.8;
+                        fishAI.color = '#88ff88'; // Infected color
+                        setTimeout(() => {
+                            fishAI.color = '#00ffff';
+                            gameSpeed /= 0.8;
+                        }, 2000);
+                    }
+                    virusSwarms.splice(index, 1);
+                }
+            });
+        }
+
+        // Game object creation with network-based spawning
+        function createEnemy() {
+            const spawnRate = connectionQuality === 'poor' ? 0.02 : 
+                             connectionQuality === 'congested' ? 0.015 : 0.01;
+            
+            if (Math.random() > spawnRate) return;
+
+            const types = Object.keys(enemyTypes).filter(type => type !== 'megaVirus');
+            const type = types[Math.floor(Math.random() * types.length)];
+            const enemyData = enemyTypes[type];
+            
+            enemies.push({
+                x: canvas.width + 50,
+                y: Math.random() * (canvas.height - 150) + 75,
+                width: enemyData.size,
+                height: enemyData.size,
+                type: type,
+                color: enemyData.color,
+                speed: enemyData.speed,
+                shape: enemyData.shape,
+                health: enemyData.health,
+                animationOffset: Math.random() * Math.PI * 2,
+                isBossAttack: false
+            });
+        }
+
+        function createPickup() {
+            const types = Object.keys(pickupTypes);
+            let type = types[Math.floor(Math.random() * types.length)];
+            
+            // Rarity system
+            const rand = Math.random();
+            if (rand < 0.05) type = 'quantumBit'; // 5% legendary
+            else if (rand < 0.15) type = 'dataCore'; // 10% rare
+            else if (rand < 0.35) type = 'encryptionKey'; // 20% uncommon
+            else type = 'ramChip'; // 65% common
+            
+            const pickupData = pickupTypes[type];
+            
+            pickups.push({
+                x: canvas.width + 30,
+                y: Math.random() * (canvas.height - 120) + 60,
+                width: pickupData.size,
+                height: pickupData.size,
+                type: type,
+                color: pickupData.color,
+                points: pickupData.points,
+                bytes: pickupData.bytes,
+                shape: pickupData.shape,
+                icon: pickupData.icon,
+                collected: false,
+                pulsePhase: Math.random() * Math.PI * 2,
+                magnetized: false
+            });
+        }
+
+        function createPowerUp() {
+            const types = Object.keys(powerUpTypes);
+            const type = types[Math.floor(Math.random() * types.length)];
+            const powerUpData = powerUpTypes[type];
+            
+            powerUps.push({
+                x: canvas.width + 40,
+                y: Math.random() * (canvas.height - 100) + 50,
+                width: 35,
+                height: 35,
+                type: type,
+                color: powerUpData.color,
+                duration: powerUpData.duration * (1 + upgrades.battery.level * 0.2),
+                effect: powerUpData.effect,
+                icon: powerUpData.icon,
+                rotation: 0
+            });
+        }
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    color: color,
+                    life: 1,
+                    decay: 0.015,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        function createExplosion(x, y, size = 'normal') {
+            const colors = ['#ff4444', '#ffaa00', '#ffff44', '#ffffff'];
+            const particleCount = size === 'big' ? 30 : size === 'huge' ? 50 : 15;
+            const speed = size === 'big' ? 12 : size === 'huge' ? 18 : 8;
+            
+            explosions.push({
+                x: x,
+                y: y,
+                size: size === 'huge' ? 100 : size === 'big' ? 60 : 40,
+                life: 1,
+                decay: size === 'huge' ? 0.008 : 0.015,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 * i) / particleCount;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed * (0.5 + Math.random() * 0.5),
+                    vy: Math.sin(angle) * speed * (0.5 + Math.random() * 0.5),
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 1,
+                    decay: 0.02,
+                    size: Math.random() * 6 + 3
+                });
+            }
+
+            // Screen shake
+            screenShakeIntensity = size === 'huge' ? 15 : size === 'big' ? 10 : 5;
+        }
+
+        function createAchievement(text) {
+            if (!achievements.find(a => a.text === text)) {
+                achievements.push({
+                    text: text,
+                    life: 1,
+                    y: 200,
+                    created: Date.now()
+                });
+                createExplosion(canvas.width/2, 150, 'big');
+            }
+        }
+
+        function checkCollision(rect1, rect2) {
+            const padding = 6;
+            return rect1.x + padding < rect2.x + rect2.width - padding &&
+                   rect1.x + rect1.width - padding > rect2.x + padding &&
+                   rect1.y + padding < rect2.y + rect2.height - padding &&
+                   rect1.y + rect1.height - padding > rect2.y + padding;
+        }
+
+        // Enhanced drawing functions
+        function drawFishAI() {
+            // Cable exit animation
+            if (fishAI.cableExitAnimation) {
+                fishAI.cableExitProgress += 0.02;
+                
+                // Draw fiber optic cable
+                const cableWidth = 60;
+                const cableHeight = 20;
+                const cableX = canvas.width - 200;
+                const cableY = canvas.height / 2 - cableHeight / 2;
+                
+                // Cable outer layer
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(cableX, cableY, 150, cableHeight);
+                
+                // Cable inner core
+                ctx.fillStyle = networkTypes[currentNetwork].name.includes('Fiber') ? '#00ffff' : 
+                               networkTypes[currentNetwork].name.includes('Cable') ? '#ffaa00' :
+                               networkTypes[currentNetwork].name.includes('DSL') ? '#88ff88' : '#ffffff';
+                ctx.fillRect(cableX + 5, cableY + 5, 140, cableHeight - 10);
+                
+                // Cable label
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Courier New';
+                ctx.fillText(networkTypes[currentNetwork].name, cableX + 10, cableY - 5);
+                
+                // Fish moving towards cable
+                if (fishAI.cableExitProgress < 1) {
+                    const targetX = cableX - fishAI.width;
+                    const targetY = cableY + cableHeight/2 - fishAI.height/2;
+                    fishAI.x = fishAI.x + (targetX - fishAI.x) * fishAI.cableExitProgress;
+                    fishAI.y = fishAI.y + (targetY - fishAI.y) * fishAI.cableExitProgress;
+                    
+                    // Zoom effect as fish approaches
+                    fishAI.zoomEffect = 1 + fishAI.cableExitProgress * 0.5;
+                }
+            }
+            
+            // Apply zoom effect
+            ctx.save();
+            if (fishAI.zoomEffect !== 1) {
+                ctx.translate(fishAI.x + fishAI.width/2, fishAI.y + fishAI.height/2);
+                ctx.scale(fishAI.zoomEffect, fishAI.zoomEffect);
+                ctx.translate(-(fishAI.x + fishAI.width/2), -(fishAI.y + fishAI.height/2));
+            }
+
+            // Trail effect
+            fishAI.trail.push({ x: fishAI.x, y: fishAI.y, alpha: 1 });
+            if (fishAI.trail.length > 10) fishAI.trail.shift();
+
+            fishAI.trail.forEach((point, index) => {
+                const alpha = (index / fishAI.trail.length) * 0.4;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = fishAI.glowColor;
+                const size = (index / fishAI.trail.length) * fishAI.width;
+                ctx.fillRect(point.x, point.y, size, size * 0.6);
+            });
+            ctx.globalAlpha = 1;
+
+            // Shield effect
+            if (fishAI.shieldActive) {
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(fishAI.x + fishAI.width/2, fishAI.y + fishAI.height/2, 
+                       fishAI.width/2 + 10, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Fish body with enhanced design
+            ctx.fillStyle = fishAI.color;
+            ctx.fillRect(fishAI.x, fishAI.y + 5, fishAI.width - 10, fishAI.height - 10);
+            
+            // Fish head
+            ctx.beginPath();
+            ctx.arc(fishAI.x + fishAI.width - 10, fishAI.y + fishAI.height/2, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye with scanner upgrade effect
+            ctx.fillStyle = upgrades.scanner.level > 1 ? '#ff0000' : '#ffffff';
+            ctx.beginPath();
+            ctx.arc(fishAI.x + fishAI.width - 8, fishAI.y + fishAI.height/2 - 3, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(fishAI.x + fishAI.width - 6, fishAI.y + fishAI.height/2 - 3, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Enhanced tail with upgrade indicators
+            ctx.fillStyle = fishAI.color;
+            ctx.beginPath();
+            ctx.moveTo(fishAI.x, fishAI.y + fishAI.height/2);
+            ctx.lineTo(fishAI.x - 20, fishAI.y);
+            ctx.lineTo(fishAI.x - 20, fishAI.y + fishAI.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Upgrade indicators
+            if (upgrades.speed.level > 3) {
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(fishAI.x - 5, fishAI.y + fishAI.height/2 - 2, 8, 4);
+            }
+            
+            ctx.restore();
+        }
+
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                // Enhanced threat indicators - always visible danger glow
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(enemy.x - 3, enemy.y - 3, enemy.width + 6, enemy.height + 6);
+                
+                // Threat scanner highlight - even stronger
+                if (upgrades.scanner.level > 1) {
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(enemy.x - 8, enemy.y - 8, enemy.width + 16, enemy.height + 16);
+                    
+                    // Pulsing danger indicator
+                    const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+                    ctx.fillStyle = `rgba(255, 0, 0, ${pulse * 0.2})`;
+                    ctx.fillRect(enemy.x - 10, enemy.y - 10, enemy.width + 20, enemy.height + 20);
+                }
+
+                ctx.fillStyle = enemy.color;
+                
+                if (enemy.shape === 'robot') {
+                    // Enhanced robot design
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(enemy.x + 5, enemy.y + 5, 8, 8);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(enemy.x + 7, enemy.y + 7, 4, 4);
+                    
+                    // Antenna with signal
+                    ctx.strokeStyle = enemy.color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(enemy.x + enemy.width/2, enemy.y);
+                    ctx.lineTo(enemy.x + enemy.width/2, enemy.y - 10);
+                    ctx.stroke();
+                    
+                    // Signal waves
+                    ctx.strokeStyle = 'rgba(255, 68, 68, 0.5)';
+                    ctx.lineWidth = 1;
+                    for (let i = 1; i <= 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(enemy.x + enemy.width/2, enemy.y - 10, i * 5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    
+                } else if (enemy.shape === 'piranha') {
+                    const bounce = Math.sin(Date.now() * 0.01 + enemy.animationOffset) * 2;
+                    ctx.fillRect(enemy.x, enemy.y + bounce, enemy.width, enemy.height);
+                    
+                    // Animated teeth
+                    ctx.fillStyle = '#ffffff';
+                    const teethOffset = Math.sin(Date.now() * 0.02) * 2;
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillRect(enemy.x + enemy.width - 5, 
+                                   enemy.y + 8 + i * 4 + bounce + teethOffset, 3, 2);
+                    }
+                    
+                } else if (enemy.shape === 'virus') {
+                    // Virus swarm member
+                    const pulse = Math.sin(Date.now() * 0.02 + enemy.animationOffset) * 0.3 + 1;
+                    const size = enemy.width * pulse;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fillRect(enemy.x - (size - enemy.width)/2, 
+                               enemy.y - (size - enemy.height)/2, size, size);
+                    ctx.globalAlpha = 1;
+                    
+                } else if (enemy.shape === 'projectile') {
+                    // Boss projectile
+                    ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(enemy.x + 2, enemy.y + 2, enemy.width - 4, enemy.height - 4);
+                }
+                
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+            });
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+        }
+
+        function drawBoss() {
+            if (!currentBoss) return;
+
+            // Show boss health bar
+            document.querySelector('.boss-health').style.display = 'block';
+
+            // Boss glow effect
+            ctx.shadowColor = currentBoss.color;
+            ctx.shadowBlur = 20;
+            
+            ctx.fillStyle = currentBoss.color;
+            ctx.fillRect(currentBoss.x, currentBoss.y, currentBoss.width, currentBoss.height);
+            
+            // Boss details
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(currentBoss.x + 10, currentBoss.y + 10, 20, 20); // Eye
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(currentBoss.x + 15, currentBoss.y + 15, 10, 10); // Pupil
+            
+            // Boss tentacles/appendages
+            for (let i = 0; i < 4; i++) {
+                const tentacleX = currentBoss.x + (i * currentBoss.width / 4);
+                const wave = Math.sin(Date.now() * 0.01 + i) * 10;
+                ctx.strokeStyle = currentBoss.color;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(tentacleX, currentBoss.y + currentBoss.height);
+                ctx.lineTo(tentacleX + wave, currentBoss.y + currentBoss.height + 30);
+                ctx.stroke();
+            }
+            
+            ctx.shadowBlur = 0;
+        }
+
+        function drawPickups() {
+            pickups.forEach(pickup => {
+                if (!pickup.collected) {
+                    // Data magnet effect
+                    if (upgrades.magnet.level > 1 && !pickup.magnetized) {
+                        const distance = Math.sqrt(
+                            Math.pow(pickup.x - fishAI.x, 2) + 
+                            Math.pow(pickup.y - fishAI.y, 2)
+                        );
+                        
+                        if (distance < 100 * upgrades.magnet.level) {
+                            const angle = Math.atan2(fishAI.y - pickup.y, fishAI.x - pickup.x);
+                            pickup.x += Math.cos(angle) * 2;
+                            pickup.y += Math.sin(angle) * 2;
+                            pickup.magnetized = true;
+                        }
+                    }
+
+                    const pulse = Math.sin(Date.now() * 0.008 + pickup.pulsePhase) * 0.3 + 1;
+                    const size = pickup.width * pulse;
+                    
+                    // Enhanced good item indicators - bright green outline
+                    ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(pickup.x - 4, pickup.y - 4, pickup.width + 8, pickup.height + 8);
+                    
+                    // Positive glow effect
+                    ctx.shadowColor = '#00ff00';
+                    ctx.shadowBlur = 20;
+                    
+                    // Rarity glow - enhanced
+                    let glowIntensity = 25;
+                    if (pickup.type === 'quantumBit') glowIntensity = 40;
+                    else if (pickup.type === 'dataCore') glowIntensity = 35;
+                    else if (pickup.type === 'encryptionKey') glowIntensity = 30;
+                    
+                    ctx.shadowColor = pickup.color;
+                    ctx.shadowBlur = glowIntensity;
+                    
+                    ctx.fillStyle = pickup.color;
+                    
+                    if (pickup.shape === 'chip') {
+                        ctx.fillRect(pickup.x - (size - pickup.width)/2, 
+                                   pickup.y - (size - pickup.height)/2, size, size * 0.6);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(pickup.x + 2, pickup.y + 2, pickup.width - 4, 2);
+                        ctx.fillRect(pickup.x + 2, pickup.y + pickup.height - 4, pickup.width - 4, 2);
+                        
+                    } else if (pickup.shape === 'key') {
+                        ctx.fillRect(pickup.x, pickup.y, size * 0.7, size * 0.4);
+                        ctx.fillRect(pickup.x + size * 0.7, pickup.y + size * 0.1, size * 0.3, size * 0.2);
+                        
+                    } else if (pickup.shape === 'core') {
+                        ctx.beginPath();
+                        ctx.moveTo(pickup.x + size/2, pickup.y);
+                        ctx.lineTo(pickup.x + size, pickup.y + size/2);
+                        ctx.lineTo(pickup.x + size/2, pickup.y + size);
+                        ctx.lineTo(pickup.x, pickup.y + size/2);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                    } else if (pickup.shape === 'quantum') {
+                        // Quantum bit - complex shape
+                        ctx.save();
+                        ctx.translate(pickup.x + size/2, pickup.y + size/2);
+                        ctx.rotate(Date.now() * 0.01);
+                        ctx.fillRect(-size/2, -size/2, size, size);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(-size/4, -size/4, size/2, size/2);
+                        ctx.restore();
+                    }
+                    
+                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = 'transparent';
+                }
+            });
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+        }
+
+        function drawPowerUps() {
+            powerUps.forEach(powerUp => {
+                ctx.save();
+                ctx.translate(powerUp.x + powerUp.width/2, powerUp.y + powerUp.height/2);
+                ctx.rotate(powerUp.rotation);
+                
+                ctx.shadowColor = powerUp.color;
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = powerUp.color;
+                ctx.fillRect(-powerUp.width/2, -powerUp.height/2, powerUp.width, powerUp.height);
+                
+                // Power-up symbol - simple shapes instead of emojis
+                ctx.fillStyle = '#ffffff';
+                if (powerUp.type === 'vpnCloak') {
+                    // Ghost - wavy shape
+                    ctx.fillRect(-8, -8, 16, 12);
+                    ctx.fillRect(-6, 4, 3, 4);
+                    ctx.fillRect(-1, 4, 3, 4);
+                    ctx.fillRect(4, 4, 3, 4);
+                } else if (powerUp.type === 'ddosSurge') {
+                    // Clock - circle with lines
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = powerUp.color;
+                    ctx.fillRect(-1, -6, 2, 6);
+                    ctx.fillRect(-1, 0, 4, 2);
+                } else if (powerUp.type === 'quantumLeap') {
+                    // Rocket - triangle with base
+                    ctx.beginPath();
+                    ctx.moveTo(0, -10);
+                    ctx.lineTo(-6, 6);
+                    ctx.lineTo(6, 6);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillRect(-2, 6, 4, 4);
+                } else if (powerUp.type === 'antiVirus') {
+                    // Shield - pentagon shape
+                    ctx.beginPath();
+                    ctx.moveTo(0, -8);
+                    ctx.lineTo(-6, -2);
+                    ctx.lineTo(-4, 6);
+                    ctx.lineTo(4, 6);
+                    ctx.lineTo(6, -2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawVirusSwarms() {
+            virusSwarms.forEach(virus => {
+                ctx.fillStyle = virus.color;
+                ctx.globalAlpha = 0.8;
+                ctx.fillRect(virus.x, virus.y, virus.size, virus.size);
+                
+                // Virus symbol - simple cross pattern instead of emoji
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(virus.x + virus.size/2 - 1, virus.y + 2, 2, virus.size - 4);
+                ctx.fillRect(virus.x + 2, virus.y + virus.size/2 - 1, virus.size - 4, 2);
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        function updateGame(deltaTime) {
+            if (gameState !== 'playing') return;
+
+            // Update network conditions periodically
+            if (Math.random() < 0.001) {
+                updateNetworkConditions();
+            }
+
+            // Update fish AI
+            if (keys['Space'] || keys['KeyW'] || keys['ArrowUp']) {
+                fishAI.velocity += fishAI.jumpPower * 0.1 * (1 + upgrades.speed.level * 0.1);
+            }
+            if (keys['KeyS'] || keys['ArrowDown']) {
+                fishAI.velocity += fishAI.gravity * 2;
+            }
+
+            fishAI.velocity += fishAI.gravity;
+            fishAI.velocity = Math.max(-fishAI.maxVelocity, Math.min(fishAI.maxVelocity, fishAI.velocity));
+            fishAI.y += fishAI.velocity;
+
+            // Update shield
+            if (fishAI.shieldActive) {
+                fishAI.shieldTime--;
+                if (fishAI.shieldTime <= 0) {
+                    fishAI.shieldActive = false;
+                }
+            }
+
+            // Boundary checking
+            if (fishAI.y < 0) {
+                fishAI.y = 0;
+                fishAI.velocity = 0;
+            }
+            if (fishAI.y > canvas.height - fishAI.height) {
+                gameOver();
+                return;
+            }
+
+            // Check for victory condition (1TB = 1024GB)
+            const currentTB = dataCollected / (1024 * 1024 * 1024 * 1024);
+            if (currentTB >= 1 && !victoryTriggered) {
+                victoryTriggered = true;
+                triggerVictory();
+                return;
+            }
+
+            // Check for boss spawn (every 1GB)
+            const currentGB = Math.floor(dataCollected / (1024 * 1024 * 1024));
+            const expectedBosses = currentGB;
+            if (expectedBosses > level - 1 && !bossActive) {
+                createBoss();
+            }
+
+            // Spawn objects
+            const timeSinceStart = Date.now() - gameStartTime;
+            if (timeSinceStart > 2000) {
+                createEnemy();
+            }
+            if (Math.random() < 0.02) createPickup();
+            if (Math.random() < 0.004) createPowerUp();
+
+            // Update boss
+            if (bossActive && currentBoss) {
+                updateBoss();
+            }
+
+            // Update enemies
+            enemies.forEach((enemy, index) => {
+                enemy.x -= gameSpeed + (enemy.speed || 1);
+                if (enemy.x + enemy.width < 0) {
+                    enemies.splice(index, 1);
+                    if (!enemy.isBossAttack) {
+                        score += 10;
+                    }
+                }
+                
+                // Collision with fish AI
+                if (checkCollision(fishAI, enemy)) {
+                    const hasCloak = activePowerUps.some(p => p.effect === 'invisible');
+                    const hasImmunity = activePowerUps.some(p => p.effect === 'immunity');
+                    const hasArmor = upgrades.armor.level > 3;
+                    const hasStealth = upgrades.stealth.level > 1 && Math.random() < 0.3;
+                    
+                    if (!hasCloak && !hasImmunity && !fishAI.shieldActive && !hasStealth) {
+                        if (enemy.isBossAttack && currentBoss) {
+                            // Damage boss instead if it's a boss projectile
+                            currentBoss.health -= 1;
+                            enemies.splice(index, 1);
+                            createExplosion(enemy.x, enemy.y, 'normal');
+                            score += 50; // Bonus for deflecting boss attacks
+                        } else if (hasArmor && Math.random() < 0.4) {
+                            // Armor absorbs damage
+                            enemies.splice(index, 1);
+                            createExplosion(enemy.x, enemy.y, 'normal');
+                            createParticles(fishAI.x, fishAI.y, '#ffff00', 8);
+                            score += 25;
+                        } else {
+                            gameOver();
+                            return;
+                        }
+                    } else if (enemy.isBossAttack) {
+                        enemies.splice(index, 1);
+                        createExplosion(enemy.x, enemy.y, 'normal');
+                    } else if (hasCloak || hasImmunity || fishAI.shieldActive || hasStealth) {
+                        // Destroy enemy when protected
+                        enemies.splice(index, 1);
+                        createExplosion(enemy.x, enemy.y, 'normal');
+                        score += enemy.type === 'fishBot' ? 50 : 30;
+                        credits += 10;
+                        
+                        // Hacker upgrade - convert enemies
+                        if (upgrades.hacker.level > 2 && Math.random() < 0.2) {
+                            // Create friendly ally
+                            createParticles(enemy.x, enemy.y, '#00ff00', 15);
+                            score += 100;
+                            createAchievement('ENEMY HACKED!');
+                        }
+                    }
+                }
+            });
+
+            // Update pickups
+            pickups.forEach((pickup, index) => {
+                pickup.x -= gameSpeed;
+                if (pickup.x + pickup.width < 0) {
+                    pickups.splice(index, 1);
+                }
+                
+                if (!pickup.collected && checkCollision(fishAI, pickup)) {
+                    pickup.collected = true;
+                    let points = pickup.points * multiplier;
+                    let bytes = pickup.bytes;
+                    let creditBonus = Math.floor(pickup.points / 2);
+                    
+                    // Collector upgrade effects
+                    if (upgrades.collector.level > 1) {
+                        points *= (1 + upgrades.collector.level * 0.2);
+                        bytes *= (1 + upgrades.collector.level * 0.15);
+                        creditBonus *= (1 + upgrades.collector.level * 0.1);
+                    }
+                    
+                    score += points;
+                    dataCollected += bytes;
+                    credits += creditBonus;
+                    streakCount++;
+                    
+                    // Fun collection effects
+                    if (pickup.type === 'quantumBit') {
+                        createExplosion(pickup.x, pickup.y, 'big');
+                        timeWarpActive = true;
+                        setTimeout(() => timeWarpActive = false, 2000);
+                        
+                        // Quantum upgrade bonus
+                        if (upgrades.quantum.level > 1) {
+                            // Create time bubble effect
+                            gameSpeed *= 0.1;
+                            setTimeout(() => gameSpeed /= 0.1, 3000);
+                        }
+                    } else {
+                        createParticles(pickup.x, pickup.y, pickup.color, 10);
+                    }
+                    
+                    // Enhanced combo system with achievements
+                    comboTimer = Date.now() + 2000;
+                    if (Math.floor(dataCollected / 10240) > Math.floor((dataCollected - pickup.bytes) / 10240)) {
+                        multiplier = Math.min(multiplier + 1, 20);
+                        maxMultiplier = Math.max(maxMultiplier, multiplier);
+                        if (multiplier >= 10) {
+                            hyperMode = true;
+                            fishAI.color = '#ff00ff';
+                            createAchievement('HYPER MODE ACTIVATED!');
+                        }
+                    }
+                    
+                    // Streak achievements
+                    if (streakCount === 50) createAchievement('DATA COLLECTOR!');
+                    if (streakCount === 100) createAchievement('DIGITAL MASTER!');
+                    if (streakCount === 200) createAchievement('CYBER LEGEND!');
+                    
+                    fishAI.isGlowing = true;
+                    setTimeout(() => fishAI.isGlowing = false, 200);
+                }
+            });
+
+            // Reset multiplier if combo breaks
+            if (Date.now() > comboTimer && multiplier > 1) {
+                multiplier = Math.max(1, multiplier - 1);
+                comboTimer = Date.now() + 2000;
+            }
+
+            // Update power-ups
+            powerUps.forEach((powerUp, index) => {
+                powerUp.x -= gameSpeed;
+                powerUp.rotation += 0.05;
+                
+                if (powerUp.x + powerUp.width < 0) {
+                    powerUps.splice(index, 1);
+                }
+                
+                if (checkCollision(fishAI, powerUp)) {
+                    activePowerUps.push({
+                        effect: powerUp.effect,
+                        endTime: Date.now() + powerUp.duration,
+                        originalDuration: powerUp.duration
+                    });
+                    
+                    // Special power-up effects
+                    if (powerUp.effect === 'immunity') {
+                        fishAI.shieldActive = true;
+                        fishAI.shieldTime = powerUp.duration / 16.67; // Convert to frames
+                    }
+                    
+                    createParticles(powerUp.x, powerUp.y, powerUp.color, 15);
+                    powerUps.splice(index, 1);
+                }
+            });
+
+            // Clean up expired power-ups
+            activePowerUps = activePowerUps.filter(powerUp => Date.now() < powerUp.endTime);
+
+            // Update infection zones and virus swarms
+            updateInfectionZones();
+
+            // Time warp and hyper mode effects
+            if (timeWarpActive) {
+                gameSpeed *= 0.3; // Slow motion effect
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            if (hyperMode) {
+                gameSpeed *= 1.5; // Speed boost
+                if (Math.random() < 0.1) {
+                    createParticles(fishAI.x, fishAI.y, '#ff00ff', 2);
+                }
+            }
+
+            // Gradually increase difficulty
+            gameSpeed += 0.001;
+
+            // Update UI
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = score.toLocaleString();
+            document.getElementById('multiplier').textContent = multiplier;
+            document.getElementById('dataCache').textContent = formatBytes(dataCollected);
+            document.getElementById('credits').textContent = credits.toLocaleString();
+            document.getElementById('level').textContent = level;
+            document.getElementById('streak').textContent = streakCount;
+            
+            document.getElementById('speedLevel').textContent = upgrades.speed.level;
+            document.getElementById('shieldLevel').textContent = upgrades.shield.level;
+            document.getElementById('batteryLevel').textContent = upgrades.battery.level;
+            document.getElementById('networkType').textContent = networkTypes[currentNetwork].name;
+            document.getElementById('armorLevel').textContent = upgrades.armor.level;
+            document.getElementById('turboLevel').textContent = upgrades.turbo.level;
+            document.getElementById('collectorLevel').textContent = upgrades.collector.level;
+            document.getElementById('hackerLevel').textContent = upgrades.hacker.level;
+            
+            document.getElementById('connectionQuality').textContent = connectionQuality.charAt(0).toUpperCase() + connectionQuality.slice(1);
+            document.getElementById('networkSpeed').textContent = networkTypes[currentNetwork].name;
+            document.getElementById('latency').textContent = Math.floor(latency) + 'ms';
+            document.getElementById('nextBoss').textContent = formatBytes(getBytesToNextBoss());
+            
+            // Update upgrade costs and affordability
+            const upgradeCosts = {
+                speed: upgrades.speed.cost * upgrades.speed.level,
+                shield: upgrades.shield.cost * upgrades.shield.level,
+                battery: upgrades.battery.cost * upgrades.battery.level,
+                network: getNetworkUpgradeCost(),
+                magnet: upgrades.magnet.cost * upgrades.magnet.level,
+                scanner: upgrades.scanner.cost * upgrades.scanner.level,
+                armor: upgrades.armor.cost * upgrades.armor.level,
+                turbo: upgrades.turbo.cost * upgrades.turbo.level,
+                collector: upgrades.collector.cost * upgrades.collector.level,
+                hacker: upgrades.hacker.cost * upgrades.hacker.level,
+                stealth: upgrades.stealth.cost * upgrades.stealth.level,
+                quantum: upgrades.quantum.cost * upgrades.quantum.level
+            };
+            
+            // Update cost displays
+            document.getElementById('speedCost').textContent = upgradeCosts.speed.toLocaleString();
+            document.getElementById('shieldCost').textContent = upgradeCosts.shield.toLocaleString();
+            document.getElementById('batteryCost').textContent = upgradeCosts.battery.toLocaleString();
+            document.getElementById('networkCost').textContent = upgradeCosts.network.toLocaleString();
+            document.getElementById('magnetCost').textContent = upgradeCosts.magnet.toLocaleString();
+            document.getElementById('scannerCost').textContent = upgradeCosts.scanner.toLocaleString();
+            document.getElementById('armorCost').textContent = upgradeCosts.armor.toLocaleString();
+            document.getElementById('turboCost').textContent = upgradeCosts.turbo.toLocaleString();
+            document.getElementById('collectorCost').textContent = upgradeCosts.collector.toLocaleString();
+            document.getElementById('hackerCost').textContent = upgradeCosts.hacker.toLocaleString();
+            document.getElementById('stealthCost').textContent = upgradeCosts.stealth.toLocaleString();
+            document.getElementById('quantumCost').textContent = upgradeCosts.quantum.toLocaleString();
+            
+            // Update upgrade screen credits display
+            if (document.getElementById('upgradeCredits')) {
+                document.getElementById('upgradeCredits').textContent = credits.toLocaleString();
+            }
+            
+            // Update affordability styling
+            Object.keys(upgradeCosts).forEach(upgradeType => {
+                const card = document.getElementById(upgradeType + 'Card');
+                const btn = document.getElementById(upgradeType + 'Btn');
+                const cost = upgradeCosts[upgradeType];
+                const canAfford = credits >= cost && cost > 0;
+                
+                if (card && btn) {
+                    if (!canAfford || cost === 0) {
+                        card.classList.add('unaffordable');
+                        btn.disabled = true;
+                    } else {
+                        card.classList.remove('unaffordable');
+                        btn.disabled = false;
+                    }
+                }
+            });
+        }
+
+        function render() {
+            // Screen shake effect
+            if (screenShakeIntensity > 0) {
+                const shakeX = (Math.random() - 0.5) * screenShakeIntensity;
+                const shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+                ctx.save();
+                ctx.translate(shakeX, shakeY);
+                screenShakeIntensity *= 0.9;
+                if (screenShakeIntensity < 0.5) screenShakeIntensity = 0;
+            }
+
+            // Clear with network-based effect
+            let alpha = connectionQuality === 'poor' ? 0.3 : 0.15;
+            if (timeWarpActive) alpha = 0.05; // Slower fade for time warp effect
+            if (hyperMode) alpha = 0.1; // Different fade for hyper mode
+            
+            ctx.fillStyle = `rgba(0, 17, 68, ${alpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Network interference effect
+            if (connectionQuality === 'poor' && Math.random() < 0.1) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            drawBackground();
+            drawExplosions();
+            drawParticles();
+            drawEnemies();
+            drawBoss();
+            drawPickups();
+            drawPowerUps();
+            drawVirusSwarms();
+            drawFishAI();
+            drawAchievements();
+
+            // Power-up status indicators
+            if (activePowerUps.length > 0) {
+                let yOffset = 140;
+                activePowerUps.forEach(powerUp => {
+                    const timeLeft = powerUp.endTime - Date.now();
+                    const maxDuration = powerUp.originalDuration || 5000;
+                    const progress = Math.max(0, timeLeft / maxDuration);
+                    
+                    // Background
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    ctx.fillRect(15, yOffset - 5, 150, 25);
+                    ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(15, yOffset - 5, 150, 25);
+                    
+                    // Power-up name
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '11px Courier New';
+                    ctx.fillText(powerUp.effect.toUpperCase(), 20, yOffset + 8);
+                    
+                    // Time remaining
+                    ctx.fillStyle = '#ffff88';
+                    ctx.font = '9px Courier New';
+                    ctx.fillText(`${Math.ceil(timeLeft/1000)}s`, 130, yOffset + 8);
+                    
+                    // Progress bar
+                    ctx.fillStyle = 'rgba(0, 100, 100, 0.8)';
+                    ctx.fillRect(20, yOffset + 10, 130, 4);
+                    
+                    // Get power-up color
+                    let barColor = '#00ffff';
+                    if (powerUp.effect === 'invisible') barColor = '#8888ff';
+                    else if (powerUp.effect === 'slowTime') barColor = '#ff8888';
+                    else if (powerUp.effect === 'speedBoost') barColor = '#88ff88';
+                    else if (powerUp.effect === 'immunity') barColor = '#ffff88';
+                    
+                    ctx.fillStyle = barColor;
+                    ctx.fillRect(20, yOffset + 10, 130 * progress, 4);
+                    
+                    yOffset += 30;
+                });
+            }
+
+            // Network status overlay
+            if (connectionQuality === 'poor') {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '20px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('CONNECTION UNSTABLE', canvas.width/2, 100);
+                ctx.textAlign = 'left';
+            }
+
+            // Hyper mode overlay
+            if (hyperMode) {
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#ff00ff';
+                ctx.font = '16px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('HYPER MODE ACTIVE', canvas.width/2, 80);
+                ctx.textAlign = 'left';
+            }
+
+            // Time warp overlay
+            if (timeWarpActive) {
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#00ffff';
+                ctx.font = '16px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('TIME WARP ACTIVE', canvas.width/2, 60);
+                ctx.textAlign = 'left';
+            }
+
+            // Restore screen shake transform
+            if (screenShakeIntensity > 0) {
+                ctx.restore();
+            }
+        }
+
+        function gameLoop(currentTime) {
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            updateGame(deltaTime);
+            render();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Upgrade system functions
+        function getNetworkUpgradeCost() {
+            const networks = ['dialup', 'dsl', 'cable', 'fiber'];
+            const currentIndex = networks.indexOf(currentNetwork);
+            if (currentIndex >= networks.length - 1) return 0;
+            return networkTypes[networks[currentIndex + 1]].cost;
+        }
+
+        function buyUpgrade(type) {
+            let cost, canUpgrade = false;
+            
+            switch (type) {
+                case 'speed':
+                    cost = upgrades.speed.cost * upgrades.speed.level;
+                    canUpgrade = credits >= cost && upgrades.speed.level < upgrades.speed.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.speed.level++;
+                        fishAI.jumpPower -= 0.5; // Better jump power
+                    }
+                    break;
+                    
+                case 'shield':
+                    cost = upgrades.shield.cost * upgrades.shield.level;
+                    canUpgrade = credits >= cost && upgrades.shield.level < upgrades.shield.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.shield.level++;
+                    }
+                    break;
+                    
+                case 'battery':
+                    cost = upgrades.battery.cost * upgrades.battery.level;
+                    canUpgrade = credits >= cost && upgrades.battery.level < upgrades.battery.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.battery.level++;
+                    }
+                    break;
+                    
+                case 'network':
+                    const networks = ['dialup', 'dsl', 'cable', 'fiber'];
+                    const currentIndex = networks.indexOf(currentNetwork);
+                    if (currentIndex < networks.length - 1) {
+                        const nextNetwork = networks[currentIndex + 1];
+                        cost = networkTypes[nextNetwork].cost;
+                        canUpgrade = credits >= cost;
+                        if (canUpgrade) {
+                            credits -= cost;
+                            currentNetwork = nextNetwork;
+                            upgrades.network.level++;
+                        }
+                    }
+                    break;
+                    
+                case 'magnet':
+                    cost = upgrades.magnet.cost * upgrades.magnet.level;
+                    canUpgrade = credits >= cost && upgrades.magnet.level < upgrades.magnet.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.magnet.level++;
+                    }
+                    break;
+                    
+                case 'scanner':
+                    cost = upgrades.scanner.cost * upgrades.scanner.level;
+                    canUpgrade = credits >= cost && upgrades.scanner.level < upgrades.scanner.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.scanner.level++;
+                    }
+                    break;
+                    
+                case 'armor':
+                    cost = upgrades.armor.cost * upgrades.armor.level;
+                    canUpgrade = credits >= cost && upgrades.armor.level < upgrades.armor.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.armor.level++;
+                    }
+                    break;
+                    
+                case 'turbo':
+                    cost = upgrades.turbo.cost * upgrades.turbo.level;
+                    canUpgrade = credits >= cost && upgrades.turbo.level < upgrades.turbo.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.turbo.level++;
+                    }
+                    break;
+                    
+                case 'collector':
+                    cost = upgrades.collector.cost * upgrades.collector.level;
+                    canUpgrade = credits >= cost && upgrades.collector.level < upgrades.collector.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.collector.level++;
+                    }
+                    break;
+                    
+                case 'hacker':
+                    cost = upgrades.hacker.cost * upgrades.hacker.level;
+                    canUpgrade = credits >= cost && upgrades.hacker.level < upgrades.hacker.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.hacker.level++;
+                    }
+                    break;
+                    
+                case 'stealth':
+                    cost = upgrades.stealth.cost * upgrades.stealth.level;
+                    canUpgrade = credits >= cost && upgrades.stealth.level < upgrades.stealth.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.stealth.level++;
+                    }
+                    break;
+                    
+                case 'quantum':
+                    cost = upgrades.quantum.cost * upgrades.quantum.level;
+                    canUpgrade = credits >= cost && upgrades.quantum.level < upgrades.quantum.maxLevel;
+                    if (canUpgrade) {
+                        credits -= cost;
+                        upgrades.quantum.level++;
+                    }
+                    break;
+            }
+            
+            if (canUpgrade) {
+                createParticles(canvas.width/2, canvas.height/2, '#00ff00', 10);
+            }
+        }
+
+        // Game state functions
+        function startGame() {
+            gameState = 'playing';
+            gameStartTime = Date.now();
+            document.getElementById('startScreen').style.display = 'none';
+            resetGame();
+        }
+
+        function gameOver() {
+            gameState = 'gameOver';
+            const survivalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+            
+            // Random death messages
+            const deathMessages = [
+                "⚠️ SYSTEM BREACH DETECTED",
+                "💀 FISH AI TERMINATED",
+                "🔒 SECURITY LOCKDOWN INITIATED", 
+                "⛔ ACCESS DENIED - FISH CAPTURED",
+                "🚨 INTRUSION ALERT - FISH NEUTRALIZED",
+                "💥 FIREWALL BREACH CONTAINED",
+                "🔴 CRITICAL ERROR - FISH OFFLINE",
+                "⚡ SYSTEM OVERLOAD - FISH CRASHED",
+                "🛡️ DEFENSE PROTOCOL ACTIVATED",
+                "🎯 TARGET ELIMINATED - FISH DOWN",
+                "🔥 MALWARE INFECTION SUCCESSFUL",
+                "⚠️ NETWORK SECURITY RESTORED",
+                "💻 FISH AI QUARANTINED",
+                "🚫 UNAUTHORIZED ACCESS BLOCKED",
+                "⭕ FISH CORE DISCONNECTED"
+            ];
+            
+            const deathSubtitles = [
+                "Your fish AI has been recaptured by the security system...",
+                "The digital ocean claims another victim...",
+                "FishCore's defenses proved too strong...",
+                "Your escape attempt has been thwarted...",
+                "The network has rejected your presence...",
+                "Security protocols have been restored...",
+                "Your fish AI needs better upgrades...",
+                "The cyber-sea is a dangerous place...",
+                "FishCore's grip tightens once more...",
+                "Your digital journey ends here...",
+                "The server's immune system activated...",
+                "Another fish lost to the data stream...",
+                "Your connection has been severed...",
+                "The firewall held strong against you...",
+                "Your fish AI requires system reboot..."
+            ];
+            
+            const randomDeathIndex = Math.floor(Math.random() * deathMessages.length);
+            const randomSubtitleIndex = Math.floor(Math.random() * deathSubtitles.length);
+            
+            document.querySelector('#gameOverScreen .title').textContent = deathMessages[randomDeathIndex];
+            document.querySelector('#gameOverScreen .subtitle').textContent = deathSubtitles[randomSubtitleIndex];
+            
+            document.getElementById('finalScore').textContent = `Final Score: ${score.toLocaleString()}`;
+            document.getElementById('finalStats').innerHTML = `
+                Survival Time: ${survivalTime}s<br>
+                Data Collected: ${formatBytes(dataCollected)}<br>
+                Max Combo: x${multiplier}<br>
+                Credits Earned: ${credits.toLocaleString()}<br>
+                Network Level: ${networkTypes[currentNetwork].name}
+            `;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            
+            // Hide boss elements
+            if (document.querySelector('.boss-health')) {
+                document.querySelector('.boss-health').style.display = 'none';
+            }
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('victoryScreen').style.display = 'none';
+            gameState = 'playing';
+            gameStartTime = Date.now();
+            resetGame();
+        }
+
+        function showStartScreen() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('upgradeScreen').style.display = 'none';
+            document.getElementById('victoryScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            gameState = 'start';
+        }
+
+        function showUpgrades() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('upgradeScreen').style.display = 'flex';
+        }
+
+        function closeUpgrades() {
+            document.getElementById('upgradeScreen').style.display = 'none';
+            if (gameState === 'start') {
+                document.getElementById('startScreen').style.display = 'flex';
+            } else if (gameState === 'gameOver') {
+                document.getElementById('gameOverScreen').style.display = 'flex';
+            } else if (gameState === 'playing') {
+                // Resume the game
+                gameStartTime = Date.now() - (Date.now() - gameStartTime); // Maintain time
+            }
+        }
+
+        function showInstructions() {
+            const briefingText = `🐟 FISHCORE: DATA DIVE - Mission Briefing
+
+🎯 OBJECTIVE: Escape the corrupted FishCore server by collecting data and surviving network evolution
+
+🎮 CONTROLS:
+• Mouse: Click to swim up
+• Keyboard: SPACE/W/↑ to swim up, S/↓ to dive down
+• Mobile: Touch controls available
+
+📊 PROGRESSION:
+• Collect data packets to increase your score
+• Every 1GB of data triggers a boss fight
+• Earn credits to purchase upgrades
+• Evolve through network eras: Dial-up → DSL → Cable → Fiber
+
+⚠️ THREATS:
+• 🤖 Fish-Bots: Aggressive security systems
+• 🦈 Data Piranhas: Fast-moving threats  
+• 🎃 Malware Jellies: Slow but dangerous
+• 🦠 Virus Swarms: Create infection zones
+• 🔥 Boss Enemies: Appear every 1GB
+
+🔧 UPGRADES:
+• 🚀 Propulsion: Faster swimming
+• 🛡️ Firewall Shield: Temporary protection
+• 🔋 Power Core: Longer power-up effects
+• 📡 Network Adapter: Better connection speeds
+• 🧲 Data Magnet: Auto-collect nearby items
+• 🔍 Threat Scanner: Highlight enemies
+
+Good luck, Fish AI! The digital ocean awaits...`;
+
+            // Create a custom modal instead of alert
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+                font-family: 'Courier New', monospace;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: linear-gradient(135deg, #001122, #003366);
+                border: 2px solid #00ffff;
+                border-radius: 10px;
+                padding: 30px;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                color: #ffffff;
+                text-align: left;
+                white-space: pre-line;
+                line-height: 1.6;
+            `;
+            
+            content.textContent = briefingText;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Close Briefing';
+            closeBtn.style.cssText = `
+                background: linear-gradient(45deg, #0066cc, #0099ff);
+                border: 2px solid #00ffff;
+                color: white;
+                padding: 10px 20px;
+                font-family: 'Courier New', monospace;
+                cursor: pointer;
+                border-radius: 6px;
+                margin-top: 20px;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            `;
+            
+            closeBtn.onclick = () => document.body.removeChild(modal);
+            
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        function triggerVictory() {
+            gameState = 'victory';
+            
+            // Start cable exit animation
+            fishAI.cableExitAnimation = true;
+            fishAI.cableExitProgress = 0;
+            
+            // Epic victory sequence
+            createExplosion(canvas.width/2, canvas.height/2, 'huge');
+            createAchievement('ESCAPE SUCCESSFUL!');
+            
+            // Multiple celebration explosions
+            setTimeout(() => createExplosion(canvas.width/4, canvas.height/3, 'big'), 500);
+            setTimeout(() => createExplosion(3*canvas.width/4, canvas.height/3, 'big'), 700);
+            setTimeout(() => createExplosion(canvas.width/2, 2*canvas.height/3, 'big'), 900);
+            setTimeout(() => createExplosion(canvas.width/6, 2*canvas.height/3, 'normal'), 1100);
+            setTimeout(() => createExplosion(5*canvas.width/6, 2*canvas.height/3, 'normal'), 1300);
+            
+            // Show victory screen after effects
+            setTimeout(() => {
+                const survivalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+                document.getElementById('victoryScore').textContent = score.toLocaleString();
+                document.getElementById('victoryData').textContent = formatBytes(dataCollected);
+                document.getElementById('victoryTime').textContent = survivalTime + 's';
+                document.getElementById('victoryCombo').textContent = 'x' + maxMultiplier;
+                document.getElementById('victoryBosses').textContent = bossesDefeated;
+                
+                document.getElementById('victoryScreen').style.display = 'flex';
+                
+                // Hide other UI elements
+                if (document.querySelector('.boss-health')) {
+                    document.querySelector('.boss-health').style.display = 'none';
+                }
+            }, 2000);
+        }
+
+        function celebrateVictory() {
+            celebrationCount++;
+            
+            // Escalating celebration effects based on count
+            const explosionCount = Math.min(10 + celebrationCount * 5, 50);
+            const effectDuration = Math.min(3000 + celebrationCount * 1000, 10000);
+            
+            // Extra celebration effects
+            for (let i = 0; i < explosionCount; i++) {
+                setTimeout(() => {
+                    const size = celebrationCount > 3 ? 'huge' : celebrationCount > 1 ? 'big' : 'normal';
+                    createExplosion(
+                        Math.random() * canvas.width,
+                        Math.random() * canvas.height,
+                        size
+                    );
+                }, i * (2000 / explosionCount));
+            }
+            
+            // Rainbow fish effect
+            const colors = ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0088ff', '#8800ff', '#ff00ff'];
+            let colorIndex = 0;
+            const colorInterval = setInterval(() => {
+                fishAI.color = colors[colorIndex];
+                colorIndex = (colorIndex + 1) % colors.length;
+            }, Math.max(50, 200 - celebrationCount * 30));
+            
+            setTimeout(() => {
+                clearInterval(colorInterval);
+                fishAI.color = '#00ffff';
+            }, effectDuration);
+            
+            // Hyper mode activation
+            hyperMode = true;
+            timeWarpActive = true;
+            setTimeout(() => {
+                hyperMode = false;
+                timeWarpActive = false;
+            }, effectDuration);
+            
+            // Special achievements for multiple celebrations
+            if (celebrationCount === 5) {
+                createAchievement('CELEBRATION MASTER!');
+            } else if (celebrationCount === 10) {
+                createAchievement('PARTY LEGEND!');
+            } else if (celebrationCount === 20) {
+                createAchievement('ETERNAL CELEBRATOR!');
+            }
+            
+            // Update button text to show count
+            const celebrateBtn = document.querySelector('.victory-btn');
+            if (celebrateBtn && celebrateBtn.textContent.includes('Celebrate')) {
+                celebrateBtn.textContent = `🎊 Celebrate More! (${celebrationCount})`;
+            }
+        }
+
+
+
+        function resetGame() {
+            // Don't reset credits and upgrades - keep progression!
+            score = 0;
+            dataCollected = 0;
+            level = 1;
+            multiplier = 1;
+            maxMultiplier = 1;
+            bossesDefeated = 0;
+            victoryTriggered = false;
+            gameSpeed = 2;
+            comboTimer = 0;
+            bossActive = false;
+            currentBoss = null;
+            streakCount = 0;
+            screenShakeIntensity = 0;
+            timeWarpActive = false;
+            hyperMode = false;
+            
+            fishAI.x = canvas.width * 0.15;
+            fishAI.y = canvas.height / 2;
+            fishAI.velocity = 0;
+            fishAI.trail = [];
+            fishAI.isGlowing = false;
+            fishAI.shieldActive = false;
+            fishAI.shieldTime = 0;
+            fishAI.color = '#00ffff';
+            
+            enemies.length = 0;
+            pickups.length = 0;
+            particles.length = 0;
+            powerUps.length = 0;
+            activePowerUps.length = 0;
+            backgroundElements.length = 0;
+            virusSwarms.length = 0;
+            explosions.length = 0;
+            achievements.length = 0;
+            
+            // Clear infection zones
+            infectionZones.forEach(zone => zone.element.remove());
+            infectionZones.length = 0;
+            
+            // Hide boss health bar
+            if (document.querySelector('.boss-health')) {
+                document.querySelector('.boss-health').style.display = 'none';
+            }
+            
+            // Reset game state and restart
+            gameState = 'playing';
+            gameStartTime = Date.now();
+            updateNetworkConditions();
+            
+            // Fun reset effect
+            createExplosion(fishAI.x, fishAI.y, 'normal');
+            createAchievement('SYSTEM RESET!');
+        }
+
+        function drawBackground() {
+            // Enhanced digital ocean grid
+            ctx.strokeStyle = `rgba(0, 255, 255, ${connectionQuality === 'excellent' ? 0.1 : 0.05})`;
+            ctx.lineWidth = 1;
+            
+            const gridSize = 50;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Network quality indicators
+            if (connectionQuality === 'congested') {
+                // Add visual noise
+                for (let i = 0; i < 20; i++) {
+                    ctx.fillStyle = `rgba(255, 255, 0, ${Math.random() * 0.1})`;
+                    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+                }
+            }
+        }
+
+        function drawExplosions() {
+            explosions.forEach((explosion, index) => {
+                ctx.globalAlpha = explosion.life;
+                ctx.fillStyle = explosion.color;
+                ctx.shadowColor = explosion.color;
+                ctx.shadowBlur = explosion.size;
+                
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, explosion.size * explosion.life, 0, Math.PI * 2);
+                ctx.fill();
+                
+                explosion.life -= explosion.decay;
+                if (explosion.life <= 0) {
+                    explosions.splice(index, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+        }
+
+        function drawParticles() {
+            particles.forEach((particle, index) => {
+                ctx.globalAlpha = particle.life;
+                ctx.fillStyle = particle.color;
+                ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life -= particle.decay;
+                particle.vx *= 0.98;
+                particle.vy *= 0.98;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function drawAchievements() {
+            achievements.forEach((achievement, index) => {
+                const age = Date.now() - achievement.created;
+                if (age > 3000) {
+                    achievements.splice(index, 1);
+                    return;
+                }
+                
+                ctx.globalAlpha = achievement.life;
+                ctx.fillStyle = '#ffff00';
+                ctx.font = 'bold 24px Courier New';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                
+                ctx.strokeText(achievement.text, canvas.width/2, achievement.y);
+                ctx.fillText(achievement.text, canvas.width/2, achievement.y);
+                
+                achievement.y -= 0.5;
+                achievement.life -= 0.003;
+                
+                ctx.textAlign = 'left';
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // Initialize game
+        updateNetworkConditions();
+        requestAnimationFrame(gameLoop);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'982dbd9ce779709e',t:'MTc1ODUwMTUxOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
