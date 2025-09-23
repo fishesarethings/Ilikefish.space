@@ -1,0 +1,9 @@
+{
+  "name": "Fish Tycoon",
+  "folder": "fishtycoon",
+  "icon": "fishtycoon.png",
+  "entry": "fishtycoon.html",
+  "featured": true,
+  "featuredOrder": 7,
+  "touchInstructions": "Tap buttons"
+}

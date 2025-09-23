@@ -118,7 +118,11 @@ const PRECACHE_URLS = [
 
   '/games/fishcore/config.json',
   '/games/fishcore/fishcore.html',
-  '/games/fishcore/fishcore.png'
+  '/games/fishcore/fishcore.png',
+
+  '/games/fishytycoon/config.json',
+  '/games/fishtycoon/fishtycoon.html',
+  '/games/fishtycoon/fishtycoon.png'
 
 ];
 

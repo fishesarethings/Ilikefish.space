@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fish Tycoon - Multi-Jetty</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: linear-gradient(135deg, #40E0D0, #20B2AA);
+      color:#f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height:100vh; padding:10px;
+    }
+    .game-container {
+      max-width: 780px; margin:0 auto; background: rgba(32,178,170,0.9);
+      border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      padding: 16px; border:2px solid rgba(248,249,250,0.1);
+    }
+    .header { text-align:center; margin-bottom: 14px; }
+    .header h1 { font-size: 1.8rem; color:#003366; text-shadow:2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 6px; }
+    .stats-panel { display:grid; grid-template-columns: repeat(6,1fr); gap:8px; margin-bottom: 12px; }
+    .stat-card {
+      background: rgba(0,51,102,0.8); padding:10px 6px; border-radius:8px; text-align:center;
+      border:1px solid rgba(248,249,250,0.2); font-size: .78rem;
+    }
+    .stat-value { font-size: 1rem; font-weight:700; color:#87CEEB; }
+
+    .controls-row {
+      display:flex; align-items:center; justify-content: space-between; gap:10px; margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .jetty-switcher {
+      display:flex; align-items:center; gap:8px; background: rgba(0, 51, 102, 0.6);
+      border:1px solid rgba(248,249,250,0.2); border-radius:10px; padding:8px 10px;
+    }
+    .jetty-label { font-weight:700; color:#B0E0E6; }
+    .switch-btn, .mini-btn {
+      background: linear-gradient(135deg, #87CEEB, #B0E0E6); color:#003366; border:none; border-radius:8px;
+      padding:8px 10px; font-weight:700; cursor:pointer; box-shadow:0 4px 12px rgba(135,206,235,0.35);
+      transition: transform .2s ease, filter .2s ease;
+    }
+    .switch-btn:hover, .mini-btn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+    .switch-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    .production-rate {
+      flex:1; text-align:center; font-size: .98rem; color: #98FB98; padding:9px;
+      background: rgba(0,0,0,0.25); border-radius:8px; border:1px solid rgba(248,249,250,0.12);
+    }
+
+    .mine-visual {
+      background: linear-gradient(to bottom, #2b9dcf 0%, #3fb4d6 40%, #1f8aa8 100%);
+      height: 360px; border-radius: 12px; position: relative; overflow: hidden;
+      margin-bottom: 14px; border: 3px solid #1b6078; box-shadow: inset 0 0 30px rgba(0,0,0,0.25);
+    }
+    .mine-visual::before {
+      content: ''; position:absolute; inset:0;
+      background: radial-gradient(ellipse at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 40%),
+                  radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.10) 0%, transparent 45%);
+      animation: ripple 6s ease-in-out infinite; pointer-events:none; border-radius: 12px;
+    }
+    @keyframes ripple { 0%,100% {opacity:.35; filter:blur(0px);} 50% {opacity:.55; filter:blur(1px);} }
+
+    .mine-level {
+      width: 100%; height: 100px; position: relative; display:flex; align-items:center; justify-content:center;
+      border-bottom: 2px solid rgba(255,255,255,0.08);
+      background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0) 100%);
+    }
+    .mine-level::before, .mine-level::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 8px;
+      background: linear-gradient(#4b2e18, #2a180e); border-radius: 2px; opacity: 0.9;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    .mine-level::before { left: calc(50% - 50px); }
+    .mine-level::after  { right: calc(50% - 50px); }
+
+    .mine-shaft {
+      position: absolute; left: 50%; transform: translateX(-50%); width: 100px; top: 0; height: 100%;
+      background: repeating-linear-gradient(90deg, #7b4a2a 0px, #8b5a2b 12px, #6b3e1e 12px, #6b3e1e 16px);
+      border-left: 3px solid #4b2e18; border-right: 3px solid #4b2e18;
+      box-shadow: inset 0 8px 0 rgba(0,0,0,0.2), inset 0 -8px 0 rgba(0,0,0,0.2), 0 0 20px rgba(0,0,0,0.25);
+      z-index: 2;
+    }
+
+    .level-info {
+      position: absolute; left: 10px; top: 6px; font-size: 12px; color: #E0F7FA; font-weight: 700;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+    }
+
+    .tunnel {
+      position: absolute; width: 140px; height: 40px;
+      background: repeating-linear-gradient(90deg, #7b4a2a 0px, #8b5a2b 12px, #6b3e1e 12px, #6b3e1e 16px);
+      border: 2px solid #4b2e18; border-radius: 8px; top: 50%;
+      display:flex; align-items:center; justify-content: space-between; padding: 4px 8px;
+      box-shadow: 0 8px 14px rgba(0,0,0,0.35);
+    }
+    .tunnel.left  { left: calc(50% - 125px); transform: translate(-50%, -50%); }
+    .tunnel.right { right: calc(50% - 125px); transform: translate(50%, -50%); }
+
+    .tunnel::before, .tunnel::after {
+      content: ''; position:absolute; left:0; width:100%; height:6px; background: linear-gradient(#b27a4e, #8b5a2b);
+      border:1px solid #4b2e18; border-radius: 3px; opacity:.9;
+    }
+    .tunnel::before { top: -8px; } .tunnel::after { bottom: -8px; }
+
+    .tunnel.empty {
+      background: rgba(139, 69, 19, 0.25); border: 2px dashed #A0522D;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; transition:.25s ease;
+    }
+    .tunnel.empty:hover { background: rgba(139,69,19,0.45); border-color:#D2691E; }
+    .tunnel-button { color:#fff; text-shadow: 0 1px 0 rgba(0,0,0,0.4); font-weight:700; font-size: 10px; text-align:center; line-height:1.2; }
+
+    .miner { width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size: 18px; }
+    .miner.mining { animation: fishing 1.2s infinite ease-in-out; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35)); }
+    @keyframes fishing { 0%,100%{ transform: rotate(-3deg) translateY(0);} 50%{ transform: rotate(3deg) translateY(-1px);} }
+
+    .cart {
+      min-width: 28px; height: 18px; background: #4169E1; border-radius:3px; border:1px solid #191970; display:flex;
+      align-items:center; justify-content:center; font-size: 9px; color:#fff; font-weight:700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3); padding: 0 4px;
+    }
+    .cart.loaded { background:#FF6347; border-color:#DC143C; box-shadow: 0 0 10px rgba(255,99,71,0.5); }
+
+    .lift {
+      position: absolute; left: 50%; top: 0; transform: translateX(-50%) translateY(0);
+      width: 46px; height: 60px; background: linear-gradient(#9aa7b3, #6b747c);
+      border-radius: 6px; border: 3px solid #2F4F4F; z-index: 10; display:flex; align-items:center; justify-content:center;
+      font-size: 18px; box-shadow: inset 0 6px rgba(255,255,255,0.15), inset 0 -6px rgba(0,0,0,0.15);
+      transition: transform 2s ease-in-out;
+    }
+    .lift::before { content:''; position:absolute; top:-14px; left:50%; transform: translateX(-50%); width:3px; height:14px; background:#2F4F4F; }
+
+    .shop-section { background: rgba(0, 51, 102, 0.6); padding: 14px; border-radius: 12px; margin-bottom: 10px; border:1px solid rgba(248,249,250,0.2); }
+    .shop-title { text-align:center; color:#B0E0E6; font-size:1.2rem; margin-bottom:10px; }
+    .shop-buttons { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; }
+    .shop-btn {
+      background: linear-gradient(135deg, #87CEEB, #B0E0E6); color:#003366; border:none; padding: 11px 12px;
+      border-radius:8px; font-size:.9rem; font-weight:700; cursor:pointer; transition:.2s ease; min-height:48px;
+      box-shadow:0 4px 15px rgba(135,206,235,0.3);
+    }
+    .shop-btn:hover:not(:disabled){ transform: translateY(-2px); filter:brightness(1.06); }
+    .shop-btn:disabled { background:#666; color:#bbb; box-shadow:none; cursor:not-allowed; }
+
+    .gold-popup {
+      position: absolute; color: #E0F7FA; font-weight: 800; pointer-events:none; animation: rise 2s ease-out forwards; z-index: 100;
+      text-shadow:0 0 10px #00FFFF, 0 0 20px #00FFFF;
+    }
+    @keyframes rise { 0%{opacity:1; transform: translateY(0);} 100%{opacity:0; transform: translateY(-50px);} }
+
+    .fish-explosion { position: fixed; inset:0; pointer-events:none; z-index: 9999; overflow:hidden; }
+    .fish-emoji { position:absolute; font-size:2rem; left:50%; top:50%; animation: fishExplode 3s ease-out forwards; }
+    @keyframes fishExplode {
+      0%{opacity:1; transform: translate(-50%,-50%) scale(0.1) rotate(0deg);}
+      20%{opacity:1; transform: translate(calc(-50% + var(--final-x)*.3), calc(-50% + var(--final-y)*.3)) scale(1.2) rotate(72deg);}
+      100%{opacity:0; transform: translate(calc(-50% + var(--final-x)), calc(-50% + var(--final-y))) scale(0.8) rotate(360deg);}
+    }
+
+    @media (max-width: 780px) {
+      .stats-panel { grid-template-columns: repeat(3,1fr); }
+      .shop-buttons { grid-template-columns: 1fr; }
+      .production-rate { order: 3; width: 100%; }
+      .jetty-switcher { order: 2; flex: 1; justify-content: center; }
+    }
+      /* Boat visuals */
+    .boat {
+      position: absolute;
+      left: -80px;
+      top: 18px; /* near surface */
+      width: 48px;
+      height: 24px;
+      display: none;
+      font-size: 28px;
+      line-height: 24px;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+      z-index: 6;
+      transition: transform linear;
+    }
+    .boat.sailing { display: block; }
+
+    .boat-status {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: rgba(0,0,0,0.35);
+      color: #E0F7FA;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.18);
+      z-index: 7;
+      pointer-events: none;
+    }
+</style>
+</head>
+<body>
+
+<!-- === Fishy splash (paste this directly after <body>) === -->
+<style id="fishy-splash-styles">
+  /* Scoped-ish unique names to avoid collisions */
+  #fishy-splash-wrapper{position:fixed;inset:0;z-index:2147483646;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+  .fishy-screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;transition:opacity .6s ease}
+  .fishy-screen.fishy-active{opacity:1}
+  .fishy-text{color:#fff;font-weight:800;text-align:center;user-select:none}
+  .fishy-text.big{font-size:2.6rem}
+  .fishy-text.mid{font-size:1.6rem}
+  .fishy-game-title{font-size:2.4rem;margin-top:8px}
+  .fishy-logo{width:300px;height:300px;object-fit:cover;margin-bottom:12px;border-radius:10px}
+  .fishy-loader-wrap{width:84%;max-width:520px;margin-top:12px;display:flex;flex-direction:column;align-items:center}
+  .fishy-loader{width:100%;height:14px;background:rgba(255,255,255,0.12);border-radius:999px;overflow:hidden}
+  .fishy-progress{height:100%;width:0;background:linear-gradient(90deg,#00caff,#66ffb3);transition:width .12s linear}
+  .fishy-percent{margin-top:8px;color:rgba(255,255,255,0.88);font-weight:700}
+  /* fish animation that flips correctly at the turn */
+  .fishy-fish{position:absolute;top:58%;width:140px;height:70px;left:2%;transform:translateY(-50%) scaleX(1);z-index:2147483647}
+  @keyframes fishy-swim {
+    0%   { left:2%;   transform:translateY(-50%) scaleX(1); }
+    49.9%{ left:98%;  transform:translateY(-50%) scaleX(1); }
+    50%  { left:98%;  transform:translateY(-50%) scaleX(-1); }
+    100% { left:2%;   transform:translateY(-50%) scaleX(-1); }
+  }
+  .fishy-fish.animate{ animation: fishy-swim 4s ease-in-out infinite; }
+  /* fade out helper */
+  #fishy-splash-wrapper.fishy-hide{ opacity:0; transition:opacity .9s ease; pointer-events:none; }
+</style>
+
+<div id="fishy-splash-wrapper" aria-hidden="true" role="dialog">
+  <div class="fishy-screen" id="fishy-screen-1">
+    <div class="fishy-text fishy-text big">A <span style="color:#00caff">fishy</span> production</div>
+  </div>
+
+  <div class="fishy-screen" id="fishy-screen-2">
+    <div class="fishy-text fishy-text mid">Presents</div>
+  </div>
+
+  <div class="fishy-screen" id="fishy-screen-3">
+    <!-- replace src with your 1024x1024 logo if you want -->
+    <img class="fishy-logo" src="fishtycoon	.png" alt="Logo">
+    <div class="fishy-text fishy-game-title">Fish Tycoon</div>
+
+    <!-- fish (SVG) sits above the loading bar -->
+    <svg class="fishy-fish" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="fishy-grad" x1="0" x2="1">
+          <stop offset="0" stop-color="#00caff"/>
+          <stop offset="1" stop-color="#66ffb3"/>
+        </linearGradient>
+      </defs>
+      <ellipse cx="100" cy="50" rx="70" ry="36" fill="url(#fishy-grad)" />
+      <circle cx="135" cy="42" r="6" fill="#001"/>
+      <path d="M30,45 L2,28 L2,68 L30,52 Z" fill="#007fbf"/>
+      <!-- small mouth chomp for personality -->
+      <path class="fishy-mouth" d="M118 56 C94 74 68 70 44 56" fill="transparent" stroke="#004" stroke-width="2" opacity="0.1"/>
+    </svg>
+
+    <div class="fishy-loader-wrap" aria-hidden="true">
+      <div class="fishy-loader"><div id="fishy-progress" class="fishy-progress" style="width:0%"></div></div>
+      <div id="fishy-percent" class="fishy-percent">0%</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // keep everything scoped, and use unique ids/classes to avoid collisions
+  const wrapper = document.getElementById('fishy-splash-wrapper');
+  const screens = [
+    document.getElementById('fishy-screen-1'),
+    document.getElementById('fishy-screen-2'),
+    document.getElementById('fishy-screen-3')
+  ];
+  const progressEl = document.getElementById('fishy-progress');
+  const percentEl = document.getElementById('fishy-percent');
+  const fishSvg = document.querySelector('.fishy-fish');
+
+  // save & lock page scroll/state and restore later
+  const prevOverflow = document.documentElement.style.overflow || document.body.style.overflow || '';
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  // show the given screen index, others hidden
+  function show(i){
+    screens.forEach((s, idx) => s.classList.toggle('fishy-active', idx===i));
+  }
+
+  // timeline: screen1 (2s) -> screen2 (1.5s) -> screen3 (loading)
+  show(0);
+  setTimeout(()=> show(1), 2000);
+  setTimeout(()=> startLoading(), 3500);
+
+  // random duration 5-15s
+  function randDuration(){ return Math.floor(Math.random()*10000) + 5000; }
+
+  function startLoading(){
+    show(2);
+    // start fish swimming animation
+    fishSvg.classList.add('animate');
+
+    const duration = randDuration();
+    const start = performance.now();
+
+    function easeOutQuad(t){ return t*(2-t); } // gentle ease
+    function frame(now){
+      const elapsed = Math.min(now - start, duration);
+      const t = elapsed / duration;
+      const eased = easeOutQuad(t);
+      const pct = Math.floor(eased * 100);
+      progressEl.style.width = pct + '%';
+      percentEl.textContent = pct + '%';
+      if(elapsed < duration){
+        requestAnimationFrame(frame);
+      } else {
+        progressEl.style.width = '100%';
+        percentEl.textContent = '100%';
+        done();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function done(){
+    // fade out wrapper, then remove & restore scroll
+    wrapper.classList.add('fishy-hide');
+    setTimeout(()=>{
+      try{ if(typeof window.onSplashDone === 'function') window.onSplashDone(); }catch(e){}
+      // remove wrapper and style tag to avoid lingering effects
+      const s = document.getElementById('fishy-splash-styles');
+      if(wrapper && wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
+      if(s && s.parentNode) s.parentNode.removeChild(s);
+      // restore overflow
+      document.documentElement.style.overflow = prevOverflow || '';
+      document.body.style.overflow = prevOverflow || '';
+    }, 900);
+  }
+
+  // safety: if something goes wrong, auto-timeout after 18s total
+  setTimeout(()=> {
+    if(document.getElementById('fishy-splash-wrapper')) done();
+  }, 18000);
+
+})();
+</script>
+<!-- === end fishy splash snippet === -->
+
+
+  <div class="game-container">
+    <div class="header">
+      <h1 id="game-title">🎣 Fish Tycoon 🎣</h1>
+      <p>Build multi-jetty fishing empire!</p>
+    </div>
+
+    <div class="stats-panel">
+      <div class="stat-card"><div>🐟 Fish</div><div class="stat-value" id="gold-display">0</div></div>
+      <div class="stat-card"><div>🏗️ Jetty Length</div><div class="stat-value" id="levels-display">1</div></div>
+      <div class="stat-card"><div>🎣 Fishing Spots</div><div class="stat-value" id="tunnels-display">0</div></div>
+      <div class="stat-card"><div>👷 Fishermen</div><div class="stat-value" id="workers-display">0</div></div>
+      <div class="stat-card"><div>🛳️ Jetties</div><div class="stat-value" id="jetty-count-display">1</div></div>
+      <div class="stat-card"><div>💎 Lifetime</div><div class="stat-value" id="lifetime-display">1K</div></div>
+    </div>
+
+    <div class="controls-row">
+      <div class="jetty-switcher">
+        <button class="switch-btn" id="prev-jetty">◀</button>
+        <div class="jetty-label">Jetty <span id="active-jetty-index">1</span> / <span id="jetty-total">1</span></div>
+        <button class="switch-btn" id="next-jetty">▶</button>
+        <button class="mini-btn" id="rename-jetty">Rename</button>
+      </div>
+      <div class="production-rate">
+        🎣 All fishermen: <span id="ore-per-second">0</span> fish/sec • Active jetty capacity: <span id="cart-capacity">5</span>
+      </div>
+    </div>
+
+    <div class="mine-visual" id="mine-visual">
+      <div class="boat-status" id="boat-status" style="display:none;">Boat: Docked</div>
+      <div class="boat" id="boat">⛵</div>
+      <div class="mine-shaft"></div>
+      <div id="mine-levels"></div>
+      <div class="lift" id="lift">🚤</div>
+    </div>
+
+    <div class="shop-section">
+      <h2 class="shop-title">🏪 Upgrade Shop</h2>
+      <div class="shop-buttons">
+        <button class="shop-btn" id="buy-boat">⛵ Buy Fishing Boat - Cost: <span id="boat-cost">1,000</span></button>
+        <button class="shop-btn" id="send-boat" disabled>🧭 Send Boat Trip</button>
+        <button class="shop-btn" id="dig-level">🏗️ Extend Jetty (Active) - Cost: <span id="level-cost">25</span></button>
+        <button class="shop-btn" id="hire-worker">👷 Hire Fisherman (Active) - Cost: <span id="worker-cost">13</span></button>
+        <button class="shop-btn" id="upgrade-workers">⚡ Upgrade Fisher Speed (Active) - Cost: <span id="worker-upgrade-cost">25</span></button>
+        <button class="shop-btn" id="upgrade-carts">🪣 Upgrade Storage (Active +<span id="cart-increase">25</span>) - Cost: <span id="cart-upgrade-cost">19</span></button>
+        <button class="shop-btn" id="buy-jetty">🛳️ Buy New Jetty - Cost: <span id="jetty-cost">250</span></button>
+        <button class="shop-btn" id="rebirth-btn" style="background: linear-gradient(135deg, #ff6b35, #ff8c42); display:none;">
+          🔄 REBIRTH - 5x Profit Forever! (Requires <span id="rebirth-cost-display">1,000,000</span> 💎 lifetime)
+        </button>
+      </div>
+    </div>
+
+    <div class="instructions">
+      • Each jetty is independent. Use ◀ ▶ to switch which jetty you build on<br>
+      • Max 2 fishermen per fishing spot<br>
+      • Build left/right spots just outside the center pier; fishermen face outward into the water<br>
+      • Lift services all full buckets automatically
+    </div>
+  </div>
+
+  <script>
+    // Core state with multiple jetties
+    const defaultJetty = () => ({
+      name: '',
+      levels: 1,
+      tunnels: [], // { level, side: 'left'|'right', workers, cartOre, cartCapacity, workerSpeed }
+      levelCost: 25,
+      workerCost: 13,
+      workerUpgradeCost: 25,
+      cartCapacity: 5,
+      cartUpgradeCost: 19,
+      tunnelCost: 15
+    });
+
+    let gameState = {
+      gold: 1000,
+      lifetimeGold: 1000,
+      rebirths: 0,
+      profitMultiplier: 1,
+      rebirthCost: 1000000,
+      // multi-jetty
+      jetties: [ defaultJetty() ],
+      activeJetty: 0,
+      jettyCost: 250,
+      // Boat system
+      boatOwned: false,
+      boatCost: 1000,
+      boatLevel: 1,
+      boatBusy: false,
+      boatETA: 0
+    };
+
+    // Easter egg
+    let titleClickCount = 0, titleClickTimer = null;
+
+    // Elements
+    const goldDisplay = document.getElementById('gold-display');
+    const levelsDisplay = document.getElementById('levels-display');
+    const tunnelsDisplay = document.getElementById('tunnels-display');
+    const workersDisplay = document.getElementById('workers-display');
+    const lifetimeDisplay = document.getElementById('lifetime-display');
+    const orePerSecondDisplay = document.getElementById('ore-per-second');
+    const cartCapacityDisplay = document.getElementById('cart-capacity');
+    const levelCostDisplay = document.getElementById('level-cost');
+    const workerCostDisplay = document.getElementById('worker-cost');
+    const workerUpgradeCostDisplay = document.getElementById('worker-upgrade-cost');
+    const cartUpgradeCostDisplay = document.getElementById('cart-upgrade-cost');
+    const cartIncreaseDisplay = document.getElementById('cart-increase');
+    const mineVisual = document.getElementById('mine-visual');
+    const mineLevels = document.getElementById('mine-levels');
+    const rebirthBtn = document.getElementById('rebirth-btn');
+    const boatEl = document.getElementById('boat');
+    const boatStatusEl = document.getElementById('boat-status');
+    const buyBoatBtn = document.getElementById('buy-boat');
+    const sendBoatBtn = document.getElementById('send-boat');
+    const boatCostDisplay = document.getElementById('boat-cost');
+    const rebirthCostDisplay = document.getElementById('rebirth-cost-display');
+
+    const digLevelBtn = document.getElementById('dig-level');
+    const hireWorkerBtn = document.getElementById('hire-worker');
+    const upgradeWorkersBtn = document.getElementById('upgrade-workers');
+    const upgradeCartsBtn = document.getElementById('upgrade-carts');
+    const buyJettyBtn = document.getElementById('buy-jetty');
+    const jettyCostDisplay = document.getElementById('jetty-cost');
+    const jettyCountDisplay = document.getElementById('jetty-count-display');
+    const activeJettyIndexEl = document.getElementById('active-jetty-index');
+    const jettyTotalEl = document.getElementById('jetty-total');
+    const prevJettyBtn = document.getElementById('prev-jetty');
+    const nextJettyBtn = document.getElementById('next-jetty');
+
+    // Helpers
+    function J() { return gameState.jetties[gameState.activeJetty]; }
+    function formatNumber(n){
+      if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+      if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+      if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+      return Math.floor(n).toLocaleString();
+    }
+    function totalWorkers(){
+      return gameState.jetties.reduce((sum, j)=> sum + j.tunnels.reduce((s,t)=> s + (t.workers||0), 0),0);
+    }
+    function totalTunnels(){
+      return gameState.jetties.reduce((sum, j)=> sum + j.tunnels.length, 0);
+    }
+    function totalRate(){
+      let total = 0;
+      gameState.jetties.forEach(j=>{
+        j.tunnels.forEach(t=>{
+          if ((t.workers||0)>0) total += (t.workers||0) * (t.workerSpeed||1);
+        });
+      });
+      return total;
+    }
+
+    // UI render
+    function createLevels(){
+      mineLevels.innerHTML = '';
+      // adjust shaft height
+      const shaft = document.querySelector('.mine-shaft');
+      if (shaft) shaft.style.height = (J().levels * 100) + 'px';
+
+      for (let i=0; i<J().levels; i++){
+        const level = document.createElement('div');
+        level.className = 'mine-level';
+        const info = document.createElement('div');
+        info.className = 'level-info';
+        info.textContent = `${J().name ? J().name+' • ' : ''}Spot ${i+1}`;
+        level.appendChild(info);
+
+        // left spot
+        const left = J().tunnels.find(t=> t.level===i && t.side==='left');
+        const leftDiv = document.createElement('div');
+        if (left){
+          leftDiv.className = 'tunnel left';
+          // workers (no mirroring so icon stays identical)
+          const workers = document.createElement('div');
+          workers.style.display='flex'; workers.style.gap='2px';
+          for(let w=0; w<(left.workers||0); w++){
+            const m = document.createElement('div'); m.className='miner mining'; m.textContent='👷🏼'; m.style.fontSize='18px';
+            workers.appendChild(m);
+          }
+          leftDiv.appendChild(workers);
+          // cart
+          const cart = document.createElement('div');
+          cart.className = 'cart'; if ((left.cartOre||0)>0) cart.classList.add('loaded');
+          cart.textContent = `${Math.floor(left.cartOre||0)}/${left.cartCapacity}`;
+          leftDiv.appendChild(cart);
+        } else {
+          leftDiv.className='tunnel empty left';
+          leftDiv.innerHTML = `<div class="tunnel-button">Build Fishing Spot<br>🐟 ${J().tunnelCost}</div>`;
+          leftDiv.onclick = ()=> buildTunnel(i,'left');
+        }
+        level.appendChild(leftDiv);
+
+        // right spot
+        const right = J().tunnels.find(t=> t.level===i && t.side==='right');
+        const rightDiv = document.createElement('div');
+        if (right){
+          rightDiv.className = 'tunnel right';
+          const workers = document.createElement('div');
+          workers.style.display='flex'; workers.style.gap='2px';
+          for(let w=0; w<(right.workers||0); w++){
+            const m = document.createElement('div'); m.className='miner mining'; m.textContent='👷🏼'; m.style.fontSize='18px';
+            workers.appendChild(m);
+          }
+          rightDiv.appendChild(workers);
+          const cart = document.createElement('div');
+          cart.className = 'cart'; if ((right.cartOre||0)>0) cart.classList.add('loaded');
+          cart.textContent = `${Math.floor(right.cartOre||0)}/${right.cartCapacity}`;
+          rightDiv.appendChild(cart);
+        } else {
+          rightDiv.className='tunnel empty right';
+          rightDiv.innerHTML = `<div class="tunnel-button">Build Fishing Spot<br>🐟 ${J().tunnelCost}</div>`;
+          rightDiv.onclick = ()=> buildTunnel(i,'right');
+        }
+        level.appendChild(rightDiv);
+
+        mineLevels.appendChild(level);
+      }
+    }
+
+    function updateDisplays(){
+      goldDisplay.textContent = Math.floor(gameState.gold).toLocaleString();
+      levelsDisplay.textContent = J().levels;
+      tunnelsDisplay.textContent = totalTunnels();
+      workersDisplay.textContent = totalWorkers();
+      lifetimeDisplay.textContent = formatNumber(gameState.lifetimeGold);
+      orePerSecondDisplay.textContent = totalRate();
+      cartCapacityDisplay.textContent = J().cartCapacity;
+      levelCostDisplay.textContent = J().levelCost;
+      workerCostDisplay.textContent = J().workerCost;
+      workerUpgradeCostDisplay.textContent = J().workerUpgradeCost;
+      cartUpgradeCostDisplay.textContent = J().cartUpgradeCost;
+      rebirthCostDisplay.textContent = formatNumber(gameState.rebirthCost);
+      jettyCostDisplay.textContent = gameState.jettyCost;
+      jettyCountDisplay.textContent = gameState.jetties.length;
+      activeJettyIndexEl.textContent = gameState.activeJetty + 1;
+      jettyTotalEl.textContent = gameState.jetties.length;
+
+      // dynamic capacity increment label
+      let inc = 25;
+      if (J().cartCapacity >= 1500) inc = 250;
+      else if (J().cartCapacity >= 750) inc = 100;
+      else if (J().cartCapacity >= 400) inc = 75;
+      cartIncreaseDisplay.textContent = inc;
+
+      // enable/disable buttons
+      digLevelBtn.disabled = gameState.gold < J().levelCost;
+      hireWorkerBtn.disabled = gameState.gold < J().workerCost || J().tunnels.length===0 || allSpotsFull();
+      upgradeWorkersBtn.disabled = gameState.gold < J().workerUpgradeCost || totalWorkersOn(J())===0;
+      upgradeCartsBtn.disabled = gameState.gold < J().cartUpgradeCost || J().tunnels.length===0;
+      buyJettyBtn.disabled = gameState.gold < gameState.jettyCost || gameState.jetties.length >= 6; // soft cap 6
+      // Boat controls
+      boatCostDisplay.textContent = formatNumber(gameState.boatCost);
+      buyBoatBtn.disabled = gameState.boatOwned || gameState.gold < gameState.boatCost;
+      sendBoatBtn.disabled = !gameState.boatOwned || gameState.boatBusy;
+
+      // show/hide rebirth button
+      if (gameState.lifetimeGold >= gameState.rebirthCost){
+        rebirthBtn.style.display = 'block';
+        rebirthBtn.disabled = false;
+      } else {
+        rebirthBtn.style.display = 'none';
+      }
+
+      prevJettyBtn.disabled = gameState.activeJetty===0;
+      nextJettyBtn.disabled = gameState.activeJetty===gameState.jetties.length-1;
+
+      createLevels();
+    }
+
+    function totalWorkersOn(j){ return j.tunnels.reduce((s,t)=> s+(t.workers||0), 0); }
+    function allSpotsFull(){
+      // true if every spot in active jetty has 2 workers already
+      const eligible = J().tunnels.filter(t=> (t.workers||0) < 2);
+      return eligible.length===0;
+    }
+
+    // Actions
+    function buildTunnel(level, side){
+      if (gameState.gold < J().tunnelCost) return;
+      gameState.gold -= J().tunnelCost;
+      J().tunnels.push({
+        level, side, workers: 0, cartOre: 0, cartCapacity: J().cartCapacity, workerSpeed: 1
+      });
+      J().tunnelCost = Math.floor(J().tunnelCost * 1.4);
+      updateDisplays();
+    }
+
+    function digLevel(){
+      if (gameState.gold < J().levelCost) return;
+      gameState.gold -= J().levelCost;
+      J().levels += 1;
+      J().levelCost = Math.floor(J().levelCost * 1.6);
+      // move lift visually to new bottom shortly
+      setTimeout(()=>{
+        const lift = document.getElementById('lift');
+        const bottom = (J().levels - 1) * 100 + 40;
+        lift.style.transform = `translateX(-50%) translateY(${bottom}px)`;
+      }, 150);
+      updateDisplays();
+    }
+
+    // Hire worker (max 2 per spot)
+    function hireWorker(){
+      if (gameState.gold < J().workerCost || J().tunnels.length===0) return;
+      const eligible = J().tunnels.filter(t=> (t.workers||0) < 2);
+      if (eligible.length===0){ updateDisplays(); return; }
+      // assign to spot with least workers
+      const target = eligible.reduce((min,t)=> (t.workers||0) < (min.workers||0) ? t : min);
+      gameState.gold -= J().workerCost;
+      target.workers = (target.workers||0) + 1;
+      J().workerCost = Math.floor(J().workerCost * 1.3);
+      updateDisplays();
+    }
+
+    function upgradeWorkers(){
+      if (gameState.gold < J().workerUpgradeCost || totalWorkersOn(J())===0) return;
+      gameState.gold -= J().workerUpgradeCost;
+      J().tunnels.forEach(t=> { if ((t.workers||0)>0) t.workerSpeed = (t.workerSpeed||1)+1; });
+      J().workerUpgradeCost = Math.floor(J().workerUpgradeCost * 1.5);
+      updateDisplays();
+    }
+
+    function upgradeCarts(){
+      if (gameState.gold < J().cartUpgradeCost || J().tunnels.length===0) return;
+      gameState.gold -= J().cartUpgradeCost;
+      let inc = 25; if (J().cartCapacity>=1500) inc=250; else if (J().cartCapacity>=750) inc=100; else if(J().cartCapacity>=400) inc=75;
+      J().cartCapacity += inc;
+      J().tunnels.forEach(t=> t.cartCapacity = J().cartCapacity);
+      J().cartUpgradeCost = Math.floor(J().cartUpgradeCost * 1.8);
+      updateDisplays();
+    }
+
+    function buyJetty(){
+      if (gameState.gold < gameState.jettyCost) return;
+      gameState.gold -= gameState.jettyCost;
+      gameState.jetties.push(defaultJetty());
+      gameState.activeJetty = gameState.jetties.length-1;
+      // price scaling
+      gameState.jettyCost = Math.floor(gameState.jettyCost * 2.2);
+      updateDisplays();
+    }
+
+    function renameJetty(){
+      const current = J();
+      const name = prompt('Name this jetty (optional):', current.name || `Jetty ${gameState.activeJetty+1}`);
+      if (name !== null){
+        current.name = name.trim().slice(0, 18);
+        updateDisplays();
+      }
+    }
+
+    // Mining loop (all jetties)
+    // Boat trip handling
+    function launchBoatTrip(){
+      if (!gameState.boatOwned || gameState.boatBusy) return;
+      gameState.boatBusy = true;
+      const tripSeconds = 8 + Math.floor(Math.random()*6); // 8-13s trip
+      gameState.boatETA = Date.now() + tripSeconds*1000;
+      boatStatusEl.style.display='block';
+      boatStatusEl.textContent = 'Boat: At sea...';
+      boatEl.classList.add('sailing');
+
+      // simple sail out and back animation within viewport
+      const width = mineVisual.clientWidth;
+      const travel = width + 160; // out of view
+      boatEl.style.transitionDuration = (tripSeconds/2)+'s';
+      boatEl.style.transform = `translateX(${travel/2}px)`;
+      setTimeout(()=>{
+        boatEl.style.transform = `translateX(${travel}px)`; // go far right
+        setTimeout(()=>{ // return to dock
+          boatEl.style.transform = 'translateX(0px)';
+        }, (tripSeconds/2)*1000);
+      }, (tripSeconds/2)*1000);
+
+      // payout on return
+      setTimeout(()=>{
+        const base = 500; // base chunk
+        const scaleByWorkers = totalWorkers();
+        const reward = Math.floor((base + scaleByWorkers*25) * gameState.profitMultiplier * (1 + (gameState.boatLevel-1)*0.5));
+        gameState.gold += reward;
+        gameState.lifetimeGold += reward;
+        showPopup(`⛵ Boat haul: +${formatNumber(reward)} 🐟`);
+        gameState.boatBusy = false;
+        gameState.boatETA = 0;
+        boatEl.classList.remove('sailing');
+        boatStatusEl.textContent = 'Boat: Docked';
+        setTimeout(()=> boatStatusEl.style.display='none', 1500);
+        updateDisplays();
+        // Auto-launch the next trip after a short rest
+        setTimeout(()=>{ if (gameState.boatOwned && !gameState.boatBusy) { launchBoatTrip(); } }, 2000);
+      }, tripSeconds*1000);
+    }
+
+    function miningPhase(){
+      gameState.jetties.forEach(j=>{
+        j.tunnels.forEach(t=>{
+          if ((t.workers||0)>0 && (t.cartOre||0) < t.cartCapacity){
+            const rate = (t.workers||0) * (t.workerSpeed||1);
+            const space = t.cartCapacity - (t.cartOre||0);
+            const mined = Math.min(rate, space);
+            if (mined>0){
+              // rare catch event
+              for (let i=0; i<mined; i++){
+                if (Math.random() < 0.00001){
+                  const diamondReward = (gameState.gold>100000) ? gameState.gold*10 : 2500000;
+                  gameState.gold += diamondReward;
+                  gameState.lifetimeGold += diamondReward;
+                  showPopup(`💎 RARE FISH! +${formatNumber(diamondReward)}`);
+                  break;
+                }
+              }
+              t.cartOre = (t.cartOre||0) + mined;
+            }
+          }
+        });
+      });
+    }
+
+    function cartCollectionPhase(){
+      // update cart visuals for active jetty only (what user sees)
+      J().tunnels.forEach(t=>{
+        const levelEl = document.querySelectorAll('.mine-level')[t.level];
+        if (!levelEl) return;
+        const selector = `.tunnel.${t.side}`;
+        const tunnelEl = levelEl.querySelector(selector);
+        if (!tunnelEl) return;
+        const cart = tunnelEl.querySelector('.cart');
+        if (!cart) return;
+        cart.textContent = `${Math.floor(t.cartOre||0)}/${t.cartCapacity}`;
+        if ((t.cartOre||0)>0) cart.classList.add('loaded'); else cart.classList.remove('loaded');
+      });
+    }
+
+    function transportPhase(){
+      // collect from any jetty that has full carts (one trip per cycle)
+      const fullList = [];
+      gameState.jetties.forEach((j, ji)=>{
+        j.tunnels.forEach(t=>{ if ((t.cartOre||0)>=t.cartCapacity) fullList.push({ji, t}); });
+      });
+      if (!fullList.length) return;
+
+      const lift = document.getElementById('lift');
+      // Move down to bottom of active jetty track for visual consistency
+      const bottom = (J().levels - 1) * 100 + 40;
+      lift.style.transform = `translateX(-50%) translateY(${bottom}px)`;
+
+      // Simulate pickup and payout
+      setTimeout(()=>{
+        // total payload
+        const totalGold = fullList.reduce((s, it)=> s + it.t.cartCapacity, 0) * 10;
+        // empty carts
+        fullList.forEach(it=> it.t.cartOre = 0);
+
+        // go to surface visually
+        const surfaceY = - (J().levels * 100) - 120;
+        lift.style.transform = `translateX(-50%) translateY(${surfaceY}px)`;
+
+        setTimeout(()=>{
+          const payout = totalGold * gameState.profitMultiplier;
+          gameState.gold += payout;
+          gameState.lifetimeGold += payout;
+          showPopup(`+${formatNumber(payout)} 🐟`);
+          // return to bottom of active jetty
+          setTimeout(()=>{
+            lift.style.transform = `translateX(-50%) translateY(${bottom}px)`;
+          }, 1000);
+        }, 1200);
+      }, 600);
+    }
+
+    function showPopup(text){
+      const popup = document.createElement('div');
+      popup.className='gold-popup';
+      popup.textContent = text;
+      popup.style.left = (Math.random()*70+15)+'%';
+      popup.style.top  = (Math.random()*35+30)+'%';
+      mineVisual.appendChild(popup);
+      setTimeout(()=> popup.remove(), 2000);
+    }
+
+    // Fish explosion easter egg (no bonus)
+    function createFishExplosion(){
+      const wrap = document.createElement('div');
+      wrap.className = 'fish-explosion';
+      document.body.appendChild(wrap);
+      for (let i=0;i<30;i++){
+        const f = document.createElement('div');
+        f.className='fish-emoji'; f.textContent='🐟';
+        const angle = Math.random()*360, dist = 300 + Math.random()*800, rad = angle*Math.PI/180;
+        const finalX = Math.cos(rad)*dist, finalY = Math.sin(rad)*dist;
+        f.style.setProperty('--final-x', finalX+'px');
+        f.style.setProperty('--final-y', finalY+'px');
+        f.style.fontSize = (0.8+Math.random()*2.5)+'rem';
+        f.style.animationDelay = (Math.random()*0.8)+'s';
+        wrap.appendChild(f);
+      }
+      setTimeout(()=> wrap.remove(), 5000);
+    }
+
+    function handleTitleClick(){
+      titleClickCount++;
+      if (titleClickTimer) clearTimeout(titleClickTimer);
+      titleClickTimer = setTimeout(()=> titleClickCount=0, 3000);
+      if (titleClickCount===7){ createFishExplosion(); titleClickCount=0; }
+    }
+
+    // Jetty navigation
+    function prevJetty(){ if (gameState.activeJetty>0){ gameState.activeJetty--; updateDisplays(); } }
+    function nextJetty(){ if (gameState.activeJetty<gameState.jetties.length-1){ gameState.activeJetty++; updateDisplays(); } }
+
+    // Save/Load
+    function save(){ localStorage.setItem('fishTycoonMultiJetty', JSON.stringify(gameState)); }
+    function updateBoatUIOnLoad(){
+      if (gameState.boatOwned){
+        boatStatusEl.style.display='block';
+        boatStatusEl.textContent = gameState.boatBusy ? 'Boat: At sea...' : 'Boat: Docked';
+        if (gameState.boatBusy && gameState.boatETA> Date.now()){
+          // resume countdown and finish when ETA arrives
+          const remaining = Math.max(0, gameState.boatETA - Date.now());
+          boatEl.classList.add('sailing');
+          setTimeout(()=>{
+            // award after resume (same logic as on launch)
+            const base = 500;
+            const scaleByWorkers = totalWorkers();
+            const reward = Math.floor((base + scaleByWorkers*25) * gameState.profitMultiplier * (1 + (gameState.boatLevel-1)*0.5));
+            gameState.gold += reward; gameState.lifetimeGold += reward;
+            showPopup(`⛵ Boat haul: +${formatNumber(reward)} 🐟`);
+            gameState.boatBusy=false; gameState.boatETA=0;
+            boatEl.classList.remove('sailing');
+            boatStatusEl.textContent='Boat: Docked';
+            setTimeout(()=> boatStatusEl.style.display='none', 1500);
+            updateDisplays();
+          }, remaining);
+        }
+      }
+    }
+    function load(){
+      const raw = localStorage.getItem('fishTycoonMultiJetty');
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw);
+        // migrate old single-jetty saves if any exist from earlier versions (best effort)
+        if (saved.tunnels || saved.levels){
+          const j = defaultJetty();
+          j.levels = saved.levels || 1;
+          j.tunnels = (saved.tunnels||[]).map(t=>({
+            level:t.level, side:t.side||'left', workers:t.workers||0, cartOre:t.cartOre||0,
+            cartCapacity: t.cartCapacity || (saved.cartCapacity||5), workerSpeed: t.workerSpeed||1
+          }));
+          j.levelCost = saved.levelCost||25;
+          j.workerCost = saved.workerCost||13;
+          j.workerUpgradeCost = saved.workerUpgradeCost||25;
+          j.cartCapacity = saved.cartCapacity||5;
+          j.cartUpgradeCost = saved.cartUpgradeCost||19;
+          j.tunnelCost = saved.tunnelCost||15;
+          gameState = {
+            gold: saved.gold||0,
+            lifetimeGold: saved.lifetimeGold||0,
+            rebirths: saved.rebirths||0,
+            profitMultiplier: saved.profitMultiplier||1,
+            rebirthCost: saved.rebirthCost||1000000,
+            jetties:[j],
+            activeJetty:0,
+            jettyCost: 250,
+      // Boat system
+      boatOwned: false,
+      boatCost: 1000,
+      boatLevel: 1,
+      boatBusy: false,
+      boatETA: 0
+          };
+        } else {
+          gameState = { ...gameState, ...saved };
+          // ensure structure
+          if (!Array.isArray(gameState.jetties) || gameState.jetties.length===0){
+            gameState.jetties = [ defaultJetty() ];
+          }
+          gameState.jetties.forEach(j=>{
+            j.tunnels = (j.tunnels||[]).map(t=>({
+              level: t.level||0, side: t.side||'left',
+              workers: t.workers||0, cartOre: t.cartOre||0,
+              cartCapacity: t.cartCapacity || (j.cartCapacity||5),
+              workerSpeed: t.workerSpeed||1
+            }));
+          });
+        }
+      } catch(e){}
+    }
+
+    // Events
+    document.getElementById('game-title').addEventListener('click', handleTitleClick);
+    digLevelBtn.addEventListener('click', digLevel);
+    hireWorkerBtn.addEventListener('click', hireWorker);
+    upgradeWorkersBtn.addEventListener('click', upgradeWorkers);
+    upgradeCartsBtn.addEventListener('click', upgradeCarts);
+    buyJettyBtn.addEventListener('click', buyJetty);
+    buyBoatBtn.addEventListener('click', ()=>{
+      if (gameState.boatOwned || gameState.gold < gameState.boatCost) return;
+      gameState.gold -= gameState.boatCost;
+      gameState.boatOwned = true;
+      boatStatusEl.style.display='block';
+      boatStatusEl.textContent = 'Boat: Docked';
+      updateDisplays();
+    });
+    sendBoatBtn.addEventListener('click', launchBoatTrip);
+    prevJettyBtn.addEventListener('click', prevJetty);
+    nextJettyBtn.addEventListener('click', nextJetty);
+    document.getElementById('rename-jetty').addEventListener('click', renameJetty);
+
+    // Init
+    load();
+    function init(){
+      // set initial lift position
+      setTimeout(()=>{
+        const lift = document.getElementById('lift');
+        const bottom = (J().levels - 1) * 100 + 40;
+        lift.style.transform = `translateX(-50%) translateY(${bottom}px)`;
+      }, 80);
+      updateDisplays();
+      updateBoatUIOnLoad();
+    }
+    init();
+
+    // Loops
+    setInterval(()=> { miningPhase(); cartCollectionPhase(); transportPhase(); updateDisplays(); }, 1000);
+    // Keep boat button state fresh more often
+    setInterval(()=>{ if (gameState.boatOwned){ sendBoatBtn.disabled = gameState.boatBusy; } }, 500);
+    setInterval(save, 4000);
+    window.addEventListener('beforeunload', save);
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'983726904538b624',t:'MTc1ODYwMDE4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
