@@ -1,16 +1,15 @@
 // assets/js/version-check.js
-// Modern centered update UI with in-modal progress + bottom bar usage.
-// - Polls /version.json every 15s for new version.
-// - Shows badge + floating notifier when new version detected.
-// - Clicking "Refresh" will re-check and (if new) open a centered modal with two-step confirmation:
-//    Step 1: 5s countdown (in-modal progress)
-//    Step 2: 15s countdown (in-modal progress)
-// - Modal is dismissable (X) and cancelable at any point; timers are cleaned up.
-// - On final confirm the script stores the new version in localStorage.siteVersion and does location.reload(true).
-// - If #download-progress exists we will use it as the bottom update bar during the final step; otherwise we create a temporary bottom bar.
-// - This script injects its own CSS so no stylesheet edits are required.
+// Improved version-check with working Confirm, auto-update slider, and more robust SW handling.
 //
-// Drop this file into /assets/js/version-check.js (overwrite). Hard-refresh the page after deploy.
+// - Polls /version.json every 15s (cache-busted).
+// - Badges + floating notifier.
+// - Centered modal with: Confirm / Cancel, in-modal progress visuals.
+// - Auto-apply toggle + delay slider (persisted to localStorage).
+// - Proper timer & event cleanup; Confirm is clickable reliably.
+// - SW-aware final update flow; falls back to location.reload.
+//
+// Usage: place at /assets/js/version-check.js and include on pages.
+// Hard-refresh after deploy to test.
 
 (function () {
   if (window.__ILF_VERSION_CHECK_LOADED) return;
@@ -20,9 +19,12 @@
   const CHECK_BTN_ID = 'check-update';
   const SITE_VERSION_KEY = 'siteVersion';
   const POLL_INTERVAL_MS = 15000; // 15s poll
+  const AUTO_KEY = 'ilf_auto_update';
+  const AUTO_DELAY_KEY = 'ilf_auto_update_delay';
 
-  // ---- Inject styles for the modal & notifier ----
+  // ---------- Inject styles ----------
   (function injectStyles() {
+    if (document.getElementById('ilf-version-css')) return;
     const css = `
 /* Version-check modal styles (isolated under ilf- prefix) */
 #ilf-update-backdrop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(4,8,15,0.55); z-index: 2600; }
@@ -52,6 +54,12 @@
 /* floating notifier styling (small top-right) */
 #ilf-floating-notif { display:none; position: fixed; top: 14px; right: 14px; background: linear-gradient(180deg,#ff6b6b,#e04242); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight:700; z-index: 2700; box-shadow: 0 12px 36px rgba(0,0,0,0.18); cursor:pointer; }
 
+/* auto-apply controls */
+.ilf-auto-row { display:flex; align-items:center; gap:12px; margin-top:10px; justify-content:space-between; }
+.ilf-auto-left { display:flex; align-items:center; gap:8px; }
+.ilf-auto-left label { font-size:0.95rem; color:#334e63; }
+.ilf-range-row { display:flex; align-items:center; gap:10px; margin-top:8px; justify-content:space-between; }
+
 @media (max-width:560px) {
   #ilf-update-modal { margin: 16px; }
   .ilf-countdown .circle { width:40px; height:40px; font-size:.95rem; }
@@ -63,15 +71,15 @@
     document.head.appendChild(s);
   })();
 
-  // ---- Utility / cleanup ----
+  // ---------- Utility cleanup ----------
   (function cleanupFloats() {
     try {
       const oldNav = document.getElementById('ilf-floating-nav');
       if (oldNav && oldNav.parentNode) oldNav.parentNode.removeChild(oldNav);
-    } catch (e) {/* ignore */}
+    } catch (e) { /* ignore */ }
   })();
 
-  // ---- Create modal / notifier DOM (if absent) ----
+  // ---------- Create modal / notifier DOM ----------
   function ensureModalElements() {
     let backdrop = document.getElementById('ilf-update-backdrop');
     if (!backdrop) {
@@ -90,6 +98,19 @@
             </div>
           </div>
 
+          <div class="ilf-auto-row" style="display:block;">
+            <div class="ilf-auto-left">
+              <input id="ilf-auto-apply" type="checkbox" aria-label="Auto-apply update" />
+              <label for="ilf-auto-apply">Auto-apply update</label>
+            </div>
+            <div style="font-size:.9rem;color:#334e63;" id="ilf-auto-status">Delay: <span id="ilf-auto-delay-label">10</span>s</div>
+          </div>
+
+          <div class="ilf-range-row" style="display:block;">
+            <input id="ilf-auto-delay" type="range" min="0" max="60" step="5" value="10" />
+            <div style="width:54px;text-align:right;font-size:.9rem;color:#334e63;"><span id="ilf-auto-delay-value">10</span>s</div>
+          </div>
+
           <div class="ilf-progress-wrap" id="ilf-progress-wrap" style="display:none;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
               <div style="flex:1;margin-right:12px;">
@@ -102,12 +123,13 @@
           </div>
 
           <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
-            <button class="ilf-btn secondary" id="ilf-confirm-btn" style="display:none;">Confirm</button>
+            <button class="ilf-btn secondary" id="ilf-confirm-btn" style="display:inline-block;">Confirm</button>
             <button class="ilf-cancel" id="ilf-cancel-btn">Cancel</button>
           </div>
         </div>
       `;
       document.body.appendChild(backdrop);
+
       // bottom bar (separate) if not present
       if (!document.getElementById('ilf-bottom-bar')) {
         const bb = document.createElement('div');
@@ -115,6 +137,7 @@
         bb.innerHTML = `<div class="inner" id="ilf-bottom-inner"></div>`;
         document.body.appendChild(bb);
       }
+
       // floating notifier
       if (!document.getElementById('ilf-floating-notif')) {
         const n = document.createElement('div');
@@ -123,11 +146,12 @@
         n.style.display = 'none';
         n.addEventListener('click', () => {
           const btn = document.getElementById(CHECK_BTN_ID);
-          if (btn && typeof btn.onclick === 'function') btn.onclick();
+          if (btn) btn.click(); // robust trigger
         });
         document.body.appendChild(n);
       }
     }
+
     return {
       backdrop: document.getElementById('ilf-update-backdrop'),
       modal: document.getElementById('ilf-update-modal'),
@@ -141,43 +165,56 @@
       bottomInner: document.getElementById('ilf-bottom-inner'),
       notifier: document.getElementById('ilf-floating-notif'),
       title: document.getElementById('ilf-update-title'),
-      message: document.getElementById('ilf-update-message')
+      message: document.getElementById('ilf-update-message'),
+      autoCheckbox: document.getElementById('ilf-auto-apply'),
+      autoRange: document.getElementById('ilf-auto-delay'),
+      autoLabel: document.getElementById('ilf-auto-delay-value'),
+      autoStatus: document.getElementById('ilf-auto-delay-label')
     };
   }
 
-  // ---- Modal control + timers ----
-  let step1Timer = null;
-  let step2Timer = null;
-  let step1Remaining = 0;
-  let step2Remaining = 0;
+  // ---------- State & timers ----------
+  let stepTimerHandle = null; // generic handle for the countdown interval
   let linearAnimInterval = null;
-  let bottomBarAnimation = null;
+  let autoCountdownHandle = null; // for auto-apply pre-wait
+  let currentModalState = 'idle'; // idle | preparing | finalizing
+  let lastDetectedVersion = null;
 
   function clearTimersAndHide() {
-    if (step1Timer) { clearInterval(step1Timer); step1Timer = null; }
-    if (step2Timer) { clearInterval(step2Timer); step2Timer = null; }
+    if (stepTimerHandle) { clearInterval(stepTimerHandle); stepTimerHandle = null; }
     if (linearAnimInterval) { clearInterval(linearAnimInterval); linearAnimInterval = null; }
-    if (bottomBarAnimation) { clearInterval(bottomBarAnimation); bottomBarAnimation = null; }
+    if (autoCountdownHandle) { clearInterval(autoCountdownHandle); autoCountdownHandle = null; }
     const els = ensureModalElements();
     if (els) {
       els.progressWrap.style.display = 'none';
-      els.linearBar.style.width = '0%';
-      els.countdownNum.textContent = '';
-      els.confirmBtn.style.display = 'none';
+      if (els.linearBar) els.linearBar.style.width = '0%';
+      if (els.countdownNum) els.countdownNum.textContent = '';
+      if (els.confirmBtn) {
+        els.confirmBtn.style.display = 'inline-block';
+        els.confirmBtn.disabled = false;
+        // remove any attached ilf handlers
+        if (els.confirmBtn.__ilf_handler) {
+          els.confirmBtn.removeEventListener('click', els.confirmBtn.__ilf_handler);
+          delete els.confirmBtn.__ilf_handler;
+        }
+      }
+      if (els.cancelBtn && els.cancelBtn.__ilf_handler) {
+        els.cancelBtn.removeEventListener('click', els.cancelBtn.__ilf_handler);
+        delete els.cancelBtn.__ilf_handler;
+      }
+      if (els.closeBtn && els.closeBtn.__ilf_handler) {
+        els.closeBtn.removeEventListener('click', els.closeBtn.__ilf_handler);
+        delete els.closeBtn.__ilf_handler;
+      }
       // hide bottom bar if we created it
       if (els.bottomBar) els.bottomBar.style.display = 'none';
       // hide backdrop
       if (els.backdrop) els.backdrop.style.display = 'none';
+      currentModalState = 'idle';
     }
   }
 
-  // ---- New: force service worker update & wait for activation ----
-  // This will:
-  //  - set the version in localStorage
-  //  - try to update the registration
-  //  - instruct waiting worker to skipWaiting (if present)
-  //  - wait for the new worker to activate, then reload once
-  // Fallbacks to location.reload(true) on errors.
+  // ---------- Service worker final update ----------
   function doFinalUpdate(latestVersion) {
     try { localStorage.setItem(SITE_VERSION_KEY, latestVersion); } catch (e) { /* ignore */ }
 
@@ -186,7 +223,6 @@
       return;
     }
 
-    // guard to ensure we reload exactly once
     let reloaded = false;
     function reloadOnce() {
       if (reloaded) return;
@@ -194,181 +230,243 @@
       try { location.reload(true); } catch (e) { location.reload(); }
     }
 
-    // If the SW activates and becomes controller, controllerchange will fire -> safe to reload
-    const onControllerChange = () => {
-      // slight delay to allow the new SW to take control
-      setTimeout(reloadOnce, 150);
-    };
-
+    const onControllerChange = () => setTimeout(reloadOnce, 150);
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
     navigator.serviceWorker.getRegistration().then(reg => {
       if (!reg) {
-        // no registration - just reload
         navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
         reloadOnce();
         return;
       }
 
-      // ask the registration to update its worker files (this should fetch the new precache manifest)
-      reg.update().catch(() => { /* continue anyway */ });
+      // Trigger an update attempt
+      reg.update().catch(()=>{});
 
-      // If there's a waiting worker, tell it to skipWaiting (activate immediately)
+      // If there's a waiting worker -> ask it to skipWaiting
       if (reg.waiting) {
-        try {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-        } catch (e) { /* ignore */ }
-        // Wait for controllerchange -> reload
-        // if controller doesn't change, fallback to listening to the statechange on waiting
-        if (reg.waiting.addEventListener) {
-          reg.waiting.addEventListener('statechange', function sc(e) {
-            if (e.target.state === 'activated') {
-              // give controllerchange a chance to fire; but if it doesn't, reload anyway
-              setTimeout(reloadOnce, 120);
-            }
-          });
-        }
+        try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch(e){/*ignore*/}
+        // Wait for controllerchange (which we already listen for)
         return;
       }
 
-      // Otherwise, maybe an installing worker is present -> watch it
+      // If installing, watch its lifecycle
       if (reg.installing) {
         const installing = reg.installing;
-        installing.addEventListener('statechange', (evt) => {
-          if (evt.target.state === 'installed') {
-            // If it's installed and there's no waiting (rare), attempt to message skipWaiting
-            if (reg.waiting) {
-              try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
-            }
+        installing.addEventListener('statechange', function sc(e) {
+          if (e.target.state === 'installed' && reg.waiting) {
+            try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
           }
-          if (evt.target.state === 'activated') {
-            // activated -> reload
+          if (e.target.state === 'activated') {
             setTimeout(reloadOnce, 120);
           }
         });
         return;
       }
 
-      // No installing/waiting worker found; try to fetch an update and then reload as fallback
-      // Give reg.update() a short grace period
+      // Otherwise fallback after a short grace
       setTimeout(() => {
         navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
         reloadOnce();
       }, 1200);
     }).catch(err => {
-      try { navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange); } catch (e){ }
+      try { navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange); } catch (e) {}
       reloadOnce();
     });
   }
 
+  // ---------- Modal show + flow ----------
   function showModalCenter(latestVersion, onFinalConfirm) {
+    lastDetectedVersion = latestVersion;
     const els = ensureModalElements();
     if (!els) return;
+
+    // sync auto controls from storage
+    const autoEnabled = localStorage.getItem(AUTO_KEY) === '1';
+    const autoDelayStored = Number(localStorage.getItem(AUTO_DELAY_KEY) || 10);
+    els.autoCheckbox.checked = !!autoEnabled;
+    els.autoRange.value = String(isFinite(autoDelayStored) ? autoDelayStored : 10);
+    els.autoLabel.textContent = String(els.autoRange.value);
+    els.autoStatus.textContent = String(els.autoRange.value);
+
     els.title.textContent = `Update available — v${latestVersion}`;
     els.message.innerHTML = `A newer version (${latestVersion}) is available. Click <strong>Confirm</strong> to start the update flow or <strong>Cancel</strong> to abort. Closing the dialog will also cancel.`;
 
     // show modal
     els.backdrop.style.display = 'flex';
-    // Initialize UI
+    // Init UI
     els.progressWrap.style.display = 'none';
     els.linearBar.style.width = '0%';
     els.countdownNum.textContent = '';
     els.confirmBtn.style.display = 'inline-block';
     els.confirmBtn.disabled = false;
-    els.cancelBtn.disabled = false;
+    currentModalState = 'idle';
 
-    // wire close
-    els.closeBtn.onclick = () => { clearTimersAndHide(); };
+    // wire handlers (remove old handlers first)
+    if (els.closeBtn.__ilf_handler) { els.closeBtn.removeEventListener('click', els.closeBtn.__ilf_handler); delete els.closeBtn.__ilf_handler; }
+    if (els.cancelBtn.__ilf_handler) { els.cancelBtn.removeEventListener('click', els.cancelBtn.__ilf_handler); delete els.cancelBtn.__ilf_handler; }
+    if (els.confirmBtn.__ilf_handler) { els.confirmBtn.removeEventListener('click', els.confirmBtn.__ilf_handler); delete els.confirmBtn.__ilf_handler; }
 
-    // Cancel button
-    els.cancelBtn.onclick = () => { clearTimersAndHide(); };
+    const closeHandler = () => { clearTimersAndHide(); };
+    els.closeBtn.__ilf_handler = closeHandler;
+    els.closeBtn.addEventListener('click', closeHandler);
 
-    // Confirm click -> run step 1 then step 2
-    els.confirmBtn.onclick = () => {
+    const cancelHandler = () => { clearTimersAndHide(); };
+    els.cancelBtn.__ilf_handler = cancelHandler;
+    els.cancelBtn.addEventListener('click', cancelHandler);
+
+    // range UI update
+    els.autoRange.oninput = () => {
+      els.autoLabel.textContent = String(els.autoRange.value);
+      els.autoStatus.textContent = String(els.autoRange.value);
+      try { localStorage.setItem(AUTO_DELAY_KEY, String(els.autoRange.value)); } catch(e){}
+    };
+    els.autoCheckbox.onchange = () => {
+      try { localStorage.setItem(AUTO_KEY, els.autoCheckbox.checked ? '1' : '0'); } catch(e){}
+    };
+
+    // confirm handler (single-click to start step1)
+    const startStep1 = () => {
+      if (currentModalState !== 'idle') return;
+      currentModalState = 'preparing';
       els.confirmBtn.disabled = true;
-      // step 1
-      runStepCountdown(3, 'Step 1: preparing update', els, async () => {
-        // after step1 complete, present step2
-        // show confirm again for final step
-        els.confirmBtn.style.display = 'inline-block';
-        els.confirmBtn.disabled = false;
+      runStepCountdown(3, 'Step 1: preparing update', els, () => {
+        // step1 complete -> present final confirmation (or auto proceed)
+        currentModalState = 'idle';
         els.message.innerHTML = `Final confirmation required. This will reload the site to apply the update. You may cancel.`;
-        // when confirm clicked for step2, start final countdown and run onFinalConfirm at finish
-        els.confirmBtn.onclick = () => {
-          els.confirmBtn.disabled = true;
-          runStepCountdown(5, 'Finalizing update', els, async () => {
-            // show bottom bar progress while we perform final actions
-            try {
-              // reveal bottom bar (use existing #download-progress if present)
-              const existingBottom = document.getElementById('download-progress');
-              if (existingBottom) {
-                existingBottom.style.display = 'block';
-                // if it has .bar inside, update that later via service worker messages if any
-              } else {
-                // reveal our own bottom bar
-                if (els.bottomBar) els.bottomBar.style.display = 'block';
-              }
-
-              // call final action (store version, reload/update SW)
-              if (typeof onFinalConfirm === 'function') onFinalConfirm();
-            } catch (e) {
-              console.error('final update step error', e);
-              clearTimersAndHide();
-            }
-          });
-        };
+        els.confirmBtn.disabled = false;
+        // ensure confirm's click starts final step
       });
     };
+
+    // final confirm starts finalizing countdown then runs final action
+    const startFinalStep = () => {
+      if (currentModalState === 'finalizing') return;
+      currentModalState = 'finalizing';
+      els.confirmBtn.disabled = true;
+      runStepCountdown(5, 'Finalizing update', els, () => {
+        // show bottom progress bar (use existing #download-progress if present)
+        try {
+          const existingBottom = document.getElementById('download-progress');
+          const createdBottom = document.getElementById('ilf-bottom-bar');
+          if (existingBottom) {
+            existingBottom.style.display = 'block';
+            const inner = existingBottom.querySelector('.bar');
+            if (inner) inner.style.width = '20%';
+          } else if (createdBottom) {
+            createdBottom.style.display = 'block';
+            const inner = document.getElementById('ilf-bottom-inner');
+            if (inner) inner.style.width = '24%';
+          }
+          if (typeof onFinalConfirm === 'function') onFinalConfirm();
+        } catch (e) {
+          console.error('final update step error', e);
+          clearTimersAndHide();
+        }
+      });
+    };
+
+    // attach click handlers via addEventListener and store references so we can remove later
+    els.confirmBtn.__ilf_handler = function (ev) {
+      ev.preventDefault();
+      // clicking when idle -> run step1
+      if (currentModalState === 'idle') {
+        startStep1();
+        // after step1 completes the user must click again to run final step; wait for that click
+        // attach a one-time listener to confirm to trigger final step once
+        const onceFinal = function onceFinalFn(e2) {
+          e2.preventDefault();
+          startFinalStep();
+          // remove this onceFinal listener
+          if (els.confirmBtn) els.confirmBtn.removeEventListener('click', onceFinalFn);
+        };
+        // Use setTimeout to attach after the immediate click to avoid re-triggering
+        setTimeout(() => { if (els.confirmBtn) els.confirmBtn.addEventListener('click', onceFinal); }, 1200);
+      } else if (currentModalState === 'preparing') {
+        // prevent spamming
+      } else if (currentModalState === 'finalizing') {
+        // already finalizing
+      }
+    };
+    els.confirmBtn.addEventListener('click', els.confirmBtn.__ilf_handler);
+
+    // focus confirm for accessibility
+    try { els.confirmBtn.focus(); } catch (e) {}
+
+    // If auto-apply is enabled, start an auto-precountdown that triggers the flow.
+    try {
+      const autoOn = localStorage.getItem(AUTO_KEY) === '1';
+      const autoDelay = Math.max(0, Number(localStorage.getItem(AUTO_DELAY_KEY) || els.autoRange.value || 10));
+      if (autoOn) {
+        // show a short auto countdown bar above confirm to show time until auto-start
+        let remaining = Math.max(0, Math.floor(autoDelay));
+        // if delay 0 -> start sequence immediately
+        if (remaining <= 0) {
+          // start step1 immediately then final
+          startStep1();
+          setTimeout(() => { startFinalStep(); }, 4200); // chain approx
+        } else {
+          // Start a small auto countdown visible in the message area
+          const prevMsg = els.message.innerHTML;
+          els.message.innerHTML = `Auto-apply in <strong><span id="ilf-auto-countdown">${remaining}</span>s</strong>. Cancel to abort.`;
+          autoCountdownHandle = setInterval(() => {
+            remaining--;
+            const elc = document.getElementById('ilf-auto-countdown');
+            if (elc) elc.textContent = String(Math.max(0, remaining));
+            if (remaining <= 0) {
+              clearInterval(autoCountdownHandle);
+              autoCountdownHandle = null;
+              // start both steps automatically
+              startStep1();
+              // start final a little after step1 finishes
+              setTimeout(() => { startFinalStep(); }, 4200);
+            }
+          }, 1000);
+        }
+      }
+    } catch (e) { /* ignore auto errors */ }
   }
 
-  // runs a step countdown with in-modal progress visual
+  // ---------- Step countdown with in-modal progress ----------
   function runStepCountdown(seconds, label, els, doneCallback) {
-    // prepare UI
+    if (!els) return;
     els.progressWrap.style.display = 'block';
     els.message.textContent = label;
     const linear = els.linearBar;
     const circle = els.countdownNum;
-    linear.style.width = '0%';
-    circle.textContent = String(seconds);
+    if (linear) linear.style.width = '0%';
+    if (circle) circle.textContent = String(seconds);
 
     // clear any previous timers
-    if (step1Timer) { clearInterval(step1Timer); step1Timer = null; }
-    if (step2Timer) { clearInterval(step2Timer); step2Timer = null; }
+    if (stepTimerHandle) { clearInterval(stepTimerHandle); stepTimerHandle = null; }
     if (linearAnimInterval) { clearInterval(linearAnimInterval); linearAnimInterval = null; }
 
     const start = Date.now();
     const total = Math.max(1, seconds);
     let elapsed = 0;
 
-    // update every 200ms for smoother bar movement
     linearAnimInterval = setInterval(() => {
       elapsed = (Date.now() - start) / 1000;
       const pct = Math.min(100, Math.round((elapsed / total) * 100));
-      linear.style.width = pct + '%';
+      if (linear) linear.style.width = pct + '%';
     }, 200);
 
-    // countdown integer update every 1s
     let remaining = total;
-    const interval = setInterval(() => {
+    stepTimerHandle = setInterval(() => {
       remaining--;
-      circle.textContent = String(Math.max(0, remaining));
+      if (circle) circle.textContent = String(Math.max(0, remaining));
       if (remaining <= 0) {
-        clearInterval(interval);
-        if (linearAnimInterval) { clearInterval(linearAnimInterval); linearAnimInterval = null; linear.style.width = '100%'; }
-        // small delay to show full bar
+        clearInterval(stepTimerHandle);
+        stepTimerHandle = null;
+        if (linearAnimInterval) { clearInterval(linearAnimInterval); linearAnimInterval = null; if (linear) linear.style.width = '100%'; }
         setTimeout(() => {
-          // done
           if (typeof doneCallback === 'function') doneCallback();
         }, 360);
       }
     }, 1000);
-
-    // store ref so it can be canceled externally
-    if (seconds <= 5) step1Timer = interval; else step2Timer = interval;
   }
 
-  // ---- Badge + notifier + poll logic ----
-
+  // ---------- Badge + notifier + poll logic ----------
   function addBadgeToButton() {
     const btn = document.getElementById(CHECK_BTN_ID);
     if (!btn) return;
@@ -396,13 +494,18 @@
     setTimeout(() => { try { n.style.display = 'none'; } catch(e){} }, 9000);
   }
 
-  // immediate click handler (always enabled)
+  // ---------- Immediate click bind ----------
   function bindImmediateClick() {
     const btn = document.getElementById(CHECK_BTN_ID);
     if (!btn) return;
-    // ensure it's clickable
-    btn.classList.remove('btn-disabled');
-    btn.onclick = async () => {
+
+    // avoid double-binding
+    if (btn.__ilf_click_handler) {
+      btn.removeEventListener('click', btn.__ilf_click_handler);
+      delete btn.__ilf_click_handler;
+    }
+
+    const handler = async function () {
       try {
         const url = VERSION_JSON + '?t=' + Date.now();
         const res = await fetch(url, { cache: 'no-store' });
@@ -426,7 +529,6 @@
           showModalCenter(latest, () => {
             try {
               try { localStorage.setItem(SITE_VERSION_KEY, latest); } catch(e){}
-              // ensure bottom progress visible (use existing download-progress if present)
               const existingBottom = document.getElementById('download-progress');
               const createdBottom = document.getElementById('ilf-bottom-bar');
               if (existingBottom) {
@@ -438,7 +540,6 @@
                 const inner = document.getElementById('ilf-bottom-inner');
                 if (inner) inner.style.width = '24%';
               }
-              // Use SW-aware final update which will try to update the SW, skip waiting, wait for activation, then reload
               doFinalUpdate(latest);
             } catch (e) {
               console.error('final update invocation failed', e);
@@ -453,6 +554,11 @@
         alert('Could not check updates.');
       }
     };
+
+    btn.__ilf_click_handler = handler;
+    btn.addEventListener('click', handler);
+    // ensure it's visually enabled
+    btn.classList.remove('btn-disabled');
   }
 
   async function pollOnce() {
@@ -476,6 +582,7 @@
       if (stored !== latest) {
         addBadgeToButton();
         showFloatingNotifier('Update available — click Refresh to update');
+        lastDetectedVersion = latest;
       }
     } catch (err) {
       // silent
@@ -484,22 +591,17 @@
 
   // Start up
   (function start() {
-    // ensure our elements exist
     ensureModalElements();
-    // bind click to refresh button
     bindImmediateClick();
-    // initial poll & set interval
     pollOnce();
     setInterval(pollOnce, POLL_INTERVAL_MS);
 
-    // Wire service worker progress messages (if present) into the bottom bar so real SW updates show progress
+    // Wire service worker progress messages into the bottom bar
     try {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(reg => {
-          reg.active; // no-op, ensure ready
           navigator.serviceWorker.addEventListener('message', ev => {
             if (!ev.data) return;
-            // handle pre-cache progress messages like earlier code
             if (ev.data.type === 'PRECACHE_PROGRESS') {
               const percent = Number(ev.data.percent) || 0;
               const existingBottom = document.getElementById('download-progress');
