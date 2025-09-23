@@ -110,7 +110,16 @@ const PRECACHE_URLS = [
   '/games/emojimatch/config.json',
   '/games/emojimatch/emojimatch.html',
   '/games/emojimatch/icon.png',
-  '/games/emojimatch/icon1.png'
+  '/games/emojimatch/icon1.png',
+
+  '/games/fishyclicker/config.json',
+  '/games/fishyclicker/fishyclicker.html',
+  '/games/fishyclicker/fishyclicker.png',
+
+  '/games/fishcore/config.json',
+  '/games/fishcore/fishcore.html',
+  '/games/fishcore/fishcore.png'
+
 ];
 
 // --- helper logs ---
