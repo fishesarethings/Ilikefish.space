@@ -7,8 +7,8 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://ilikefish.space/games/fishcore/",
-      "name": "fishcore"
+      "url": "https://ilikefish.space/games/rotaze/",
+      "name": "rotaze"
     },
     {
       "@type": "ListItem",
@@ -19,8 +19,8 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/minetycoon/",
-      "name": "minetycoon"
+      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
+      "name": "DiceRollIdleEmpires2"
     },
     {
       "@type": "ListItem",
@@ -31,8 +31,8 @@
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/Block-bang/",
+      "name": "Block-bang"
     }
   ]
 }
