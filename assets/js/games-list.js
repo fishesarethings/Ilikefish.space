@@ -82,7 +82,7 @@ function renderGameCard(game) {
 
   // Minimal change: point to game-player in /games/ and encode folder
   const link = document.createElement('a');
-  link.href = `/games/game-player.html?folder=${encodeURIComponent(game.folder)}`;
+  link.href = `/games/game_player.html?folder=${encodeURIComponent(game.folder)}`;
   link.className = 'game-card';
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
@@ -100,7 +100,7 @@ function renderGameCard(game) {
   if (playBtn) {
     playBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
-      const url = `/games/game-player.html?folder=${encodeURIComponent(game.folder)}`;
+      const url = `/games/game_player.html?folder=${encodeURIComponent(game.folder)}`;
       location.href = url;
     });
   }
