@@ -37,13 +37,13 @@
     .more-games{padding:12px 6px}
     .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
     .game-card{width:300px;height:300px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:block;position:relative;flex:0 0 auto}
-    .game-card .tile-img{width:100%;height:100%;display:block;object-fit:cover}
-    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);color:#fff;text-align:center}
-    .game-card .title-bar .tile-title{display:block;font-size:0.95rem;font-weight:700}
+    .game-card .tile{width:100%;height:100%;display:block;position:relative}
+    .game-card .tile-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
+    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);color:#fff;text-align:center;box-sizing:border-box}
+    .game-card .tile-title{display:block;font-size:0.95rem;font-weight:700}
     .game-card .placeholder{display:flex;align-items:center;justify-content:center;height:100%;padding:12px;color:var(--muted)}
-    .game-card img{max-width:100%;max-height:120px;object-fit:contain;margin-bottom:8px;display:block}
-    .game-card strong{display:block;font-size:0.98rem;text-align:center;padding:0 6px} 
-
+    /* hide any legacy small-img rules to avoid conflicts */
+    .game-card img:not(.tile-img){display:none}
     .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999;opacity:0;transition:opacity .18s}
     .ilf-toast.show{opacity:1}
     footer{padding:14px 18px;color:#666;font-size:.9rem;border-top:1px solid rgba(0,0,0,0.04);background:transparent}
