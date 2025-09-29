@@ -60,7 +60,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // Render to all immediately (same look as games page)
+      // Render to all immediately
       const card = renderGameCard(game);
       if (allHome) allHome.append(card.cloneNode(true));
       if (allPage) allPage.append(card);
@@ -74,10 +74,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-/**
- * Renders the same tile markup as used in the games page:
- * big 300x300 square, image covers tile, title bar at bottom.
- */
 function renderGameCard(game) {
   if (!game.folder || !game.icon || !game.entry || !game.name) {
     console.error('[games-list] ❌ invalid config.json missing required fields:', game);
@@ -85,34 +81,19 @@ function renderGameCard(game) {
   }
 
   const link = document.createElement('a');
-  link.href = `/games/${encodeURIComponent(game.folder)}/${encodeURIComponent(game.entry)}`;
+  link.href = `/games/${game.folder}/${game.entry}`;
   link.target = '_blank';
   link.className = 'game-card';
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
 
-  const imgUrl = `/games/${encodeURIComponent(game.folder)}/${encodeURIComponent(game.icon)}`;
-  const safeName = escapeHtml(game.name);
+  link.innerHTML = `
+    <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
+    <div class="card-info">
+      <h3>${game.name}</h3>
+      <button type="button">Play</button>
+    </div>
+  `;
 
-  // we use data-src for lazy loading (some pages also observe)
-  link.innerHTML = '\
-    <div class="tile">\
-      <img class="tile-img" data-src="' + imgUrl + '" alt="' + safeName + '" loading="lazy">\
-      <div class="title-bar"><span class="tile-title">' + safeName + '</span></div>\
-    </div>\
-  ';
-
-  // If you're using the grid that supports IntersectionObserver elsewhere,
-  // optionally observe this tile's image here (some pages will set up their own observer).
   return link;
-}
-
-// small helper (keeps same escaping used elsewhere)
-function escapeHtml(s){
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
 }
