@@ -3,6 +3,7 @@
   "folder": "DiceRollIdleEmpires",
   "icon": "icon.png",
   "entry": "DiceRollIdleEmpires.html",
+  "description": "This is a fun game in which you rolla a dice. What ever the number the dice lands on is the amount you make (NOTE: As you could beat the game by getting the infinity simbol, a sequel was made to make it take longer to finish it.",
   "touchInstructions": "Tap or click to play."
 }
 

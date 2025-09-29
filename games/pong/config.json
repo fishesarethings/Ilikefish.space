@@ -3,6 +3,7 @@
   "folder": "pong",
   "icon": "icon.png",
   "entry": "pong.html",
+  "description": "A pong(y) game",
   "touchInstructions": "Use the on-screen arrows to move your paddle.",
   "controllerMapping": {
     "axes": { "1": "Paddle Movement" },

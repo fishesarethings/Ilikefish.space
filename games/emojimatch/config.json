@@ -3,5 +3,6 @@
   "folder":"emojimatch",
   "icon":"icon.png",
   "entry":"emojimatch.html",
+  "description": "Match the emojies to the topic!",
   "touchInstructions":"Tap to play."
 }

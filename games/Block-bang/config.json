@@ -3,5 +3,6 @@
   "folder":"Block-bang",
   "icon":"icon.png",
   "entry":"block-bang.html",
+  "description": "A very glitchy game where you match blocks and they explode",
   "touchInstructions":"Tap to play."
 }

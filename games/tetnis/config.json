@@ -5,6 +5,7 @@
   "entry": "tetnis.html",
   "featured": true,
   "featuredOrder": 4,
+  "description": "A fun blocky game with sharp iron blocks!",
   "touchInstructions": "Tap or swipe to move and rotate.",
   "controllerMapping": {
     "buttons": {},

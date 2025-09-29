@@ -3,6 +3,7 @@
   "folder": "why-chicken-crossed",
   "icon": "icon.png",
   "entry": "why-chicken-crossed.html",
+  "description": "Why on Earth is the chicken crossing the road! Good question, play to find out!",
   "touchInstructions": "Tap the on-screen arrows to move the chicken.",
   "controllerMapping": {
     "buttons": { "0": "useHammer" },

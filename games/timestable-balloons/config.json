@@ -3,6 +3,7 @@
   "folder": "timestable-balloons",
   "icon": "icon.png",
   "entry": "timestable-balloons.html",
+  "description": "What's more fun the timestables? Nothing! Complete timetable questions and pop ballons, and get more timestables!",
   "touchInstructions": "Tap numbers to answer before the balloon hits the bottom.",
   "controllerMapping": { "axes": {}, "buttons": {} }
 }

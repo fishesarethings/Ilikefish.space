@@ -5,8 +5,7 @@
   "folder": "gridbite",
   "icon": "icon.png",
   "entry": "gridbite.html",
-  "description": "Fast-paced local 1-2 player snake-like game on a 64×64 grid. Supports keyboard (WASD + Arrow keys), gamepad, and touch controls (on-screen buttons).",
-  "author": "Your Name",
+  "description": "Fast-paced local 1-2 player snake-like game on a 16×16 grid (adding up to 256 squares!). Supports keyboard (WASD + Arrow keys), gamepad, and touch controls (on-screen buttons).",
   "version": "1.0.0",
   "touchInstructions": "Use the on-screen arrows or swipe to change direction. Tap the ✱ button to boost.",
   "controls": {
