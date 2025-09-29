@@ -19,20 +19,20 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/timestable-balloons/",
+      "name": "timestable-balloons"
     },
     {
       "@type": "ListItem",
       "position": 4,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires/",
-      "name": "DiceRollIdleEmpires"
+      "url": "https://ilikefish.space/games/emojimatch/",
+      "name": "emojimatch"
     },
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/gridbite/",
-      "name": "gridbite"
+      "url": "https://ilikefish.space/games/rotaze/",
+      "name": "rotaze"
     }
   ]
 }
