@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide walks you through adding, organizing, and testing HTML5 games in the I like fishes _ PWA on GitHub Pages. No build tools required—just drop files into your repo and open in a browser.
+This guide walks you through adding, organizing, and testing HTML5 games in the **I like fishes _** PWA on GitHub Pages. No build tools required—just drop files into your repo and open in a browser.
 
 ---
 
@@ -14,7 +14,6 @@ my-site/
 ├─ games.html
 ├─ server.html
 ├─ manifest.json
-├─ service-worker.js
 ├─ CNAME
 ├─ assets/
 │ ├─ css/
@@ -33,34 +32,61 @@ my-site/
 └─ games/
  ├─ index.json
  └─ <game-slug>/
- ├─ <slug>.html
- ├─ <slug>.css
- ├─ <slug>.js
- ├─ icon.png ← 300×300px
- └─ config.json
+   ├─ <slug>.html
+   ├─ <slug>.css
+   ├─ <slug>.js
+   ├─ icon.png ← 300×300px
+   └─ config.json
 ```
 
 ### Notes
- - icon.png must be exactly 300×300px.
- - All visual/audio assets live inside each game folder (or inline them).
- - Use absolute paths (/assets/..., /games/...) so caching and SW can find them.
+
+* `icon.png` should be **exactly 300×300px**.
+* All visual/audio assets live inside each game folder (or inline them).
+* Use absolute paths (`/assets/...`, `/games/...`) so resources resolve consistently across pages and caching layers.
 
 ---
 
 ## ➕ Adding a New Game
 
-1. Create /games/<slug>/.
+1. Create `/games/<slug>/`.
 2. Add these files:
- - <slug>.html (entry)
- - <slug>.css (styles)
- - <slug>.js (logic)
- - icon.png (300×300px)
- - config.json:
- json  {  "name":"My Game",  "folder":"<slug>",  "icon":"icon.png",  "entry":"<slug>.html",  "touchInstructions":"Tap or click to play.",  "controllerMapping":{ "buttons":{}, "axes":{} }  } 
-3. Update /games/index.json if you’re not using auto-discovery (optional):
- json  { "folders":[ "pong","timestable-balloons","why-chicken-crossed","<slug>" ] } 
-4. Test locally by simply opening index.html or games.html in your browser—no server needed.
-5. Offline: first visit caches shell + runtime caches game assets; revisit with network off to confirm.
+
+   * `<slug>.html` (entry)
+   * `<slug>.css` (styles)
+   * `<slug>.js` (logic)
+   * `icon.png` (300×300px)
+   * `config.json` (metadata). **Important:** include a short `description` field — this is shown in the game loader UI.
+
+Example `config.json` (required fields):
+
+```json
+{
+  "name": "My Game",
+  "folder": "<slug>",
+  "icon": "icon.png",
+  "entry": "<slug>.html",
+  "description": "A short, 1–2 sentence summary of the game shown in the game loader.",
+  "touchInstructions": "Tap or click to play.",
+  "controllerMapping": { "buttons": {}, "axes": {} }
+}
+```
+
+**Description guidance**
+
+* Keep it concise (recommended 20–180 characters).
+* Plain text only (no HTML). The loader will escape HTML for safety.
+* If `description` is missing, the loader will display **"No description"**.
+
+3. Update `/games/index.json` if you’re not using auto-discovery (optional). Example:
+
+```json
+{
+  "folders": ["pong","timestable-balloons","why-chicken-crossed","<slug>"]
+}
+```
+
+4. Test locally by simply opening `index.html` or `games.html` in your browser—no server needed.
 
 ---
 
@@ -68,58 +94,20 @@ my-site/
 
 ### Game Discovery
 
-- games-list.js fetches /games/index.json → each config.json → renders cards in Featured & All sections.
+* `games-list.js` fetches `/games/index.json` → each `config.json` → renders cards in Featured & All sections. The loader reads `name`, `description`, `icon`, `entry` and `touchInstructions` from each `config.json`.
 
 ### Server Stats
 
-- server.js writes join info (mc.ilikefish.space + port) and fetches live stats from api.mcsrvstat.us → Chart.js line graph.
-
-### Asset Caching
-
-- Precache (install): service worker caches core shell:
- • /, /index.html, /games.html, /server.html, /manifest.json
- • /assets/css/styles.css
- • All /assets/js/*.js
- • (Optionally) a generated /precache-manifest.js listing every game asset.
-
-- Runtime cache: on fetch, serve from cache or network, then cache new responses—that way, every visited game and image becomes offline-ready.
-
----
-
-## 🛠️ Service Worker Setup
-
-### Manual Precache (no build step)
-In service-worker.js, modify the install handler’s toCache set to include:
-
-```js
-const PRECACHE = 'static-v1';
-const PRECACHE_URLS = [
- '/', '/index.html','/games.html','/server.html','/manifest.json',
- '/assets/css/styles.css',
- '/assets/js/typing.js','/assets/js/games-list.js',
- '/assets/js/server.js','/assets/js/fullscreen.js',
- '/assets/js/sw-register.js',
- // + each game entry, icon, and asset folder...
-];
-self.addEventListener('install', evt => {
- evt.waitUntil(
- caches.open(PRECACHE).then(cache => cache.addAll(PRECACHE_URLS))
- );
-});
-```
-
-### Automatic Caching
-
-Use the existing HTML-scrape logic to discover <script>, <link>, <img>, and game assets dynamically—just ensure paths resolve.
+* `server.js` writes join info (mc.ilikefish.space + port) and fetches live stats from `api.mcsrvstat.us` → Chart.js line graph.
 
 ---
 
 ## 🧠 AI Prompt Template
 
-Use this full prompt in ChatGPT to scaffold a new game folder complete with precache manifest:
+Use this full prompt in ChatGPT to scaffold a new game folder. Note: the `description` field is required for the game loader.
 
-```markdown
-## Scaffold a New Game for “I like fishes _”
+````markdown
+## Scaffold a New Game for "I like fishes _"
 I’m building an HTML5 browser game titled [Your Game Title] for the “I like fishes _” site.
 ### Requirements
 - Mechanics: [e.g., avoid obstacles, match tiles].
@@ -131,37 +119,49 @@ I’m building an HTML5 browser game titled [Your Game Title] for the “I like 
 2. [slug].css
 3. [slug].js
 4. icon.png (300×300px placeholder)
-5. config.json (metadata as above)
-6. precache-manifest.js listing those four paths:
-```js
-self.__WB_MANIFEST = [
- '/games/[slug]/[slug].html',
- '/games/[slug]/[slug].css',
- '/games/[slug]/[slug].js',
- '/games/[slug]/icon.png'
-];
-```
+5. config.json (metadata — **must include** `description`)
+
+Example `config.json` provided to the model should include:
+```json
+{
+  "name": "[Your Game Title]",
+  "folder": "[slug]",
+  "icon": "icon.png",
+  "entry": "[slug].html",
+  "description": "A short 1-2 sentence description shown in the loader",
+  "touchInstructions": "Tap or click to play."
+}
+````
+
 ### In ChatGPT
- - Provide each file in its own code block labeled with filename.
- - Include comments explaining major sections.
- - Add a Home button linking back to /index.html.
- - Ensure all paths are absolute (start with /).
+
+* Provide each file in its own code block labeled with filename.
+* Include comments explaining major sections.
+* Add a Home button linking back to /index.html.
+* Ensure all paths are absolute (start with /).
+
 ```
 
 ---
 
 ## 📝 Quick Checklist
 
-`[ ]` Created /games/index.json entry
+```
 
-`[ ]` /games/<slug>/ contains:
- - .html, .css, .js
- - icon.png (300×300px)
- - config.json
- - precache-manifest.js (if using manual manifest)
+[ ] Created /games/index.json entry
 
-`[ ]` Opened games.html locally to verify game list
+[ ] /games/<slug>/ contains:
 
-`[ ]` Tested offline: all visited pages and games load without network
+* .html, .css, .js
+* icon.png (300×300px)
+* config.json (including the required "description" field)
+
+[ ] Opened games.html locally to verify game list
+
+```
 
 Happy coding and creating! 🎮
+
+Soon coming: the game packager to make packaging and uploading games even easier.
+
+```
