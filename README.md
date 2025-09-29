@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide walks you through adding, organizing, and testing HTML5 games in the **I like fishes _** PWA on GitHub Pages. No build tools required—just drop files into your repo and open in a browser.
+This guide walks you through adding, organizing, and testing HTML5 games in the **I like fishes _** on GitHub Pages. No build tools required—just drop files into your repo and open in a browser.
 
 ---
 
