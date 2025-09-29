@@ -125,7 +125,11 @@
 
     <div class="options">
       <button id="toggleTouch" class="toggle-btn" aria-pressed="true">Touch: On</button>
-      <button id="toggleScroll" class="toggle-btn" aria-pressed="true">Scroll: On</button>
+      <!-- Page scroll controls whether the OUTER page is scrollable -->
+      <button id="toggleScroll" class="toggle-btn" aria-pressed="true">Page scroll: On</button>
+      <!-- Game scroll (iframe) controls whether the iframe allows overflow scroll (best-effort) -->
+      <button id="toggleFrameScroll" class="toggle-btn" aria-pressed="true">Game scroll: On</button>
+
       <button id="toggleControls" class="toggle-btn" aria-pressed="true">Controls: On</button>
       <button id="toggleIcon" class="toggle-btn" aria-pressed="true">Icon: On</button>
       <button id="toggleCompact" class="toggle-btn" aria-pressed="false">Compact: Off</button>
@@ -178,7 +182,15 @@
       }
 
       // Pref helpers
-      const PREF_TOUCH = 'ilf_touch', PREF_SCROLL = 'ilf_scroll', PREF_CONTROLS = 'ilf_controls', PREF_ICON = 'ilf_icon', PREF_COMPACT = 'ilf_compact', PREF_SOUND = 'ilf_sound';
+      // NOTE: page scroll (outer page) and iframe scroll (game) are separate now
+      const PREF_TOUCH = 'ilf_touch';
+      const PREF_PAGE_SCROLL = 'ilf_page_scroll';      // controls page scrolling (body)
+      const PREF_IFRAME_SCROLL = 'ilf_iframe_scroll';  // controls iframe overflow (best-effort)
+      const PREF_CONTROLS = 'ilf_controls';
+      const PREF_ICON = 'ilf_icon';
+      const PREF_COMPACT = 'ilf_compact';
+      const PREF_SOUND = 'ilf_sound';
+
       function readPref(k, d=true){ try{ const v = localStorage.getItem(k); if (v===null) return d; return v === 'ON'; }catch(e){ return d; } }
       function writePref(k, on){ try{ localStorage.setItem(k, on ? 'ON' : 'OFF'); }catch(e){} }
 
@@ -192,9 +204,10 @@
         const noGameSample = document.getElementById('noGameSample');
         const vp = document.getElementById('viewport');
 
-        // read prefs
+        // read prefs (universal; persist across games)
         let touchOn = readPref(PREF_TOUCH, true);
-        let scrollOn = readPref(PREF_SCROLL, true);
+        let pageScrollOn = readPref(PREF_PAGE_SCROLL, true);       // default: allow page scroll
+        let iframeScrollOn = readPref(PREF_IFRAME_SCROLL, true);   // default: allow iframe scroll
         let controlsOn = readPref(PREF_CONTROLS, true);
         let iconOn = readPref(PREF_ICON, true);
         let compactOn = readPref(PREF_COMPACT, false);
@@ -205,7 +218,6 @@
         // ensure iframe allow attributes for games (keeps it permissive for gameplay features)
         if (iframe) {
           iframe.setAttribute('allow', 'fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; gamepad; gyroscope; accelerometer; microphone; camera; usb; xr-spatial-tracking');
-          // don't sandbox by default because many HTML5 games need same-origin / wasm / workers — consider sandboxing per-game if needed
         }
 
         async function loadConfig(folderName){
@@ -219,6 +231,7 @@
             if (gameTitle) gameTitle.textContent = '(Game)';
             if (descTitle) descTitle.textContent = 'Description';
             if (descBody) descBody.textContent = 'No description';
+            applyAllPrefs();
             return;
           }
 
@@ -249,7 +262,7 @@
               iframe.src = src;
               iframe.onload = () => {
                 try {
-                  iframe.contentWindow.postMessage({ type:'ilf-set-prefs', prefs: { sound: !!soundOn, touch: !!touchOn } }, '*');
+                  iframe.contentWindow.postMessage({ type:'ilf-set-prefs', prefs: { sound: !!soundOn, touch: !!touchOn, iframeScroll: !!iframeScrollOn } }, '*');
                 } catch (e) { /* ignore cross-origin restrictions */ }
               };
             }
@@ -263,18 +276,42 @@
             if (gameTitle) gameTitle.textContent = folderName || '(Game)';
             if (descTitle) descTitle.textContent = 'No description';
             if (descBody) descBody.textContent = 'No description';
+            applyAllPrefs();
           }
         }
 
         function applyAllPrefs(){
-          try{ if (iframe) iframe.style.overflow = scrollOn ? 'auto' : 'hidden'; }catch(e){}
+          // PAGE SCROLL: control outer document scrolling (reliable)
+          try {
+            if (pageScrollOn) {
+              document.documentElement.style.overflow = '';
+              document.body.style.overflow = '';
+            } else {
+              // prevent scrolling of the page
+              document.documentElement.style.overflow = 'hidden';
+              document.body.style.overflow = 'hidden';
+            }
+          } catch(e) { /* ignore */ }
+
+          // IFRAME SCROLL: best-effort - set iframe overflow style (may not fully control cross-origin content)
+          try {
+            if (iframe) {
+              iframe.style.overflow = iframeScrollOn ? 'auto' : 'hidden';
+              // if same-origin, postMessage so child can adjust internal scrolling if it supports it
+              try {
+                iframe.contentWindow.postMessage({ type: 'ilf-set-iframe-scroll', enabled: !!iframeScrollOn }, '*');
+              } catch (e) { /* cross-origin - ignore */ }
+            }
+          }catch(e){}
+
           const hdr = document.getElementById('headerControls'); if (hdr) hdr.style.display = controlsOn ? 'flex' : 'none';
           const gi = document.getElementById('gameIcon'); if (gi) gi.style.display = iconOn ? 'block' : 'none';
           document.body.classList.toggle('compact', compactOn);
           // try to inform child frame about audio toggle (best-effort)
           try{ if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type:'ilf-set-audio', enabled: !!soundOn }, '*'); }catch(e){}
           updateToggleButton(document.getElementById('toggleTouch'), 'Touch', touchOn);
-          updateToggleButton(document.getElementById('toggleScroll'), 'Scroll', scrollOn);
+          updateToggleButton(document.getElementById('toggleScroll'), 'Page scroll', pageScrollOn);
+          updateToggleButton(document.getElementById('toggleFrameScroll'), 'Game scroll', iframeScrollOn);
           updateToggleButton(document.getElementById('toggleControls'), 'Controls', controlsOn);
           updateToggleButton(document.getElementById('toggleIcon'), 'Icon', iconOn);
           updateToggleButton(document.getElementById('toggleCompact'), 'Compact', compactOn);
@@ -341,9 +378,30 @@
         const openBtn = document.getElementById('openBtn');
         if (openBtn) openBtn.addEventListener('click', () => { if (!iframe || !iframe.src || iframe.src === 'about:blank') return showToast('Game not loaded'); window.open(iframe.src, '_blank', 'noopener'); });
 
-        // toggles
-        const tTouch = document.getElementById('toggleTouch'); if (tTouch) tTouch.addEventListener('click', () => { touchOn = !touchOn; writePref(PREF_TOUCH, touchOn); updateToggleButton(tTouch, 'Touch', touchOn); loadConfig(currentFolder); showToast('Touch ' + (touchOn ? 'On' : 'Off')); });
-        const tScroll = document.getElementById('toggleScroll'); if (tScroll) tScroll.addEventListener('click', () => { scrollOn = !scrollOn; writePref(PREF_SCROLL, scrollOn); updateToggleButton(tScroll, 'Scroll', scrollOn); applyAllPrefs(); showToast('Scroll ' + (scrollOn ? 'On' : 'Off')); });
+        // toggles - keep behavior universal and persistent
+        const tTouch = document.getElementById('toggleTouch');
+        if (tTouch) tTouch.addEventListener('click', () => {
+          touchOn = !touchOn; writePref(PREF_TOUCH, touchOn); updateToggleButton(tTouch, 'Touch', touchOn); loadConfig(currentFolder); showToast('Touch ' + (touchOn ? 'On' : 'Off'));
+        });
+
+        const tScroll = document.getElementById('toggleScroll');
+        if (tScroll) tScroll.addEventListener('click', () => {
+          pageScrollOn = !pageScrollOn;
+          writePref(PREF_PAGE_SCROLL, pageScrollOn);
+          updateToggleButton(tScroll, 'Page scroll', pageScrollOn);
+          applyAllPrefs();
+          showToast('Page scroll ' + (pageScrollOn ? 'On' : 'Off'));
+        });
+
+        const tFrameScroll = document.getElementById('toggleFrameScroll');
+        if (tFrameScroll) tFrameScroll.addEventListener('click', () => {
+          iframeScrollOn = !iframeScrollOn;
+          writePref(PREF_IFRAME_SCROLL, iframeScrollOn);
+          updateToggleButton(tFrameScroll, 'Game scroll', iframeScrollOn);
+          applyAllPrefs();
+          showToast('Game scroll ' + (iframeScrollOn ? 'On' : 'Off'));
+        });
+
         const tControls = document.getElementById('toggleControls'); if (tControls) tControls.addEventListener('click', () => { controlsOn = !controlsOn; writePref(PREF_CONTROLS, controlsOn); updateToggleButton(tControls, 'Controls', controlsOn); applyAllPrefs(); showToast('Controls ' + (controlsOn ? 'On' : 'Off')); });
         const tIcon = document.getElementById('toggleIcon'); if (tIcon) tIcon.addEventListener('click', () => { iconOn = !iconOn; writePref(PREF_ICON, iconOn); updateToggleButton(tIcon, 'Icon', iconOn); applyAllPrefs(); showToast('Icon ' + (iconOn ? 'On' : 'Off')); });
         const tCompact = document.getElementById('toggleCompact'); if (tCompact) tCompact.addEventListener('click', () => { compactOn = !compactOn; writePref(PREF_COMPACT, compactOn); updateToggleButton(tCompact, 'Compact', compactOn); applyAllPrefs(); showToast('Compact ' + (compactOn ? 'On' : 'Off')); });
@@ -363,10 +421,6 @@
             const idx = await r.json();
 
             // support multiple shapes:
-            // 1) { folders: [ 'slug1', 'slug2' ] }
-            // 2) [ 'slug1', 'slug2' ]
-            // 3) { games: [ { folder:'slug', ...}, ... ] }
-            // 4) [ { folder:'slug', name: '…' }, ... ]
             if (Array.isArray(idx.folders)) {
               folders = idx.folders.slice();
             } else if (Array.isArray(idx)) {
@@ -379,7 +433,6 @@
             } else if (Array.isArray(idx.games)) {
               folders = idx.games.map(g => g.folder || g.name).filter(Boolean);
             } else {
-              // fallback: try to collect any string values in object arrays
               for (const k of Object.keys(idx || {})) {
                 if (Array.isArray(idx[k])) {
                   const arr = idx[k].map(item => (typeof item === 'string' ? item : (item && (item.folder || item.name)))).filter(Boolean);
@@ -422,7 +475,8 @@
 
                 const a = document.createElement('a');
                 a.className = 'game-card';
-                a.href = '/game-player.html?folder=' + encodeURIComponent(slug);
+                // MINIMAL: link to /games/game-player.html (we assume your game-player is in /games/)
+                a.href = '/games/game-player.html?folder=' + encodeURIComponent(slug);
 
                 const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
                 const nameEsc = escapeHtml(g.name || slug);
