@@ -36,6 +36,7 @@ const PRECACHE_URLS = [
   '/games/pong/config.json',
   '/games/pong/icon.png',
   '/games/pong/pong.html',
+  '/games/game_player.html?folder=pong',
 
   '/games/timestable-balloons/config.json',
   '/games/timestable-balloons/icon.png',
@@ -47,16 +48,20 @@ const PRECACHE_URLS = [
   '/games/timestable-balloons/assets/sounds/bgm.mp3',
   '/games/timestable-balloons/assets/sounds/pop.mp3',
   '/games/timestable-balloons/assets/sounds/wrong.mp3',
+  '/games/game_player.html?folder=timestable-balloons',
 
   '/games/why-chicken-crossed/config.json',
   '/games/why-chicken-crossed/icon.png',
   '/games/why-chicken-crossed/why-chicken-crossed.html',
+  '/games/game_player.html?folder=why-chicken-crossed',
 
   '/games/tetnis/icon.png',
   '/games/tetnis/config.json',
   '/games/tetnis/tetnis.html',
+  '/games/game_player.html?folder=tetnis',
 
   '/games/chess/icon.png',
+  '/games/game_player.html?folder=chess',
 
   '/games/lawnmower-simulator/background.mp3',
   '/games/lawnmower-simulator/config.json',
@@ -64,63 +69,78 @@ const PRECACHE_URLS = [
   '/games/lawnmower-simulator/icon.png',
   '/games/lawnmower-simulator/lawnmower.html',
   '/games/lawnmower-simulator/mower.png',
+  '/games/game_player.html?folder=lawnmower-simulator',
 
   '/games/Block-bang/block-bang.html',
   '/games/Block-bang/config.json',
   '/games/Block-bang/explosion.mp4',
   '/games/Block-bang/icon.png',
+  '/games/game_player.html?folder=Block-bang',
 
   '/games/DiceRollIdleEmpires/config.json',
   '/games/DiceRollIdleEmpires/DiceRollIdleEmpires.html',
   '/games/DiceRollIdleEmpires/icon.png',
   '/games/DiceRollIdleEmpires/icon1.png',
+  '/games/game_player.html?folder=DiceRollIdleEmpires',
 
   '/games/gridbite/config.json',
   '/games/gridbite/gridbite.html',
   '/games/gridbite/icon.png',
   '/games/gridbite/icon1.png',
   '/games/gridbite/music.mp3',
+  '/games/game_player.html?folder=gridbite',
 
   '/games/rotaze/rotaze.html',
   '/games/rotaze/icon.png',
   '/games/rotaze/icon1.png',
   '/games/rotaze/config.json',
+  '/games/game_player.html?folder=rotaze',
 
   '/games/Tower-Defense/config.json',
   '/games/Tower-Defense/icon.png',
   '/games/Tower-Defense/icon1.png',
   '/games/Tower-Defense/Tower-defense.html',
+  '/games/game_player.html?folder=Tower-Defense',
 
   '/games/DiceRollIdleEmpires2/config.json',
   '/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html',
   '/games/DiceRollIdleEmpires2/icon.png',
   '/games/DiceRollIdleEmpires2/icon1.png',
+  '/games/game_player.html?folder=DiceRollIdleEmpires2',
 
   '/games/fishclimbracing/config.json',
   '/games/fishclimbracing/fishclimbracing.html',
   '/games/fishclimbracing/icon1.png',
   '/games/fishclimbracing/icon.png',
+  '/games/game_player.html?folder=fishclimbracing',
 
   '/games/minetycoon/config.json',
   '/games/minetycoon/icon.png',
   '/games/minetycoon/minetycoon.html',
+  '/games/game_player.html?folder=minetycoon',
 
   '/games/emojimatch/config.json',
   '/games/emojimatch/emojimatch.html',
   '/games/emojimatch/icon.png',
   '/games/emojimatch/icon1.png',
+  '/games/game_player.html?folder=emojimatch',
 
   '/games/fishyclicker/config.json',
   '/games/fishyclicker/fishyclicker.html',
   '/games/fishyclicker/fishyclicker.png',
+  '/games/game_player.html?folder=fishyclicker',
 
   '/games/fishcore/config.json',
   '/games/fishcore/fishcore.html',
   '/games/fishcore/fishcore.png',
+  '/games/game_player.html?folder=fishcore',
 
   '/games/fishytycoon/config.json',
+  '/games/game_player.html?folder=fishytycoon',
+
   '/games/fishtycoon/fishtycoon.html',
-  '/games/fishtycoon/fishtycoon.png'
+  '/games/fishtycoon/fishtycoon.png',
+  '/games/game_player.html?folder=fishtycoon',
 
 ];
 
