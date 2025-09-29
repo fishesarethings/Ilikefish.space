@@ -36,7 +36,11 @@
     .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
     .more-games{padding:12px 6px}
     .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-    .game-card{width:240px;height:180px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:8px}
+    .game-card{width:300px;height:300px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:block;position:relative;flex:0 0 auto}
+    .game-card .tile-img{width:100%;height:100%;display:block;object-fit:cover}
+    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%);color:#fff;text-align:center}
+    .game-card .title-bar .tile-title{display:block;font-size:0.95rem;font-weight:700}
+    .game-card .placeholder{display:flex;align-items:center;justify-content:center;height:100%;padding:12px;color:var(--muted)}
     .game-card img{max-width:100%;max-height:120px;object-fit:contain;margin-bottom:8px;display:block}
     .game-card strong{display:block;font-size:0.98rem;text-align:center;padding:0 6px} 
 
@@ -352,9 +356,9 @@
                 const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
                 const nameEsc = escapeHtml(g.name || slug);
 
-                a.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px">'
-                  + '<img data-src="' + imgSrc + '" alt="' + nameEsc + '" loading="lazy" style="max-width:100%;max-height:120px;object-fit:contain;margin-bottom:8px">'
-                  + '<strong>' + nameEsc + '</strong>'
+                a.innerHTML = '<div class="tile">'
+                  + '<img class="tile-img" data-src="' + imgSrc + '" alt="' + nameEsc + '" loading="lazy">'
+                  + '<div class="title-bar"><span class="tile-title">' + nameEsc + '</span></div>'
                   + '</div>';
 
                 grid.appendChild(a);
