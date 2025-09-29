@@ -19,20 +19,20 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/Tower-Defense/",
-      "name": "Tower-Defense"
+      "url": "https://ilikefish.space/games/fishtycoon/",
+      "name": "fishtycoon"
     },
     {
       "@type": "ListItem",
       "position": 4,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires/",
-      "name": "DiceRollIdleEmpires"
+      "url": "https://ilikefish.space/games/emojimatch/",
+      "name": "emojimatch"
     },
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
-      "name": "DiceRollIdleEmpires2"
+      "url": "https://ilikefish.space/games/Block-bang/",
+      "name": "Block-bang"
     }
   ]
 }
