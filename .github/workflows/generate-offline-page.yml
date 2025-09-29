@@ -1,0 +1,42 @@
+name: Generate Offline Page
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-offline-page:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: List cached assets
+      run: |
+        # Extract the PRECACHE_URLS array from service-worker.js
+        grep -oP "(?<=const PRECACHE_URLS = \[)[^\]]+" ./service-worker.js \
+        | tr -d "' " | tr ',' '\n' > cached-assets.txt
+        echo "Found assets:"
+        cat cached-assets.txt
+
+    - name: Generate offline.html
+      run: |
+        echo "<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>Offline</title>
+        <style>body{font-family:sans-serif;padding:2rem;}h1{color:#007aff;}ul{list-style:none;padding:0;}li{margin:0.5rem 0;}</style>
+        </head><body><h1>Offline Mode</h1><p>The following resources are available offline:</p><ul>" > offline.html
+
+        while read line; do
+          if [ -f "./$line" ]; then
+            echo "<li><a href='/$line'>$line</a></li>" >> offline.html
+          else
+            echo "<li>$line (FAILED)</li>" >> offline.html
+          fi
+        done < cached-assets.txt
+
+        echo "</ul><p>Use available links to access cached content.</p></body></html>" >> offline.html
+
+    - name: Commit and push offline.html
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "Update offline.html with cached resources"
+        file_pattern: offline.html
