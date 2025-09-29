@@ -80,10 +80,9 @@ function renderGameCard(game) {
     return document.createTextNode('');
   }
 
-  // <-- changed: link now opens the game player page in the same tab -->
+  // Minimal change: point to game-player in /games/ and encode folder
   const link = document.createElement('a');
-  link.href = `/game-player.html?folder=${encodeURIComponent(game.folder)}`;
-  // removed target="_blank" so it doesn't open a new tab by default
+  link.href = `/games/game-player.html?folder=${encodeURIComponent(game.folder)}`;
   link.className = 'game-card';
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
@@ -96,13 +95,12 @@ function renderGameCard(game) {
     </div>
   `;
 
-  // wire play button to navigate to the player page (same-tab).
+  // Wire Play button to the same target (same-tab navigation).
   const playBtn = link.querySelector('.play-btn');
   if (playBtn) {
     playBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
-      // keep ctrl/cmd/default modifier behavior out of this handler
-      const url = `/game-player.html?folder=${encodeURIComponent(game.folder)}`;
+      const url = `/games/game-player.html?folder=${encodeURIComponent(game.folder)}`;
       location.href = url;
     });
   }
