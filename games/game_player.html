@@ -460,7 +460,7 @@
 
                 const a = document.createElement('a');
                 a.className = 'game-card';
-                a.href = '/games/game-player.html?folder=' + encodeURIComponent(slug);
+                a.href = '/games/game_player.html?folder=' + encodeURIComponent(slug);
 
                 const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
                 const nameEsc = escapeHtml(g.name || slug);
