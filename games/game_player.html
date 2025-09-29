@@ -161,7 +161,8 @@
     (function(){
       'use strict';
       const params = new URLSearchParams(location.search);
-      const folder = params.get('folder');
+      const initialFolder = params.get('folder');
+      let currentFolder = initialFolder || null;
 
       // Utilities
       function $(sel){ return document.querySelector(sel); }
@@ -173,7 +174,6 @@
         .replace(/"/g,'&quot;')
         .replace(/'/g,'&#39;'); }
       function formatDescription(text){
-        // fixed regex to replace newlines with <br>
         return escapeHtml(text || '').replace(/\r?\n/g, '<br>');
       }
 
@@ -202,16 +202,29 @@
 
         function updateToggleButton(btn, label, on){ if(!btn) return; btn.textContent = label + ': ' + (on ? 'On' : 'Off'); btn.setAttribute('aria-pressed', String(on)); }
 
+        // ensure iframe allow attributes for games (keeps it permissive for gameplay features)
+        if (iframe) {
+          iframe.setAttribute('allow', 'fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; gamepad; gyroscope; accelerometer; microphone; camera; usb; xr-spatial-tracking');
+          // don't sandbox by default because many HTML5 games need same-origin / wasm / workers — consider sandboxing per-game if needed
+        }
+
         async function loadConfig(folderName){
+          currentFolder = folderName || null;
+
           if (!folderName){
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
             if (vp) vp.classList.add('no-game');
+            // ensure header reflects empty state
+            if (gameTitle) gameTitle.textContent = '(Game)';
+            if (descTitle) descTitle.textContent = 'Description';
+            if (descBody) descBody.textContent = 'No description';
             return;
           }
 
           try{
-            const res = await fetch(`/games/${encodeURIComponent(folderName)}/config.json`);
+            const safeName = encodeURIComponent(folderName);
+            const res = await fetch(`/games/${safeName}/config.json`);
             if (!res.ok) throw new Error('Config load failed: ' + res.status);
             const cfg = await res.json();
             const title = cfg.name || folderName;
@@ -229,8 +242,17 @@
             const touchHtml = touchInstr ? ('<br><small>' + escapeHtml(touchInstr) + '</small>') : '';
             if (descBody) descBody.innerHTML = formatDescription(description) + (touchOn ? touchHtml : '');
 
-            if (icon && gameIconImg) { gameIconImg.src = `/games/${encodeURIComponent(folderName)}/${encodeURIComponent(icon)}`; gameIconImg.alt = title + ' icon'; }
-            if (iframe) iframe.src = `/games/${encodeURIComponent(folderName)}/${encodeURIComponent(entry)}`;
+            if (icon && gameIconImg) { gameIconImg.src = `/games/${safeName}/${encodeURIComponent(icon)}`; gameIconImg.alt = title + ' icon'; }
+            if (iframe) {
+              const src = `/games/${safeName}/${encodeURIComponent(entry)}`;
+              // set src and when loaded, send prefs
+              iframe.src = src;
+              iframe.onload = () => {
+                try {
+                  iframe.contentWindow.postMessage({ type:'ilf-set-prefs', prefs: { sound: !!soundOn, touch: !!touchOn } }, '*');
+                } catch (e) { /* ignore cross-origin restrictions */ }
+              };
+            }
 
             applyAllPrefs();
           }catch(e){
@@ -249,8 +271,8 @@
           const hdr = document.getElementById('headerControls'); if (hdr) hdr.style.display = controlsOn ? 'flex' : 'none';
           const gi = document.getElementById('gameIcon'); if (gi) gi.style.display = iconOn ? 'block' : 'none';
           document.body.classList.toggle('compact', compactOn);
+          // try to inform child frame about audio toggle (best-effort)
           try{ if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage({ type:'ilf-set-audio', enabled: !!soundOn }, '*'); }catch(e){}
-
           updateToggleButton(document.getElementById('toggleTouch'), 'Touch', touchOn);
           updateToggleButton(document.getElementById('toggleScroll'), 'Scroll', scrollOn);
           updateToggleButton(document.getElementById('toggleControls'), 'Controls', controlsOn);
@@ -259,10 +281,36 @@
           updateToggleButton(document.getElementById('toggleSound'), 'Sound', soundOn);
         }
 
+        // handle messages from framed games or parent windows
+        window.addEventListener('message', (ev) => {
+          const msg = ev && ev.data;
+          if (!msg || typeof msg !== 'object') return;
+          if (msg.type === 'ilf-set-audio') {
+            // child -> parent: request to toggle audio state (or inform)
+            if (typeof msg.enabled === 'boolean') {
+              soundOn = !!msg.enabled;
+              writePref(PREF_SOUND, soundOn);
+              applyAllPrefs();
+              showToast('Sound ' + (soundOn ? 'On' : 'Off'));
+            }
+          } else if (msg.type === 'ilf-open-entry') {
+            // child requests opening a specific entry file (relative to folder)
+            if (currentFolder && typeof msg.entry === 'string') {
+              const iframeEl = document.getElementById('gameFrame');
+              const safeFolder = encodeURIComponent(currentFolder);
+              iframeEl.src = `/games/${safeFolder}/${encodeURIComponent(msg.entry)}`;
+            }
+          } else if (msg.type === 'ilf-resize' && msg.height) {
+            // adjust iframe size if requested (best-effort)
+            const frame = document.getElementById('gameFrame');
+            if (frame && typeof msg.height === 'number') frame.style.height = msg.height + 'px';
+          }
+        });
+
         // wire UI buttons
         const shareBtn = document.getElementById('shareBtn');
         if (shareBtn) shareBtn.addEventListener('click', async () => {
-          const playerUrl = location.origin + location.pathname + '?folder=' + encodeURIComponent(folder || '');
+          const playerUrl = location.origin + location.pathname + (currentFolder ? '?folder=' + encodeURIComponent(currentFolder) : '');
           try{
             if (navigator.share) { await navigator.share({ title: (gameTitle && gameTitle.textContent) || '', text: (descBody && descBody.textContent && descBody.textContent.slice(0,120)) || '', url: playerUrl }); return; }
             if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(playerUrl); showToast('Link copied to clipboard'); return; }
@@ -294,7 +342,7 @@
         if (openBtn) openBtn.addEventListener('click', () => { if (!iframe || !iframe.src || iframe.src === 'about:blank') return showToast('Game not loaded'); window.open(iframe.src, '_blank', 'noopener'); });
 
         // toggles
-        const tTouch = document.getElementById('toggleTouch'); if (tTouch) tTouch.addEventListener('click', () => { touchOn = !touchOn; writePref(PREF_TOUCH, touchOn); updateToggleButton(tTouch, 'Touch', touchOn); loadConfig(folder); showToast('Touch ' + (touchOn ? 'On' : 'Off')); });
+        const tTouch = document.getElementById('toggleTouch'); if (tTouch) tTouch.addEventListener('click', () => { touchOn = !touchOn; writePref(PREF_TOUCH, touchOn); updateToggleButton(tTouch, 'Touch', touchOn); loadConfig(currentFolder); showToast('Touch ' + (touchOn ? 'On' : 'Off')); });
         const tScroll = document.getElementById('toggleScroll'); if (tScroll) tScroll.addEventListener('click', () => { scrollOn = !scrollOn; writePref(PREF_SCROLL, scrollOn); updateToggleButton(tScroll, 'Scroll', scrollOn); applyAllPrefs(); showToast('Scroll ' + (scrollOn ? 'On' : 'Off')); });
         const tControls = document.getElementById('toggleControls'); if (tControls) tControls.addEventListener('click', () => { controlsOn = !controlsOn; writePref(PREF_CONTROLS, controlsOn); updateToggleButton(tControls, 'Controls', controlsOn); applyAllPrefs(); showToast('Controls ' + (controlsOn ? 'On' : 'Off')); });
         const tIcon = document.getElementById('toggleIcon'); if (tIcon) tIcon.addEventListener('click', () => { iconOn = !iconOn; writePref(PREF_ICON, iconOn); updateToggleButton(tIcon, 'Icon', iconOn); applyAllPrefs(); showToast('Icon ' + (iconOn ? 'On' : 'Off')); });
@@ -311,12 +359,35 @@
           let folders = [];
           try{
             const r = await fetch('/games/index.json');
-            if(!r.ok) throw new Error('index.json load failed');
+            if(!r.ok) throw new Error('index.json load failed: ' + r.status);
             const idx = await r.json();
-            if (Array.isArray(idx)) folders = idx.map(g=>g.folder||g.name||'');
-            else if (Array.isArray(idx.folders)) folders = idx.folders;
-            else if (Array.isArray(idx.games)) folders = idx.games.map(g=>g.folder||g.name||'');
-          }catch(e){ console.warn(e); return; }
+
+            // support multiple shapes:
+            // 1) { folders: [ 'slug1', 'slug2' ] }
+            // 2) [ 'slug1', 'slug2' ]
+            // 3) { games: [ { folder:'slug', ...}, ... ] }
+            // 4) [ { folder:'slug', name: '…' }, ... ]
+            if (Array.isArray(idx.folders)) {
+              folders = idx.folders.slice();
+            } else if (Array.isArray(idx)) {
+              folders = idx.map(item => {
+                if (typeof item === 'string') return item;
+                if (item && typeof item.folder === 'string') return item.folder;
+                if (item && typeof item.name === 'string') return item.name;
+                return '';
+              }).filter(Boolean);
+            } else if (Array.isArray(idx.games)) {
+              folders = idx.games.map(g => g.folder || g.name).filter(Boolean);
+            } else {
+              // fallback: try to collect any string values in object arrays
+              for (const k of Object.keys(idx || {})) {
+                if (Array.isArray(idx[k])) {
+                  const arr = idx[k].map(item => (typeof item === 'string' ? item : (item && (item.folder || item.name)))).filter(Boolean);
+                  if (arr.length) { folders = arr; break; }
+                }
+              }
+            }
+          }catch(e){ console.warn('[games-grid] index load failed', e); return; }
 
           const pageSize = 12;
           let cursor = 0;
@@ -336,7 +407,6 @@
           // load a batch of tiles
           async function loadBatch(){
             if (cursor >= folders.length) {
-              // nothing left
               if (sentinel) sentinel.style.display = 'none';
               return;
             }
@@ -345,8 +415,9 @@
 
             for (const slug of batch) {
               try {
-                const cfgR = await fetch(`/games/${encodeURIComponent(slug)}/config.json`);
-                if(!cfgR.ok) throw new Error('cfg fail');
+                const safeSlug = encodeURIComponent(slug);
+                const cfgR = await fetch(`/games/${safeSlug}/config.json`);
+                if(!cfgR.ok) throw new Error('cfg fail ' + cfgR.status);
                 const g = await cfgR.json();
 
                 const a = document.createElement('a');
@@ -366,7 +437,7 @@
                 const img = a.querySelector('img');
                 if (img) imgObserver.observe(img);
               } catch (e) {
-                const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = slug; grid.appendChild(ph);
+                const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = String(slug); grid.appendChild(ph);
               }
             }
           }
@@ -392,8 +463,20 @@
         }
 
         // initial load
-        loadConfig(folder);
+        loadConfig(currentFolder);
         showMoreGames();
+
+        // optional: fetch site version (best-effort)
+        (async function fetchSiteVersion(){
+          try{
+            const r = await fetch('/site-version.json', {cache: 'no-store'});
+            if (r.ok) {
+              const v = await r.json();
+              const el = document.getElementById('current-site-version');
+              if (el && v && v.version) el.textContent = v.version;
+            }
+          }catch(e){}
+        })();
       });
     })();
   </script>
