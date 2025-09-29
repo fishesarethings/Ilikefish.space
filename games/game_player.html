@@ -36,7 +36,9 @@
     .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
     .more-games{padding:12px 6px}
     .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-    .game-card{width:180px;height:120px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center}
+    .game-card{width:240px;height:180px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:8px}
+    .game-card img{max-width:100%;max-height:120px;object-fit:contain;margin-bottom:8px;display:block}
+    .game-card strong{display:block;font-size:0.98rem;text-align:center;padding:0 6px} 
 
     .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999;opacity:0;transition:opacity .18s}
     .ilf-toast.show{opacity:1}
@@ -300,42 +302,89 @@
           const grid = document.getElementById('gamesGrid');
           if(!grid) return;
           grid.innerHTML = '';
+
+          // dynamic/paginated loading
+          let folders = [];
           try{
             const r = await fetch('/games/index.json');
             if(!r.ok) throw new Error('index.json load failed');
             const idx = await r.json();
-            let folders = [];
             if (Array.isArray(idx)) folders = idx.map(g=>g.folder||g.name||'');
             else if (Array.isArray(idx.folders)) folders = idx.folders;
             else if (Array.isArray(idx.games)) folders = idx.games.map(g=>g.folder||g.name||'');
+          }catch(e){ console.warn(e); return; }
 
-            // show a larger initial batch but still paginated by scroll later
-            const batch = folders.slice(0, 16);
-            for(const slug of batch){
-              try{
+          const pageSize = 12;
+          let cursor = 0;
+
+          // lazy-load images when they enter viewport
+          const imgObserver = new IntersectionObserver((entries, obs) => {
+            for (const ent of entries) {
+              if (ent.isIntersecting) {
+                const img = ent.target;
+                const src = img.dataset.src;
+                if (src) { img.src = src; img.removeAttribute('data-src'); }
+                obs.unobserve(img);
+              }
+            }
+          }, { root: null, rootMargin: '200px', threshold: 0.01 });
+
+          // load a batch of tiles
+          async function loadBatch(){
+            if (cursor >= folders.length) {
+              // nothing left
+              if (sentinel) sentinel.style.display = 'none';
+              return;
+            }
+            const batch = folders.slice(cursor, cursor + pageSize);
+            cursor += batch.length;
+
+            for (const slug of batch) {
+              try {
                 const cfgR = await fetch(`/games/${encodeURIComponent(slug)}/config.json`);
                 if(!cfgR.ok) throw new Error('cfg fail');
                 const g = await cfgR.json();
 
                 const a = document.createElement('a');
-                a.className='game-card';
+                a.className = 'game-card';
                 a.href = '/game-player.html?folder=' + encodeURIComponent(slug);
 
-                // prefer icon, fall back to site icon if missing
                 const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
                 const nameEsc = escapeHtml(g.name || slug);
 
                 a.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px">'
-                  + '<img src="' + imgSrc + '" alt="' + nameEsc + '" style="max-width:100%;max-height:64px;object-fit:contain;margin-bottom:8px">'
-                  + '<strong style="font-size:0.95rem;text-align:center">' + nameEsc + '</strong>'
+                  + '<img data-src="' + imgSrc + '" alt="' + nameEsc + '" loading="lazy" style="max-width:100%;max-height:120px;object-fit:contain;margin-bottom:8px">'
+                  + '<strong>' + nameEsc + '</strong>'
                   + '</div>';
 
                 grid.appendChild(a);
-              }catch(e){
+
+                const img = a.querySelector('img');
+                if (img) imgObserver.observe(img);
+              } catch (e) {
                 const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = slug; grid.appendChild(ph);
               }
             }
-          }catch(e){ console.warn(e); }
+          }
+
+          // sentinel for infinite scroll
+          let sentinel = document.getElementById('gamesSentinel');
+          if (!sentinel) {
+            sentinel = document.createElement('div');
+            sentinel.id = 'gamesSentinel';
+            sentinel.style.height = '1px';
+            grid.after(sentinel);
+          }
+
+          const sentinelObserver = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) loadBatch();
+            }
+          }, { root: null, rootMargin: '400px', threshold: 0.01 });
+
+          // start
+          loadBatch();
+          sentinelObserver.observe(sentinel);
         }
 
         // initial load
