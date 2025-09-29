@@ -308,18 +308,32 @@
             if (Array.isArray(idx)) folders = idx.map(g=>g.folder||g.name||'');
             else if (Array.isArray(idx.folders)) folders = idx.folders;
             else if (Array.isArray(idx.games)) folders = idx.games.map(g=>g.folder||g.name||'');
-            const batch = folders.slice(0,8);
+
+            // show a larger initial batch but still paginated by scroll later
+            const batch = folders.slice(0, 16);
             for(const slug of batch){
               try{
                 const cfgR = await fetch(`/games/${encodeURIComponent(slug)}/config.json`);
                 if(!cfgR.ok) throw new Error('cfg fail');
                 const g = await cfgR.json();
+
                 const a = document.createElement('a');
                 a.className='game-card';
                 a.href = '/game-player.html?folder=' + encodeURIComponent(slug);
-                a.innerHTML = '<div style="text-align:center;padding:12px"><strong>' + escapeHtml(g.name || slug) + '</strong></div>';
+
+                // prefer icon, fall back to site icon if missing
+                const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
+                const nameEsc = escapeHtml(g.name || slug);
+
+                a.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px">'
+                  + '<img src="' + imgSrc + '" alt="' + nameEsc + '" style="max-width:100%;max-height:64px;object-fit:contain;margin-bottom:8px">'
+                  + '<strong style="font-size:0.95rem;text-align:center">' + nameEsc + '</strong>'
+                  + '</div>';
+
                 grid.appendChild(a);
-              }catch(e){ const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = slug; grid.appendChild(ph); }
+              }catch(e){
+                const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = slug; grid.appendChild(ph);
+              }
             }
           }catch(e){ console.warn(e); }
         }
