@@ -2,7 +2,7 @@
 // Drop this file at the site root: /service-worker.js
 // IMPORTANT: bump CACHE_VERSION on each deploy to force cache refresh (see notes below).
 
-const CACHE_VERSION = 'v3';               // <-- BUMP THIS on deploy (e.g. v3, v4) to invalidate old caches
+const CACHE_VERSION = 'v4';               // <-- BUMP THIS on deploy (e.g. v3, v4) to invalidate old caches
 const CACHE_NAME = `static-${CACHE_VERSION}`;
 const LOG_PREFIX = '[sw]';
 
