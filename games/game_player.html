@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Game Player — ILikeFish.Space</title>
+  <title>ilikefish.Space - Game player</title>
   <style>
     :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
@@ -460,7 +460,7 @@
 
                 const a = document.createElement('a');
                 a.className = 'game-card';
-                a.href = '/game-player.html?folder=' + encodeURIComponent(slug);
+                a.href = '/games/game-player.html?folder=' + encodeURIComponent(slug);
 
                 const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
                 const nameEsc = escapeHtml(g.name || slug);
