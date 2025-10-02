@@ -7,8 +7,8 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://ilikefish.space/games/lawnmower-simulator/",
-      "name": "lawnmower-simulator"
+      "url": "https://ilikefish.space/games/fishcore/",
+      "name": "fishcore"
     },
     {
       "@type": "ListItem",
@@ -19,20 +19,20 @@
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/Block-bang/",
-      "name": "Block-bang"
+      "url": "https://ilikefish.space/games/fishyclicker/",
+      "name": "fishyclicker"
     },
     {
       "@type": "ListItem",
       "position": 4,
-      "url": "https://ilikefish.space/games/emojimatch/",
-      "name": "emojimatch"
+      "url": "https://ilikefish.space/games/DiceRollIdleEmpires/",
+      "name": "DiceRollIdleEmpires"
     },
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/gridbite/",
-      "name": "gridbite"
+      "url": "https://ilikefish.space/games/why-chicken-crossed/",
+      "name": "why-chicken-crossed"
     }
   ]
 }
