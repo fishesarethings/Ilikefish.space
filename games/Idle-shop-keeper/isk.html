@@ -1,121 +1,156 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Idle Shop Keeper</title>
+<title>Idle Shop Keeper — Authoritative Multiplayer</title>
 <style>
-/* Styles preserved and minor additions for players list */
-body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333}
-.game-container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.1)}
-.main-menu{text-align:center}
-.subtitle{color:#666;font-size:1.2rem;margin:10px 0 40px 0}
-.menu-options{max-width:680px;margin:0 auto}
-.menu-btn{width:100%;background:white;border:2px solid #e2e8f0;border-radius:15px;padding:20px;margin-bottom:15px;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;gap:20px;text-align:left}
-.menu-btn:hover{border-color:#4299e1;transform:translateY(-2px);box-shadow:0 8px 25px rgba(66,153,225,.15)}
-.single-player{background:linear-gradient(135deg,#48bb78,#38a169);color:white;border-color:#38a169}
-.btn-icon{font-size:2.5rem;min-width:60px}
-.btn-text h3{margin:0 0 5px;font-size:1.2rem}
-.btn-text p{margin:0;color:#666;font-size:.9rem}
+/* UI styles (kept compact) */
+body{box-sizing:border-box;margin:0;padding:20px;font-family:Segoe UI,Helvetica,Arial;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#222}
+.game-container{max-width:1200px;margin:0 auto;background:#fff;border-radius:16px;padding:22px;box-shadow:0 18px 36px rgba(0,0,0,.12)}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header h1{margin:0;font-size:1.6rem}
+.small{font-size:.85rem;color:#555}
 .player-code{font-size:.9rem;color:#2d3748;background:#f7fafc;padding:6px 8px;border-radius:8px;border:1px solid #e2e8f0;display:inline-block;margin-left:8px}
 .copy-btn{margin-left:8px;padding:6px 8px;border-radius:8px;border:none;cursor:pointer;background:#4299e1;color:white}
-.players-panel{margin-top:12px;padding:12px;border-radius:10px;border:1px solid #e2e8f0;background:#fbfcff;max-height:220px;overflow:auto}
-.player-row{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px dashed #e2e8f0}
-.player-row:last-child{border-bottom:none}
-.status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.menu{margin-top:14px}
+.menu-grid{display:grid;grid-template-columns:1fr 320px;gap:18px}
+.card{background:#fbfcff;border:1px solid #e6eefb;padding:12px;border-radius:10px}
+.menu-btn{display:flex;gap:12px;align-items:center;padding:12px;border-radius:10px;border:2px solid #e2e8f0;background:white;cursor:pointer}
+.players-panel{max-height:260px;overflow:auto;margin-top:8px}
+.player-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px dashed #e2e8f0}
+.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:8px}
 .status-online{background:#38a169}.status-off{background:#cbd5e0}
-.small{font-size:.85rem;color:#555}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:3000}
-.modal{background:white;padding:18px;border-radius:12px;width:380px;max-width:94%;box-shadow:0 8px 40px rgba(0,0,0,0.25)}
-.input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0}
-.btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
-.btn.primary{background:#4299e1;color:white}
-.btn.ghost{background:#e2e8f0;color:#2d3748}
-#toastArea{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:4000}
-.toast{background:#2d3748;color:white;padding:8px 12px;border-radius:8px;opacity:0.95;min-width:160px}
-@media(max-width:768px){.menu-options{padding:0 12px}}
-/* reuse other CSS minimally (stat cards, item cards etc) */
-.stat-card{background:linear-gradient(135deg,#48bb78,#38a169);color:white;padding:20px;border-radius:15px;text-align:center;box-shadow:0 4px 15px rgba(72,187,120,.3)}
+.rooms-list{max-height:260px;overflow:auto;margin-top:8px}
+.room-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px dashed #e2e8f0}
+.room-host{font-weight:600}
+.btn{padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+.btn.primary{background:#4299e1;color:#fff}
+.btn.ghost{background:#e6eefb;color:#2d3748}
+.toast{position:fixed;right:18px;bottom:18px;background:#2d3748;color:#fff;padding:8px 12px;border-radius:8px;opacity:.98;z-index:9999}
+.modal-backdrop{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:6000}
+.modal{background:#fff;padding:14px;border-radius:10px;width:380px;max-width:94%}
+.ping-box{display:flex;gap:8px;align-items:center}
+.signal-bars{display:flex;gap:2px;align-items:end;height:14px}
+.signal-bar{width:6px;background:#cbd5e0;border-radius:2px}
+.signal-bar.active{background:#38a169}
+@media(max-width:900px){ .menu-grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
 <div class="game-container">
-  <div id="mainMenu" class="main-menu">
-    <div class="header">
+  <div class="header">
+    <div>
       <h1>🏪 Idle Shop Keeper</h1>
-      <p class="subtitle">Build your retail empire!</p>
-      <div style="margin-top:12px">
-        <span class="small">Your player code:</span>
-        <span id="playerCode" class="player-code">—</span>
-        <button id="copyPlayerCode" class="copy-btn">Copy</button>
-      </div>
+      <div class="small">Build your retail empire — with multiplayer</div>
     </div>
-
-    <div class="menu-options">
-      <button class="menu-btn single-player" id="btnSingle">
-        <div class="btn-icon">🎮</div>
-        <div class="btn-text"><h3>Single Player</h3><p>Play solo and build your shop</p></div>
-      </button>
-
-      <div style="margin:10px 0;text-align:left">
-        <strong>Friends & Recent</strong>
-        <div style="display:flex;gap:10px;margin-top:8px;justify-content:center">
-          <button id="btnFriends" class="menu-btn multiplayer">👥 Friends</button>
-          <button id="btnRecent" class="menu-btn multiplayer">🕘 Recent</button>
-        </div>
-      </div>
-
-      <div class="multiplayer-section">
-        <h2>🌐 Multiplayer Options</h2>
-        <div style="display:grid;gap:10px">
-          <div style="display:flex;gap:10px">
-            <button class="menu-btn multiplayer" id="btnLAN"><div class="btn-icon">🏠</div><div class="btn-text"><h3>Local Network</h3><p>Play with friends on LAN</p></div></button>
-            <button class="menu-btn multiplayer" id="btnGlobal"><div class="btn-icon">🌍</div><div class="btn-text"><h3>Create/Join Room</h3><p>Global players</p></div></button>
-          </div>
-          <button class="menu-btn multiplayer" id="btnRandom"><div class="btn-icon">🎲</div><div class="btn-text"><h3>Random Match</h3><p>Find a random opponent</p></div></button>
-
-          <div>
-            <h4 style="margin:8px 0 6px 0">Available Players (online)</h4>
-            <div id="playersPanel" class="players-panel"><div class="small" style="color:#666;text-align:center">Loading players...</div></div>
-          </div>
+    <div style="text-align:right">
+      <div class="small">Player code: <span id="playerCode" class="player-code">—</span></div>
+      <div style="margin-top:8px" class="ping-box">
+        <div id="pingDisplay" class="small">Ping: — ms</div>
+        <div class="signal-bars" id="signalBars" aria-hidden="true">
+          <div class="signal-bar" id="bar1"></div>
+          <div class="signal-bar" id="bar2"></div>
+          <div class="signal-bar" id="bar3"></div>
+          <div class="signal-bar" id="bar4"></div>
+          <div class="signal-bar" id="bar5"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Basic game screen (kept minimal for brevity; full game UI still available in original) -->
-  <div id="gameScreen" style="display:none">
-    <div class="header"><h1>🏪 Idle Shop Keeper</h1></div>
-    <div class="stats" style="display:flex;gap:12px;flex-wrap:wrap">
-      <div class="stat-card" style="flex:1;min-width:180px"><h3>💰 Money</h3><p id="money" class="stat-value">$100</p></div>
-      <div class="stat-card" style="flex:1;min-width:180px"><h3>👥 Customers Served</h3><p id="customersServed" class="stat-value">0</p></div>
-      <div class="stat-card" style="flex:1;min-width:180px"><h3>⭐ Shop Level</h3><p id="shopLevel" class="stat-value">1</p></div>
-    </div>
+  <div class="menu" style="margin-top:16px">
+    <div class="menu-grid">
+      <!-- Left: main actions -->
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+            <div>
+              <button class="menu-btn" id="btnSingle"><div style="font-size:22px">🎮</div><div style="margin-left:8px"><strong>Single Player</strong><div class="small">Play solo</div></div></button>
+            </div>
+            <div>
+              <button id="btnExportConfig" class="btn ghost">Use custom Firebase</button>
+            </div>
+          </div>
+        </div>
 
-    <!-- minimal interactives for saving/export -->
-    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
-      <button id="saveBtn" class="btn primary">Save</button>
-      <button id="savesBtn" class="btn ghost">Saves</button>
-      <button id="exportBtn" class="btn primary">Export</button>
-      <input id="importFile" type="file" accept=".json" style="display:none" />
-      <button id="importBtn" class="btn ghost">Import</button>
-      <button id="backBtn" class="btn ghost">Back to Menu</button>
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Multiplayer</h3>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <button id="btnLAN" class="btn primary">Create LAN Room</button>
+            <button id="btnGlobal" class="btn ghost">Create/Join Room</button>
+            <button id="btnRandom" class="btn ghost">Random</button>
+          </div>
+
+          <div style="margin-top:6px">
+            <div class="small">Available players:</div>
+            <div id="playersPanel" class="players-panel"><div class="small" style="color:#666;text-align:center">Loading...</div></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="small">Active rooms:</div>
+            <div id="roomsList" class="rooms-list"><div class="small" style="color:#666;text-align:center">Loading rooms...</div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: info card -->
+      <div>
+        <div class="card">
+          <h4 style="margin:0 0 8px 0">Saves & Tools</h4>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button id="saveBtn" class="btn primary">Save (local + server)</button>
+            <button id="savesBtn" class="btn ghost">Open Saves</button>
+            <button id="exportBtn" class="btn ghost">Export</button>
+            <button id="importBtn" class="btn ghost">Import</button>
+          </div>
+
+          <div style="margin-top:12px">
+            <label class="small">Auto-clean rooms (host only)</label>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="toggleAutoCleaner" class="btn ghost" title="Hidden for non-hosts">Auto-clean: OFF</button>
+            </div>
+            <div class="small" style="color:#666;margin-top:8px">Only the host (room creator) sees the Auto-clean control. Non-hosts cannot remove rooms.</div>
+          </div>
+
+          <div style="margin-top:10px" class="small">Favicon may 404 — that's harmless; put a /favicon.ico if you want one.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="modalRoot" style="position:fixed;inset:0;pointer-events:none;z-index:3500"></div>
-<div id="toastArea"></div>
+<!-- modal root + file input -->
+<div id="modalRoot" style="position:fixed;inset:0;pointer-events:none;z-index:8000"></div>
+<input id="importFile" type="file" accept=".json" style="display:none" />
 
+<!-- script (module) -->
 <script type="module">
-/* ------------- Firebase + game sync + players list ------------- */
-/* Note: requires Firebase project with Anonymous Auth enabled and RTDB rules that allow auth != null */
+/*
+ Authoritative multiplayer using Firebase Realtime Database as coordinator:
+ - Rooms structure:
+   rooms/{roomId}:
+     host: p-xxxx
+     createdAt: timestamp
+     expiresAt: timestamp
+     state: { authoritative game state object }
+     actions: { pushId: { from: playerId, type: 'buy'|'serve'|'custom', payload: {...}, ts } }
+     participants: { playerId: { lastSeen } }
+ - Host becomes authoritative processor: listens for actions and applies to rooms/{roomId}/state and clears actions.
+ - Clients push actions and listen to rooms/{roomId}/state updates.
+ - onDisconnect used to remove presence and remove host's room.
+ - TTL sweeper runs client-side periodically; only host or clients with autoClean enabled remove expired rooms.
+ - Ping & signal: when a data channel with a peer exists, ping round-trip is measured via datachannel 'ping'/'pong' messages; signal bars computed from ping.
+ - IMPORTANT: Firebase DB rules must allow authenticated writes to /players and /rooms. Enable Anonymous Auth and set RTDB rules accordingly.
+*/
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, onChildAdded, child, get, remove, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, onChildAdded, child, get, remove, update, onDisconnect, query, orderByChild } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
-/* ---------- CONFIG - replace if needed ---------- */
-const firebaseConfig = {
+/* ---------------- CONFIG - default (replace via "Use custom Firebase") --------------- */
+let firebaseConfig = {
   apiKey: "AIzaSyBn4khIpi57YvqQX2urCup2mCvpVUZ0j8k",
   authDomain: "idle-shop-keeper.firebaseapp.com",
   databaseURL: "https://idle-shop-keeper-default-rtdb.firebaseio.com",
@@ -125,496 +160,602 @@ const firebaseConfig = {
   appId: "1:117380146729:web:8180d507d5a2aae45e5e38",
   measurementId: "G-VS2Z5T0Y9Y"
 };
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
 
-/* ---------- small UI helpers ---------- */
+/* ----------------- Initialize Firebase app & services ----------------- */
+let app, db, auth;
+function initFirebase(cfg) {
+  try {
+    app = initializeApp(cfg);
+    db = getDatabase(app);
+    auth = getAuth(app);
+  } catch (e) {
+    console.error('Firebase init failed', e);
+    toast('Firebase init error — check console');
+  }
+}
+initFirebase(firebaseConfig);
+
+/* ----------------- small UI helpers ----------------- */
 const modalRoot = document.getElementById('modalRoot');
-function showModal(html, opts = {}) {
+function showModal(html, opts={}) {
   const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop'; backdrop.style.pointerEvents='auto';
-  const box = document.createElement('div'); box.className='modal'; box.innerHTML = html;
+  const box = document.createElement('div'); box.className = 'modal'; box.innerHTML = html;
   backdrop.appendChild(box); modalRoot.appendChild(backdrop);
-  const close = () => { try{ backdrop.remove(); }catch(e){} if(opts.onClose) opts.onClose(); };
+  function close(){ try{ backdrop.remove(); }catch(e){} if(opts.onClose) opts.onClose(); }
   box.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', close));
   return { box, close };
 }
-function toast(msg, t = 3000) {
-  const area = document.getElementById('toastArea'); const el = document.createElement('div'); el.className='toast'; el.textContent = msg; area.appendChild(el);
-  setTimeout(()=> el.style.opacity='0', t-350); setTimeout(()=> { try{ el.remove(); }catch(e){} }, t);
+function toast(msg, t=3000){
+  const el = document.createElement('div'); el.className='toast'; el.textContent=msg; document.body.appendChild(el);
+  setTimeout(()=> el.style.opacity='0', t-350); setTimeout(()=> el.remove(), t);
 }
 
-/* ---------- storage keys & helpers ---------- */
-const STORAGE_KEY = 'idle_shop_saves_v1';
-const META_KEY = 'idle_shop_meta_v1';
-function safeParse(s, fallback={}){ try{return JSON.parse(s);}catch(e){return fallback;} }
-
-/* ---------- stable id generation ---------- */
-function generateId() { return (crypto && crypto.randomUUID) ? 'p-'+crypto.randomUUID() : 'p-'+Math.random().toString(36).slice(2,10); }
-
-/* ---------- game state (kept simple) ---------- */
+/* ----------------- game state (authoritative model kept compact for demo) ----------------- */
 let gameState = {
-  money: 100,
-  customersServed: 0,
-  shopLevel: 1,
-  inventory: {},
-  upgrades: { autoCustomer:0, fasterService:0, betterPrices:0, moreCustomers:0 },
-  customers: [],
-  workers: { manager:{level:0,assigned:'idle'}, restocker:{level:0,assigned:'idle'}, server:{level:0,assigned:'idle'} },
-  playerId: null,
-  unlockedCount: 6,
-  friends: [],
-  recentOpponents: [],
-  autosave: true
+  money: 100, customersServed: 0, shopLevel:1,
+  inventory: {}, upgrades: {}, customers: [], workers: {}
 };
+const LOCAL_META_KEY = 'idle_shop_meta_v1';
+let myPlayerId = null;
+let myAnonUid = null;
+let autoCleanerEnabled = false;
 
-/* ---------- items (same generation) ---------- */
-const TOTAL_ITEMS = 5000, items = {};
-function generateItems(){
-  const base = [
-    {key:'apple',emoji:'🍎',name:'Apple',buyPrice:5,sellPrice:8},
-    {key:'bread',emoji:'🍞',name:'Bread',buyPrice:8,sellPrice:12},
-    {key:'milk',emoji:'🥛',name:'Milk',buyPrice:12,sellPrice:18},
-    {key:'candy',emoji:'🍬',name:'Candy',buyPrice:15,sellPrice:25},
-    {key:'coffee',emoji:'☕',name:'Coffee',buyPrice:20,sellPrice:35},
-    {key:'cake',emoji:'🎂',name:'Cake',buyPrice:30,sellPrice:50}
-  ];
-  base.forEach(it=>{ items[it.key]=it; gameState.inventory[it.key]=gameState.inventory[it.key]||0; });
-  for(let i=base.length+1;i<=TOTAL_ITEMS;i++){
-    const key='item_'+i; const buy=5+Math.floor(i*0.8); const sell=Math.floor(buy*1.6);
-    items[key]={emoji:'🎁',name:'Item '+i,buyPrice:buy,sellPrice:sell}; gameState.inventory[key]=gameState.inventory[key]||0;
-  }
-}
+/* ----------------- helpers ----------------- */
+function generateLocalId(){ return (crypto && crypto.randomUUID) ? 'p-'+crypto.randomUUID() : 'p-'+Math.random().toString(36).slice(2,9); }
 
-/* ---------- UI update functions ---------- */
-function updateStats(){
-  document.getElementById('money').textContent='$'+gameState.money;
-  document.getElementById('customersServed').textContent=gameState.customersServed;
-  document.getElementById('shopLevel').textContent=gameState.shopLevel;
-  document.getElementById('playerCode').textContent=gameState.playerId || '—';
-}
-function updateAllUI(){ updateStats(); /* other UI updates (inventory / buttons) are minimal here */ }
+/* ----------------- UI refs ----------------- */
+const playerCodeEl = document.getElementById('playerCode');
+const playersPanel = document.getElementById('playersPanel');
+const roomsListEl = document.getElementById('roomsList');
+const toggleAutoCleanerBtn = document.getElementById('toggleAutoCleaner');
+const pingDisplay = document.getElementById('pingDisplay');
+const barEls = [1,2,3,4,5].map(i=>document.getElementById('bar'+i));
 
-/* ---------- save helpers (single implementation) ---------- */
-function getLocalSaves(){ return safeParse(localStorage.getItem(STORAGE_KEY),'{}') || {}; }
-function setLocalSaves(s){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){} }
-
-/* single save function (no duplicate name) */
-async function saveSlot(slotName){
-  const name = slotName || ('save-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'));
-  const saves = getLocalSaves(); saves[name] = { state: JSON.parse(JSON.stringify(gameState)), ts: Date.now() }; setLocalSaves(saves);
-  // upload to RTDB under players/{playerId}/saves/{name}
-  try {
-    if(gameState.playerId) await set(ref(db, `players/${gameState.playerId}/saves/${name}`), saves[name]);
-    toast('Saved: ' + name);
-  } catch(e) { toast('Saved locally (upload failed)'); }
-}
-
-/* load */
-async function loadSlot(name){
-  const saves = getLocalSaves();
-  if(saves[name]){ gameState = JSON.parse(JSON.stringify(saves[name].state)); postLoadRestore(); toast('Loaded: '+name); return; }
-  // try server
-  try {
-    if(gameState.playerId){
-      const snap = await get(ref(db, `players/${gameState.playerId}/saves/${name}`));
-      if(snap.exists()){ const payload = snap.val(); gameState = JSON.parse(JSON.stringify(payload.state)); postLoadRestore(); toast('Loaded from server: '+name); return; }
-    }
-  } catch(e){}
-  toast('Save not found: '+name);
-}
-function postLoadRestore(){ generateItems(); gameState.inventory = gameState.inventory || {}; updateAllUI(); }
-
-/* quickSave */
-function quickSave(){
-  try{
-    const saves=getLocalSaves(); const key='quick_'+gameState.playerId;
-    saves[key]={ state: JSON.parse(JSON.stringify(gameState)), ts: Date.now() }; setLocalSaves(saves);
-    if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{});
-  }catch(e){}
-}
-
-/* ---------- Export / Import ---------- */
-function exportSaveFile(){
-  const payload = { savedAt: Date.now(), playerId: gameState.playerId, state: gameState };
-  const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-  const a=document.createElement('a'); a.href=data; a.download=`idle-shop-${gameState.playerId||'anon'}-${new Date().toISOString().slice(0,19)}.json`; document.body.appendChild(a); a.click(); a.remove();
-  toast('Export started');
-}
-function importSaveFile(file){
-  if(!file){ toast('No file'); return; }
-  const r=new FileReader();
-  r.onload = (e)=>{
-    try{
-      const p = JSON.parse(e.target.result);
-      if(!p || !p.state){ toast('Invalid file'); return; }
-      gameState = p.state; postLoadRestore();
-      // mirror into local and server quick slot
-      const saves = getLocalSaves(); const key = 'import_'+(p.playerId||'import')+'_'+Date.now(); saves[key]={ state: JSON.parse(JSON.stringify(gameState)), ts:Date.now() }; setLocalSaves(saves);
-      if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{});
-      toast('Imported');
-    }catch(e){ console.warn(e); toast('Failed import'); }
-  };
-  r.readAsText(file);
-}
-
-/* ---------- players list & presence ---------- */
-/* write presence + onDisconnect cleanup */
-async function writePresence(){
-  if(!gameState.playerId) return;
-  try{
-    const pRef = ref(db, `players/${gameState.playerId}/presence`);
-    await set(pRef, { lastSeen: Date.now(), playerId: gameState.playerId });
-    // register onDisconnect to clear presence (best-effort)
-    try { await onDisconnect(pRef).remove(); } catch(e) { /* if onDisconnect not supported in this context it will fail; it's optional */ }
-  }catch(e){ console.warn('presence write failed', e); }
-}
-
-/* render players panel live */
-function renderPlayersPanel(allPlayers){
-  const panel = document.getElementById('playersPanel'); panel.innerHTML = '';
-  const rows = [];
-  Object.keys(allPlayers || {}).forEach(pid=>{
-    if(pid === gameState.playerId) return;
-    const p = allPlayers[pid];
-    const pres = p.presence || {};
-    const last = pres.lastSeen || 0; const online = (Date.now() - last) < 60_000;
-    rows.push({ pid, online, meta: p.meta || {} });
-  });
-  if(rows.length === 0){ panel.innerHTML = '<div class="small" style="text-align:center;color:#666">No players found</div>'; return; }
-  rows.sort((a,b)=> (b.online?1:0) - (a.online?1:0));
-  rows.forEach(r=>{
-    const div = document.createElement('div'); div.className='player-row';
-    const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
-    const dot = document.createElement('span'); dot.className = 'status-dot ' + (r.online ? 'status-online' : 'status-off'); left.appendChild(dot);
-    const name = document.createElement('div'); name.innerHTML = `<strong style="margin-left:8px">${r.pid}</strong><div class="small" style="color:#666">${r.online ? 'Online' : 'Offline'}</div>`; left.appendChild(name);
-    const right = document.createElement('div');
-    const inviteBtn = document.createElement('button'); inviteBtn.className='btn primary'; inviteBtn.textContent='Invite';
-    inviteBtn.onclick = () => invitePlayer(r.pid);
-    const joinBtn = document.createElement('button'); joinBtn.className='btn ghost'; joinBtn.textContent='Join Room';
-    joinBtn.onclick = () => tryJoinPlayerRoom(r.pid);
-    right.appendChild(inviteBtn); right.appendChild(joinBtn); right.style.display='flex'; right.style.gap='6px';
-    div.appendChild(left); div.appendChild(right);
-    panel.appendChild(div);
-  });
-}
-
-/* listen / refresh players */
-onValue(ref(db, 'players'), snapshot => {
-  const all = snapshot.val() || {};
-  renderPlayersPanel(all);
+/* ----------------- Firebase auth (anonymous) ----------------- */
+signInAnonymously(getAuth(app)).catch(err=>{
+  console.warn('anon sign-in failed', err);
+  toast('Anonymous sign-in failed — check Firebase config and DB rules');
 });
 
-/* invite: create a room and write invite under players/{pid}/invites/{roomId} */
-async function invitePlayer(pid){
-  if(!gameState.playerId) { toast('Player id missing'); return; }
-  const rid = Math.random().toString(36).slice(2,10);
-  try{
-    await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId });
-    await set(ref(db, `players/${pid}/invites/${rid}`), { from: gameState.playerId, room: rid, ts: Date.now() });
-    toast('Invite sent to ' + pid);
-    // optionally open room for host
-    showRoomCreatedModal(rid);
-  }catch(e){ console.warn(e); toast('Invite failed'); }
-}
-
-/* try to join a player's room (search for room with host=pid and open offer present) */
-async function tryJoinPlayerRoom(pid){
-  try{
-    const roomsSnap = await get(ref(db, 'rooms')); if(!roomsSnap.exists()){ toast('No active rooms'); return; }
-    const rooms = roomsSnap.val();
-    for(const rid in rooms){
-      if(rooms[rid].host === pid){
-        // open join modal to confirm
-        const content = `<h3>Join Room</h3><div style="margin-top:8px">Join room <strong>${rid}</strong> hosted by ${pid}?</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Cancel</button><button id="confirmJoin" class="btn primary">Join</button></div>`;
-        const m = showModal(content);
-        m.box.querySelector('#confirmJoin').addEventListener('click', async ()=> {
-          m.close();
-          await joinRoomById(rid);
-        });
-        return;
-      }
-    }
-    toast('No room found for that player');
-  }catch(e){ console.warn(e); toast('Failed to query rooms'); }
-}
-
-/* show room created modal */
-function showRoomCreatedModal(rid){
-  showModal(`<h3>Room Created</h3><div style="margin-top:8px"><div class="small" style="color:#666">Share this room ID:</div><div style="margin-top:8px;padding:8px;border-radius:8px;background:#f7fafc;border:1px solid #e2e8f0;text-align:center;font-weight:bold">${rid}</div></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
-}
-
-/* ---------- minimal WebRTC + datachannel game sync ---------- */
-let pc = null, dataChannel = null, roomIdActive = null;
-
-/* create peer connection and wire ICE <-> db candidates */
-function createPeerConnection() {
-  const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  const conn = new RTCPeerConnection(configuration);
-  conn.onicecandidate = (e) => {
-    if(e.candidate && roomIdActive) {
-      push(ref(db, `rooms/${roomIdActive}/candidates/${gameState.playerId}`), e.candidate.toJSON()).catch(()=>{});
-    }
-  };
-  conn.ondatachannel = (ev) => {
-    dataChannel = ev.channel;
-    setupDataChannelHandlers();
-  };
-  conn.onconnectionstatechange = () => {
-    if(conn.connectionState === 'connected') toast('Peer connected');
-    if(conn.connectionState === 'disconnected' || conn.connectionState === 'failed') toast('Peer disconnected');
-  };
-  pc = conn; return conn;
-}
-function setupDataChannelHandlers(){
-  if(!dataChannel) return;
-  dataChannel.onopen = ()=> { console.log('DC open'); /* send initial state */ sendGameStateSnapshot(); };
-  dataChannel.onmessage = (ev) => {
-    try{
-      const msg = JSON.parse(ev.data);
-      if(msg.type === 'syncState') {
-        // Apply received snapshot carefully (only allowed fields)
-        const s = msg.state;
-        if(s && typeof s === 'object') {
-          // Only apply safe keys, avoid full overwrite of player data
-          gameState.money = s.money || gameState.money;
-          gameState.customersServed = s.customersServed || gameState.customersServed;
-          gameState.shopLevel = s.shopLevel || gameState.shopLevel;
-          // merge inventory small amounts (for demonstration we accept numbers)
-          if(s.inventory) {
-            Object.keys(s.inventory).slice(0,20).forEach(k => { gameState.inventory[k] = s.inventory[k]; });
-          }
-          updateAllUI();
-        }
-      } else if(msg.type === 'requestSync') {
-        sendGameStateSnapshot();
-      }
-    }catch(e){ console.warn('dc msg parse', e); }
-  };
-}
-function sendGameStateSnapshot(){
-  if(!dataChannel || dataChannel.readyState !== 'open') return;
-  // send compact snapshot (limit inventory keys to avoid huge payloads)
-  const invKeys = Object.keys(gameState.inventory).slice(0,12);
-  const inv = {}; invKeys.forEach(k => inv[k] = gameState.inventory[k]);
-  const payload = { type:'syncState', state:{ money:gameState.money, customersServed:gameState.customersServed, shopLevel:gameState.shopLevel, inventory:inv } };
-  dataChannel.send(JSON.stringify(payload));
-}
-
-/* host: create offer and write to rooms/{rid}/offer */
-async function hostRoom(rid){
-  roomIdActive = rid;
-  createPeerConnection();
-  // create data channel as host
-  dataChannel = pc.createDataChannel('game');
-  setupDataChannelHandlers();
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-  await set(ref(db, `rooms/${rid}/offer`), { sdp: offer.sdp, type: offer.type, from: gameState.playerId, createdAt: Date.now() });
-  // listen for answer
-  onValue(ref(db, `rooms/${rid}/answer`), async snap => {
-    const val = snap.val(); if(!val || !val.sdp) return;
-    await pc.setRemoteDescription({ type: val.type, sdp: val.sdp }).catch(()=>{});
-  });
-  // listen candidates posted by remote
-  onChildAdded(ref(db, `rooms/${rid}/candidates`), snap => {
-    const obj = snap.val(); // object keyed by playerId keys; flatten
-    if(!obj) return;
-    Object.values(obj).forEach(async candidate => { try{ await pc.addIceCandidate(candidate); }catch(e){} });
-  });
-}
-
-/* joiner: read offer, create answer */
-async function joinRoomById(rid){
-  roomIdActive = rid;
-  createPeerConnection();
-  // fetch offer
-  const offerSnap = await get(ref(db, `rooms/${rid}/offer`));
-  if(!offerSnap.exists()){ toast('No offer in room ' + rid); return; }
-  const offer = offerSnap.val();
-  await pc.setRemoteDescription({ type: offer.type, sdp: offer.sdp }).catch(()=>{});
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-  await set(ref(db, `rooms/${rid}/answer`), { sdp: answer.sdp, type: answer.type, from: gameState.playerId, answeredAt: Date.now() });
-  // listen for candidates
-  onChildAdded(ref(db, `rooms/${rid}/candidates`), snap => {
-    const obj = snap.val(); if(!obj) return;
-    Object.values(obj).forEach(async candidate => { try{ await pc.addIceCandidate(candidate); } catch(e){} });
-  });
-}
-
-/* ---------- listeners for invites (others invite you) ---------- */
-onValue(ref(db, `players`), snapshot => {
-  // we handled rendering players list elsewhere; keep cheap
-});
-
-/* if an invite appears for me, show modal to accept */
-onValue(ref(db, `players`), snapshot => {
-  const players = snapshot.val() || {};
-  const me = players[gameState.playerId] || {};
-  const invites = (me.invites) || {};
-  const keys = Object.keys(invites);
-  if(keys.length > 0) {
-    // take first invite
-    const id = keys[0]; const inv = invites[id];
-    if(inv && inv.room) {
-      const content = `<h3>Invite</h3><div style="margin-top:8px">Player <strong>${inv.from}</strong> invited you to room <strong>${inv.room}</strong></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Ignore</button><button id="acceptInvite" class="btn primary">Join</button></div>`;
-      const m = showModal(content, { onClose(){} });
-      m.box.querySelector('#acceptInvite').addEventListener('click', async ()=>{
-        m.close();
-        // remove invite and join
-        await remove(ref(db, `players/${gameState.playerId}/invites/${id}`)).catch(()=>{});
-        await joinRoomById(inv.room);
-      });
-    }
-  }
-});
-
-/* ---------- UI wiring ---------- */
-document.getElementById('btnSingle').addEventListener('click', () => startSinglePlayer());
-document.getElementById('btnFriends').addEventListener('click', openFriendsDialog);
-document.getElementById('btnRecent').addEventListener('click', openRecentDialog);
-document.getElementById('btnGlobal').addEventListener('click', () => {
-  // create / join modal
-  const content = `<h3>Rooms</h3><div style="margin-top:8px"><button id="createRoomBtn" class="btn primary">Create Room</button><button id="joinRoomBtn" class="btn ghost" style="margin-left:8px">Join by ID</button></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
-  const m = showModal(content);
-  m.box.querySelector('#createRoomBtn').addEventListener('click', async ()=>{
-    m.close();
-    const rid = Math.random().toString(36).slice(2,10);
-    await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId });
-    hostRoom(rid); showRoomCreatedModal(rid);
-  });
-  m.box.querySelector('#joinRoomBtn').addEventListener('click', ()=> {
-    m.close(); joinRoomPrompt();
-  });
-});
-document.getElementById('btnLAN').addEventListener('click', ()=> {
-  const rid = Math.random().toString(36).slice(2,10); showRoomCreatedModal(rid); hostRoom(rid);
-});
-document.getElementById('btnRandom').addEventListener('click', async ()=>{
-  // try to find room with offer and no answer; else create
-  try{
-    const roomsSnap = await get(ref(db, 'rooms'));
-    if(roomsSnap.exists()){
-      const rooms = roomsSnap.val();
-      for(const rid in rooms){
-        const ansSnap = await get(ref(db, `rooms/${rid}/answer`));
-        if(!ansSnap.exists()){
-          // join this
-          await joinRoomById(rid); toast('Random matched to ' + rid); return;
-        }
-      }
-    }
-    // none found -> create and host
-    const newId = Math.random().toString(36).slice(2,10);
-    await set(ref(db, `rooms/${newId}`), { createdAt: Date.now(), host: gameState.playerId });
-    hostRoom(newId); showRoomCreatedModal(newId);
-  }catch(e){ console.warn(e); toast('Random match failed'); }
-});
-
-document.getElementById('copyPlayerCode').addEventListener('click', () => {
-  const code = gameState.playerId || '';
-  if(!code) { toast('Not ready'); return; }
-  navigator.clipboard?.writeText(code).then(()=>toast('Copied')).catch(()=>toast('Copy failed'));
-});
-
-document.getElementById('saveBtn').addEventListener('click', ()=> saveSlot());
-document.getElementById('savesBtn').addEventListener('click', ()=> openSavesDialog());
-document.getElementById('exportBtn').addEventListener('click', ()=> exportSaveFile());
-document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
-document.getElementById('importFile').addEventListener('change', (e)=> { const f=e.target.files && e.target.files[0]; importSaveFile(f); e.target.value=''; });
-document.getElementById('backBtn').addEventListener('click', ()=> { document.getElementById('gameScreen').style.display='none'; document.getElementById('mainMenu').style.display='block'; });
-
-/* friends/recent dialogs */
-function openFriendsDialog(){
-  const content = `<h3>Friends</h3><div style="margin-top:8px"><input id="friendInput" class="input" placeholder="Enter player code to add"/></div><div style="display:flex;gap:8px;margin-top:8px"><button id="addFriendBtn" class="btn primary">Add</button><button class="btn ghost" data-close>Close</button></div><div style="margin-top:10px"><h4>Your friends</h4><div style="max-height:160px;overflow:auto">${gameState.friends.map(f=>`<div style="padding:6px 0">${f}</div>`).join('') || '<div class="small" style="color:#666">No friends</div>'}</div></div>`;
-  const m = showModal(content);
-  m.box.querySelector('#addFriendBtn').addEventListener('click', ()=> {
-    const v = m.box.querySelector('#friendInput').value.trim(); if(!v){ toast('Enter code'); return; } addFriendId(v); m.close(); toast('Friend added');
-  });
-}
-function openRecentDialog(){
-  showModal(`<h3>Recent</h3><div style="max-height:240px;overflow:auto;margin-top:8px">${gameState.recentOpponents.map(r=>`<div style="padding:6px 0">${r}</div>`).join('') || '<div class="small" style="color:#666">No recents</div>'}</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
-}
-
-/* saves dialog */
-function openSavesDialog(){
-  const saves = getLocalSaves(); const keys = Object.keys(saves);
-  const html = `<h3>Saves</h3><div style="max-height:260px;overflow:auto;margin-top:8px">${keys.map(k=>`<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><div style="flex:1"><strong>${k}</strong><div class="small" style="color:#666">${new Date(saves[k].ts).toLocaleString()}</div></div><div style="display:flex;gap:6px"><button class="btn primary" data-load="${k}">Load</button><button class="btn ghost" data-del="${k}">Delete</button></div></div>`).join('') || '<div class="small" style="color:#666">No saves</div>'}</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
-  const m = showModal(html);
-  m.box.querySelectorAll('[data-load]').forEach(b=>b.addEventListener('click', ()=> { const k=b.getAttribute('data-load'); m.close(); loadSlot(k); }));
-  m.box.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', ()=> { const k=b.getAttribute('data-del'); const s=getLocalSaves(); delete s[k]; setLocalSaves(s); toast('Deleted '+k); m.close(); }));
-}
-
-/* ---------- utility: joinRoom prompt ---------- */
-function joinRoomPrompt(){
-  const nm = 'joinRoomInput_'+Math.random().toString(36).slice(2,6);
-  const html = `<h3>Join Room</h3><div style="margin-top:8px"><input id="${nm}" class="input" placeholder="Enter room id"/></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Cancel</button><button id="doJoin" class="btn primary">Join</button></div>`;
-  const m = showModal(html);
-  m.box.querySelector('#doJoin').addEventListener('click', async ()=>{ const rid = m.box.querySelector('#'+nm).value.trim(); if(!rid){ toast('Enter room id'); return; } m.close(); await joinRoomById(rid); });
-}
-
-/* ---------- initialization: auth, id, items, presence ---------- */
-signInAnonymously(auth).catch(err => { console.warn('anon sign-in failed', err); toast('Anonymous sign-in failed (check Firebase config)'); });
-
-onAuthStateChanged(auth, (user)=>{
+onAuthStateChanged(getAuth(app), (user) => {
   if(user){
-    // prefer persisted local META playerId if exists (so user keeps same id across sessions on same browser)
-    const savedMeta = safeParse(localStorage.getItem(META_KEY), {});
-    if(savedMeta && savedMeta.playerId) gameState.playerId = savedMeta.playerId;
-    else gameState.playerId = 'p-'+user.uid;
+    myAnonUid = user.uid;
+    // load local meta
+    const saved = JSON.parse(localStorage.getItem(LOCAL_META_KEY) || '{}');
+    if(saved && saved.playerId) myPlayerId = saved.playerId;
+    else myPlayerId = 'p-' + user.uid;
     // persist meta
-    localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents }));
-    // presence & meta push
-    writePresence();
-    set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() }).catch(()=>{});
-    updateAllUI();
+    localStorage.setItem(LOCAL_META_KEY, JSON.stringify({ playerId: myPlayerId }));
+    playerCodeEl.textContent = myPlayerId;
+    // now safe to write presence/meta
+    ensurePlayerNode();
+    attachRealtimeListeners();
+    updateUI();
   } else {
     // not signed in yet
   }
 });
 
-// read local meta if present
-try{
-  const meta = safeParse(localStorage.getItem(META_KEY), {});
-  if(meta && meta.playerId) gameState.playerId = meta.playerId;
-  gameState.friends = meta.friends || gameState.friends;
-  gameState.recentOpponents = meta.recent || gameState.recentOpponents;
-}catch(e){}
+/* Wait for auth before writing anything to DB — this avoids permission_denied issues */
+async function ensurePlayerNode(){
+  if(!db || !myPlayerId) return;
+  const metaRef = ref(db, `players/${myPlayerId}/meta`);
+  const presenceRef = ref(db, `players/${myPlayerId}/presence`);
+  try{
+    await set(metaRef, { createdAt: Date.now(), playerId: myPlayerId });
+    await set(presenceRef, { lastSeen: Date.now(), playerId: myPlayerId });
+    try{ await onDisconnect(presenceRef).remove(); }catch(e){/* optional */ }
+  } catch(e){
+    console.warn('ensurePlayerNode failed', e);
+    toast('Permission denied writing player node — check DB rules or ensure anonymous auth is enabled.');
+  }
+}
 
-/* ensure id */
-if(!gameState.playerId) { gameState.playerId = generateId(); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); }
+/* ----------------- listen for players & rooms ----------------- */
+function attachRealtimeListeners(){
+  if(!db) return;
+  // players list
+  onValue(ref(db, 'players'), snap=>{
+    const all = snap.val() || {};
+    renderPlayers(all);
+  });
+  // rooms list (ordered by createdAt)
+  const q = query(ref(db, 'rooms'));
+  onValue(q, snap=>{
+    const rooms = snap.val() || {};
+    renderRoomsList(rooms);
+  });
+}
 
-generateItems(); updateAllUI();
-setInterval(()=> { quickSave(); writePresence(); }, 15000);
+/* Render players */
+function renderPlayers(all){
+  playersPanel.innerHTML = '';
+  const keys = Object.keys(all).sort();
+  if(keys.length === 0){ playersPanel.innerHTML = '<div class="small" style="color:#666">No players</div>'; return; }
+  keys.forEach(pid=>{
+    const node = all[pid];
+    if(!node) return;
+    const pres = node.presence || {};
+    const last = pres.lastSeen || 0; const online = (Date.now() - last) < 90_000;
+    const div = document.createElement('div'); div.className='player-row';
+    div.innerHTML = `<div><span class="status-dot ${online?'status-online':'status-off'}"></span><div style="display:inline-block;margin-left:8px"><strong>${pid}</strong><div class="small" style="color:#666">${online?'Online':'Offline'}</div></div></div>`;
+    const btns = document.createElement('div');
+    const invite = document.createElement('button'); invite.className='btn primary'; invite.textContent='Invite';
+    invite.onclick = ()=> invitePlayer(pid);
+    const join = document.createElement('button'); join.className='btn ghost'; join.textContent='Join Room';
+    join.onclick = ()=> tryJoinPlayerRoom(pid);
+    btns.appendChild(invite); btns.appendChild(join);
+    div.appendChild(btns);
+    playersPanel.appendChild(div);
+  });
+}
 
-/* ---------- helper friend functions ---------- */
-function addFriendId(id){ if(!id) return; gameState.friends.unshift(id); gameState.friends = [...new Set(gameState.friends)].slice(0,50); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() }).catch(()=>{}); }
+/* Render rooms list stacked */
+function renderRoomsList(rooms){
+  roomsListEl.innerHTML = '';
+  const keys = Object.keys(rooms || {});
+  if(keys.length === 0){ roomsListEl.innerHTML = '<div class="small" style="color:#666">No rooms</div>'; return; }
+  // sort by createdAt desc
+  keys.sort((a,b)=> (rooms[b].createdAt||0) - (rooms[a].createdAt||0));
+  keys.forEach(rid=>{
+    const r = rooms[rid];
+    if(!r) return;
+    const host = r.host || '—';
+    const expires = r.expiresAt || 0;
+    const expired = Date.now() > expires;
+    const row = document.createElement('div'); row.className='room-row';
+    row.innerHTML = `<div><div class="room-host">${rid}</div><div class="small" style="color:#666">host: ${host} · ${new Date(r.createdAt||0).toLocaleString()} ${expired? '· (expired)' : ''}</div></div>`;
+    const controls = document.createElement('div');
+    const view = document.createElement('button'); view.className='btn ghost'; view.textContent='View';
+    view.onclick = ()=> openRoomModal(rid, r);
+    controls.appendChild(view);
+    if(r.host === myPlayerId){
+      const openBtn = document.createElement('button'); openBtn.className='btn primary'; openBtn.textContent='Open (host)';
+      openBtn.onclick = ()=> openRoomAsHost(rid, r);
+      controls.appendChild(openBtn);
+    } else {
+      const joinBtn = document.createElement('button'); joinBtn.className='btn primary'; joinBtn.textContent='Join';
+      joinBtn.onclick = ()=> joinRoomById(rid);
+      controls.appendChild(joinBtn);
+    }
+    row.appendChild(controls);
+    roomsListEl.appendChild(row);
+  });
+}
 
-/* ---------- listen players list (live) ---------- */
-onValue(ref(db, 'players'), snapshot => {
-  const all = snapshot.val() || {};
-  renderPlayersPanel(all);
+/* ----------------- invite / create / join helpers ----------------- */
+async function invitePlayer(pid){
+  if(!db) return;
+  const rid = Math.random().toString(36).slice(2,9);
+  try{
+    // create room with authoritative empty state
+    await set(ref(db, `rooms/${rid}`), { host: myPlayerId, createdAt: Date.now(), expiresAt: Date.now() + 1000*60*60, state: gameState, participants: { [myPlayerId]: { lastSeen: Date.now() } } });
+    // write invite under target player's node
+    await set(ref(db, `players/${pid}/invites/${rid}`), { from: myPlayerId, room: rid, ts: Date.now() });
+    toast('Invite sent: ' + pid);
+    // host room locally
+    laterHostRoom(rid);
+  } catch(e){ console.warn(e); toast('Invite failed (check permissions/rules)'); }
+}
+
+async function createRoomAndHost(){
+  if(!db) return;
+  const rid = Math.random().toString(36).slice(2,9);
+  try{
+    await set(ref(db, `rooms/${rid}`), { host: myPlayerId, createdAt: Date.now(), expiresAt: Date.now() + 1000*60*60, state: gameState, participants: { [myPlayerId]: { lastSeen: Date.now() } } });
+    toast('Room created: ' + rid);
+    laterHostRoom(rid);
+  } catch(e){ console.warn(e); toast('Create room failed'); }
+}
+
+/* When hosting, we need the host to process incoming actions */
+async function laterHostRoom(rid){
+  // small delay so UI updates reflect new room
+  setTimeout(()=> hostRoom(rid), 250);
+}
+
+/* Join room by ID (client) */
+async function joinRoomById(rid){
+  if(!db) return;
+  // add participant
+  try {
+    await set(ref(db, `rooms/${rid}/participants/${myPlayerId}`), { lastSeen: Date.now(), joinedAt: Date.now() });
+  } catch(e){ console.warn('join participant set failed', e); toast('Join failed (check permissions)'); return; }
+  // open local client room UI
+  openRoomAsClient(rid);
+}
+
+/* Try to find a room hosted by given player and join it */
+async function tryJoinPlayerRoom(pid){
+  try {
+    const snap = await get(ref(db, 'rooms'));
+    if(!snap.exists()){ toast('No active rooms'); return; }
+    const rooms = snap.val();
+    for(const rid in rooms){
+      if(rooms[rid].host === pid){ await joinRoomById(rid); return; }
+    }
+    toast('No room found for that player');
+  } catch(e){ console.warn(e); toast('Query failed'); }
+}
+
+/* ----------------- Authoritative host logic ----------------- */
+
+/*
+ Host responsibilities:
+ - Listen to rooms/{rid}/actions (onChildAdded)
+ - For each action: validate, apply to rooms/{rid}/state (authoritative), then remove that action entry
+ - When host disconnects, onDisconnect should remove the room node (we attempt to set this when hosting)
+ - Hosts MAY run autoCleaner to remove expired rooms
+*/
+const hosting = {}; // map roomId -> listener cleanup
+
+async function hostRoom(rid){
+  if(!db) return;
+  const actionsRef = ref(db, `rooms/${rid}/actions`);
+  const stateRef = ref(db, `rooms/${rid}/state`);
+  // attach listener for new actions
+  const unsub = onChildAdded(actionsRef, async (snap) => {
+    const action = snap.val();
+    const key = snap.key;
+    if(!action) return;
+    // apply simple validation: require from and type
+    if(!action.from || !action.type) {
+      // invalid action: remove
+      await remove(child(actionsRef, key)).catch(()=>{});
+      return;
+    }
+    // Ensure this host is still the current host in DB
+    const metaSnap = await get(ref(db, `rooms/${rid}/host`));
+    const hostId = (metaSnap && metaSnap.exists()) ? metaSnap.val() : null;
+    // if host in DB changed, stop processing
+    const roomSnap = await get(ref(db, `rooms/${rid}`));
+    const roomObj = roomSnap.val() || {};
+    if(roomObj.host !== myPlayerId) {
+      // not host anymore; stop listener
+      toast('No longer host, stopping authoritative processing for room ' + rid);
+      try { hosting[rid]?.off(); } catch(e){}
+      return;
+    }
+    // load current authoritative state
+    const stSnap = await get(stateRef);
+    let currentState = stSnap.exists() ? stSnap.val() : (roomObj.state || {});
+    if(!currentState) currentState = {};
+    // we apply simple action types: buy / serve / custom
+    try {
+      if(action.type === 'buy') {
+        const keyItem = action.payload?.itemKey;
+        if(!keyItem) { /* ignore */ }
+        else {
+          currentState.inventory = currentState.inventory || {};
+          currentState.inventory[keyItem] = (currentState.inventory[keyItem]||0) + 1;
+          // deduct money? for authoritative demo we accept it
+        }
+      } else if(action.type === 'serve') {
+        const want = action.payload?.itemKey;
+        if(want && (currentState.inventory?.[want]||0) > 0) {
+          currentState.inventory[want] = currentState.inventory[want] - 1;
+          currentState.customersServed = (currentState.customersServed||0) + 1;
+        }
+      } else if(action.type === 'custom') {
+        // host-authorized custom patch: merge payload
+        currentState = Object.assign({}, currentState, action.payload || {});
+      }
+      // write back authoritative state
+      await set(stateRef, currentState).catch(()=>{});
+    } catch(e) {
+      console.warn('action apply failed', e);
+    } finally {
+      // remove processed action
+      await remove(child(actionsRef, key)).catch(()=>{});
+    }
+  });
+
+  // store cleanup handle so we can stop listening later
+  hosting[rid] = { off: () => { try { snapOff(actionsRef); } catch(e){} } };
+
+  // ensure onDisconnect: if host leaves, remove the room (so clients don't get orphaned)
+  try {
+    const roomRef = ref(db, `rooms/${rid}`);
+    await onDisconnect(roomRef).remove();
+  } catch(e){ /* best-effort */ }
+
+  toast('Hosting authoritative room: ' + rid);
+}
+
+/* helper wrapper for safe removal (not part of firebase SDK) */
+function snapOff(refObj){
+  try { onChildAdded(refObj, ()=>{}).off; } catch(e){}
+}
+
+/* ----------------- client-side: send actions to room ----------------- */
+async function clientSendAction(rid, type, payload){
+  if(!db) return;
+  const actionsRef = ref(db, `rooms/${rid}/actions`);
+  try {
+    await push(actionsRef, { from: myPlayerId, type, payload: payload||{}, ts: Date.now() });
+  } catch(e) { console.warn('sendAction failed', e); toast('Action send failed'); }
+}
+
+/* ----------------- room UI: host & client views ----------------- */
+function openRoomModal(rid, roomObj){
+  const html = `<h3>Room ${rid}</h3><div style="margin-top:8px"><div class="small">Host: ${roomObj.host}</div><div class="small">Created: ${new Date(roomObj.createdAt||0).toLocaleString()}</div></div><div style="text-align:right;margin-top:12px"><button class="btn ghost" data-close>Close</button></div>`;
+  showModal(html);
+}
+
+function openRoomAsHost(rid, roomObj){
+  // open host control modal
+  const html = `<h3>Hosting: ${rid}</h3>
+    <div style="margin-top:8px"><div class="small">Host: ${roomObj.host}</div><div class="small">Created: ${new Date(roomObj.createdAt||0).toLocaleString()}</div></div>
+    <div style="margin-top:12px"><button id="hostCloseRoom" class="btn ghost">Close Room (delete)</button><button id="hostToggleCleaner" class="btn primary" style="margin-left:8px">${autoCleanerEnabled?'Stop cleaner':'Start cleaner'}</button></div>
+    <div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Done</button></div>`;
+  const m = showModal(html);
+  m.box.querySelector('#hostCloseRoom').addEventListener('click', async ()=>{
+    try{ await remove(ref(db, `rooms/${rid}`)); toast('Room removed'); m.close(); } catch(e){ toast('Remove failed'); }
+  });
+  m.box.querySelector('#hostToggleCleaner').addEventListener('click', ()=>{
+    autoCleanerEnabled = !autoCleanerEnabled;
+    m.box.querySelector('#hostToggleCleaner').textContent = autoCleanerEnabled ? 'Stop cleaner' : 'Start cleaner';
+    updateAutoCleanerUI();
+  });
+  // ensure host listener running
+  hostRoom(rid);
+}
+
+/* open as client (listening to authoritative state) */
+function openRoomAsClient(rid){
+  const html = `<h3>Joined: ${rid}</h3><div style="margin-top:8px" id="roomStateArea"><div class="small" style="color:#666">Loading state...</div></div>
+    <div style="margin-top:10px"><div style="display:flex;gap:8px"><button id="actBuy" class="btn primary">Buy (demo)</button><button id="actServe" class="btn ghost">Serve (demo)</button></div></div>
+    <div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
+  const m = showModal(html);
+  const stateArea = m.box.querySelector('#roomStateArea');
+  // listen to authoritative state updates
+  const stateRef = ref(db, `rooms/${rid}/state`);
+  const unsub = onValue(stateRef, snap=>{
+    const val = snap.val();
+    stateArea.innerHTML = `<div class="small" style="white-space:pre-wrap">${JSON.stringify(val, null, 2)}</div>`;
+  });
+  // actions
+  m.box.querySelector('#actBuy').addEventListener('click', ()=> clientSendAction(rid, 'buy', { itemKey: 'apple' }));
+  m.box.querySelector('#actServe').addEventListener('click', ()=> clientSendAction(rid, 'serve', { itemKey: 'apple' }));
+  m.close = () => { try{ unsub(); }catch(e){}; m.box.parentElement.remove(); };
+}
+
+/* ----------------- joinHost helpers ----------------- */
+async function joinRoomByIdAndOpen(rid){
+  await joinRoomById(rid);
+  openRoomAsClient(rid);
+}
+
+/* ----------------- room cleanup sweeper (TTL) ----------------- */
+async function sweepExpiredRooms(){
+  if(!db) return;
+  try {
+    const snap = await get(ref(db, 'rooms'));
+    if(!snap.exists()) return;
+    const rooms = snap.val();
+    const now = Date.now();
+    for(const rid in rooms){
+      const r = rooms[rid];
+      if(!r) continue;
+      if((r.expiresAt || 0) < now){
+        // only hosts or clients with autoCleanerEnabled remove
+        if(r.host === myPlayerId || autoCleanerEnabled){
+          try { await remove(ref(db, `rooms/${rid}`)); console.log('sweeper removed', rid); } catch(e){}
+        }
+      }
+    }
+  } catch(e){ console.warn('sweep failed', e); }
+}
+
+/* run sweeper every minute */
+setInterval(()=> { sweepExpiredRooms(); }, 60_000);
+
+/* update Auto-cleaner UI (hidden for non-hosts) */
+function updateAutoCleanerUI(){
+  toggleAutoCleanerBtn.textContent = 'Auto-clean: ' + (autoCleanerEnabled ? 'ON' : 'OFF');
+  // hide toggle if not host of any room
+  // We check rooms list to see if we host any active room
+  get(ref(db, 'rooms')).then(snap=>{
+    const rooms = snap.val() || {};
+    const hostingAny = Object.values(rooms).some(r => r.host === myPlayerId);
+    toggleAutoCleanerBtn.style.display = hostingAny ? 'inline-block' : 'none';
+  }).catch(()=> toggleAutoCleanerBtn.style.display = 'none');
+}
+
+/* ----------------- ping & signal bar (via DataChannel when connected) ----------------- */
+let dataChannel = null;
+let pc = null;
+let pingLast = null;
+
+function createPC(){
+  pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  pc.ondatachannel = e => {
+    dataChannel = e.channel;
+    wireDataChannel();
+  };
+  pc.oniceconnectionstatechange = ()=> {
+    if(pc && (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed')) {
+      pingDisplay.textContent = 'Ping: — ms';
+      setSignalBars(null);
+    }
+  };
+  return pc;
+}
+function wireDataChannel(){
+  if(!dataChannel) return;
+  dataChannel.onopen = ()=> { pingDisplay.textContent = 'Ping: measuring...'; sendPing(); };
+  dataChannel.onmessage = ev => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if(msg.type === 'ping') {
+        // reply with pong + timestamp
+        dataChannel.send(JSON.stringify({ type:'pong', t: msg.t }));
+      } else if(msg.type === 'pong') {
+        const now = performance.now();
+        const rtt = Math.round(now - (msg.t || 0));
+        pingLast = rtt;
+        pingDisplay.textContent = 'Ping: ' + rtt + ' ms';
+        setSignalBars(rtt);
+      }
+    } catch(e){}
+  };
+}
+function sendPing(){
+  if(!dataChannel || dataChannel.readyState !== 'open') return;
+  const t = performance.now();
+  dataChannel.send(JSON.stringify({ type:'ping', t }));
+  // schedule next ping
+  setTimeout(()=> sendPing(), 2000);
+}
+function setSignalBars(ping){
+  // map ping to bars: <=50ms =>5, <=100=>4, <=200=>3, <=400=>2, >400=>1, null=>0
+  let bars = 0;
+  if(ping == null) bars = 0;
+  else if(ping <= 50) bars = 5;
+  else if(ping <= 100) bars = 4;
+  else if(ping <= 200) bars = 3;
+  else if(ping <= 400) bars = 2;
+  else bars = 1;
+  barEls.forEach((el, idx) => {
+    if(idx < bars) el.classList.add('active'); else el.classList.remove('active');
+  });
+}
+
+/* ----------------- UI wiring (safe order) ----------------- */
+function updateUI(){
+  playerCodeEl.textContent = myPlayerId || '—';
+  updateAutoCleanerUI();
+}
+
+/* event handlers (buttons) */
+document.getElementById('btnSingle').addEventListener('click', () => {
+  // show minimal singleplayer start
+  showModal(`<h3>Single Player</h3><div style="margin-top:8px">Starting single player (local).</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
 });
 
-/* ---------- ensure player meta and presence are created in DB for discovery ---------- */
-async function ensurePlayerNode(){
-  if(!gameState.playerId) return;
+document.getElementById('btnLAN').addEventListener('click', () => createRoomAndHost());
+document.getElementById('btnGlobal').addEventListener('click', () => {
+  // create/join modal
+  const m = showModal(`<h3>Rooms</h3><div style="margin-top:8px"><button id="createRoom" class="btn primary">Create Room</button><button id="joinRoom" class="btn ghost" style="margin-left:8px">Join by ID</button></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
+  m.box.querySelector('#createRoom').addEventListener('click', async ()=>{ m.close(); await createRoomAndHost(); });
+  m.box.querySelector('#joinRoom').addEventListener('click', ()=>{ m.close(); joinRoomPrompt(); });
+});
+document.getElementById('btnRandom').addEventListener('click', async ()=>{
+  // try to find first room without many participants
   try{
-    // set meta node if missing
-    await set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() });
-    // presence
-    await set(ref(db, `players/${gameState.playerId}/presence`), { lastSeen: Date.now(), playerId: gameState.playerId });
-    try{ await onDisconnect(ref(db, `players/${gameState.playerId}/presence`)).remove(); }catch(e){}
-  }catch(e){ console.warn(e); }
-}
-ensurePlayerNode();
+    const snap = await get(ref(db, 'rooms'));
+    if(!snap.exists()){ await createRoomAndHost(); return; }
+    const rooms = snap.val();
+    const keys = Object.keys(rooms || {});
+    if(keys.length === 0){ await createRoomAndHost(); return; }
+    // join the first one not hosted by me
+    for(const k of keys){
+      if(rooms[k].host !== myPlayerId){ await joinRoomById(k); toast('Joined room ' + k); return; }
+    }
+    // else create
+    await createRoomAndHost();
+  } catch(e){ console.warn(e); toast('Random match failed'); }
+});
 
-/* ---------- final notes: expose simple debug ---------- */
-window.gameState = gameState;
-window.saveSlot = saveSlot;
-window.loadSlot = loadSlot;
-window.exportSaveFile = exportSaveFile;
+document.getElementById('saveBtn').addEventListener('click', async ()=>{
+  // save local + mirror to player node (quick save)
+  try {
+    localStorage.setItem('idle_quick_save_'+myPlayerId, JSON.stringify(gameState));
+    if(db && myPlayerId) await set(ref(db, `players/${myPlayerId}/saves/quick`), { state: gameState, ts: Date.now() });
+    toast('Saved');
+  } catch(e){ toast('Save failed (check permissions)'); }
+});
+document.getElementById('savesBtn').addEventListener('click', ()=> openSavesDialog());
+document.getElementById('exportBtn').addEventListener('click', ()=> {
+  const payload = { savedAt: Date.now(), playerId: myPlayerId, state: gameState };
+  const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+  const a = document.createElement('a'); a.href = data; a.download = `idle-shop-${myPlayerId||'anon'}-${new Date().toISOString().slice(0,19)}.json`; document.body.appendChild(a); a.click(); a.remove();
+  toast('Export started');
+});
+document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', (e)=> {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const r = new FileReader(); r.onload = (ev)=> {
+    try { const p = JSON.parse(ev.target.result); if(p.state) { gameState = p.state; toast('Imported'); updateUI(); } else toast('Invalid import file'); } catch(e){ toast('Import failed'); }
+  }; r.readAsText(f); e.target.value = '';
+});
+
+toggleAutoCleanerBtn.addEventListener('click', ()=>{
+  // this control is only visible if you host something — but still guard
+  autoCleanerEnabled = !autoCleanerEnabled;
+  toggleAutoCleanerBtn.textContent = 'Auto-clean: ' + (autoCleanerEnabled ? 'ON' : 'OFF');
+});
+
+/* joinRoom prompt */
+function joinRoomPrompt(){
+  const nm = 'rid_'+Math.random().toString(36).slice(2,6);
+  const m = showModal(`<h3>Join Room</h3><div style="margin-top:8px"><input id="${nm}" placeholder="room id" class="input" /></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Cancel</button><button id="doJoin" class="btn primary">Join</button></div>`);
+  m.box.querySelector('#doJoin').addEventListener('click', async ()=> {
+    const rid = m.box.querySelector('#'+nm).value.trim(); if(!rid) { toast('Enter room id'); return; }
+    m.close();
+    await joinRoomByIdAndOpen(rid);
+  });
+}
+
+/* opens saves dialog */
+function openSavesDialog(){
+  const store = Object.keys(localStorage).filter(k => k.startsWith('idle_quick_save_'));
+  const html = `<h3>Saves</h3><div style="margin-top:8px">${store.map(k=>`<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><div style="flex:1"><strong>${k}</strong></div><div style="display:flex;gap:6px"><button class="btn primary" data-load="${k}">Load</button><button class="btn ghost" data-del="${k}">Delete</button></div></div>`).join('') || '<div class="small" style="color:#666">No saves found</div>'}</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
+  const m = showModal(html);
+  m.box.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', ()=> { const k = b.getAttribute('data-load'); const v = localStorage.getItem(k); if(v){ try{ gameState = JSON.parse(v); toast('Loaded ' + k); updateUI(); m.close(); }catch(e){ toast('Load failed'); } } }));
+  m.box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', ()=> { const k = b.getAttribute('data-del'); localStorage.removeItem(k); toast('Deleted ' + k); m.close(); }));
+}
+
+/* ----------------- accept invites (listen under my player node) ----------------- */
+if(db){
+  // listen invites for me (shows modal when created)
+  onValue(ref(db, `players`), snap => {
+    const all = snap.val() || {};
+    if(!myPlayerId) return;
+    const me = all[myPlayerId] || {};
+    const invites = (me.invites) || {};
+    const keys = Object.keys(invites);
+    if(keys.length > 0){
+      const id = keys[0]; const inv = invites[id];
+      if(inv && inv.room){
+        const m = showModal(`<h3>Invite</h3><div style="margin-top:8px">From <strong>${inv.from}</strong> to room <strong>${inv.room}</strong></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Ignore</button><button id="acceptInvite" class="btn primary">Join</button></div>`);
+        m.box.querySelector('#acceptInvite').addEventListener('click', async ()=> {
+          m.close();
+          await remove(ref(db, `players/${myPlayerId}/invites/${id}`)).catch(()=>{});
+          await joinRoomByIdAndOpen(inv.room);
+        });
+      }
+    }
+  });
+}
+
+/* ----------------- allow custom firebase config (confirmation required) ----------------- */
+document.getElementById('btnExportConfig').addEventListener('click', ()=>{
+  const m = showModal(`<h3>Set custom Firebase config</h3><div style="margin-top:8px"><textarea id="cfgArea" style="width:100%;height:160px" placeholder='Paste JSON firebaseConfig here'></textarea></div><div style="display:flex;gap:8px;margin-top:8px"><button id="applyCfg" class="btn primary">Apply (confirm)</button><button class="btn ghost" data-close>Cancel</button></div>`);
+  m.box.querySelector('#applyCfg').addEventListener('click', ()=>{
+    const txt = m.box.querySelector('#cfgArea').value.trim();
+    if(!txt) return toast('Paste config JSON');
+    try {
+      const json = JSON.parse(txt);
+      // ask confirm
+      const c = confirm(`Replace Firebase config with provided JSON? This will re-initialize the app and sign in anonymously again. Continue?`);
+      if(!c) return;
+      // re-init Firebase with provided config
+      initFirebase(json);
+      toast('Firebase config applied — reloading listeners');
+      // re-sign in anonymously
+      signInAnonymously(getAuth(app)).catch(()=>{});
+      m.close();
+    } catch(e){ toast('Invalid JSON'); }
+  });
+});
+
+/* ----------------- Fix: ensure functions defined before usage — done above ----------------- */
+
+/* ----------------- initial UI update & sweeper visibility ----------------- */
+updateUI();
+setTimeout(()=> updateAutoCleanerUI(), 1500);
 
 </script>
 </body>
