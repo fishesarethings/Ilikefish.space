@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Idle Shop Keeper</title>
+    <style>
+        /* (unchanged from your provided CSS) */
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .main-menu {
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2rem;
+            margin: 10px 0 40px 0;
+        }
+
+        .menu-options {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .menu-btn {
+            width: 100%;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .menu-btn:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(66, 153, 225, 0.15);
+        }
+
+        .single-player {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border-color: #38a169;
+        }
+
+        .single-player:hover {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            border-color: #2f855a;
+        }
+
+        .multiplayer {
+            position: relative;
+        }
+
+        .btn-icon {
+            font-size: 2.5rem;
+            min-width: 60px;
+        }
+
+        .btn-text h3 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+        }
+
+        .btn-text p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .single-player .btn-text p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .status-indicator {
+            margin-left: auto;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .multiplayer-section {
+            margin-top: 40px;
+        }
+
+        .multiplayer-section h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .game-screen {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .game-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .section h2 {
+            color: #2d3748;
+            margin: 0 0 20px 0;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .item-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .item-emoji {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .item-count {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .buy-btn, .upgrade-btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .buy-btn:hover, .upgrade-btn:hover {
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            transform: translateY(-1px);
+        }
+
+        .buy-btn:disabled, .upgrade-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .upgrades-section {
+            grid-column: 1 / -1;
+        }
+
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .upgrade-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .upgrade-card h3 {
+            color: #2d3748;
+            margin: 0 0 10px 0;
+        }
+
+        .upgrade-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .customer-queue {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .customer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .customer-emoji {
+            font-size: 1.5rem;
+        }
+
+        .serve-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .serve-btn:hover {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+        }
+
+        .serve-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .small {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .controls { display:flex; gap:10px; align-items:center; justify-content:center; margin-top:10px }
+
+        @media (max-width: 768px) {
+            .game-sections {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .upgrades-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Main Menu Screen -->
+        <div id="mainMenu" class="main-menu">
+            <div class="header">
+                <h1>🏪 Idle Shop Keeper</h1>
+                <p class="subtitle">Build your retail empire!</p>
+            </div>
+            
+            <div class="menu-options">
+                <button class="menu-btn single-player" onclick="startSinglePlayer()">
+                    <div class="btn-icon">🎮</div>
+                    <div class="btn-text">
+                        <h3>Single Player</h3>
+                        <p>Play solo and build your shop</p>
+                    </div>
+                </button>
+
+                <div style="margin:10px 0; text-align:left">
+                  <strong>Friends & Recent</strong>
+                  <div style="display:flex; gap:10px; margin-top:8px; justify-content:center">
+                    <button onclick="openFriends()" class="menu-btn multiplayer">👥 Friends</button>
+                    <button onclick="openRecent()" class="menu-btn multiplayer">🕘 Recent</button>
+                  </div>
+                </div>
+                
+                <div class="multiplayer-section">
+                    <h2>🌐 Multiplayer Options</h2>
+                    
+                    <button class="menu-btn multiplayer" onclick="connectLAN()">
+                        <div class="btn-icon">🏠</div>
+                        <div class="btn-text">
+                            <h3>Local Network (LAN)</h3>
+                            <p>Play with friends on same WiFi</p>
+                        </div>
+                        <div id="lanStatus" class="status-indicator">🟢 Available</div>
+                    </button>
+                    
+                    <button class="menu-btn multiplayer" onclick="connectRandom()">
+                        <div class="btn-icon">🎲</div>
+                        <div class="btn-text">
+                            <h3>Random Match</h3>
+                            <p>Find a random opponent online</p>
+                        </div>
+                        <div id="randStatus" class="status-indicator">🟡 Idle</div>
+                    </button>
+                    
+                    <button class="menu-btn multiplayer" onclick="connectGlobal()">
+                        <div class="btn-icon">🌍</div>
+                        <div class="btn-text">
+                            <h3>Global Match</h3>
+                            <p>Compete with players worldwide</p>
+                        </div>
+                        <div id="globalStatus" class="status-indicator">🔴 Demo Mode</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen (initially hidden) -->
+        <div id="gameScreen" class="game-screen" style="display: none;">
+            <div class="header">
+                <h1>🏪 Idle Shop Keeper</h1>
+            </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>💰 Money</h3>
+                <p class="stat-value" id="money">$100</p>
+            </div>
+            <div class="stat-card">
+                <h3>👥 Customers Served</h3>
+                <p class="stat-value" id="customersServed">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>⭐ Shop Level</h3>
+                <p class="stat-value" id="shopLevel">1</p>
+            </div>
+        </div>
+
+        <div class="customer-queue">
+            <h2>🚶‍♂️ Customer Queue</h2>
+            <div id="customerList">
+                <p style="text-align: center; color: #666;">No customers waiting...</p>
+            </div>
+        </div>
+
+        <div class="game-sections">
+            <div class="section">
+                <h2>📦 Shop Inventory</h2>
+                <div class="inventory-grid" id="inventory">
+                    <!-- Items will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🛒 Buy Items</h2>
+                <div class="small" style="text-align:center">Unlocked items: <span id="unlockedCount">6</span> / 5000</div>
+                <div class="inventory-grid" id="buySection">
+                    <!-- Buy options will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div class="section upgrades-section">
+            <h2>⬆️ Shop Upgrades</h2>
+            <div class="upgrades-grid" id="upgrades">
+                <!-- Upgrades will be populated by JavaScript -->
+            </div>
+
+            <div style="margin-top:20px">
+                <h3>🛠️ Workers & Manager</h3>
+                <div id="workersPanel" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:10px">
+                    <!-- Worker cards -->
+                </div>
+                <div class="controls">
+                    <button onclick="toggleAutoSave()" id="autosaveBtn" class="upgrade-btn" style="width:auto;">Autosave: ON</button>
+                    <button onclick="saveToSlot()" class="upgrade-btn" style="width:auto;">Save</button>
+                    <button onclick="openSaveManager()" class="upgrade-btn" style="width:auto;">Saves</button>
+                    <button onclick="exitToMenu(false)" class="upgrade-btn" style="width:auto; background:#e53e3e">Exit (no save)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single module script: combines your logic and Firebase + WebRTC implementation -->
+    <script type="module">
+    // --------- Firebase + WebRTC + Game logic (kept minimal & functional) ----------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, onChildAdded, child, get, remove, update } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+
+    // Your firebase config (unchanged)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBn4khIpi57YvqQX2urCup2mCvpVUZ0j8k",
+      authDomain: "idle-shop-keeper.firebaseapp.com",
+      databaseURL: "https://idle-shop-keeper-default-rtdb.firebaseio.com",
+      projectId: "idle-shop-keeper",
+      storageBucket: "idle-shop-keeper.firebasestorage.app",
+      messagingSenderId: "117380146729",
+      appId: "1:117380146729:web:8180d507d5a2aae45e5e38",
+      measurementId: "G-VS2Z5T0Y9Y"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    try { getAnalytics(app); } catch(e){ /* ignore environments without analytics */ }
+    const db = getDatabase(app);
+
+    // Storage keys
+    const STORAGE_KEY = 'idle_shop_saves_v1';
+    const META_KEY = 'idle_shop_meta_v1';
+
+    // safer id generation
+    function generateId() {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return 'p-' + crypto.randomUUID();
+        // fallback
+        return 'p-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-6);
+    }
+
+    // --- initial gameState (same as your original) ---
+    let gameState = {
+        money: 100,
+        customersServed: 0,
+        shopLevel: 1,
+        inventory: {},
+        upgrades: { autoCustomer: 0, fasterService: 0, betterPrices: 0, moreCustomers: 0 },
+        customers: [],
+        workers: { manager: { level: 0, assigned: 'idle' }, restocker: { level: 0, assigned: 'idle' }, server: { level: 0, assigned: 'idle' } },
+        playerId: null,
+        unlockedCount: 6,
+        recentOpponents: [],
+        friends: [],
+        autosave: true
+    };
+
+    const TOTAL_ITEMS = 5000;
+    const items = {};
+
+    function generateItems() {
+        const base = [
+            { key: 'apple', emoji: '🍎', name: 'Apple', buyPrice: 5, sellPrice: 8 },
+            { key: 'bread', emoji: '🍞', name: 'Bread', buyPrice: 8, sellPrice: 12 },
+            { key: 'milk', emoji: '🥛', name: 'Milk', buyPrice: 12, sellPrice: 18 },
+            { key: 'candy', emoji: '🍬', name: 'Candy', buyPrice: 15, sellPrice: 25 },
+            { key: 'coffee', emoji: '☕', name: 'Coffee', buyPrice: 20, sellPrice: 35 },
+            { key: 'cake', emoji: '🎂', name: 'Cake', buyPrice: 30, sellPrice: 50 }
+        ];
+        base.forEach(it => { items[it.key] = it; gameState.inventory[it.key] = gameState.inventory[it.key] || 0; });
+        for (let i = base.length + 1; i <= TOTAL_ITEMS; i++) {
+            const key = 'item_' + i;
+            const buy = 5 + Math.floor(i * 0.8);
+            const sell = Math.floor(buy * 1.6);
+            items[key] = { emoji: '🎁', name: `Item ${i}`, buyPrice: buy, sellPrice: sell };
+            gameState.inventory[key] = gameState.inventory[key] || 0;
+        }
+    }
+
+    const upgradeDefinitions = {
+        autoCustomer: { name: 'Auto Customer', description: 'Customers arrive automatically', baseCost: 200 },
+        fasterService: { name: 'Faster Service', description: 'Serve customers 25% faster', baseCost: 150 },
+        betterPrices: { name: 'Better Prices', description: 'Earn 20% more per sale', baseCost: 300 },
+        moreCustomers: { name: 'More Customers', description: 'More customers in queue', baseCost: 250 }
+    };
+    const workerDefs = {
+        manager: { name: 'Manager', description: 'Enable worker coordination; required to assign tasks', baseCost: 500 },
+        restocker: { name: 'Restocker', description: 'Automatically restocks inventory when assigned', baseCost: 300 },
+        server: { name: 'Server', description: 'Automatically serves customers when assigned', baseCost: 350 }
+    };
+    const customerTypes = [
+        { emoji: '👨', wants: ['apple', 'bread'] },
+        { emoji: '👩', wants: ['milk', 'coffee'] },
+        { emoji: '👦', wants: ['candy', 'cake'] },
+        { emoji: '👧', wants: ['apple', 'candy'] },
+        { emoji: '🧓', wants: ['bread', 'milk'] },
+        { emoji: '👴', wants: ['coffee', 'cake'] }
+    ];
+
+    // --- UI update functions (unchanged logic) ---
+    function updateStats() {
+        document.getElementById('money').textContent = `$${gameState.money}`;
+        document.getElementById('customersServed').textContent = gameState.customersServed;
+        document.getElementById('shopLevel').textContent = gameState.shopLevel;
+        document.getElementById('unlockedCount').textContent = gameState.unlockedCount;
+        const autoBtn = document.getElementById('autosaveBtn');
+        if(autoBtn) autoBtn.textContent = 'Autosave: ' + (gameState.autosave ? 'ON' : 'OFF');
+    }
+
+    function updateInventory() {
+        const inventoryDiv = document.getElementById('inventory');
+        inventoryDiv.innerHTML = '';
+        const keys = Object.keys(items).slice(0, gameState.unlockedCount);
+        keys.forEach(itemKey => {
+            const item = items[itemKey];
+            const count = gameState.inventory[itemKey] || 0;
+            const itemCard = document.createElement('div');
+            itemCard.className = 'item-card';
+            itemCard.innerHTML = `
+                <div class="item-emoji">${item.emoji}</div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-count">Stock: ${count}</div>
+            `;
+            inventoryDiv.appendChild(itemCard);
+        });
+    }
+
+    function updateBuySection() {
+        const buyDiv = document.getElementById('buySection');
+        buyDiv.innerHTML = '';
+        const keys = Object.keys(items).slice(0, gameState.unlockedCount);
+        keys.forEach(itemKey => {
+            const item = items[itemKey];
+            const itemCard = document.createElement('div');
+            itemCard.className = 'item-card';
+            itemCard.innerHTML = `
+                <div class="item-emoji">${item.emoji}</div>
+                <div class="item-name">${item.name}</div>
+                <div class="item-count">$${item.buyPrice}</div>
+                <button class="buy-btn" data-key="${itemKey}">Buy</button>
+            `;
+            buyDiv.appendChild(itemCard);
+        });
+        // attach handlers
+        buyDiv.querySelectorAll('.buy-btn').forEach(b => {
+            const key = b.getAttribute('data-key');
+            b.disabled = gameState.money < items[key].buyPrice;
+            b.onclick = () => buyItem(key);
+        });
+    }
+
+    function updateUpgrades() {
+        const upgradesDiv = document.getElementById('upgrades');
+        upgradesDiv.innerHTML = '';
+        Object.keys(upgradeDefinitions).forEach(upgradeKey => {
+            const upgrade = upgradeDefinitions[upgradeKey];
+            const level = gameState.upgrades[upgradeKey];
+            const cost = Math.floor(upgrade.baseCost * Math.pow(1.5, level));
+            const upgradeCard = document.createElement('div');
+            upgradeCard.className = 'upgrade-card';
+            upgradeCard.innerHTML = `
+                <h3>${upgrade.name}</h3>
+                <div class="upgrade-description">${upgrade.description}</div>
+                <div style="margin-bottom: 10px;">Level: ${level}</div>
+                <div style="margin-bottom: 15px;">Cost: $${cost}</div>
+                <button class="upgrade-btn" data-key="${upgradeKey}">Upgrade</button>
+            `;
+            upgradesDiv.appendChild(upgradeCard);
+        });
+        upgradesDiv.querySelectorAll('.upgrade-btn').forEach(btn=>{
+            const key = btn.getAttribute('data-key');
+            const level = gameState.upgrades[key];
+            const cost = Math.floor(upgradeDefinitions[key].baseCost * Math.pow(1.5, level));
+            btn.disabled = gameState.money < cost;
+            btn.onclick = () => buyUpgrade(key);
+        });
+        renderWorkersPanel();
+    }
+
+    function renderWorkersPanel() {
+        const panel = document.getElementById('workersPanel');
+        panel.innerHTML = '';
+        Object.keys(gameState.workers).forEach(wKey => {
+            const w = gameState.workers[wKey];
+            const def = workerDefs[wKey];
+            const cost = Math.floor(def.baseCost * Math.pow(1.6, w.level));
+            const card = document.createElement('div');
+            card.className = 'upgrade-card';
+            card.innerHTML = `
+                <h3>${def.name}</h3>
+                <div class="upgrade-description">${def.description}</div>
+                <div class="small">Level: ${w.level}</div>
+                <div class="small">Assigned: ${w.assigned}</div>
+                <div style="margin-top:8px; display:grid; gap:6px">
+                  <button class="upgrade-btn" data-buy="${wKey}">Buy/Upgrade ($${cost})</button>
+                  ${wKey !== 'manager' ? `<select id="assign_${wKey}">
+                    <option value="idle">Idle</option>
+                    <option value="restock">Restock</option>
+                    <option value="serve">Serve</option>
+                  </select>` : `<select id="assign_${wKey}">
+                    <option value="idle">Idle</option>
+                    <option value="manage">Manage</option>
+                    <option value="assign">Assign Tasks</option>
+                  </select>` }
+                </div>
+            `;
+            panel.appendChild(card);
+            const buyBtn = card.querySelector('[data-buy]');
+            buyBtn.disabled = gameState.money < cost;
+            buyBtn.onclick = () => upgradeWorker(wKey);
+            setTimeout(()=>{
+                const sel = document.getElementById('assign_'+wKey);
+                if(sel) { sel.value = w.assigned; sel.onchange = ()=> assignWorker(wKey, sel.value); }
+            }, 10);
+        });
+    }
+
+    function updateCustomers() {
+        const customerList = document.getElementById('customerList');
+        if (gameState.customers.length === 0) {
+            customerList.innerHTML = '<p style="text-align: center; color: #666;">No customers waiting...</p>';
+            return;
+        }
+        customerList.innerHTML = '';
+        gameState.customers.forEach((customer, index) => {
+            const customerDiv = document.createElement('div');
+            customerDiv.className = 'customer';
+            const item = items[customer.wants];
+            const canServe = (gameState.inventory[customer.wants] || 0) > 0;
+            customerDiv.innerHTML = `
+                <div class="customer-info">
+                    <span class="customer-emoji">${customer.emoji}</span>
+                    <span>Wants ${item.emoji} ${item.name} - $${item.sellPrice}</span>
+                </div>
+                <button class="serve-btn" data-i="${index}">${canServe ? 'Serve' : 'No Stock'}</button>
+            `;
+            customerList.appendChild(customerDiv);
+            const btn = customerDiv.querySelector('.serve-btn');
+            btn.disabled = !canServe;
+            btn.onclick = () => serveCustomer(index);
+        });
+    }
+
+    // --- core game actions (unchanged) ---
+    function buyItem(itemKey) {
+        const item = items[itemKey];
+        if (gameState.money >= item.buyPrice) {
+            gameState.money -= item.buyPrice;
+            gameState.inventory[itemKey] = (gameState.inventory[itemKey] || 0) + 1;
+            updateAll();
+        }
+    }
+
+    function serveCustomer(index) {
+        const customer = gameState.customers[index];
+        if (!customer) return;
+        const item = items[customer.wants];
+        if ((gameState.inventory[customer.wants] || 0) > 0) {
+            gameState.inventory[customer.wants]--;
+            let earnings = item.sellPrice;
+            if (gameState.upgrades.betterPrices > 0) {
+                earnings = Math.floor(earnings * (1 + 0.2 * gameState.upgrades.betterPrices));
+            }
+            gameState.money += earnings;
+            gameState.customersServed++;
+            gameState.customers.splice(index, 1);
+            if (gameState.customersServed % 10 === 0) {
+                gameState.shopLevel++;
+                gameState.unlockedCount = Math.min(TOTAL_ITEMS, gameState.unlockedCount + 10);
+            }
+            updateAll();
+        }
+    }
+
+    function buyUpgrade(upgradeKey) {
+        const upgrade = upgradeDefinitions[upgradeKey];
+        const level = gameState.upgrades[upgradeKey];
+        const cost = Math.floor(upgrade.baseCost * Math.pow(1.5, level));
+        if (gameState.money >= cost) {
+            gameState.money -= cost;
+            gameState.upgrades[upgradeKey]++;
+            updateAll();
+        }
+    }
+
+    function upgradeWorker(wKey) {
+        const def = workerDefs[wKey];
+        const level = gameState.workers[wKey].level;
+        const cost = Math.floor(def.baseCost * Math.pow(1.6, level));
+        if (gameState.money >= cost) {
+            gameState.money -= cost;
+            gameState.workers[wKey].level++;
+            updateAll();
+        }
+    }
+
+    function assignWorker(wKey, task) {
+        if (gameState.workers.manager.level < 1 && wKey !== 'manager') {
+            alert('You need at least 1 Manager level to enable worker automation.');
+            const sel = document.getElementById('assign_'+wKey);
+            if(sel) sel.value = 'idle';
+            return;
+        }
+        gameState.workers[wKey].assigned = task;
+        updateAll();
+    }
+
+    function spawnCustomer() {
+        const maxCustomers = 3 + gameState.upgrades.moreCustomers;
+        if (gameState.customers.length < maxCustomers) {
+            const customerType = customerTypes[Math.floor(Math.random() * customerTypes.length)];
+            const wantedItem = customerType.wants[Math.floor(Math.random() * customerType.wants.length)];
+            gameState.customers.push({ emoji: customerType.emoji, wants: wantedItem });
+            updateCustomers();
+        }
+    }
+
+    function workerTick() {
+        const rest = gameState.workers.restocker;
+        if (rest.level > 0 && rest.assigned === 'restock' && gameState.workers.manager.level > 0) {
+            if (Math.random() < 0.3 + rest.level * 0.15) {
+                const unlockedKeys = Object.keys(items).slice(0, gameState.unlockedCount);
+                let cheapestKey = unlockedKeys[0];
+                unlockedKeys.forEach(k => { if (items[k].buyPrice < items[cheapestKey].buyPrice) cheapestKey = k; });
+                const amount = 1 + rest.level;
+                const cost = items[cheapestKey].buyPrice * amount;
+                if (gameState.money >= cost) {
+                    gameState.money -= cost;
+                    gameState.inventory[cheapestKey] = (gameState.inventory[cheapestKey] || 0) + amount;
+                }
+            }
+        }
+        const srv = gameState.workers.server;
+        if (srv.level > 0 && srv.assigned === 'serve' && gameState.workers.manager.level > 0) {
+            if (gameState.customers.length > 0) {
+                if (Math.random() < 0.4 + srv.level * 0.15) {
+                    for (let i = 0; i < gameState.customers.length; i++) {
+                        const c = gameState.customers[i];
+                        if ((gameState.inventory[c.wants] || 0) > 0) { serveCustomer(i); break; }
+                    }
+                }
+            }
+        }
+    }
+
+    function updateAll() {
+        updateStats();
+        updateInventory();
+        updateBuySection();
+        updateUpgrades();
+        updateCustomers();
+        // persist meta to local storage (not full gameState to avoid big data)
+        try { localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); } catch(e){}
+    }
+
+    // --- game loop ---
+    let gameLoopInterval = null;
+    function gameLoop() {
+        if (gameState.upgrades.autoCustomer > 0) {
+            if (Math.random() < 0.3 + (gameState.upgrades.autoCustomer * 0.1)) spawnCustomer();
+        }
+        if (Math.random() < 0.1 + (gameState.shopLevel * 0.02)) spawnCustomer();
+        workerTick();
+        if (gameState.autosave) quickSave();
+    }
+
+    // --- saves and slots (local + firebase mirror) ---
+    function getSaves() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){ return {}; } }
+    function setSaves(s) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e){} }
+
+    async function saveToSlot(slotName) {
+        slotName = slotName || prompt('Enter save slot name:', `Save-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}`);
+        if (!slotName) return;
+        const saves = getSaves();
+        // store a copy (avoid circular)
+        const payload = { state: JSON.parse(JSON.stringify(gameState)), timestamp: Date.now() };
+        saves[slotName] = payload;
+        setSaves(saves);
+        // also mirror to firebase under /players/{playerId}/saves/{slotName}
+        try {
+            if (gameState.playerId) {
+                await set(ref(db, `players/${gameState.playerId}/saves/${slotName}`), payload);
+            }
+        } catch(e) { console.warn('firebase save failed', e); }
+        alert('Saved to slot: ' + slotName);
+    }
+
+    async function loadFromSlot(slotName) {
+        const saves = getSaves();
+        if (!saves[slotName]) {
+            // try firebase fallback
+            try {
+                if (gameState.playerId) {
+                    const snap = await get(child(ref(db), `players/${gameState.playerId}/saves/${slotName}`));
+                    if (snap.exists()) {
+                        const payload = snap.val();
+                        gameState = JSON.parse(JSON.stringify(payload.state));
+                        restoreStatePostLoad();
+                        return;
+                    }
+                }
+            } catch(e){}
+            alert('Slot not found');
+            return;
+        }
+        gameState = JSON.parse(JSON.stringify(saves[slotName].state));
+        restoreStatePostLoad();
+    }
+
+    function restoreStatePostLoad() {
+        // ensure items exist and not lost
+        generateItems();
+        // ensure arrays/objects present
+        gameState.inventory = gameState.inventory || {};
+        gameState.upgrades = gameState.upgrades || { autoCustomer: 0, fasterService: 0, betterPrices: 0, moreCustomers: 0 };
+        gameState.workers = gameState.workers || { manager: { level: 0, assigned: 'idle' }, restocker: { level: 0, assigned: 'idle' }, server: { level: 0, assigned: 'idle' } };
+        gameState.recentOpponents = gameState.recentOpponents || [];
+        gameState.friends = gameState.friends || [];
+        updateAll();
+    }
+
+    function openSaveManager() {
+        const saves = getSaves();
+        const slots = Object.keys(saves);
+        const choice = prompt('Saves:\n' + slots.map((s,i)=>`${i+1}. ${s} (${new Date(saves[s].timestamp).toLocaleString()})`).join('\n') + '\n\nEnter slot name to load or CANCEL to abort:');
+        if (!choice) return;
+        if (saves[choice]) {
+            if (confirm('Load save "'+choice+'"? Current progress will be replaced.')) loadFromSlot(choice);
+        } else if (confirm('Save current game as "'+choice+'"?')) saveToSlot(choice);
+    }
+
+    function quickSave() {
+        try {
+            const saves = getSaves();
+            const key = 'quick_' + gameState.playerId;
+            saves[key] = { state: JSON.parse(JSON.stringify(gameState)), timestamp: Date.now() };
+            setSaves(saves);
+            // mirror quick save to firebase
+            if (gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{});
+        } catch(e){}
+    }
+
+    function toggleAutoSave() { gameState.autosave = !gameState.autosave; updateStats(); }
+
+    function exitToMenu(save = true) {
+        if (save) saveToSlot('quick_' + gameState.playerId);
+        document.getElementById('gameScreen').style.display = 'none';
+        document.getElementById('mainMenu').style.display = 'block';
+        if (gameLoopInterval) { clearInterval(gameLoopInterval); gameLoopInterval = null; }
+    }
+
+    // --- friends & recent helpers (persist local + firebase) ---
+    async function pushMetaToFirebase() {
+        if (!gameState.playerId) return;
+        try {
+            await set(ref(db, `players/${gameState.playerId}/meta`), {
+                friends: gameState.friends,
+                recent: gameState.recentOpponents,
+                lastSeen: Date.now()
+            });
+        } catch(e) { console.warn('meta push failed', e); }
+    }
+
+    function addRecentOpponent(id) {
+        if (!id) return;
+        gameState.recentOpponents.unshift(id);
+        gameState.recentOpponents = [...new Set(gameState.recentOpponents)].slice(0,20);
+        try{ localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); }catch(e){}
+        pushMetaToFirebase();
+    }
+
+    function addFriend(id) {
+        if (!id) return;
+        gameState.friends.unshift(id);
+        gameState.friends = [...new Set(gameState.friends)].slice(0,50);
+        try{ localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); }catch(e){}
+        pushMetaToFirebase();
+    }
+
+    function openFriends() {
+        const list = gameState.friends.length ? gameState.friends.join('\n') : '(none)';
+        const action = prompt(`Friends:\n${list}\n\nEnter a playerId to add (or leave empty):`);
+        if (action) {
+            addFriend(action);
+            alert('Added friend: ' + action);
+        }
+    }
+
+    function openRecent() {
+        const list = gameState.recentOpponents.length ? gameState.recentOpponents.join('\n') : '(none)';
+        alert('Recent opponents:\n' + list);
+    }
+
+    // --- WebRTC minimal signaling via Firebase Realtime Database ---
+    // We'll create rooms under /rooms/{roomId} with fields: offer, answer, callers/{id}/candidates, callees/{id}/candidates
+    let pc = null;
+    let localStream = null;
+    let currentRoomRef = null;
+    let roomIdGlobal = null;
+
+    async function createPeerConnection(onTrackCallback) {
+        const conf = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+        pc = new RTCPeerConnection(conf);
+        pc.onicecandidate = (event) => {
+            if (!event.candidate || !currentRoomRef) return;
+            // push candidate to candidates list
+            const path = `rooms/${roomIdGlobal}/candidates/${gameState.playerId}`;
+            push(ref(db, path), event.candidate.toJSON()).catch(()=>{});
+        };
+        pc.ontrack = (ev) => {
+            if (onTrackCallback) onTrackCallback(ev.streams[0]);
+        };
+        // optional: create a small data channel for simple messages
+        const dc = pc.createDataChannel('game');
+        dc.onopen = () => console.log('datachannel open');
+        dc.onmessage = (m) => console.log('datachannel msg', m.data);
+        // attach local audio (optional) - we won't request camera by default; keep minimal
+        return pc;
+    }
+
+    async function connectToRoomAsCaller(roomId) {
+        roomIdGlobal = roomId;
+        currentRoomRef = ref(db, `rooms/${roomIdGlobal}`);
+        pc = await createPeerConnection();
+        // create data-only offer (no tracks)
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        // write offer to room
+        await set(ref(db, `rooms/${roomIdGlobal}/offer`), { sdp: offer.sdp, type: offer.type, from: gameState.playerId });
+        // listen for answer
+        onValue(ref(db, `rooms/${roomIdGlobal}/answer`), async snap => {
+            const val = snap.val();
+            if (!val || !val.sdp) return;
+            const answerDesc = { type: val.type, sdp: val.sdp };
+            await pc.setRemoteDescription(answerDesc).catch(console.warn);
+            addRecentOpponent(val.from || 'peer');
+        });
+        // listen for remote candidates
+        onChildAdded(ref(db, `rooms/${roomIdGlobal}/candidates`), async snap => {
+            const map = snap.val();
+            if (!map) return;
+            // map contains child's candidate objects under keys; each child is a candidate push
+            // iterate over keys
+            Object.values(map).forEach(async cand => {
+                try { await pc.addIceCandidate(cand); } catch(e){}
+            });
+        });
+    }
+
+    async function connectToRoomAsCallee(roomId) {
+        roomIdGlobal = roomId;
+        const roomRef = ref(db, `rooms/${roomIdGlobal}`);
+        currentRoomRef = roomRef;
+        const offerSnap = await get(child(ref(db), `rooms/${roomIdGlobal}/offer`));
+        if (!offerSnap.exists()) { alert('Offer not found'); return; }
+        const offer = offerSnap.val();
+        pc = await createPeerConnection();
+        await pc.setRemoteDescription({ type: offer.type, sdp: offer.sdp });
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        await set(ref(db, `rooms/${roomIdGlobal}/answer`), { sdp: answer.sdp, type: answer.type, from: gameState.playerId });
+        // listen for candidates
+        onChildAdded(ref(db, `rooms/${roomIdGlobal}/candidates`), async snap => {
+            const map = snap.val();
+            if (!map) return;
+            Object.values(map).forEach(async cand => {
+                try { await pc.addIceCandidate(cand); } catch(e){}
+            });
+        });
+        addRecentOpponent(offer.from || 'peer');
+    }
+
+    async function createRoomAndWait() {
+        const rid = Math.random().toString(36).slice(2,10);
+        const roomRef = ref(db, `rooms/${rid}`);
+        // cleanup any old remnants
+        await set(roomRef, { createdAt: Date.now(), host: gameState.playerId });
+        await connectToRoomAsCaller(rid);
+        // show short dialog with room id for other peers to join
+        alert('Room created: ' + rid + '\nShare this ID for someone to join (or open another tab and use Join room).');
+        document.getElementById('globalStatus').textContent = '🟢 In Room';
+    }
+
+    async function joinRoomPrompt() {
+        const rid = prompt('Enter room ID to join:');
+        if (!rid) return;
+        try {
+            await connectToRoomAsCallee(rid);
+            document.getElementById('globalStatus').textContent = '🟢 Joined Room';
+            alert('Joined room: ' + rid);
+        } catch(e) {
+            console.warn(e);
+            alert('Failed to join room: ' + e);
+        }
+    }
+
+    // If you'd like an auto-random-match behavior: try to join an existing room, else create one
+    async function randomMatch() {
+        // scan a few rooms and try to join any that have an offer but no answer
+        try {
+            const roomsSnap = await get(ref(db, 'rooms'));
+            const rooms = roomsSnap.exists() ? roomsSnap.val() : {};
+            for (const [rid, data] of Object.entries(rooms)) {
+                const offerSnap = await get(child(ref(db), `rooms/${rid}/offer`));
+                const answerSnap = await get(child(ref(db), `rooms/${rid}/answer`));
+                if (offerSnap.exists() && !answerSnap.exists()) {
+                    await connectToRoomAsCallee(rid);
+                    document.getElementById('randStatus').textContent = '🟢 Matched';
+                    return;
+                }
+            }
+            // none found — create one
+            await createRoomAndWait();
+            document.getElementById('randStatus').textContent = '🟢 Waiting';
+        } catch(e) {
+            console.warn('randomMatch error', e);
+            alert('Random matching failed.');
+        }
+    }
+
+    // --- UI connection entrypoints (wired to your buttons) ---
+    function showConnectionDialog(type, message, proceedCallback) {
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        dialog.innerHTML = `
+            <div style="background: white; padding: 24px; border-radius: 12px; text-align: center; max-width: 400px;">
+                <h3 style="margin: 0 0 12px 0; color: #2d3748;">${type}</h3>
+                <p style="margin: 0 0 18px 0; color: #666;">${message}</p>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button id="conn_ok" style="background: #4299e1; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer;">Continue</button>
+                    <button id="conn_cancel" style="background: #e2e8f0; color: #4a5568; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dialog);
+        dialog.querySelector('#conn_cancel').onclick = () => dialog.remove();
+        dialog.querySelector('#conn_ok').onclick = async () => { dialog.remove(); try { await proceedCallback(); } catch(e){ console.warn(e); alert('Connection action failed.'); } };
+    }
+
+    // connectLAN: for simplicity, we reuse global signaling (works across LAN if DB reachable). Prompt to create/join room
+    function connectLAN() {
+        showConnectionDialog('LAN', 'Create or join a LAN room (share room ID over LAN).', async () => {
+            const action = prompt('Enter "create" to create a room, "join" to join one, or enter a room ID to join directly:','create');
+            if (!action) return;
+            if (action === 'create') await createRoomAndWait();
+            else if (action === 'join') await joinRoomPrompt();
+            else await connectToRoomAsCallee(action);
+        });
+    }
+
+    function connectRandom() {
+        showConnectionDialog('Random Match', 'Attempting to find a random opponent (via Firebase rooms).', async () => {
+            await randomMatch();
+        });
+    }
+
+    function connectGlobal() {
+        showConnectionDialog('Global Match', 'Create or join a global room.', async () => {
+            const choice = prompt('Enter "create" or a room ID to join:', 'create');
+            if (!choice) return;
+            if (choice === 'create') await createRoomAndWait();
+            else await connectToRoomAsCallee(choice);
+        });
+    }
+
+    // --- initialization & exposure to console for debugging ---
+    // Try to load meta
+    try {
+        const meta = JSON.parse(localStorage.getItem(META_KEY) || '{}');
+        if (meta && meta.playerId) gameState.playerId = meta.playerId;
+        gameState.friends = (meta && meta.friends) || gameState.friends;
+        gameState.recentOpponents = (meta && meta.recent) || gameState.recentOpponents;
+    } catch(e){}
+
+    // Ensure playerId exists
+    if (!gameState.playerId) {
+        gameState.playerId = generateId();
+        try { localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); } catch(e){}
+    }
+
+    // Generate items and update UI when starting
+    function startSinglePlayer() {
+        document.getElementById('mainMenu').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        generateItems();
+        updateAll();
+        if (gameLoopInterval) clearInterval(gameLoopInterval);
+        gameLoopInterval = setInterval(gameLoop, 2000);
+        setTimeout(() => spawnCustomer(), 1000);
+        // push meta to firebase for discoverability
+        pushMetaToFirebase();
+    }
+
+    // small helpers exposed for debugging in console
+    window.gameState = gameState;
+    window.buyItem = buyItem;
+    window.serveCustomer = serveCustomer;
+    window.spawnCustomer = spawnCustomer;
+    window.saveToSlot = saveToSlot;
+    window.loadFromSlot = loadFromSlot;
+    window.exitToMenu = exitToMenu;
+    window.connectGlobal = connectGlobal;
+    window.connectRandom = connectRandom;
+    window.connectLAN = connectLAN;
+    window.openFriends = openFriends;
+    window.openRecent = openRecent;
+    window.setupWebRTCPlaceholders = async ()=> { alert('WebRTC is now wired via Firebase signaling; use Global/Random to create/join rooms.'); };
+
+    // final UI refresh
+    generateItems();
+    updateAll();
+
+    // optional: cleanup old stray rooms older than a threshold (non-destructive here; commented out)
+    // (Left out to keep minimal)
+
+    </script>
+
+</body>
+</html>
