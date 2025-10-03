@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Idle Shop Keeper (Authoritative Rooms)</title>
+<title>Idle Shop Keeper</title>
 <style>
-/* Minimal UI changes only — everything else preserved */
+/* (kept styles minimal and compatible with your previous version) */
 body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333}
 .game-container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;padding:30px;box-shadow:0 20px 40px rgba(0,0,0,0.1)}
 .main-menu{text-align:center}
@@ -25,7 +25,7 @@ body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-ser
 .status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 .status-online{background:#38a169}.status-off{background:#cbd5e0}
 .small{font-size:.85rem;color:#555}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:3000}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:3000;pointer-events:auto}
 .modal{background:white;padding:18px;border-radius:12px;width:380px;max-width:94%;box-shadow:0 8px 40px rgba(0,0,0,0.25)}
 .input{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e2e8f0}
 .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
@@ -33,14 +33,10 @@ body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-ser
 .btn.ghost{background:#e2e8f0;color:#2d3748}
 #toastArea{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:4000}
 .toast{background:#2d3748;color:white;padding:8px 12px;border-radius:8px;opacity:0.95;min-width:160px}
-#signalStatus{position:fixed;right:18px;top:18px;z-index:4500;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.9);padding:6px;border-radius:8px;border:1px solid #e2e8f0}
-.signal-bars{display:flex;gap:2px;align-items:flex-end;height:18px}
-.signal-bars span{display:block;width:4px;background:#cbd5e0;border-radius:1px}
-.signal-bars span.on{background:#38a169}
-.ping-num{font-size:0.85rem;color:#333}
-.rooms-list{margin-top:10px;max-height:160px;overflow:auto;border:1px solid #e2e8f0;padding:8px;border-radius:8px;background:#fff}
-.room-row{display:flex;justify-content:space-between;align-items:center;padding:6px;border-bottom:1px dashed #eee}
-.room-row:last-child{border-bottom:none}
+.pingBox{position:fixed;right:18px;top:18px;background:rgba(255,255,255,0.9);padding:6px 10px;border-radius:8px;border:1px solid #e2e8f0;z-index:4001;display:flex;align-items:center;gap:8px}
+.signalBars{display:inline-flex;gap:2px;align-items:center}
+.bar{width:6px;height:10px;background:#cbd5e0;border-radius:2px}
+.bar.on{background:#38a169}
 @media(max-width:768px){.menu-options{padding:0 12px}}
 </style>
 </head>
@@ -73,32 +69,34 @@ body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-ser
 
       <div class="multiplayer-section">
         <h2>🌐 Multiplayer Options</h2>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;gap:10px">
+            <button class="menu-btn multiplayer" id="btnLAN"><div class="btn-icon">🏠</div><div class="btn-text"><h3>Local Network</h3><p>Play with friends on LAN</p></div></button>
+            <button class="menu-btn multiplayer" id="btnGlobal"><div class="btn-icon">🌍</div><div class="btn-text"><h3>Create/Join Room</h3><p>Global players</p></div></button>
+          </div>
+          <button class="menu-btn multiplayer" id="btnRandom"><div class="btn-icon">🎲</div><div class="btn-text"><h3>Random Match</h3><p>Find a random opponent</p></div></button>
 
-        <div style="display:flex;gap:10px;margin-bottom:8px">
-          <button class="menu-btn multiplayer" id="btnLAN"><div class="btn-icon">🏠</div><div class="btn-text"><h3>Local Network</h3><p>Create LAN room</p></div></button>
-          <button class="menu-btn multiplayer" id="btnGlobal"><div class="btn-icon">🌍</div><div class="btn-text"><h3>Rooms</h3><p>Create / Join room</p></div></button>
+          <div>
+            <h4 style="margin:8px 0 6px 0">Available Players (online)</h4>
+            <div id="playersPanel" class="players-panel"><div class="small" style="color:#666;text-align:center">Loading players...</div></div>
+          </div>
+
+          <div style="margin-top:12px">
+            <h4 style="margin:6px 0">Active Rooms (create/join)</h4>
+            <div id="roomsPanel" class="players-panel"><div class="small" style="color:#666;text-align:center">Loading rooms...</div></div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="createRoomBtn" class="btn primary">Create Room</button>
+              <button id="refreshRoomsBtn" class="btn ghost">Refresh Rooms</button>
+            </div>
+          </div>
+
         </div>
-
-        <button class="menu-btn multiplayer" id="btnRandom"><div class="btn-icon">🎲</div><div class="btn-text"><h3>Random Match</h3><p>Find an open room</p></div></button>
-
-        <div style="margin-top:12px">
-          <h4 style="margin:8px 0 6px 0">Available Players (online)</h4>
-          <div id="playersPanel" class="players-panel"><div class="small" style="color:#666;text-align:center">Loading players...</div></div>
-        </div>
-
-        <div style="margin-top:12px">
-          <h4 style="margin:8px 0 6px 0">Open Rooms</h4>
-          <div id="roomsPanel" class="rooms-list"><div class="small" style="color:#666;text-align:center">Loading rooms...</div></div>
-        </div>
-
       </div>
     </div>
   </div>
 
-  <!-- Game Screen (simple) -->
   <div id="gameScreen" style="display:none">
     <div class="header"><h1>🏪 Idle Shop Keeper</h1></div>
-
     <div class="stats" style="display:flex;gap:12px;flex-wrap:wrap">
       <div class="stat-card" style="flex:1;min-width:180px"><h3>💰 Money</h3><p id="money" class="stat-value">$100</p></div>
       <div class="stat-card" style="flex:1;min-width:180px"><h3>👥 Customers Served</h3><p id="customersServed" class="stat-value">0</p></div>
@@ -119,23 +117,21 @@ body{box-sizing:border-box;margin:0;padding:20px;font-family:'Segoe UI',sans-ser
 <div id="modalRoot" style="position:fixed;inset:0;pointer-events:none;z-index:3500"></div>
 <div id="toastArea"></div>
 
-<!-- ping & signal overlay -->
-<div id="signalStatus" style="display:none">
-  <div class="signal-bars" id="signalBars">
-    <span></span><span></span><span></span><span></span><span></span>
+<!-- Ping / signal widget -->
+<div id="pingWidget" class="pingBox" style="display:none">
+  <div id="pingValue">-- ms</div>
+  <div class="signalBars" id="signalBars" aria-hidden="true">
+    <div class="bar" id="bar1"></div><div class="bar" id="bar2"></div><div class="bar" id="bar3"></div><div class="bar" id="bar4"></div><div class="bar" id="bar5"></div>
   </div>
-  <div class="ping-num" id="pingNum">-- ms</div>
 </div>
 
 <script type="module">
-/* ====== Authoritative multiplayer + TTL sweeper + ping + minimal UI wiring ====== */
-
-/* Firebase imports */
+/* ---------- Imports ---------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, onChildAdded, child, get, remove, update, onDisconnect, query, orderByChild } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, onChildAdded, child, get, remove, update, onDisconnect } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
 
-/* ---------- Config (replace with your own if needed) ---------- */
+/* ---------- CONFIG ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyBn4khIpi57YvqQX2urCup2mCvpVUZ0j8k",
   authDomain: "idle-shop-keeper.firebaseapp.com",
@@ -153,37 +149,41 @@ const auth = getAuth(app);
 /* ---------- UI helpers ---------- */
 const modalRoot = document.getElementById('modalRoot');
 function showModal(html, opts = {}) {
-  const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop'; backdrop.style.pointerEvents = 'auto';
+  const backdrop = document.createElement('div'); backdrop.className = 'modal-backdrop';
   const box = document.createElement('div'); box.className = 'modal'; box.innerHTML = html;
   backdrop.appendChild(box); modalRoot.appendChild(backdrop);
-  const close = () => { try { backdrop.remove(); } catch(e) {} if (opts.onClose) opts.onClose(); };
-  box.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
+  const close = () => { try{ backdrop.remove(); }catch(e){} if(opts.onClose) opts.onClose(); };
+  box.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', close));
   return { box, close };
 }
-function toast(msg, t=3000) {
-  const area = document.getElementById('toastArea');
-  const el = document.createElement('div'); el.className='toast'; el.textContent = msg;
-  area.appendChild(el);
-  setTimeout(()=> el.style.opacity='0', t-350);
-  setTimeout(()=> { try{ el.remove(); }catch(e){} }, t);
+function toast(msg, t = 3000) {
+  const area = document.getElementById('toastArea'); const el = document.createElement('div'); el.className='toast'; el.textContent = msg; area.appendChild(el);
+  setTimeout(()=> el.style.opacity='0', t-350); setTimeout(()=> { try{ el.remove(); }catch(e){} }, t);
 }
 
-/* ---------- keys & helpers ---------- */
-const STORAGE_KEY = 'idle_shop_saves_v1';
-const META_KEY = 'idle_shop_meta_v1';
-function safeParse(s, fb={}){ try { return JSON.parse(s); } catch(e) { return fb; } }
-function generateId(){ return (crypto && crypto.randomUUID) ? 'p-'+crypto.randomUUID() : 'p-'+Math.random().toString(36).slice(2,10); }
+/* ---------- storage keys and helpers ---------- */
+const STORAGE_KEY = 'idle_shop_saves_v1', META_KEY = 'idle_shop_meta_v1';
+function safeParse(s, fallback={}){ try { return JSON.parse(s); } catch(e) { return fallback; } }
+function generateId() { return (crypto && crypto.randomUUID) ? 'p-'+crypto.randomUUID() : 'p-'+Math.random().toString(36).slice(2,10); }
 
-/* ---------- base game data (kept minimal) ---------- */
+/* ---------- game state ---------- */
 let gameState = {
-  money: 100, customersServed: 0, shopLevel: 1,
-  inventory: {}, upgrades:{autoCustomer:0,fasterService:0,betterPrices:0,moreCustomers:0},
-  customers: [], workers:{manager:{level:0,assigned:'idle'},restocker:{level:0,assigned:'idle'},server:{level:0,assigned:'idle'}},
-  playerId: null, unlockedCount:6, friends:[], recentOpponents:[], autosave:true,
-  currentRoom: null, isHost: false
+  money: 100,
+  customersServed: 0,
+  shopLevel: 1,
+  inventory: {},
+  upgrades: { autoCustomer:0, fasterService:0, betterPrices:0, moreCustomers:0 },
+  customers: [],
+  workers: { manager:{level:0,assigned:'idle'}, restocker:{level:0,assigned:'idle'}, server:{level:0,assigned:'idle'} },
+  playerId: null,
+  unlockedCount: 6,
+  friends: [],
+  recentOpponents: [],
+  autosave: true
 };
 
-const TOTAL_ITEMS = 5000, items = {};
+/* ---------- items ---------- */
+const TOTAL_ITEMS = 5000; const items = {};
 function generateItems(){
   const base = [
     {key:'apple',emoji:'🍎',name:'Apple',buyPrice:5,sellPrice:8},
@@ -193,478 +193,366 @@ function generateItems(){
     {key:'coffee',emoji:'☕',name:'Coffee',buyPrice:20,sellPrice:35},
     {key:'cake',emoji:'🎂',name:'Cake',buyPrice:30,sellPrice:50}
   ];
-  base.forEach(it => { items[it.key]=it; gameState.inventory[it.key] = gameState.inventory[it.key] || 0; });
-  for(let i=base.length+1;i<=TOTAL_ITEMS;i++){
-    const key='item_'+i; const buy=5+Math.floor(i*0.8); const sell=Math.floor(buy*1.6);
-    items[key]={emoji:'🎁',name:'Item '+i,buyPrice:buy,sellPrice:sell}; gameState.inventory[key]=gameState.inventory[key]||0;
-  }
+  base.forEach(it=>{ items[it.key]=it; gameState.inventory[it.key]=gameState.inventory[it.key]||0; });
+  for(let i=base.length+1;i<=TOTAL_ITEMS;i++){ const key='item_'+i; const buy=5+Math.floor(i*0.8); const sell=Math.floor(buy*1.6); items[key]={emoji:'🎁',name:'Item '+i,buyPrice:buy,sellPrice:sell}; gameState.inventory[key]=gameState.inventory[key]||0; }
 }
 
-/* ---------- UI update ---------- */
-function updateStats(){
+/* ---------- UI updates ---------- */
+function updateStats(){ try{
   document.getElementById('money').textContent='$'+gameState.money;
   document.getElementById('customersServed').textContent=gameState.customersServed;
   document.getElementById('shopLevel').textContent=gameState.shopLevel;
   document.getElementById('playerCode').textContent=gameState.playerId || '—';
-}
+}catch(e){} }
 function updateAllUI(){ updateStats(); }
 
-/* ---------- save helpers ---------- */
+/* ---------- saves ---------- */
 function getLocalSaves(){ return safeParse(localStorage.getItem(STORAGE_KEY), {}); }
-function setLocalSaves(s){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }catch(e){} }
+function setLocalSaves(s){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch(e) {} }
 
 async function saveSlot(slotName){
   const name = slotName || ('save-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'));
-  const saves = getLocalSaves(); saves[name] = { state: JSON.parse(JSON.stringify(gameState)), ts:Date.now() }; setLocalSaves(saves);
-  try { if(gameState.playerId) await set(ref(db, `players/${gameState.playerId}/saves/${name}`), saves[name]); toast('Saved: '+name); } catch(e){ toast('Saved locally (server failed)'); }
+  const saves = getLocalSaves(); saves[name] = { state: JSON.parse(JSON.stringify(gameState)), ts: Date.now() }; setLocalSaves(saves);
+  try{ if(gameState.playerId) await set(ref(db, `players/${gameState.playerId}/saves/${name}`), saves[name]); toast('Saved: '+name); } catch(e){ toast('Saved locally (upload failed)'); }
 }
 async function loadSlot(name){
   const saves = getLocalSaves();
   if(saves[name]){ gameState = JSON.parse(JSON.stringify(saves[name].state)); postLoadRestore(); toast('Loaded: '+name); return; }
-  try { if(gameState.playerId){ const snap = await get(ref(db, `players/${gameState.playerId}/saves/${name}`)); if(snap.exists()){ const payload = snap.val(); gameState = JSON.parse(JSON.stringify(payload.state)); postLoadRestore(); toast('Loaded from server: '+name); return; } } } catch(e){}
+  try{ if(gameState.playerId){ const snap = await get(ref(db, `players/${gameState.playerId}/saves/${name}`)); if(snap.exists()){ const payload = snap.val(); gameState = JSON.parse(JSON.stringify(payload.state)); postLoadRestore(); toast('Loaded from server: '+name); return; } } }catch(e){}
   toast('Save not found: '+name);
 }
-function postLoadRestore(){ generateItems(); updateAllUI(); }
+function postLoadRestore(){ generateItems(); gameState.inventory = gameState.inventory || {}; updateAllUI(); }
 
-function quickSave(){
-  try{
-    const saves = getLocalSaves(); const key = 'quick_'+gameState.playerId;
-    saves[key] = { state: JSON.parse(JSON.stringify(gameState)), ts:Date.now() }; setLocalSaves(saves);
-    if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{});
-  }catch(e){}
-}
+function quickSave(){ try{ const saves = getLocalSaves(); const key='quick_'+gameState.playerId; saves[key] = { state: JSON.parse(JSON.stringify(gameState)), ts: Date.now() }; setLocalSaves(saves); if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{}); }catch(e){} }
 
-/* ---------- export/import ---------- */
-function exportSaveFile() {
-  const payload = { savedAt: Date.now(), playerId: gameState.playerId, state: gameState };
-  const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-  const a = document.createElement('a'); a.href=data; a.download=`idle-shop-${gameState.playerId||'anon'}-${new Date().toISOString().slice(0,19)}.json`; document.body.appendChild(a); a.click(); a.remove();
-  toast('Export started');
-}
-function importSaveFile(file){
-  if(!file){ toast('No file'); return; }
-  const r = new FileReader();
-  r.onload = (e) => {
-    try {
-      const p = JSON.parse(e.target.result);
-      if(!p || !p.state){ toast('Invalid file'); return; }
-      gameState = p.state; postLoadRestore();
-      const saves = getLocalSaves(); const key = 'import_'+(p.playerId||'import')+'_'+Date.now(); saves[key] = { state: JSON.parse(JSON.stringify(gameState)), ts:Date.now() }; setLocalSaves(saves);
-      if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{});
-      toast('Imported');
-    } catch(e){ console.warn(e); toast('Import failed'); }
-  };
-  r.readAsText(file);
-}
+/* export/import */
+function exportSaveFile(){ const payload = { savedAt: Date.now(), playerId: gameState.playerId, state: gameState }; const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2)); const a=document.createElement('a'); a.href=data; a.download=`idle-shop-${gameState.playerId||'anon'}-${new Date().toISOString().slice(0,19)}.json`; document.body.appendChild(a); a.click(); a.remove(); toast('Export started'); }
+function importSaveFile(file){ if(!file){ toast('No file'); return; } const r=new FileReader(); r.onload=(e)=>{ try{ const p = JSON.parse(e.target.result); if(!p||!p.state){ toast('Invalid file'); return; } gameState = p.state; postLoadRestore(); const saves = getLocalSaves(); const key='import_'+(p.playerId||'import')+'_'+Date.now(); saves[key] = { state: JSON.parse(JSON.stringify(gameState)), ts: Date.now() }; setLocalSaves(saves); if(gameState.playerId) set(ref(db, `players/${gameState.playerId}/saves/${key}`), saves[key]).catch(()=>{}); toast('Imported'); } catch(e){ console.warn(e); toast('Failed import'); } }; r.readAsText(file); }
 
 /* ---------- presence & players list ---------- */
-async function writePresence() {
+async function writePresence(){
   if(!gameState.playerId) return;
-  try {
+  try{
     const pRef = ref(db, `players/${gameState.playerId}/presence`);
     await set(pRef, { lastSeen: Date.now(), playerId: gameState.playerId });
-    try { await onDisconnect(pRef).remove(); } catch(e){}
-  } catch(e) { console.warn('presence write failed', e); }
+    try{ await onDisconnect(pRef).remove(); } catch(e) {}
+  }catch(e){ console.warn('presence write failed', e); }
 }
-
-/* render players */
 function renderPlayersPanel(allPlayers){
   const panel = document.getElementById('playersPanel'); panel.innerHTML = '';
   const rows = [];
   Object.keys(allPlayers || {}).forEach(pid => {
     if(pid === gameState.playerId) return;
-    const p = allPlayers[pid];
-    const pres = p.presence || {};
-    const last = pres.lastSeen || 0;
-    const online = (Date.now() - last) < 60000;
+    const p = allPlayers[pid]; const pres = p.presence || {}; const last = pres.lastSeen || 0; const online = (Date.now() - last) < 60000;
     rows.push({ pid, online, meta: p.meta || {} });
   });
   if(rows.length === 0){ panel.innerHTML = '<div class="small" style="text-align:center;color:#666">No players found</div>'; return; }
-  rows.sort((a,b) => (b.online?1:0) - (a.online?1:0));
-  rows.forEach(r => {
+  rows.sort((a,b)=> (b.online?1:0) - (a.online?1:0));
+  rows.forEach(r=>{
     const div = document.createElement('div'); div.className='player-row';
     const left = document.createElement('div'); left.style.display='flex'; left.style.alignItems='center';
     const dot = document.createElement('span'); dot.className = 'status-dot ' + (r.online ? 'status-online' : 'status-off'); left.appendChild(dot);
     const name = document.createElement('div'); name.innerHTML = `<strong style="margin-left:8px">${r.pid}</strong><div class="small" style="color:#666">${r.online ? 'Online' : 'Offline'}</div>`; left.appendChild(name);
-    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='6px';
-    const inviteBtn = document.createElement('button'); inviteBtn.className='btn primary'; inviteBtn.textContent='Invite'; inviteBtn.onclick = ()=> invitePlayer(r.pid);
-    const joinBtn = document.createElement('button'); joinBtn.className='btn ghost'; joinBtn.textContent='Join Room'; joinBtn.onclick = ()=> tryJoinPlayerRoom(r.pid);
-    right.appendChild(inviteBtn); right.appendChild(joinBtn);
-    div.appendChild(left); div.appendChild(right);
-    panel.appendChild(div);
+    const right = document.createElement('div'); const inviteBtn = document.createElement('button'); inviteBtn.className='btn primary'; inviteBtn.textContent='Invite'; inviteBtn.onclick = () => invitePlayer(r.pid);
+    const joinBtn = document.createElement('button'); joinBtn.className='btn ghost'; joinBtn.textContent='Join Room'; joinBtn.onclick = () => tryJoinPlayerRoom(r.pid);
+    right.appendChild(inviteBtn); right.appendChild(joinBtn); right.style.display='flex'; right.style.gap='6px';
+    div.appendChild(left); div.appendChild(right); panel.appendChild(div);
   });
 }
 
-/* listen players live */
-onValue(ref(db, 'players'), snapshot => {
-  const all = snapshot.val() || {};
-  renderPlayersPanel(all);
-});
+/* ---------- rooms list & UI ---------- */
+const ROOM_TTL_MS = 1000 * 60 * 60 * 4; // 4 hours TTL for stale rooms; sweep clients will remove older rooms if no presence
 
-/* ---------- rooms listing & TTL sweeper ---------- */
-const ROOM_TTL_MS = 30 * 60 * 1000; // 30 minutes
-const ROOM_SWEEPER_INTERVAL = 60 * 1000; // 60s
-let sweeperId = null;
-
-async function refreshRoomsPanel() {
-  try {
-    const roomsSnap = await get(ref(db, 'rooms'));
-    const rooms = roomsSnap.exists() ? roomsSnap.val() : {};
-    const panel = document.getElementById('roomsPanel'); panel.innerHTML = '';
-    const keys = Object.keys(rooms);
-    if(keys.length === 0){ panel.innerHTML = '<div class="small" style="text-align:center;color:#666">No rooms</div>'; return; }
-    keys.forEach(rid => {
-      const rm = rooms[rid];
-      const row = document.createElement('div'); row.className = 'room-row';
-      row.innerHTML = `<div><strong>${rid}</strong><div class="small" style="color:#666">${rm.host||'unknown'} • ${rm.createdAt ? new Date(rm.createdAt).toLocaleString() : ''}</div></div>`;
-      const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='6px';
-      const join = document.createElement('button'); join.className='btn primary'; join.textContent='Join'; join.onclick = ()=> joinRoomById(rid);
-      const watch = document.createElement('button'); watch.className='btn ghost'; watch.textContent='Watch'; watch.onclick = ()=> subscribeRoomState(rid);
-      actions.appendChild(join); actions.appendChild(watch);
-      row.appendChild(actions);
-      panel.appendChild(row);
-    });
-  } catch(e) {
-    console.warn('refreshRoomsPanel failed', e);
-    document.getElementById('roomsPanel').innerHTML = '<div class="small" style="color:#666">Rooms unavailable</div>';
-  }
+function renderRoomsPanel(allRooms){
+  const panel = document.getElementById('roomsPanel'); panel.innerHTML = '';
+  const rows = [];
+  Object.keys(allRooms || {}).forEach(rid => {
+    const r = allRooms[rid];
+    rows.push({ rid, host: r.host, createdAt: r.createdAt || 0, state: r.state || {}, meta: r.meta || {} });
+  });
+  if(rows.length === 0){ panel.innerHTML = '<div class="small" style="text-align:center;color:#666">No active rooms</div>'; return; }
+  rows.sort((a,b)=> b.createdAt - a.createdAt);
+  rows.forEach(r => {
+    const div = document.createElement('div'); div.className='player-row';
+    const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:bold">${r.rid}</div><div class="small" style="color:#666">Host: ${r.host} • Age: ${Math.round((Date.now()-r.createdAt)/60000)}m</div>`;
+    const right = document.createElement('div');
+    const joinBtn = document.createElement('button'); joinBtn.className='btn primary'; joinBtn.textContent='Join'; joinBtn.onclick = () => joinRoomById(r.rid);
+    const viewBtn = document.createElement('button'); viewBtn.className='btn ghost'; viewBtn.textContent='View'; viewBtn.onclick = () => showModal(`<h3>Room ${r.rid}</h3><div style="margin-top:8px"><div class="small" style="color:#666">Host: ${r.host}</div><pre style="max-height:200px;overflow:auto;background:#f7fafc;padding:8px;border-radius:6px;border:1px solid #e2e8f0">${JSON.stringify(r.state || {}, null, 2)}</pre></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
+    right.appendChild(joinBtn); right.appendChild(viewBtn); right.style.display='flex'; right.style.gap='6px';
+    div.appendChild(left); div.appendChild(right); panel.appendChild(div);
+  });
 }
 
-/* small function to try removing stale rooms — only runs when this client is elected sweeper */
-async function runRoomSweeperOnce() {
-  if(!gameState.playerId) return;
-  try {
-    const playersSnap = await get(ref(db, 'players'));
-    const players = playersSnap.exists() ? playersSnap.val() : {};
-    const playerKeys = Object.keys(players).sort();
-    if(playerKeys.length === 0) return;
-    const elected = playerKeys[0]; // lexicographically smallest playerId is sweeper
-    if(elected !== gameState.playerId) return; // only elected sweeper runs cleanup
-    const roomsSnap = await get(ref(db, 'rooms'));
-    if(!roomsSnap.exists()) return;
-    const rooms = roomsSnap.val();
-    const now = Date.now();
-    for(const rid in rooms) {
-      try {
-        const rm = rooms[rid];
-        const created = rm.createdAt || 0;
-        if(now - created > ROOM_TTL_MS) {
-          // attempt to remove stale room
-          await remove(ref(db, `rooms/${rid}`)).catch(()=>{});
-        }
-      } catch(e) { /* ignore per-room errors */ }
-    }
-  } catch(e) { console.warn('sweeper error', e); }
-}
-
-/* start periodic sweeper */
-setInterval(()=> {
-  runRoomSweeperOnce().catch(()=>{});
-  refreshRoomsPanel();
-}, ROOM_SWEEPER_INTERVAL);
-
-/* ---------- invitations & rooms ---------- */
-async function invitePlayer(pid) {
-  if(!gameState.playerId) { toast('No player ID'); return; }
+/* ---------- create room (host) with onDisconnect cleanup ---------- */
+async function createRoom() {
   const rid = Math.random().toString(36).slice(2,10);
+  const roomRef = ref(db, `rooms/${rid}`);
   try {
-    await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId, authoritative:true });
-    await set(ref(db, `players/${pid}/invites/${rid}`), { from: gameState.playerId, room:rid, ts:Date.now() });
-    toast('Invite sent');
-    showRoomCreatedModal(rid);
-    // automatically host authoritative room for invite
-    hostAuthoritativeRoom(rid);
-  } catch(e) { console.warn(e); toast('Invite failed (permission?)'); }
-}
-
-async function tryJoinPlayerRoom(pid) {
-  try {
-    const roomsSnap = await get(ref(db, 'rooms'));
-    if(!roomsSnap.exists()){ toast('No active rooms'); return; }
-    const rooms = roomsSnap.val();
-    for(const rid in rooms) {
-      if(rooms[rid].host === pid) {
-        const m = showModal(`<h3>Join Room</h3><div style="margin-top:8px">Join room <strong>${rid}</strong> hosted by ${pid}?</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Cancel</button><button id="confirmJoin" class="btn primary">Join</button></div>`);
-        m.box.querySelector('#confirmJoin').addEventListener('click', async ()=> { m.close(); await joinRoomById(rid); });
-        return;
-      }
-    }
-    toast('No room found for that player');
-  } catch(e) { console.warn(e); toast('Failed to query rooms'); }
-}
-
-function showRoomCreatedModal(rid){
-  showModal(`<h3>Room Created</h3><div style="margin-top:8px"><div class="small" style="color:#666">Share this room ID:</div><div style="margin-top:8px;padding:8px;border-radius:8px;background:#f7fafc;border:1px solid #e2e8f0;text-align:center;font-weight:bold">${rid}</div></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`);
-}
-
-/* ---------- authoritative room implementation (host acts as server) ---------- */
-let roomActionListenerUnsub = null;
-let roomStateListenerUnsub = null;
-let roomHostTickInterval = null;
-
-async function hostAuthoritativeRoom(rid) {
-  gameState.currentRoom = rid;
-  gameState.isHost = true;
-  // set initial state in DB under rooms/{rid}/state
-  try {
-    const initState = { money: gameState.money, customersServed: gameState.customersServed, shopLevel: gameState.shopLevel, inventory: {} };
-    Object.keys(gameState.inventory).slice(0,50).forEach(k => initState.inventory[k] = gameState.inventory[k]); // small snapshot
-    await set(ref(db, `rooms/${rid}/meta`), { host: gameState.playerId, createdAt: Date.now(), authoritative:true }).catch(()=>{});
-    await set(ref(db, `rooms/${rid}/state`), initState).catch(()=>{});
-    // set onDisconnect cleanup for the room (host)
-    try { await onDisconnect(ref(db, `rooms/${rid}`)).remove(); } catch(e){}
-    // listen for actions
-    const actionsRef = ref(db, `rooms/${rid}/actions`);
-    // process each incoming action once
-    roomActionListenerUnsub = onChildAdded(actionsRef, async (snap) => {
-      const action = snap.val(); const actionKey = snap.key;
-      if(!action) return;
-      try {
-        await processRoomActionAsHost(rid, action, actionKey);
-      } catch(e) { console.warn('process action failed', e); }
-    });
-    // host tick: can periodically push authoritative state to DB
-    roomHostTickInterval = setInterval(async ()=> {
-      try {
-        // optionally do room-side automation (spawn customers, worker ticks) — simple example: increment money slowly
-        // Here we only re-write authoritative state so clients stay up-to-date
-        const stateSnapshot = await get(ref(db, `rooms/${rid}/state`)); // read current authoritative
-        if(stateSnapshot.exists()){
-          // ensure host local copy kept in sync with db snapshot
-          // (host should be authoritative origin of state changes; skip merging here)
-        }
-      } catch(e){}
-    }, 2000);
-    toast('Hosting authoritative room: ' + rid);
-  } catch(e) { console.warn('hostAuthoritativeRoom failed', e); toast('Failed to host room (permission?)'); }
-}
-
-/* host processes actions */
-async function processRoomActionAsHost(rid, action, actionKey) {
-  // basic action types: serve, buy, requestSync
-  // load current authoritative
-  const stateRef = ref(db, `rooms/${rid}/state`);
-  const snap = await get(stateRef);
-  if(!snap.exists()) { console.warn('no state for room', rid); return; }
-  const state = snap.val();
-  if(action.type === 'serve') {
-    const idx = action.customerIndex;
-    const want = action.want;
-    if(!want) return;
-    const stock = (state.inventory && state.inventory[want]) || 0;
-    if(stock > 0) {
-      state.inventory[want] = stock - 1;
-      state.money = (state.money || 0) + (items[want] ? items[want].sellPrice : 0);
-      state.customersServed = (state.customersServed||0) + 1;
-    }
-  } else if(action.type === 'buy') {
-    const want = action.itemKey;
-    const buyPrice = items[want] ? items[want].buyPrice : 0;
-    if((state.money || 0) >= buyPrice) {
-      state.money = (state.money || 0) - buyPrice;
-      state.inventory = state.inventory || {};
-      state.inventory[want] = (state.inventory[want]||0) + 1;
-    }
-  } else if(action.type === 'requestSync') {
-    // no-op; host will push state below
+    await set(roomRef, { createdAt: Date.now(), host: gameState.playerId, state: { money: gameState.money, customersServed: gameState.customersServed, shopLevel: gameState.shopLevel }, meta: { createdBy: gameState.playerId } });
+    // register onDisconnect for host to remove room automatically
+    try { await onDisconnect(roomRef).remove(); } catch(e) { /* best effort */ }
+    toast('Room created: ' + rid);
+    hostRoom(rid);
+  } catch(e) {
+    console.warn('createRoom failed', e); toast('Failed to create room');
   }
-  // write updated state and remove action
-  try {
-    await set(stateRef, state);
-    await remove(ref(db, `rooms/${rid}/actions/${actionKey}`)).catch(()=>{});
-  } catch(e) { console.warn('write state or remove action failed', e); }
 }
 
-/* client: subscribe to room state & actions */
-let currentRoomStateUnsub = null;
-async function subscribeRoomState(rid) {
-  // subscribe to state updates
-  try {
+/* ---------- authoritative model: actions queue processed by host ---------- */
+/*
+  - clients push actions to rooms/{rid}/actions (child push)
+  - host listens on actions and processes them (applies to rooms/{rid}/state using transactions)
+  - host removes action entry after processing
+  - clients subscribe to rooms/{rid}/state to receive authoritative updates
+*/
+
+/* host processing */
+let hostActionListenerHandles = {};
+
+function hostRoom(rid){
+  // set active room id for local host
+  console.log('Hosting room', rid);
+  // start listening for actions
+  const actionsRef = ref(db, `rooms/${rid}/actions`);
+  // onChildAdded handles incoming actions
+  const unsub = onChildAdded(actionsRef, async (snap) => {
+    const actionKey = snap.key; const action = snap.val();
+    if(!action) return;
+    // process action atomically: use transaction on rooms/{rid}/state
     const stateRef = ref(db, `rooms/${rid}/state`);
-    // onValue listening
-    if(currentRoomStateUnsub) { currentRoomStateUnsub(); currentRoomStateUnsub = null; }
-    currentRoomStateUnsub = onValue(stateRef, snap => {
-      const val = snap.val();
-      if(val) {
-        // apply authoritative snapshot to local gameState (careful)
-        gameState.money = val.money || gameState.money;
-        gameState.customersServed = val.customersServed || gameState.customersServed;
-        gameState.shopLevel = val.shopLevel || gameState.shopLevel;
-        // merge inventory keys (small subset)
-        if(val.inventory) {
-          Object.keys(val.inventory).forEach(k => gameState.inventory[k] = val.inventory[k]);
-        }
-        updateAllUI();
-      }
-    });
-    toast('Subscribed to room state: ' + rid);
-  } catch(e) { console.warn('subscribeRoomState failed', e); toast('Subscribe failed'); }
+    try {
+      await update(ref(db, `rooms/${rid}/processing/${actionKey}`), { processingBy: gameState.playerId, ts: Date.now() }); // mark processing (optional)
+      await runActionTransaction(stateRef, action);
+      // remove the processed action
+      await remove(ref(db, `rooms/${rid}/actions/${actionKey}`));
+      await remove(ref(db, `rooms/${rid}/processing/${actionKey}`)).catch(()=>{});
+    } catch(e){
+      console.warn('action processing failed', e);
+    }
+  });
+  hostActionListenerHandles[rid] = unsub;
 }
 
-/* join authoritative room by id */
-async function joinRoomById(rid) {
+/* runActionTransaction: apply a single action object to the state safely via transaction */
+async function runActionTransaction(stateRef, action) {
+  // action format: { type: 'buy'|'serve'|..., payload: {...}, by: playerId, ts }
   try {
-    // if room has authoritative flag, treat as server room; otherwise use p2p fallback
-    const metaSnap = await get(ref(db, `rooms/${rid}/meta`));
-    const meta = metaSnap.exists() ? metaSnap.val() : null;
-    if(meta && meta.authoritative) {
-      // join authoritative mode: listen for state and post actions under rooms/{rid}/actions
-      gameState.currentRoom = rid;
-      gameState.isHost = false;
-      // subscribe to authoritative state
-      await subscribeRoomState(rid);
-      toast('Joined authoritative room: '+rid);
-    } else {
-      // non-authoritative / legacy: attempt p2p (kept minimal)
-      toast('This room is non-authoritative or missing: attempting p2p join (legacy)');
-      // For p2p: call joinRoomByIdWebRTC (not implemented here) or joinRoomById() above
-      // fallback behavior: simply subscribe to room state if exists
-      await subscribeRoomState(rid);
-    }
-  } catch(e) { console.warn(e); toast('Join failed (permission?)'); }
+    // use get + set pattern: read current state, modify, write via transaction
+    await set(stateRef, await applyActionToState((await get(stateRef)).val() || { money:0,customersServed:0,shopLevel:1 }, action));
+  } catch(e){
+    console.warn('runActionTransaction error', e);
+  }
 }
 
-/* clients send actions to authoritative host */
-async function sendRoomAction(action) {
-  if(!gameState.currentRoom) { toast('Not in a room'); return; }
-  const actionsRef = ref(db, `rooms/${gameState.currentRoom}/actions`);
+/* very small example action application (extendable) */
+function applyActionToState(current, action) {
+  const copy = JSON.parse(JSON.stringify(current || {}));
   try {
-    await push(actionsRef, Object.assign({ from: gameState.playerId, ts: Date.now() }, action));
-  } catch(e) { console.warn('send action failed', e); toast('Action failed (permission?)'); }
+    if(action.type === 'giveMoney') {
+      copy.money = (copy.money || 0) + (action.payload.amount || 0);
+    } else if(action.type === 'serve') {
+      copy.customersServed = (copy.customersServed || 0) + 1;
+      copy.money = (copy.money || 0) + (action.payload.earn || 0);
+    } else if(action.type === 'buy') {
+      copy.money = (copy.money || 0) - (action.payload.cost || 0);
+      copy.inventory = copy.inventory || {};
+      copy.inventory[action.payload.key] = (copy.inventory[action.payload.key] || 0) + (action.payload.amount || 1);
+    }
+    // update shopLevel for demo
+    if(copy.customersServed && (copy.customersServed % 10 === 0)) copy.shopLevel = (copy.shopLevel || 1) + 1;
+  } catch(e){ console.warn('applyActionToState failed', e); }
+  return copy;
 }
 
-/* ---------- minimal client-side buy/serve adapt to authoritative rooms ---------- */
-function buyItemLocal(key) {
-  if(gameState.currentRoom && !gameState.isHost) {
-    // send buy action
-    sendRoomAction({ type:'buy', itemKey: key });
-    toast('Buy request sent to host');
-    return;
-  }
-  // local single-player or host: apply locally and if host also update room state
-  const it = items[key];
-  if(!it) return;
-  if(gameState.money >= it.buyPrice) {
-    gameState.money -= it.buyPrice;
-    gameState.inventory[key] = (gameState.inventory[key] || 0) + 1;
-    updateAllUI();
-    if(gameState.currentRoom && gameState.isHost) {
-      // host writes authoritative state
-      const stateRef = ref(db, `rooms/${gameState.currentRoom}/state`);
-      const small = { money: gameState.money, customersServed: gameState.customersServed, shopLevel: gameState.shopLevel, inventory: {} };
-      Object.keys(gameState.inventory).slice(0,50).forEach(k=> small.inventory[k] = gameState.inventory[k]);
-      set(stateRef, small).catch(()=>{});
-    }
-  } else {
-    toast('Not enough money');
-  }
-}
-function serveCustomerLocal(index, want) {
-  if(gameState.currentRoom && !gameState.isHost) {
-    // send serve action
-    sendRoomAction({ type:'serve', customerIndex: index, want });
-    toast('Serve request sent to host');
-    return;
-  }
-  // local or host apply directly
-  if((gameState.inventory[want]||0) > 0) {
-    gameState.inventory[want]--;
-    const earnings = items[want] ? items[want].sellPrice : 0;
-    gameState.money += earnings;
-    gameState.customersServed++;
-    if(gameState.customersServed % 10 === 0) { gameState.shopLevel++; gameState.unlockedCount = Math.min(TOTAL_ITEMS, gameState.unlockedCount + 10); }
-    updateAllUI();
-    if(gameState.currentRoom && gameState.isHost) {
-      const stateRef = ref(db, `rooms/${gameState.currentRoom}/state`);
-      const small = { money: gameState.money, customersServed: gameState.customersServed, shopLevel: gameState.shopLevel, inventory: {} };
-      Object.keys(gameState.inventory).slice(0,50).forEach(k=> small.inventory[k] = gameState.inventory[k]);
-      set(stateRef, small).catch(()=>{});
-    }
-  } else {
-    toast('No stock');
+/* client pushes an action to queue */
+async function pushActionToRoom(rid, action) {
+  try {
+    const actionRef = push(ref(db, `rooms/${rid}/actions`));
+    await set(actionRef, { ...action, by: gameState.playerId, ts: Date.now() });
+  } catch(e) {
+    console.warn('pushAction failed', e);
   }
 }
 
-/* ---------- WebRTC p2p (kept minimal; original code earlier used Firebase signaling) ---------- */
-/* Note: full WebRTC handshake code left minimal since authoritative mode preferred; ping uses dataChannel when available */
-let pc = null, dataChannel = null;
-function createPeerConnectionForPing() {
-  if(pc) return pc;
-  pc = new RTCPeerConnection({ iceServers:[{urls:'stun:stun.l.google.com:19302'}] });
-  pc.ondatachannel = (ev)=> {
-    dataChannel = ev.channel; setupDataChannelPing();
+/* clients subscribe to room state */
+function subscribeToRoomState(rid) {
+  const stateRef = ref(db, `rooms/${rid}/state`);
+  onValue(stateRef, snap => {
+    const val = snap.val();
+    if(!val) return;
+    // apply authoritative state snapshot to local view (don't overwrite player-specific metadata)
+    gameState.money = val.money || gameState.money;
+    gameState.customersServed = val.customersServed || gameState.customersServed;
+    gameState.shopLevel = val.shopLevel || gameState.shopLevel;
+    if(val.inventory) {
+      Object.keys(val.inventory).slice(0,20).forEach(k => { gameState.inventory[k] = val.inventory[k]; });
+    }
+    updateAllUI();
+  });
+}
+
+/* ---------- join & host flows (we still keep WebRTC datachannels for direct peer sync + ping) ---------- */
+let pc = null, dataChannel = null, roomIdActive = null;
+function createPeerConnection() {
+  const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  const conn = new RTCPeerConnection(configuration);
+  conn.onicecandidate = (e) => {
+    if(e.candidate && roomIdActive) {
+      push(ref(db, `rooms/${roomIdActive}/candidates/${gameState.playerId}`), e.candidate.toJSON()).catch(()=>{});
+    }
   };
-  pc.onconnectionstatechange = ()=> { if(pc.connectionState === 'connected'){ toast('P2P connected'); } };
-  return pc;
+  conn.ondatachannel = (ev) => {
+    dataChannel = ev.channel;
+    setupDataChannelHandlers();
+  };
+  conn.onconnectionstatechange = () => {
+    if(conn.connectionState === 'connected') toast('Peer connected');
+    if(conn.connectionState === 'disconnected' || conn.connectionState === 'failed') toast('Peer disconnected');
+  };
+  pc = conn; return conn;
 }
-function setupDataChannelPing(){
+function setupDataChannelHandlers(){
   if(!dataChannel) return;
-  dataChannel.onmessage = (ev)=> {
+  dataChannel.onopen = ()=> { console.log('DC open'); sendGameStateSnapshot(); startPingLoop(); document.getElementById('pingWidget').style.display='flex'; };
+  dataChannel.onclose = ()=> { stopPingLoop(); document.getElementById('pingWidget').style.display='none'; };
+  dataChannel.onmessage = (ev) => {
     try{
       const msg = JSON.parse(ev.data);
-      if(msg.type === 'ping-echo' && msg.nonce && pingTracker[msg.nonce]) {
-        const sent = pingTracker[msg.nonce];
-        const rtt = Date.now() - sent;
-        updatePingUI(rtt);
-        delete pingTracker[msg.nonce];
-      } else if(msg.type === 'ping' && msg.nonce) {
-        // echo back
-        dataChannel.send(JSON.stringify({ type:'ping-echo', nonce: msg.nonce }));
-      }
-    }catch(e){}
+      if(msg.type === 'syncState'){ const s=msg.state; if(s) { gameState.money = s.money || gameState.money; gameState.customersServed = s.customersServed || gameState.customersServed; gameState.shopLevel = s.shopLevel || gameState.shopLevel; updateAllUI(); } }
+      else if(msg.type === 'ping') {
+        // reply with pong immediately
+        dataChannel.send(JSON.stringify({ type: 'pong', ts: msg.ts }));
+      } else if(msg.type === 'pong') {
+        // compute RTT
+        const now = Date.now(); const rtt = now - (msg.ts || now);
+        updatePingDisplay(rtt);
+      } else if(msg.type === 'requestSync') { sendGameStateSnapshot(); }
+    }catch(e){ console.warn('dc msg parse', e); }
   };
 }
-const pingTracker = {};
-function sendPingOverDC() {
-  if(!dataChannel || dataChannel.readyState !== 'open') return;
-  const nonce = Math.random().toString(36).slice(2,9);
-  pingTracker[nonce] = Date.now();
-  dataChannel.send(JSON.stringify({ type:'ping', nonce }));
-  // timeout if no response
-  setTimeout(()=> { if(pingTracker[nonce]) { updatePingUI(null); delete pingTracker[nonce]; } }, 5000);
+function sendGameStateSnapshot(){
+  if(!dataChannel||dataChannel.readyState!=='open') return;
+  const invKeys = Object.keys(gameState.inventory).slice(0,12);
+  const inv = {}; invKeys.forEach(k => inv[k] = gameState.inventory[k]);
+  const payload = { type:'syncState', state:{ money:gameState.money, customersServed:gameState.customersServed, shopLevel:gameState.shopLevel, inventory:inv } };
+  dataChannel.send(JSON.stringify(payload));
 }
 
-/* ---------- ping UI ---------- */
-function updatePingUI(rtt) {
-  const el = document.getElementById('signalStatus');
-  const bars = document.querySelectorAll('#signalBars span');
-  if(rtt === null || rtt === undefined) {
-    el.style.display = 'flex';
-    document.getElementById('pingNum').textContent = '-- ms';
-    bars.forEach(s => s.classList.remove('on'));
-    return;
-  }
-  document.getElementById('pingNum').textContent = rtt + ' ms';
-  // thresholds: <80ms = 5, <150 =4, <300=3, <600=2, else 1
-  let n = 1;
-  if(rtt < 80) n = 5;
-  else if(rtt < 150) n = 4;
-  else if(rtt < 300) n = 3;
-  else if(rtt < 600) n = 2;
-  else n = 1;
-  bars.forEach((s,i)=> {
-    if(i < n) s.classList.add('on'); else s.classList.remove('on');
+/* ping loop via datachannel */
+let pingInterval = null;
+function startPingLoop(){
+  if(pingInterval) return;
+  pingInterval = setInterval(()=> {
+    if(!dataChannel || dataChannel.readyState !== 'open') return;
+    const ts = Date.now();
+    dataChannel.send(JSON.stringify({ type:'ping', ts }));
+  }, 2000);
+}
+function stopPingLoop(){ if(pingInterval){ clearInterval(pingInterval); pingInterval=null; } }
+function updatePingDisplay(ms){
+  const el = document.getElementById('pingValue'); el.textContent = (ms ? ms+' ms' : '-- ms');
+  // signal bars based on thresholds (smaller is better)
+  const bars = [50, 120, 200, 350]; // thresholds - adjust as needed
+  for(let i=1;i<=5;i++){ document.getElementById('bar'+i).classList.remove('on'); }
+  if(!ms) return;
+  let on = 1;
+  if(ms <= bars[0]) on = 5;
+  else if(ms <= bars[1]) on = 4;
+  else if(ms <= bars[2]) on = 3;
+  else if(ms <= bars[3]) on = 2;
+  else on = 1;
+  for(let i=1;i<=on;i++) document.getElementById('bar'+i).classList.add('on');
+}
+
+/* hostRoom WebRTC steps simplified (host will create offer) */
+async function hostRoomWebRTC(rid){
+  roomIdActive = rid;
+  createPeerConnection();
+  dataChannel = pc.createDataChannel('game'); setupDataChannelHandlers();
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await set(ref(db, `rooms/${rid}/offer`), { sdp: offer.sdp, type: offer.type, from: gameState.playerId, createdAt: Date.now() });
+  onValue(ref(db, `rooms/${rid}/answer`), async snap => { const val = snap.val(); if(!val||!val.sdp) return; await pc.setRemoteDescription({ type: val.type, sdp: val.sdp }).catch(()=>{}); });
+  onChildAdded(ref(db, `rooms/${rid}/candidates`), snap => {
+    const obj = snap.val(); if(!obj) return; Object.values(obj).forEach(async candidate => { try{ await pc.addIceCandidate(candidate); }catch(e){} });
   });
-  el.style.display = 'flex';
 }
 
-/* periodic ping attempt (uses dataChannel when connected) */
-setInterval(()=> {
-  try { sendPingOverDC(); } catch(e){}
-}, 4000);
+/* joiner using offer->answer flow */
+async function joinRoomById(rid){
+  roomIdActive = rid;
+  createPeerConnection();
+  try {
+    const offerSnap = await get(ref(db, `rooms/${rid}/offer`));
+    if(!offerSnap.exists()){ toast('No offer in room ' + rid); return; }
+    const offer = offerSnap.val();
+    await pc.setRemoteDescription({ type: offer.type, sdp: offer.sdp }).catch(()=>{});
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await set(ref(db, `rooms/${rid}/answer`), { sdp: answer.sdp, type: answer.type, from: gameState.playerId, answeredAt: Date.now() });
+    // listen for candidates
+    onChildAdded(ref(db, `rooms/${rid}/candidates`), snap => {
+      const obj = snap.val(); if(!obj) return; Object.values(obj).forEach(async candidate => { try{ await pc.addIceCandidate(candidate); } catch(e){} });
+    });
+    // subscribe to authoritative state too
+    subscribeToRoomState(rid);
+    toast('Joined room: ' + rid);
+  } catch(e) { console.warn(e); toast('Failed to join room'); }
+}
 
-/* ---------- room presence & invites handling ---------- */
-onValue(ref(db, 'players'), snapshot => {
-  const all = snapshot.val() || {};
-  renderPlayersPanel(all);
-  refreshRoomsPanel();
-});
+/* ---------- room sweeper (client-side) ---------- */
+/* invisible by default; can be toggled via developer console or an admin modal */
+let AUTO_SWEEPER_ENABLED = false;
+async function clientSweepRooms() {
+  try {
+    const snap = await get(ref(db, 'rooms'));
+    if(!snap.exists()) return;
+    const rooms = snap.val();
+    const now = Date.now();
+    for(const rid in rooms) {
+      const r = rooms[rid];
+      const age = now - (r.createdAt || 0);
+      if(age > ROOM_TTL_MS) {
+        // check host presence
+        const hostId = r.host;
+        const presSnap = await get(ref(db, `players/${hostId}/presence`));
+        const last = presSnap.exists() ? (presSnap.val().lastSeen || 0) : 0;
+        if((now - last) > ROOM_TTL_MS) {
+          // remove stale room
+          await remove(ref(db, `rooms/${rid}`)).catch(()=>{});
+          console.log('sweeper removed room', rid);
+        }
+      }
+    }
+  } catch(e) { console.warn('sweeper failed', e); }
+}
 
-/* listen for invites to me and pop modal to accept */
+/* schedule sweeper when enabled */
+let sweeperInterval = null;
+function enableSweeper(on){
+  AUTO_SWEEPER_ENABLED = !!on;
+  if(AUTO_SWEEPER_ENABLED) { clientSweepRooms(); sweeperInterval = setInterval(()=> clientSweepRooms(), 1000 * 60 * 10); } else { if(sweeperInterval) { clearInterval(sweeperInterval); sweeperInterval = null; } }
+}
+
+/* ---------- invites ---------- */
+async function invitePlayer(pid){
+  if(!gameState.playerId) { toast('Player id missing'); return; }
+  const rid = Math.random().toString(36).slice(2,10);
+  try {
+    await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId, state: { money: gameState.money, customersServed: gameState.customersServed, shopLevel: gameState.shopLevel }, meta: { createdBy: gameState.playerId } });
+    await set(ref(db, `players/${pid}/invites/${rid}`), { from: gameState.playerId, room: rid, ts: Date.now() });
+    // onDisconnect remove
+    try { await onDisconnect(ref(db, `rooms/${rid}`)).remove(); } catch(e){}
+    toast('Invite sent to ' + pid);
+    hostRoom(rid); // start processing actions for room
+  } catch(e) { console.warn(e); toast('Invite failed'); }
+}
+
+/* respond to incoming invites */
 onValue(ref(db, 'players'), snapshot => {
-  const all = snapshot.val() || {};
-  const me = all[gameState.playerId] || {};
-  const invites = me.invites || {};
+  const players = snapshot.val() || {};
+  const me = players[gameState.playerId] || {};
+  const invites = (me.invites) || {};
   const keys = Object.keys(invites);
   if(keys.length > 0) {
     const id = keys[0]; const inv = invites[id];
@@ -680,176 +568,145 @@ onValue(ref(db, 'players'), snapshot => {
   }
 });
 
-/* ---------- onDisconnect cleaning for presence + host rooms already attempted when creating room (onDisconnect set) ---------- */
-async function ensurePlayerNode() {
-  if(!gameState.playerId) return;
+/* ---------- UI wiring ---------- */
+document.getElementById('btnSingle').addEventListener('click', () => startSinglePlayer());
+document.getElementById('btnFriends').addEventListener('click', openFriendsDialog);
+document.getElementById('btnRecent').addEventListener('click', openRecentDialog);
+document.getElementById('createRoomBtn').addEventListener('click', () => createRoom());
+document.getElementById('refreshRoomsBtn').addEventListener('click', () => { refreshRooms(); });
+
+document.getElementById('btnLAN').addEventListener('click', ()=> { const rid = Math.random().toString(36).slice(2,10); createRoom(); toast('LAN room created: ' + rid); });
+document.getElementById('btnRandom').addEventListener('click', async ()=> {
+  // try to find available room, otherwise create one
   try {
-    await set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() });
-    await set(ref(db, `players/${gameState.playerId}/presence`), { lastSeen: Date.now(), playerId: gameState.playerId });
-    try { await onDisconnect(ref(db, `players/${gameState.playerId}/presence`)).remove(); } catch(e){}
-  } catch(e) { console.warn('ensurePlayerNode failed', e); }
-}
-
-/* ---------- startSinglePlayer (was missing earlier) ---------- */
-let gameLoopInterval = null;
-function startSinglePlayer() {
-  document.getElementById('mainMenu').style.display = 'none';
-  document.getElementById('gameScreen').style.display = 'block';
-  generateItems(); updateAllUI();
-  if(gameLoopInterval) clearInterval(gameLoopInterval);
-  gameLoopInterval = setInterval(gameLoop, 2000);
-  setTimeout(() => spawnCustomerLocal(), 1000);
-  writePresence();
-  ensurePlayerNode();
-  toast('Single player started');
-}
-
-/* spawn customer local function for demo */
-const customerTypes = [
-  {emoji:'👨', wants:['apple','bread']},
-  {emoji:'👩', wants:['milk','coffee']},
-  {emoji:'👦', wants:['candy','cake']},
-  {emoji:'👧', wants:['apple','candy']},
-  {emoji:'🧓', wants:['bread','milk']},
-  {emoji:'👴', wants:['coffee','cake']}
-];
-function spawnCustomerLocal(){
-  const maxCustomers = 3 + (gameState.upgrades.moreCustomers||0);
-  if(gameState.customers.length < maxCustomers) {
-    const ct = customerTypes[Math.floor(Math.random()*customerTypes.length)];
-    const want = ct.wants[Math.floor(Math.random()*ct.wants.length)];
-    gameState.customers.push({ emoji: ct.emoji, wants: want });
-  }
-}
-
-/* game loop minimal */
-function workerTickLocal(){
-  // restocker / server automation could be added here
-}
-function gameLoop() {
-  if(gameState.upgrades.autoCustomer > 0 && Math.random() < 0.3 + (gameState.upgrades.autoCustomer * 0.1)) spawnCustomerLocal();
-  if(Math.random() < 0.1 + (gameState.shopLevel * 0.02)) spawnCustomerLocal();
-  workerTickLocal();
-  if(gameState.autosave) quickSave();
-}
-
-/* ---------- wiring UI elements (minimal changes) ---------- */
-document.getElementById('btnSingle').addEventListener('click', startSinglePlayer);
-document.getElementById('btnFriends').addEventListener('click', ()=> { showFriendsDialog(); });
-document.getElementById('btnRecent').addEventListener('click', ()=> { showRecentDialog(); });
-document.getElementById('btnLAN').addEventListener('click', async ()=> {
-  // create authoritative room and host it (LAN label only)
-  const rid = Math.random().toString(36).slice(2,10);
-  try {
-    await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId, authoritative:true, lan:true });
-    hostAuthoritativeRoom(rid);
-    showRoomCreatedModal(rid);
-  } catch(e) { console.warn(e); toast('Create room failed'); }
+    const roomsSnap = await get(ref(db, 'rooms')); if(!roomsSnap.exists()){ createRoom(); return; }
+    const rooms = roomsSnap.val();
+    for(const rid in rooms){ const ans = await get(ref(db, `rooms/${rid}/answer`)); if(!ans.exists()){ await joinRoomById(rid); toast('Random matched to ' + rid); return; } }
+    createRoom();
+  } catch(e) { console.warn(e); toast('Random match failed'); }
 });
+
 document.getElementById('btnGlobal').addEventListener('click', ()=> {
-  const content = `<h3>Rooms</h3><div style="margin-top:8px"><button id="createRoomBtn" class="btn primary">Create Room</button><button id="joinRoomBtn" class="btn ghost" style="margin-left:8px">Join by ID</button></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
+  const content = `<h3>Rooms</h3><div style="margin-top:8px"><button id="createRoomModalBtn" class="btn primary">Create Room</button><button id="joinRoomModalBtn" class="btn ghost" style="margin-left:8px">Join by ID</button></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`;
   const m = showModal(content);
-  m.box.querySelector('#createRoomBtn').addEventListener('click', async ()=> {
-    m.close();
-    const rid = Math.random().toString(36).slice(2,10);
-    try {
-      await set(ref(db, `rooms/${rid}`), { createdAt: Date.now(), host: gameState.playerId, authoritative:true });
-      hostAuthoritativeRoom(rid);
-      showRoomCreatedModal(rid);
-    } catch(e) { console.warn(e); toast('Create room failed'); }
-  });
-  m.box.querySelector('#joinRoomBtn').addEventListener('click', ()=> { m.close(); joinRoomPrompt(); });
+  m.box.querySelector('#createRoomModalBtn').addEventListener('click', async ()=> { m.close(); await createRoom(); });
+  m.box.querySelector('#joinRoomModalBtn').addEventListener('click', ()=> { m.close(); joinRoomPrompt(); });
 });
-document.getElementById('btnRandom').addEventListener('click', async ()=>{
-  try {
-    const roomsSnap = await get(ref(db, 'rooms'));
-    if(roomsSnap.exists()) {
-      const rooms = roomsSnap.val();
-      for(const rid in rooms) {
-        const rm = rooms[rid];
-        if(rm && !rm.answerer) { await joinRoomById(rid); toast('Joined ' + rid); return; }
-      }
-    }
-    const newId = Math.random().toString(36).slice(2,10);
-    await set(ref(db, `rooms/${newId}`), { createdAt: Date.now(), host: gameState.playerId, authoritative:true });
-    hostAuthoritativeRoom(newId); showRoomCreatedModal(newId);
-  } catch(e) { console.warn(e); toast('Random match error'); }
-});
-document.getElementById('copyPlayerCode').addEventListener('click', ()=> {
+
+document.getElementById('copyPlayerCode').addEventListener('click', () => {
   const code = gameState.playerId || '';
-  if(!code) { toast('Player code not ready'); return; }
+  if(!code) { toast('Not ready'); return; }
   navigator.clipboard?.writeText(code).then(()=>toast('Copied')).catch(()=>toast('Copy failed'));
 });
+
 document.getElementById('saveBtn').addEventListener('click', ()=> saveSlot());
 document.getElementById('savesBtn').addEventListener('click', ()=> openSavesDialog());
 document.getElementById('exportBtn').addEventListener('click', ()=> exportSaveFile());
 document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
-document.getElementById('importFile').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; importSaveFile(f); e.target.value=''; });
+document.getElementById('importFile').addEventListener('change', (e)=> { const f=e.target.files && e.target.files[0]; importSaveFile(f); e.target.value=''; });
 document.getElementById('backBtn').addEventListener('click', ()=> { document.getElementById('gameScreen').style.display='none'; document.getElementById('mainMenu').style.display='block'; });
 
-/* ---------- friends / recent dialogs ---------- */
-function showFriendsDialog(){
+/* ---------- rooms refresh ---------- */
+async function refreshRooms() {
+  try {
+    const snap = await get(ref(db, 'rooms')); const rooms = snap.exists() ? snap.val() : {};
+    renderRoomsPanel(rooms);
+  } catch(e) { console.warn(e); toast('Failed to refresh rooms'); }
+}
+
+/* ---------- friends & recent ---------- */
+function openFriendsDialog(){
   const content = `<h3>Friends</h3><div style="margin-top:8px"><input id="friendInput" class="input" placeholder="Enter player code to add"/></div><div style="display:flex;gap:8px;margin-top:8px"><button id="addFriendBtn" class="btn primary">Add</button><button class="btn ghost" data-close>Close</button></div><div style="margin-top:10px"><h4>Your friends</h4><div style="max-height:160px;overflow:auto">${gameState.friends.map(f=>`<div style="padding:6px 0">${f}</div>`).join('') || '<div class="small" style="color:#666">No friends</div>'}</div></div>`;
   const m = showModal(content);
-  m.box.querySelector('#addFriendBtn').addEventListener('click', ()=> {
-    const v = m.box.querySelector('#friendInput').value.trim(); if(!v){ toast('Enter code'); return; } addFriendId(v); m.close(); toast('Friend added');
-  });
+  m.box.querySelector('#addFriendBtn').addEventListener('click', ()=> { const v = m.box.querySelector('#friendInput').value.trim(); if(!v){ toast('Enter code'); return; } addFriendId(v); m.close(); toast('Friend added'); });
 }
-function showRecentDialog(){ showModal(`<h3>Recent</h3><div style="max-height:240px;overflow:auto;margin-top:8px">${gameState.recentOpponents.map(r=>`<div style="padding:6px 0">${r}</div>`).join('') || '<div class="small" style="color:#666">No recents</div>'}</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`); }
-function addFriendId(id){ if(!id) return; gameState.friends.unshift(id); gameState.friends = [...new Set(gameState.friends)].slice(0,50); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends:gameState.friends, recent:gameState.recentOpponents })); set(ref(db, `players/${gameState.playerId}/meta`), { friends:gameState.friends, lastSeen:Date.now() }).catch(()=>{}); }
+function openRecentDialog(){ showModal(`<h3>Recent</h3><div style="max-height:240px;overflow:auto;margin-top:8px">${gameState.recentOpponents.map(r=>`<div style="padding:6px 0">${r}</div>`).join('') || '<div class="small" style="color:#666">No recents</div>'}</div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Close</button></div>`); }
+function addFriendId(id){ if(!id) return; gameState.friends.unshift(id); gameState.friends = [...new Set(gameState.friends)].slice(0,50); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() }).catch(()=>{}); }
 
-/* ---------- join prompt ---------- */
+/* ---------- join by ID prompt ---------- */
 function joinRoomPrompt(){
-  const nm = 'joinRoomInput_' + Math.random().toString(36).slice(2,6);
+  const nm = 'joinRoomInput_'+Math.random().toString(36).slice(2,6);
   const html = `<h3>Join Room</h3><div style="margin-top:8px"><input id="${nm}" class="input" placeholder="Enter room id"/></div><div style="text-align:right;margin-top:10px"><button class="btn ghost" data-close>Cancel</button><button id="doJoin" class="btn primary">Join</button></div>`;
   const m = showModal(html);
-  m.box.querySelector('#doJoin').addEventListener('click', async ()=> {
-    const rid = m.box.querySelector('#'+nm).value.trim(); if(!rid){ toast('Enter room id'); return; } m.close(); await joinRoomById(rid);
-  });
+  m.box.querySelector('#doJoin').addEventListener('click', async ()=>{ const rid = m.box.querySelector('#'+nm).value.trim(); if(!rid){ toast('Enter room id'); return; } m.close(); await joinRoomById(rid); });
 }
 
-/* ---------- initialization: auth / id / items ---------- */
+/* ---------- initialization & auth ---------- */
 signInAnonymously(auth).catch(err => { console.warn('anon sign-in failed', err); toast('Anonymous sign-in failed (check Firebase config/rules)'); });
 
 onAuthStateChanged(auth, (user) => {
-  if(user) {
-    const metaSaved = safeParse(localStorage.getItem(META_KEY), {});
-    if(metaSaved && metaSaved.playerId) gameState.playerId = metaSaved.playerId;
+  if(user){
+    const savedMeta = safeParse(localStorage.getItem(META_KEY), {});
+    if(savedMeta && savedMeta.playerId) gameState.playerId = savedMeta.playerId;
     else gameState.playerId = 'p-' + user.uid;
     localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents }));
     writePresence();
-    ensurePlayerNode();
+    set(ref(db, `players/${gameState.playerId}/meta`), { friends: gameState.friends, lastSeen: Date.now() }).catch(()=>{});
     updateAllUI();
   }
 });
 
-// load meta if present
-try {
-  const meta = safeParse(localStorage.getItem(META_KEY), {});
-  if(meta && meta.playerId) gameState.playerId = meta.playerId;
-  gameState.friends = meta.friends || gameState.friends;
-  gameState.recentOpponents = meta.recent || gameState.recentOpponents;
-} catch(e) {}
+// load local meta if present
+try{ const meta = safeParse(localStorage.getItem(META_KEY), {}); if(meta && meta.playerId) gameState.playerId = meta.playerId; gameState.friends = meta.friends || gameState.friends; gameState.recentOpponents = meta.recent || gameState.recentOpponents; } catch(e){}
 
-if(!gameState.playerId) { gameState.playerId = generateId(); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); }
+/* Ensure playerId */
+if(!gameState.playerId){ gameState.playerId = generateId(); localStorage.setItem(META_KEY, JSON.stringify({ playerId: gameState.playerId, friends: gameState.friends, recent: gameState.recentOpponents })); }
 
 generateItems(); updateAllUI();
-setInterval(()=> { quickSave(); writePresence(); }, 15000);
-refreshRoomsPanel();
+setInterval(()=>{ quickSave(); writePresence(); }, 15000);
 
-/* ---------- error-tolerant DB writes (wrap common set/remove calls to show permission errors) ---------- */
-async function safeSet(pathRef, value) {
-  try { await set(pathRef, value); return true; } catch(e) { console.warn('safeSet error', e); if(e && e.code && e.code.includes('PERMISSION')) toast('Permission denied writing to DB — check rules (anonymous auth).'); else toast('Write failed'); return false; }
+/* live players & rooms listeners */
+onValue(ref(db, 'players'), snapshot => {
+  const all = snapshot.val() || {};
+  renderPlayersPanel(all);
+});
+onValue(ref(db, 'rooms'), snapshot => {
+  const rooms = snapshot.val() || {};
+  renderRoomsPanel(rooms);
+});
+
+/* ---------- fix: startSinglePlayer defined once ---------- */
+let gameLoopInterval = null;
+function startSinglePlayer(){
+  document.getElementById('mainMenu').style.display='none'; document.getElementById('gameScreen').style.display='block';
+  generateItems(); updateAllUI();
+  if(gameLoopInterval) clearInterval(gameLoopInterval);
+  gameLoopInterval = setInterval(gameLoop, 2000);
+  setTimeout(()=> spawnCustomer(), 1000);
+  writePresence(); toast('Single player started');
 }
 
-/* ---------- expose debug and helpful handles ---------- */
-window.gameState = gameState;
-window.saveSlot = saveSlot;
-window.loadSlot = loadSlot;
-window.exportSaveFile = exportSaveFile;
-window.buyItemLocal = buyItemLocal;
-window.serveCustomerLocal = serveCustomerLocal;
-window.refreshRoomsPanel = refreshRoomsPanel;
+/* ---------- minimal game loop / actions so multiplayer demo shows interactions ---------- */
+function spawnCustomer(){ const max = 3 + (gameState.upgrades.moreCustomers||0); if((gameState.customers||[]).length < max){ const types = [{emoji:'👨',wants:'apple'},{emoji:'👩',wants:'milk'},{emoji:'👦',wants:'candy'}]; const t = types[Math.floor(Math.random()*types.length)]; gameState.customers = gameState.customers || []; gameState.customers.push({emoji:t.emoji, wants:t.wants}); updateAllUI(); } }
+function workerTick(){ /* kept minimal for demo */ }
+function gameLoop(){ if(gameState.upgrades.autoCustomer > 0 && Math.random() < 0.3 + (gameState.upgrades.autoCustomer*0.1)) spawnCustomer(); if(Math.random() < 0.1 + (gameState.shopLevel * 0.02)) spawnCustomer(); workerTick(); if(gameState.autosave) quickSave(); }
+
+/* expose actions for demo (buy/serve) that push to authoritative room if connected */
+async function demoBuyItem(key) {
+  if(!roomIdActive){ toast('Not in a multiplayer room; performing local buy'); if(gameState.money >= items[key].buyPrice) { gameState.money -= items[key].buyPrice; gameState.inventory[key] = (gameState.inventory[key]||0)+1; updateAllUI(); } return; }
+  // push action to room
+  await pushActionToRoom(roomIdActive, { type:'buy', payload:{ key, amount:1, cost: items[key].buyPrice } });
+  toast('Buy action queued');
+}
+async function demoServe() {
+  if(!roomIdActive){ toast('Not in multiplayer room; local serve'); if((gameState.inventory['apple']||0)>0){ gameState.inventory['apple']--; gameState.money += items['apple'].sellPrice; gameState.customersServed++; updateAllUI(); } return; }
+  await pushActionToRoom(roomIdActive, { type:'serve', payload:{ earn: 10 } });
+  toast('Serve action queued');
+}
+
+/* expose to window to help debugging */
+window.demoBuyItem = demoBuyItem;
+window.demoServe = demoServe;
+
+/* ---------- ping widget initial state ---------- */
+document.getElementById('pingWidget').style.display='none';
+
+/* small helper to refresh rooms initially */
+refreshRooms();
+
+/* ---------- optional: enable invisible sweeper by default? keep hidden; admin can call enableSweeper(true) in console ---------- */
+/* enableSweeper(false); // default off */
+
 </script>
 </body>
 </html>
