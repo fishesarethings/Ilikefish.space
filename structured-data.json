@@ -13,14 +13,14 @@
     {
       "@type": "ListItem",
       "position": 2,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/Block-bang/",
+      "name": "Block-bang"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/fishclimbracing/",
-      "name": "fishclimbracing"
+      "url": "https://ilikefish.space/games/minetycoon/",
+      "name": "minetycoon"
     },
     {
       "@type": "ListItem",
@@ -31,8 +31,8 @@
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/DiceRollIdleEmpires2/",
-      "name": "DiceRollIdleEmpires2"
+      "url": "https://ilikefish.space/games/tetnis/",
+      "name": "tetnis"
     }
   ]
 }
