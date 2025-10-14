@@ -2,13 +2,13 @@
 // Drop this file at the site root: /service-worker.js
 // IMPORTANT: bump CACHE_VERSION on each deploy to force cache refresh (see notes below).
 
-const CACHE_VERSION = 'v5';               // <-- BUMP THIS on deploy (e.g. v7, v8) to invalidate old caches
+const CACHE_VERSION = 'v6';               // <-- BUMP THIS on deploy (e.g. v7, v8) to invalidate old caches
 const CACHE_NAME = `static-${CACHE_VERSION}`;
 const LOG_PREFIX = '[sw]';
 
 // --- Precache list (normalize all to absolute paths) ---
 const PRECACHE_URLS = [
-  '/', '/index.html', '/games.html', '/gamepack.html', '/manifest.json', '/terms.html', '/games/game_player.html',
+  '/', '/index.html', '/games/index.html', '/gamepack/index.html', '/manifest.json', '/terms.html', '/games/game_player.html',
   '/assets/css/styles.css',
   '/assets/js/typing.js',
   '/assets/js/loco.js',
