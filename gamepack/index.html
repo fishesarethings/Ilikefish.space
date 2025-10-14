@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ilikefish.Space - Game player</title>
+  <style>
+    :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
+    header{padding:10px 18px}
+    header nav{display:flex;justify-content:center;gap:18px}
+    header a{color:#111;text-decoration:none;font-weight:600}
+    .container{max-width:1200px;margin:18px auto;padding:0 18px}
+
+    /* viewport - neutral by default; .no-game shows the fish pattern */
+    #viewport{background:#f4f7fb;height:64vh;min-height:360px;border-radius:6px;position:relative;overflow:auto;display:flex;align-items:center;justify-content:center}
+    #viewport.no-game{background:linear-gradient(135deg,#e6f7ff 0%,#f0f9ff 50%,#e6f7ff 100%) !important;color:#0b3b5a}
+    #gameFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent}
+
+    .sample-inner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px}
+    .fish-svg{width:120px;height:80px}
+    .pulse{animation:pulse 1.6s ease-in-out infinite}
+    @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:0.85}100%{transform:scale(1);opacity:1}}
+    .troubleshoot{max-width:780px;text-align:left;background:rgba(255,255,255,0.85);padding:12px;border-radius:8px;color:#093049;font-size:0.95rem}
+
+    .game-bar{display:flex;align-items:center;gap:12px;padding:10px 6px;margin-top:12px;background:#f2f4f6;border-radius:8px}
+    .game-bar .icon{width:52px;height:52px;border-radius:8px;background:#ddd;overflow:hidden;flex-shrink:0}
+    .game-bar .title{font-weight:700}
+    .game-bar .controls{margin-left:auto;display:flex;gap:8px}
+    .ctrl-btn{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+    .ctrl-btn svg{width:16px;height:16px}
+
+    .desc{padding:18px 6px;text-align:center}
+    .desc p{white-space:pre-wrap;color:var(--muted);max-width:980px;margin:6px auto}
+    .options{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding-bottom:8px}
+    .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    .more-games{padding:12px 6px}
+    .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+    .game-card{width:300px;height:300px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:block;position:relative;flex:0 0 auto}
+    .game-card .tile{width:100%;height:100%;display:block;position:relative}
+    .game-card .tile-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
+    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);color:#fff;text-align:center;box-sizing:border-box}
+    .game-card .tile-title{display:block;font-size:0.95rem;font-weight:700}
+    .game-card .placeholder{display:flex;align-items:center;justify-content:center;height:100%;padding:12px;color:var(--muted)}
+    /* hide any legacy small-img rules to avoid conflicts */
+    .game-card img:not(.tile-img){display:none}
+    .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999;opacity:0;transition:opacity .18s}
+    .ilf-toast.show{opacity:1}
+    footer{padding:14px 18px;color:#666;font-size:.9rem;border-top:1px solid rgba(0,0,0,0.04);background:transparent}
+
+    /* semi-full mode */
+    body.semi-full header, body.semi-full .game-bar, body.semi-full footer { display:none !important }
+    body.semi-full .container { max-width:100%; margin:0; padding:0 }
+    body.semi-full #viewport { position:fixed !important; top:6px; left:6px; right:6px; bottom:6px; height:auto; z-index:9999; border-radius:0 }
+    #exitSemi{position:fixed;top:12px;right:12px;z-index:10001;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.08);cursor:pointer;display:none}
+    body.semi-full #exitSemi{display:block}
+
+    @media (max-width:720px){ .game-bar{padding:8px} .ctrl-btn{padding:6px 8px} }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/index.html">Home</a>
+      <a href="/games.html">Games</a>
+      <a href="/gamepack.html">Game package</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <section id="viewport" aria-label="Game area">
+      <iframe id="gameFrame" src="about:blank" title="Game iframe" style="display:none"></iframe>
+
+      <div id="noGameSample" class="sample-inner" style="display:none">
+        <svg class="fish-svg pulse" viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g fill="#0b6b9a">
+            <ellipse cx="70" cy="60" rx="60" ry="28" />
+            <path d="M130 60 L170 40 L170 80 Z" />
+            <circle cx="40" cy="50" r="5" fill="#fff" />
+          </g>
+        </svg>
+        <div style="font-weight:700;font-size:1.2rem">No game loaded</div>
+        <div class="troubleshoot">
+          <strong>Troubleshooting</strong>
+          <ol style="margin:8px 0 0 18px;padding:0">
+            <li>Check the URL: include <code>?folder=Folder-Name</code> in the query string.</li>
+            <li>Ensure the game's <code>config.json</code> exists at <code>/games/Folder-Name/config.json</code>.</li>
+            <li>Make sure <code>entry</code> in the config points to a valid HTML file.</li>
+            <li>Open the browser console (F12) for network errors.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <div class="game-bar" role="region" aria-label="Game header">
+      <div class="icon" id="gameIcon"><img id="gameIconImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+      <div class="title" id="gameTitle">(Game)</div>
+      <div class="controls" id="headerControls">
+        <button id="shareBtn" class="ctrl-btn" aria-label="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v12"/></svg>
+          <span>Share</span>
+        </button>
+
+        <button id="semiFsBtn" class="ctrl-btn" aria-label="Semi fullscreen" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v6"/><path d="M20 20H4v-6"/></svg>
+          <span>Semi</span>
+        </button>
+
+        <button id="fsBtn" class="ctrl-btn" aria-label="Toggle fullscreen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V3h6"/><path d="M21 15v6h-6"/><path d="M3 15v6h6"/><path d="M21 9V3h-6"/></svg>
+          <span>Fullscreen</span>
+        </button>
+
+        <button id="openBtn" class="ctrl-btn" aria-label="Open in new tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 21H3V3"/></svg>
+          <span>Open</span>
+        </button>
+      </div>
+    </div>
+
+    <section class="desc">
+      <h2 id="descTitle">Description</h2>
+      <p id="descBody">No description</p>
+    </section>
+
+    <div class="options">
+      <button id="toggleTouch" class="toggle-btn" aria-pressed="true">Touch: On</button>
+
+      <!-- updated: two separate scroll toggles for page vs game/iframe -->
+      <button id="toggleScrollPage" class="toggle-btn" aria-pressed="true">Page Scroll: On</button>
+      <button id="toggleScrollIframe" class="toggle-btn" aria-pressed="true">Game Scroll: On</button>
+
+      <button id="toggleControls" class="toggle-btn" aria-pressed="true">Controls: On</button>
+      <button id="toggleIcon" class="toggle-btn" aria-pressed="true">Icon: On</button>
+      <button id="toggleCompact" class="toggle-btn" aria-pressed="false">Compact: Off</button>
+      <button id="toggleSound" class="toggle-btn" aria-pressed="true">Sound: On</button>
+    </div>
+
+    <div class="more-games">
+      <h3 style="text-align:center;margin:6px 0">More games</h3>
+      <div class="games-grid" id="gamesGrid" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Exit semi overlay -->
+  <button id="exitSemi" title="Exit semi-fullscreen">Exit</button>
+
+  <!-- Footer -->
+  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
+    <p>Site Version: <span id="current-site-version">—</span>
+      <button id="check-update" class="btn-disabled" aria-label="Check for updates">🔄 Refresh</button>
+    </p>
+    <p>
+      Dedicated to the public domain under the
+      <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
+
+      © 2025 fishesarethings — No rights reserved.
+      <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="#" id="cookie-settings-link">Cookie settings</a>
+    </p>
+  </footer>
+
+  <div id="toast" class="ilf-toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function(){
+      'use strict';
+      const params = new URLSearchParams(location.search);
+      const initialFolder = params.get('folder');
+      let currentFolder = initialFolder || null;
+
+      // Utilities
+      function $(sel){ return document.querySelector(sel); }
+      function showToast(msg, time=1400){ const t = document.getElementById('toast'); if(!t) return; t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), time); }
+      function escapeHtml(s){ return String(s)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;')
+        .replace(/'/g,'&#39;'); }
+      function formatDescription(text){
+        return escapeHtml(text || '').replace(/\r?\n/g, '<br>');
+      }
+
+      // Pref helpers
+      const PREF_TOUCH = 'ilf_touch', PREF_SCROLL = 'ilf_scroll', PREF_CONTROLS = 'ilf_controls', PREF_ICON = 'ilf_icon', PREF_COMPACT = 'ilf_compact', PREF_SOUND = 'ilf_sound';
+      const PREF_PAGE_SCROLL = 'ilf_page_scroll', PREF_IFRAME_SCROLL = 'ilf_iframe_scroll';
+      function readPref(k, d=true){ try{ const v = localStorage.getItem(k); if (v===null) return d; return v === 'ON'; }catch(e){ return d; } }
+      function writePref(k, on){ try{ localStorage.setItem(k, on ? 'ON' : 'OFF'); }catch(e){} }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('[game-player] DOM ready');
+        const iframe = document.getElementById('gameFrame');
+        const descBody = document.getElementById('descBody');
+        const descTitle = document.getElementById('descTitle');
+        const gameTitle = document.getElementById('gameTitle');
+        const gameIconImg = document.getElementById('gameIconImg');
+        const noGameSample = document.getElementById('noGameSample');
+        const vp = document.getElementById('viewport');
+
+        // read prefs: preserve old PREF_SCROLL if present for backward compatibility
+        const oldScroll = readPref(PREF_SCROLL, true);
+        let touchOn = readPref(PREF_TOUCH, true);
+        let pageScrollOn = readPref(PREF_PAGE_SCROLL, oldScroll);
+        let iframeScrollOn = readPref(PREF_IFRAME_SCROLL, oldScroll);
+        let controlsOn = readPref(PREF_CONTROLS, true);
+        let iconOn = readPref(PREF_ICON, true);
+        let compactOn = readPref(PREF_COMPACT, false);
+        let soundOn = readPref(PREF_SOUND, true);
+
+        function updateToggleButton(btn, label, on){ if(!btn) return; btn.textContent = label + ': ' + (on ? 'On' : 'Off'); btn.setAttribute('aria-pressed', String(on)); }
+
+        // ensure iframe allow attributes for games (keeps it permissive for gameplay features)
+        if (iframe) {
+          iframe.setAttribute('allow', 'fullscreen; autoplay; clipboard-read; clipboard-write; encrypted-media; gamepad; gyroscope; accelerometer; microphone; camera; usb; xr-spatial-tracking');
+          // don't sandbox by default because many HTML5 games need same-origin / wasm / workers — consider sandboxing per-game if needed
+        }
+
+        // helper: attempt to set iframe content overflow (works only same-origin)
+        function trySetIframeContentOverflow(allowScroll){
+          if (!iframe) return;
+          try {
+            const doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+            if (doc && doc.documentElement) {
+              doc.documentElement.style.overflow = allowScroll ? '' : 'hidden';
+              if (doc.body) doc.body.style.overflow = allowScroll ? '' : 'hidden';
+              // also attempt touch-action
+              doc.documentElement.style.touchAction = allowScroll ? '' : 'none';
+            }
+            return true;
+          } catch (e) {
+            // cross-origin or blocked
+            return false;
+          }
+        }
+
+        // Prevent parent page scrolling while pointer is inside #viewport when pageScrollOn is false.
+        // Use passive:false to allow preventDefault.
+        let _vpWheelHandler = null;
+        function updateViewportScrollHandlers(){
+          // remove previous
+          if (_vpWheelHandler && vp) {
+            vp.removeEventListener('wheel', _vpWheelHandler, { passive: false });
+            vp.removeEventListener('touchmove', _vpWheelHandler, { passive: false });
+          }
+          if (!vp) return;
+          if (!pageScrollOn) {
+            _vpWheelHandler = function(e){
+              // allow ctrl+wheel for zoom etc — only prevent when standard wheel/touch
+              if (e.ctrlKey || e.metaKey) return;
+              // If iframe is focused or pointer inside viewport block scroll to keep page static
+              e.preventDefault();
+            };
+            vp.addEventListener('wheel', _vpWheelHandler, { passive: false });
+            vp.addEventListener('touchmove', _vpWheelHandler, { passive: false });
+          } else {
+            _vpWheelHandler = null; // handlers removed above
+          }
+        }
+
+        function applyAllPrefs(){
+          // apply iframe element overflow (visual scrollbars on iframe element)
+          try{ if (iframe) iframe.style.overflow = iframeScrollOn ? 'auto' : 'hidden'; }catch(e){}
+          // header visibility, icon, compact
+          const hdr = document.getElementById('headerControls'); if (hdr) hdr.style.display = controlsOn ? 'flex' : 'none';
+          const gi = document.getElementById('gameIcon'); if (gi) gi.style.display = iconOn ? 'block' : 'none';
+          document.body.classList.toggle('compact', compactOn);
+
+          // page-level scroll: hide page scroll by locking document when pageScrollOn is false
+          if (pageScrollOn) {
+            try{ document.documentElement.style.overflow = ''; document.body.style.overflow = ''; }catch(e){}
+          } else {
+            try{ document.documentElement.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'; }catch(e){}
+          }
+
+          // try to tell iframe content to honor scroll preference (best-effort, same-origin)
+          const iframeSet = trySetIframeContentOverflow(iframeScrollOn);
+          // postMessage to iframe so same-origin or game that listens can react
+          try{
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage({ type:'ilf-set-prefs', prefs: { sound: !!soundOn, touch: !!touchOn, iframeScroll: !!iframeScrollOn, pageScroll: !!pageScrollOn } }, '*');
+            }
+          }catch(e){/* ignore */}
+
+          // update UI toggle labels
+          updateToggleButton(document.getElementById('toggleTouch'), 'Touch', touchOn);
+          updateToggleButton(document.getElementById('toggleScrollPage'), 'Page Scroll', pageScrollOn);
+          updateToggleButton(document.getElementById('toggleScrollIframe'), 'Game Scroll', iframeScrollOn);
+          updateToggleButton(document.getElementById('toggleControls'), 'Controls', controlsOn);
+          updateToggleButton(document.getElementById('toggleIcon'), 'Icon', iconOn);
+          updateToggleButton(document.getElementById('toggleCompact'), 'Compact', compactOn);
+          updateToggleButton(document.getElementById('toggleSound'), 'Sound', soundOn);
+
+          // update listeners to block page scroll if needed
+          updateViewportScrollHandlers();
+        }
+
+        // handle messages from framed games or parent windows
+        window.addEventListener('message', (ev) => {
+          const msg = ev && ev.data;
+          if (!msg || typeof msg !== 'object') return;
+          if (msg.type === 'ilf-set-audio') {
+            // child -> parent: request to toggle audio state (or inform)
+            if (typeof msg.enabled === 'boolean') {
+              soundOn = !!msg.enabled;
+              writePref(PREF_SOUND, soundOn);
+              applyAllPrefs();
+              showToast('Sound ' + (soundOn ? 'On' : 'Off'));
+            }
+          } else if (msg.type === 'ilf-open-entry') {
+            // child requests opening a specific entry file (relative to folder)
+            if (currentFolder && typeof msg.entry === 'string') {
+              const iframeEl = document.getElementById('gameFrame');
+              const safeFolder = encodeURIComponent(currentFolder);
+              iframeEl.src = `/games/${safeFolder}/${encodeURIComponent(msg.entry)}`;
+            }
+          } else if (msg.type === 'ilf-resize' && msg.height) {
+            // adjust iframe size if requested (best-effort)
+            const frame = document.getElementById('gameFrame');
+            if (frame && typeof msg.height === 'number') frame.style.height = msg.height + 'px';
+          } else if (msg.type === 'ilf-request-prefs') {
+            // child asks for current prefs
+            try {
+              ev.source.postMessage({ type: 'ilf-current-prefs', prefs: { sound: !!soundOn, touch: !!touchOn, iframeScroll: !!iframeScrollOn, pageScroll: !!pageScrollOn } }, '*');
+            } catch (e){}
+          }
+        });
+
+        // wire UI buttons
+        const shareBtn = document.getElementById('shareBtn');
+        if (shareBtn) shareBtn.addEventListener('click', async () => {
+          const playerUrl = location.origin + location.pathname + (currentFolder ? '?folder=' + encodeURIComponent(currentFolder) : '');
+          try{
+            if (navigator.share) { await navigator.share({ title: (gameTitle && gameTitle.textContent) || '', text: (descBody && descBody.textContent && descBody.textContent.slice(0,120)) || '', url: playerUrl }); return; }
+            if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(playerUrl); showToast('Link copied to clipboard'); return; }
+            prompt('Copy this link', playerUrl);
+          }catch(e){ console.warn('share failed', e); showToast('Share failed'); }
+        });
+
+        const semiBtn = document.getElementById('semiFsBtn');
+        if (semiBtn) semiBtn.addEventListener('click', () => { const is = document.body.classList.toggle('semi-full'); semiBtn.setAttribute('aria-pressed', String(is)); showToast(is ? 'Semi fullscreen on' : 'Semi fullscreen off'); });
+        const exitSemi = document.getElementById('exitSemi'); if (exitSemi) exitSemi.addEventListener('click', () => { document.body.classList.remove('semi-full'); showToast('Semi fullscreen off'); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.body.classList.remove('semi-full'); });
+
+        const fsBtn = document.getElementById('fsBtn');
+        if (fsBtn) fsBtn.addEventListener('click', async () => {
+          const vpEl = document.getElementById('viewport');
+          try{
+            if (!document.fullscreenElement) {
+              if (vpEl.requestFullscreen) await vpEl.requestFullscreen();
+              else if (vpEl.webkitRequestFullscreen) await vpEl.webkitRequestFullscreen();
+              else if (vpEl.msRequestFullscreen) await vpEl.msRequestFullscreen();
+            } else {
+              if (document.exitFullscreen) await document.exitFullscreen();
+              else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+            }
+          }catch(err){ console.warn('fullscreen failed', err); showToast('Fullscreen not available'); }
+        });
+
+        const openBtn = document.getElementById('openBtn');
+        if (openBtn) openBtn.addEventListener('click', () => { if (!iframe || !iframe.src || iframe.src === 'about:blank') return showToast('Game not loaded'); window.open(iframe.src, '_blank', 'noopener'); });
+
+        // toggles
+        const tTouch = document.getElementById('toggleTouch'); if (tTouch) tTouch.addEventListener('click', () => { touchOn = !touchOn; writePref(PREF_TOUCH, touchOn); updateToggleButton(tTouch, 'Touch', touchOn); loadConfig(currentFolder); showToast('Touch ' + (touchOn ? 'On' : 'Off')); });
+
+        // page vs iframe scroll toggles (new)
+        const tScrollPage = document.getElementById('toggleScrollPage');
+        if (tScrollPage) tScrollPage.addEventListener('click', () => {
+          pageScrollOn = !pageScrollOn;
+          // maintain legacy PREF_SCROLL for compatibility; update both if you want
+          writePref(PREF_PAGE_SCROLL, pageScrollOn);
+          writePref(PREF_SCROLL, pageScrollOn); // keep old key updated
+          applyAllPrefs();
+          showToast('Page Scroll ' + (pageScrollOn ? 'On' : 'Off'));
+        });
+
+        const tScrollIframe = document.getElementById('toggleScrollIframe');
+        if (tScrollIframe) tScrollIframe.addEventListener('click', () => {
+          iframeScrollOn = !iframeScrollOn;
+          writePref(PREF_IFRAME_SCROLL, iframeScrollOn);
+          writePref(PREF_SCROLL, iframeScrollOn); // keep old key updated
+          applyAllPrefs();
+          showToast('Game Scroll ' + (iframeScrollOn ? 'On' : 'Off'));
+        });
+
+        const tControls = document.getElementById('toggleControls'); if (tControls) tControls.addEventListener('click', () => { controlsOn = !controlsOn; writePref(PREF_CONTROLS, controlsOn); updateToggleButton(tControls, 'Controls', controlsOn); applyAllPrefs(); showToast('Controls ' + (controlsOn ? 'On' : 'Off')); });
+        const tIcon = document.getElementById('toggleIcon'); if (tIcon) tIcon.addEventListener('click', () => { iconOn = !iconOn; writePref(PREF_ICON, iconOn); updateToggleButton(tIcon, 'Icon', iconOn); applyAllPrefs(); showToast('Icon ' + (iconOn ? 'On' : 'Off')); });
+        const tCompact = document.getElementById('toggleCompact'); if (tCompact) tCompact.addEventListener('click', () => { compactOn = !compactOn; writePref(PREF_COMPACT, compactOn); updateToggleButton(tCompact, 'Compact', compactOn); applyAllPrefs(); showToast('Compact ' + (compactOn ? 'On' : 'Off')); });
+        const tSound = document.getElementById('toggleSound'); if (tSound) tSound.addEventListener('click', () => { soundOn = !soundOn; writePref(PREF_SOUND, soundOn); updateToggleButton(tSound, 'Sound', soundOn); applyAllPrefs(); showToast('Sound ' + (soundOn ? 'On' : 'Off')); });
+
+        // showMoreGames (render first batch)
+        async function showMoreGames(){
+          const grid = document.getElementById('gamesGrid');
+          if(!grid) return;
+          grid.innerHTML = '';
+
+          // dynamic/paginated loading
+          let folders = [];
+          try{
+            const r = await fetch('/games/index.json');
+            if(!r.ok) throw new Error('index.json load failed: ' + r.status);
+            const idx = await r.json();
+
+            // support multiple shapes:
+            // 1) { folders: [ 'slug1', 'slug2' ] }
+            // 2) [ 'slug1', 'slug2' ]
+            // 3) { games: [ { folder:'slug', ...}, ... ] }
+            // 4) [ { folder:'slug', name: '…' }, ... ]
+            if (Array.isArray(idx.folders)) {
+              folders = idx.folders.slice();
+            } else if (Array.isArray(idx)) {
+              folders = idx.map(item => {
+                if (typeof item === 'string') return item;
+                if (item && typeof item.folder === 'string') return item.folder;
+                if (item && typeof item.name === 'string') return item.name;
+                return '';
+              }).filter(Boolean);
+            } else if (Array.isArray(idx.games)) {
+              folders = idx.games.map(g => g.folder || g.name).filter(Boolean);
+            } else {
+              // fallback: try to collect any string values in object arrays
+              for (const k of Object.keys(idx || {})) {
+                if (Array.isArray(idx[k])) {
+                  const arr = idx[k].map(item => (typeof item === 'string' ? item : (item && (item.folder || item.name)))).filter(Boolean);
+                  if (arr.length) { folders = arr; break; }
+                }
+              }
+            }
+          }catch(e){ console.warn('[games-grid] index load failed', e); return; }
+
+          const pageSize = 12;
+          let cursor = 0;
+
+          // lazy-load images when they enter viewport
+          const imgObserver = new IntersectionObserver((entries, obs) => {
+            for (const ent of entries) {
+              if (ent.isIntersecting) {
+                const img = ent.target;
+                const src = img.dataset.src;
+                if (src) { img.src = src; img.removeAttribute('data-src'); }
+                obs.unobserve(img);
+              }
+            }
+          }, { root: null, rootMargin: '200px', threshold: 0.01 });
+
+          // load a batch of tiles
+          async function loadBatch(){
+            if (cursor >= folders.length) {
+              if (sentinel) sentinel.style.display = 'none';
+              return;
+            }
+            const batch = folders.slice(cursor, cursor + pageSize);
+            cursor += batch.length;
+
+            for (const slug of batch) {
+              try {
+                const safeSlug = encodeURIComponent(slug);
+                const cfgR = await fetch(`/games/${safeSlug}/config.json`);
+                if(!cfgR.ok) throw new Error('cfg fail ' + cfgR.status);
+                const g = await cfgR.json();
+
+                const a = document.createElement('a');
+                a.className = 'game-card';
+                a.href = '/games/game_player.html?folder=' + encodeURIComponent(slug);
+
+                const imgSrc = g.icon ? ('/games/' + encodeURIComponent(slug) + '/' + encodeURIComponent(g.icon)) : '/assets/img/ilikefish.space-icon-180.png';
+                const nameEsc = escapeHtml(g.name || slug);
+
+                a.innerHTML = '<div class="tile">'
+                  + '<img class="tile-img" data-src="' + imgSrc + '" alt="' + nameEsc + '" loading="lazy">'
+                  + '<div class="title-bar"><span class="tile-title">' + nameEsc + '</span></div>'
+                  + '</div>';
+
+                grid.appendChild(a);
+
+                const img = a.querySelector('img');
+                if (img) imgObserver.observe(img);
+              } catch (e) {
+                const ph = document.createElement('div'); ph.className='game-card'; ph.textContent = String(slug); grid.appendChild(ph);
+              }
+            }
+          }
+
+          // sentinel for infinite scroll
+          let sentinel = document.getElementById('gamesSentinel');
+          if (!sentinel) {
+            sentinel = document.createElement('div');
+            sentinel.id = 'gamesSentinel';
+            sentinel.style.height = '1px';
+            grid.after(sentinel);
+          }
+
+          const sentinelObserver = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) loadBatch();
+            }
+          }, { root: null, rootMargin: '400px', threshold: 0.01 });
+
+          // start
+          loadBatch();
+          sentinelObserver.observe(sentinel);
+        }
+
+        // load game config and set iframe src
+        async function loadConfig(folderName){
+          currentFolder = folderName || null;
+
+          if (!folderName){
+            if (iframe) iframe.style.display = 'none';
+            if (noGameSample) noGameSample.style.display = 'flex';
+            if (vp) vp.classList.add('no-game');
+            // ensure header reflects empty state
+            if (gameTitle) gameTitle.textContent = '(Game)';
+            if (descTitle) descTitle.textContent = 'Description';
+            if (descBody) descBody.textContent = 'No description';
+            return;
+          }
+
+          try{
+            const safeName = encodeURIComponent(folderName);
+            const res = await fetch(`/games/${safeName}/config.json`);
+            if (!res.ok) throw new Error('Config load failed: ' + res.status);
+            const cfg = await res.json();
+            const title = cfg.name || folderName;
+            const description = cfg.description || 'No description';
+            const touchInstr = cfg.touchInstructions || '';
+            const entry = cfg.entry || 'index.html';
+            const icon = cfg.icon || '';
+
+            if (noGameSample) noGameSample.style.display = 'none';
+            if (vp) vp.classList.remove('no-game');
+            if (iframe) iframe.style.display = 'block';
+
+            if (gameTitle) gameTitle.textContent = title;
+            if (descTitle) descTitle.textContent = title;
+            const touchHtml = touchInstr ? ('<br><small>' + escapeHtml(touchInstr) + '</small>') : '';
+            if (descBody) descBody.innerHTML = formatDescription(description) + (touchOn ? touchHtml : '');
+
+            if (icon && gameIconImg) { gameIconImg.src = `/games/${safeName}/${encodeURIComponent(icon)}`; gameIconImg.alt = title + ' icon'; }
+            if (iframe) {
+              const src = `/games/${safeName}/${encodeURIComponent(entry)}`;
+              // set src and when loaded, send prefs
+              iframe.src = src;
+              iframe.onload = () => {
+                try {
+                  // send full set of prefs to iframe, child can listen for 'ilf-set-prefs'
+                  iframe.contentWindow.postMessage({ type:'ilf-set-prefs', prefs: { sound: !!soundOn, touch: !!touchOn, iframeScroll: !!iframeScrollOn, pageScroll: !!pageScrollOn } }, '*');
+                } catch (e) { /* ignore cross-origin restrictions */ }
+
+                // best-effort: if same-origin, set internal document overflow to match iframeScrollOn
+                trySetIframeContentOverflow(iframeScrollOn);
+
+                // ensure page-level scroll handlers are correct (in case user toggled while frame was loading)
+                applyAllPrefs();
+              };
+            }
+
+            applyAllPrefs();
+          }catch(e){
+            console.warn(e);
+            if (iframe) iframe.style.display = 'none';
+            if (noGameSample) noGameSample.style.display = 'flex';
+            if (vp) vp.classList.add('no-game');
+            if (gameTitle) gameTitle.textContent = folderName || '(Game)';
+            if (descTitle) descTitle.textContent = 'No description';
+            if (descBody) descBody.textContent = 'No description';
+          }
+        }
+
+        // initial load
+        loadConfig(currentFolder);
+        showMoreGames();
+
+        // apply prefs UI & behavior initially
+        applyAllPrefs();
+
+        // optional: fetch site version (best-effort)
+        (async function fetchSiteVersion(){
+          try{
+            const r = await fetch('/site-version.json', {cache: 'no-store'});
+            if (r.ok) {
+              const v = await r.json();
+              const el = document.getElementById('current-site-version');
+              if (el && v && v.version) el.textContent = v.version;
+            }
+          }catch(e){}
+        })();
+      });
+    })();
+  </script>
+</body>
+</html>
