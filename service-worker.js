@@ -142,6 +142,9 @@ const PRECACHE_URLS = [
   '/games/fishtycoon/fishtycoon.png',
   '/games/game_player.html?folder=fishtycoon',
 
+  '/games/fishbattlei/fishbattlei.html',
+  '/games/fishbattlei/fishbattlei.png',
+  '/games/game_player.html?folder=fishbattlei',
 ];
 
 // --- helper logs ---
