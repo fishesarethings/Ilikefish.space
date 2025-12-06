@@ -7,20 +7,20 @@
     {
       "@type": "ListItem",
       "position": 1,
-      "url": "https://ilikefish.space/games/rotaze/",
-      "name": "rotaze"
+      "url": "https://ilikefish.space/games/timestable-balloons/",
+      "name": "timestable-balloons"
     },
     {
       "@type": "ListItem",
       "position": 2,
-      "url": "https://ilikefish.space/games/fishtycoon/",
-      "name": "fishtycoon"
+      "url": "https://ilikefish.space/games/Block-bang/",
+      "name": "Block-bang"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "url": "https://ilikefish.space/games/tetnis/",
-      "name": "tetnis"
+      "url": "https://ilikefish.space/games/fishclimbracing/",
+      "name": "fishclimbracing"
     },
     {
       "@type": "ListItem",
@@ -31,8 +31,8 @@
     {
       "@type": "ListItem",
       "position": 5,
-      "url": "https://ilikefish.space/games/fishyclicker/",
-      "name": "fishyclicker"
+      "url": "https://ilikefish.space/games/why-chicken-crossed/",
+      "name": "why-chicken-crossed"
     }
   ]
 }
