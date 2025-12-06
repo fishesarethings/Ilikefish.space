@@ -1,7 +1,7 @@
 {
   "name": "Fish Battle I",
   "folder": "battlefishi",
-  "icon": "battlefishi.png",
+  "icon": "fishbattle1.png",
   "entry": "battlefishi.html",
   "featured": true,
   "featuredOrder": 8,
