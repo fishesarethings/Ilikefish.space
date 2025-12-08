@@ -33,14 +33,31 @@ jobs:
       env:
         NFT_TOKEN: ${{ secrets.NFT_STORAGE_API_KEY }}
       run: |
-        if [ -z "$NFT_TOKEN" ]; then echo "Missing NFT_STORAGE_API_KEY secret"; exit 1; fi
+        if [ -z "$NFT_TOKEN" ]; then
+          echo "Missing NFT_STORAGE_API_KEY secret"
+          exit 1
+        fi
+
         # upload zip to nft.storage and save response
         curl -s -X POST "https://api.nft.storage/upload" \
           -H "Authorization: Bearer $NFT_TOKEN" \
           --data-binary @site.zip -o response.json
-        # extract CID using node (node is available on runner)
-        node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('response.json','utf8')); if(!r || !r.value || !r.value.cid){ console.error('No CID in response', r); process.exit(2);} console.log('CID='+r.value.cid);" > cid.out
-        CID=$(cat cid.out | sed 's/CID=//')
+
+        # extract CID using python3 (safe JSON handling)
+        CID=$(python3 - <<'PY'
+import json,sys
+try:
+    r = json.load(open('response.json'))
+    cid = r.get('value', {}).get('cid')
+    if not cid:
+        print("No CID in response:", json.dumps(r))
+        sys.exit(2)
+    print(cid)
+except Exception as e:
+    print("Error parsing response.json:", e, file=sys.stderr)
+    sys.exit(2)
+PY
+)
         echo "cid=$CID" >> $GITHUB_OUTPUT
         echo "Uploaded CID: $CID"
         echo "Preview URL: https://dweb.link/ipfs/$CID/"
@@ -48,16 +65,23 @@ jobs:
     - name: Create GitHub issue with CID and Unstoppable instructions (no external action)
       env:
         CID: ${{ steps.upload.outputs.cid }}
-        GITHUB_REPO: ${{ github.repository }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        if [ -z "$CID" ]; then echo "No CID found"; exit 1; fi
+        if [ -z "$CID" ]; then
+          echo "No CID found"
+          exit 1
+        fi
         echo "Creating issue for CID: $CID"
-        python3 - <<PY
+
+        python3 - <<'PY'
 import os, json, urllib.request, sys
-repo = os.environ['GITHUB_REPO']
-token = os.environ['GITHUB_TOKEN']
-cid = os.environ['CID']
+repo = os.environ.get('GITHUB_REPOSITORY')
+token = os.environ.get('GITHUB_TOKEN')
+cid = os.environ.get('CID')
+if not repo or not token or not cid:
+    print("Missing GITHUB_REPOSITORY, GITHUB_TOKEN, or CID", repo, token, cid)
+    sys.exit(1)
+
 title = f"IPFS deploy — new CID: {cid}"
 body = f"""✅ New IPFS deploy completed.
 
@@ -73,6 +97,7 @@ To update your Unstoppable domain (ilikefish.brave):
 
 After the transaction confirms, Brave and other UD-enabled resolvers will load https://ilikefish.brave from IPFS.
 """
+
 data = json.dumps({"title": title, "body": body}).encode('utf-8')
 req = urllib.request.Request(f"https://api.github.com/repos/{repo}/issues", data=data,
                              headers={"Authorization": f"token {token}", "Accept": "application/vnd.github+json"})
