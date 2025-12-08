@@ -1,0 +1,144 @@
+name: Deploy repo root to IPFS & update Unstoppable
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  BUILD_DIR: '.'            # repo root
+  DOMAIN: ilikefish.brave   # your UD domain
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install deps if package.json exists
+      run: |
+        if [ -f package.json ]; then npm ci; fi
+
+    - name: Build (if package.json has build)
+      run: |
+        if [ -f package.json ] && grep -q "\"build\"" package.json; then npm run build; fi
+
+    - name: Upload repo root to web3.storage (IPFS)
+      id: web3
+      uses: ykxVK8yL5L/add-to-web3@v1.3
+      with:
+        web3_token: ${{ secrets.WEB3_STORAGE_TOKEN }}
+        path_to_add: '${{ env.BUILD_DIR }}'
+        file_name: 'site-root'
+
+    - name: Show CID
+      run: |
+        echo "CID=${{ steps.web3.outputs.cid }}"
+        echo "URL=https://dweb.link/ipfs/${{ steps.web3.outputs.cid }}/"
+
+    - name: Install node deps for UD script
+      run: npm install axios ethers
+
+    - name: Update Unstoppable domain record (dweb.ipfs.hash)
+      env:
+        DOMAIN: ${{ env.DOMAIN }}
+        CID: ${{ steps.web3.outputs.cid }}
+        OWNER_ADDRESS: ${{ secrets.UD_OWNER_ADDRESS }}
+        PRIVATE_KEY: ${{ secrets.UD_PRIVATE_KEY }}
+      run: |
+        cat > update-ud.js <<'NODE'
+        const axios = require('axios');
+        const { ethers } = require('ethers');
+
+        (async () => {
+          try {
+            const domain = process.env.DOMAIN;
+            const cid = process.env.CID;
+            const owner = process.env.OWNER_ADDRESS;
+            const privateKey = process.env.PRIVATE_KEY;
+            if(!domain || !cid || !owner || !privateKey) {
+              console.error('Missing DOMAIN, CID, OWNER_ADDRESS or PRIVATE_KEY env vars');
+              process.exit(1);
+            }
+
+            const base = 'https://api.unstoppabledomains.com/profile';
+            const expiry = (Date.now() + 5*60*1000).toString();
+
+            // request message to sign
+            const sigResp = await axios.get(`${base}/user/${encodeURIComponent(domain)}/signature?device=true&expiry=${expiry}`);
+            const message = sigResp.data.message;
+            if(!message) throw new Error('No message to sign from UD');
+
+            const wallet = new ethers.Wallet(privateKey);
+            const signature = await wallet.signMessage(message);
+
+            // set records
+            const manageURL = `${base}/user/${encodeURIComponent(domain)}/records/manage`;
+            const manageResp = await axios.post(manageURL,
+              {
+                address: owner,
+                records: { "dweb.ipfs.hash": cid }
+              },
+              {
+                headers: {
+                  'x-auth-domain': domain,
+                  'x-auth-expires': expiry,
+                  'x-auth-signature': signature,
+                  'content-type': 'application/json'
+                }
+              }
+            );
+
+            console.log('manageResp.data:', JSON.stringify(manageResp.data, null, 2));
+
+            // handle potential on-chain dependency
+            const operation = manageResp.data.operation;
+            if(operation && operation.dependencies && operation.dependencies.length) {
+              const dep = operation.dependencies.find(d => d.transaction && d.transaction.messageToSign && d.transaction.hash);
+              if(dep) {
+                const messageToSign = dep.transaction.messageToSign;
+                const txHash = dep.transaction.hash;
+                const signed = await wallet.signMessage(messageToSign);
+
+                const confirmURL = `${base}/user/${encodeURIComponent(domain)}/records/confirm`;
+                const confirmResp = await axios.post(confirmURL,
+                  {
+                    operationId: operation.id,
+                    dependencyId: dep.id,
+                    signature: signed,
+                    txHash: txHash
+                  },
+                  {
+                    headers: {
+                      'x-auth-domain': domain,
+                      'x-auth-expires': expiry,
+                      'x-auth-signature': signature,
+                      'content-type': 'application/json'
+                    }
+                  }
+                );
+                console.log('confirmResp.data:', JSON.stringify(confirmResp.data, null, 2));
+              } else {
+                console.log('No signable on-chain dependency found.');
+              }
+            } else {
+              console.log('No on-chain dependencies; likely complete.');
+            }
+
+            console.log('Done. CID:', cid);
+          } catch(err) {
+            console.error('Error:', err.response ? err.response.data || err.response.statusText : err.message);
+            process.exit(1);
+          }
+        })();
+        NODE
+
+        node update-ud.js
