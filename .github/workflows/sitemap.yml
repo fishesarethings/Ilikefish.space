@@ -1,119 +1,78 @@
-name: Sitemap
-
-on:
-  schedule:
-    - cron: "0 6 * * *" # run daily at 6am UTC
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-jobs:
-  seo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Generate SEO files
         env:
           BASE_URL: "https://ilikefish.space"
         run: |
           set -euo pipefail
-          node -e "
+          node <<'EOF'
           const fs = require('fs');
           const path = require('path');
+
           const BASE = process.env.BASE_URL;
+          const ROOT = process.cwd();
+          const GAMES_DIR = path.join(ROOT, 'games');
 
-          // ==== STATIC PAGES ====
-          const staticPages = ['/', '/games.html', '/gamepack.html', '/terms.html'];
+          const now = new Date().toISOString();
+          const urls = new Map();
 
-          // ==== LOAD GAMES INDEX ====
-          const indexPath = path.join(process.cwd(), 'games', 'index.json');
-          let games = [];
-          if (fs.existsSync(indexPath)) {
-            try {
-              const index = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
-              if (Array.isArray(index.folders)) games = index.folders;
-            } catch (e) {
-              console.error('Warning: failed to parse index.json', e.message);
+          // === HELPER ===
+          const addUrl = (loc, freq = 'monthly', prio = '0.6') => {
+            urls.set(loc, { loc, changefreq: freq, priority: prio });
+          };
+
+          // === STATIC PAGES ===
+          [
+            '/',
+            '/games.html',
+            '/gamepack.html',
+            '/terms.html',
+            '/privacy.html'
+          ].forEach(p => addUrl(BASE + p, 'weekly', '0.8'));
+
+          // === GAME PAGES (AUTO DISCOVERY) ===
+          if (fs.existsSync(GAMES_DIR)) {
+            const entries = fs.readdirSync(GAMES_DIR, { withFileTypes: true });
+
+            for (const e of entries) {
+              if (!e.isDirectory()) continue;
+
+              const slug = e.name;
+              if (slug.toLowerCase() === 'pong') continue;
+
+              const folder = path.join(GAMES_DIR, slug);
+              const indexHtml = path.join(folder, 'index.html');
+
+              // Prefer folder URL
+              addUrl(`${BASE}/games/${slug}/`, 'monthly', '0.6');
+
+              // Also include standalone html if it exists
+              if (fs.existsSync(indexHtml)) {
+                addUrl(`${BASE}/games/${slug}/index.html`, 'monthly', '0.5');
+              }
             }
           }
 
-          // ==== FILTER GAMES (exclude Pong) ====
-          games = games.filter(g => g.toLowerCase() !== 'pong');
+          // === BUILD XML ===
+          const sitemap =
+            `<?xml version="1.0" encoding="UTF-8"?>\n` +
+            `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+            [...urls.values()].map(u =>
+              `  <url>\n` +
+              `    <loc>${u.loc}</loc>\n` +
+              `    <lastmod>${now}</lastmod>\n` +
+              `    <changefreq>${u.changefreq}</changefreq>\n` +
+              `    <priority>${u.priority}</priority>\n` +
+              `  </url>`
+            ).join('\n') +
+            `\n</urlset>\n`;
 
-          // ==== BUILD SITEMAP ====
-          const now = new Date().toISOString();
-          const urls = staticPages.map(p => ({
-            loc: BASE + p, changefreq: 'weekly', priority: '0.8'
-          }));
+          fs.writeFileSync('sitemap.xml', sitemap);
+          console.log(`✅ sitemap.xml generated (${urls.size} URLs)`);
 
-          for (const slug of games) {
-            urls.push({
-              loc: BASE + '/games/' + slug + '/',
-              changefreq: 'monthly',
-              priority: '0.6'
-            });
-          }
+          // === ROBOTS.TXT ===
+          fs.writeFileSync(
+            'robots.txt',
+            `User-agent: *\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`
+          );
 
-          const sitemapXml =
-            '<?xml version=\"1.0\" encoding=\"UTF-8\"?>\\n' +
-            '<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\\n' +
-            urls.map(u => '  <url>\\n' +
-              '    <loc>' + u.loc + '</loc>\\n' +
-              '    <lastmod>' + now + '</lastmod>\\n' +
-              '    <changefreq>' + u.changefreq + '</changefreq>\\n' +
-              '    <priority>' + u.priority + '</priority>\\n' +
-              '  </url>').join('\\n') +
-            '\\n</urlset>';
-
-          fs.writeFileSync('sitemap.xml', sitemapXml, 'utf8');
-          console.log('✅ sitemap.xml generated with', urls.length, 'entries');
-
-          // ==== ROBOTS.TXT ====
-          const robots = 'User-agent: *\\nAllow: /\\n\\nSitemap: ' + BASE + '/sitemap.xml\\n';
-          fs.writeFileSync('robots.txt', robots, 'utf8');
           console.log('✅ robots.txt updated');
-
-          // ==== STRUCTURED DATA (JSON-LD) ====
-          // pick up to 5 random games each run
-          const sample = games.sort(() => 0.5 - Math.random()).slice(0, 5);
-
-          const ld = {
-            '@context': 'https://schema.org',
-            '@type': 'ItemList',
-            'name': 'Game Collection - ILikeFish',
-            'description': 'A rotating selection of fun web games available on ilikefish.space',
-            'itemListElement': sample.map((slug, i) => ({
-              '@type': 'ListItem',
-              'position': i + 1,
-              'url': BASE + '/games/' + slug + '/',
-              'name': slug
-            }))
-          };
-
-          fs.writeFileSync('structured-data.json', JSON.stringify(ld, null, 2), 'utf8');
-          console.log('✅ structured-data.json created with', sample.length, 'games');
-          "
-
-      - name: Commit changes
-        run: |
-          git add sitemap.xml robots.txt structured-data.json || true
-          if git diff --cached --quiet; then
-            echo "No changes"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore(seo): update sitemap, robots, structured data [skip ci]"
-            git push origin HEAD:main
-          fi
+          EOF
