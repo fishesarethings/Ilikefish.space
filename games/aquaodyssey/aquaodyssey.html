@@ -1033,9 +1033,12 @@ function update(dt){ if(!running) return;
 
   const baseDecay = dt/5000 * Math.max(0.6, player.size/24);
   const movementDecay = (player.speed/80) * (dt/1000) * Math.max(0.8, player.size/24);
-  player.hunger -= baseDecay + movementDecay;
+  // apply a slight reduction to initial hunger drain for the first seconds after spawn
+  const nowTs = Date.now();
+  const spawnGrace = (player.spawnInvulnerableUntil && nowTs < player.spawnInvulnerableUntil) ? 0.45 : 1;
+  player.hunger -= (baseDecay + movementDecay) * spawnGrace;
   if(ui.hungerEl) ui.hungerEl.style.width = Math.max(0, player.hunger) + '%';
-  if(player.hunger <= 0 && player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; cameraFrozen = true; deathSequence(); playDeath(); } }
+  if(player.hunger <= 0 && player.alive){ if(!player.spawnInvulnerableUntil || nowTs > player.spawnInvulnerableUntil){ player.alive=false; if(!deathHandled){ deathHandled=true; cameraFrozen = true; deathSequence(); playDeath(); } } else { player.hunger = 2; } }
 
   for(const f of foods) f.wobble += 0.02 * dt/16;
   for(let i=bubbles.length-1;i>=0;i--){ const b=bubbles[i]; b.y -= b.vy * dt/1000; if(Math.hypot(b.x-player.x,b.y-player.y)>8000) bubbles.splice(i,1); }
@@ -1056,7 +1059,16 @@ function update(dt){ if(!running) return;
   }
 
   for(let i=foods.length-1;i>=0;i--){ const f=foods[i]; const d=Math.hypot(player.x-f.x,player.y-f.y); if(d < player.size + f.size*0.7){ foods.splice(i,1); player.size += f.size*0.08; player.score += 1; player.coins += 1; player.hunger = Math.min(100, player.hunger + 6); playEat(); } }
-  for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d < player.size + e.size*0.6){ if(e.size > player.size * 1.05){ if(player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; cameraFrozen = true; deathSequence(); playDeath(); } } } else if(player.size > e.size * 1.05){ player.size += e.size*0.18; player.score += Math.round(e.size/6); player.coins += Math.round(e.size/8); enemies.splice(i,1); playEat(); } } }
+  for(let i=enemies.length-1;i>=0;i--){ const e=enemies[i]; const d=Math.hypot(player.x-e.x,player.y-e.y); if(d < player.size + e.size*0.6){ if(e.size > player.size * 1.05){ // enemy would eat player
+      const nowTs = Date.now();
+      if(!player.spawnInvulnerableUntil || nowTs > player.spawnInvulnerableUntil){ if(player.alive){ player.alive=false; if(!deathHandled){ deathHandled=true; cameraFrozen = true; deathSequence(); playDeath(); } } } else {
+        // during spawn grace, nudge player away slightly instead of instant death
+        const ang = Math.atan2(player.y - e.y, player.x - e.x);
+        player.x += Math.cos(ang) * 18; player.y += Math.sin(ang) * 18;
+      }
+    } else if(player.size > e.size * 1.05){ player.size += e.size*0.18; player.score += Math.round(e.size/6); player.coins += Math.round(e.size/8); enemies.splice(i,1); playEat(); } } }
+  // Prevent being instantly eaten by nearby enemies immediately after spawning
+  // (apply spawn invulnerability check when comparing sizes for death)
 
   for(let i=enemies.length-1;i>=0;i--){ for(let j=enemies.length-1;j>=0;j--){ if(i===j) continue; const a=enemies[i], b=enemies[j]; const d=Math.hypot(a.x-b.x,a.y-b.y); if(d < a.size + b.size){ if(a.size > b.size * 1.05){ a.size += b.size*0.14; enemies.splice(j,1); if(j<i) i--; break; } } } }
 
@@ -1164,6 +1176,10 @@ function deathSequence(){
       const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.remove('hidden');
       const hi = document.getElementById('homeInfo'); if(hi) hi.innerHTML = `<h3>You Died</h3><p>Score: ${player.score} — press Start to reset.</p>`;
       const shopPanel = document.getElementById('shopPanel'); if(shopPanel) shopPanel.classList.add('hidden');
+        // ensure the player's last state (including username) is uploaded and leaderboards refreshed
+        try{ uploadPlayerState(); }catch(e){}
+        try{ rebuildLeaderboards(); }catch(e){}
+        try{ if(ui.usernameDisplay) ui.usernameDisplay.textContent = username || 'Guest'; }catch(e){}
     }
   }
   requestAnimationFrame(anim);
