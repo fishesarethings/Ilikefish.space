@@ -143,7 +143,7 @@
 <!-- H5 Games Ads (AdSense) -->
 <script async
   data-ad-client="ca-pub-369539584"
-  data-ad-frequency-hint="30s"
+  data-ad-frequency-hint="180s"
   src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">
 </script>
 
@@ -258,6 +258,9 @@
       <button id="deleteAccountBtn" class="secondary" style="background:linear-gradient(90deg,#ff6b6b,#ff3b3b);display:none">Delete Account</button>
       <button id="signOutBtn" class="secondary" style="display:none">Sign Out</button>
     </div>
+    <div style="font-size:12px;opacity:0.7;margin-top:4px;text-align:center">
+      ⚠️ Accounts not logged in for 90+ days will be automatically deleted. Please login regularly to keep your account.
+    </div>
     <div id="nameErr" class="err"></div>
     <div id="homeInfo" class="info">
       <strong>History &amp; Lore</strong>
@@ -306,6 +309,9 @@
     <div class="card" style="max-width:420px">
       <h3>Login or Create Account</h3>
       <p style="font-size:13px;opacity:0.9">Enter your username. If it exists, you'll need your PIN. If new, an account will be created.</p>
+      <div style="font-size:12px;opacity:0.8;margin-bottom:8px;padding:8px;background:rgba(255,107,107,0.1);border-radius:6px">
+        ⚠️ Important: Accounts inactive for 90+ days will be automatically deleted. Login regularly to keep your data.
+      </div>
       <input id="loginUsernameInput" type="text" placeholder="Enter username" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;margin:12px 0;font-size:14px" />
       <div class="pin-actions">
         <button id="usernameLoginBtn" class="primary">Continue</button>
@@ -640,25 +646,132 @@ function ensureAudioStarted(){ try{ ensureAudio(); } catch(e){} }
 
 // Safe wrapper for adBreak calls (if H5 Games Ads is available)
 let __adBreakWarned = false;
+let __adLoading = false;
 // Set to true if you want a harmless stub instead of real ads (useful for testing)
 window.__enableAdStub = window.__enableAdStub || false;
-function tryAdBreak(opts){ try{
-  // if the current session is offline, suppress ad calls and logs unless forced
-  if(!isOnlineMode && !(opts && opts.force)){ if(!__adBreakWarned){ console.log('adBreak suppressed in offline mode'); __adBreakWarned = true; } return; }
-  console.log('adBreak requested', opts||{});
-  if(typeof adBreak === 'function'){
-      try{ // mute audio briefly if available
-      if(masterGain) masterGain.gain.value = 0; // mute
-    }catch(e){}
-      try{ adBreak(opts); console.log('adBreak called'); }catch(e){ console.warn('adBreak call failed', e); }
-      // unmute after small delay to avoid overlapping audio with ads
-      setTimeout(()=>{ try{ if(masterGain) masterGain.gain.value = 0.07; console.log('adBreak: unmuted (approx)'); }catch(e){} }, 2500);
-    } else {
-      // avoid spamming the console if adBreak is not present
-      if(!__adBreakWarned){ console.log('adBreak not defined on window — no H5 Games Ads available'); __adBreakWarned = true; }
-      if(window.__enableAdStub){ try{ console.log('adBreak stub running (no real ads) —', opts||{}); }catch(e){} }
+
+// Enhanced ad debugging function
+function tryAdBreak(opts){ 
+  const timestamp = new Date().toISOString();
+  console.log(`🎯 [${timestamp}] AD REQUEST:`, opts || {});
+  
+  try{
+    // if the current session is offline, suppress ad calls and logs unless forced
+    if(!isOnlineMode && !(opts && opts.force)){ 
+      console.log(`🚫 [${timestamp}] AD BLOCKED: Offline mode - ads suppressed`); 
+      if(!__adBreakWarned){ __adBreakWarned = true; }
+      return; 
     }
-  }catch(e){ console.warn('adBreak wrapper error', e); } }
+    
+    console.log(`📡 [${timestamp}] AD CHECK: H5 Games Ads availability...`);
+    
+    if(typeof adBreak === 'function'){
+      console.log(`✅ [${timestamp}] AD BREAK FUNCTION FOUND: Preparing to show ad...`);
+      __adLoading = true;
+      
+      try{ 
+        // mute audio briefly if available
+        if(masterGain) {
+          console.log(`🔇 [${timestamp}] AUDIO: Muting for ad playback...`);
+          masterGain.gain.value = 0; 
+        }
+      }catch(e){
+        console.warn(`⚠️ [${timestamp}] AUDIO: Failed to mute -`, e);
+      }
+      
+      console.log(`🎬 [${timestamp}] AD BREAK: Calling adBreak with options:`, opts);
+      
+      // Set up ad completion tracking
+      const originalAdBreak = window.adBreak;
+      window.adBreak = function(adOpts) {
+        console.log(`🎥 [${timestamp}] AD STARTED: Ad break initiated`);
+        console.log(`📋 [${timestamp}] AD OPTIONS:`, adOpts);
+        
+        return originalAdBreak.call(this, Object.assign({}, adOpts, {
+          beforeAd: () => {
+            console.log(`⏳ [${timestamp}] AD BEFORE: Ad about to show`);
+            if(adOpts.beforeAd) adOpts.beforeAd();
+          },
+          afterAd: () => {
+            console.log(`✅ [${timestamp}] AD AFTER: Ad completed successfully`);
+            __adLoading = false;
+            if(adOpts.afterAd) adOpts.afterAd();
+          },
+          adBreakDone: (breakStatus) => {
+            console.log(`🏁 [${timestamp}] AD DONE: Break finished with status:`, breakStatus);
+            __adLoading = false;
+            // Unmute after ad completes
+            setTimeout(()=>{ 
+              try{ 
+                if(masterGain) {
+                  console.log(`🔊 [${timestamp}] AUDIO: Unmuting after ad completion`);
+                  masterGain.gain.value = 0.07; 
+                }
+              }catch(e){ 
+                console.warn(`⚠️ [${timestamp}] AUDIO: Failed to unmute -`, e);
+              } 
+            }, 500);
+            if(adOpts.adBreakDone) adOpts.adBreakDone(breakStatus);
+          }
+        }));
+      };
+      
+      try{ adBreak(opts); }catch(e){ 
+        console.error(`❌ [${timestamp}] AD ERROR: adBreak call failed -`, e); 
+        __adLoading = false;
+      }
+      
+      // Fallback unmute after longer delay
+      setTimeout(()=>{ 
+        if(__adLoading) {
+          console.log(`⏰ [${timestamp}] AD TIMEOUT: Forcing unmute after delay`);
+          __adLoading = false;
+        }
+        try{ 
+          if(masterGain) {
+            console.log(`🔊 [${timestamp}] AUDIO: Fallback unmute completed`);
+            masterGain.gain.value = 0.07; 
+          }
+        }catch(e){ 
+          console.warn(`⚠️ [${timestamp}] AUDIO: Fallback unmute failed -`, e);
+        } 
+      }, 5000);
+      
+    } else {
+      console.log(`❌ [${timestamp}] AD UNAVAILABLE: adBreak function not found on window`);
+      // avoid spamming the console if adBreak is not present
+      if(!__adBreakWarned){ 
+        console.log(`📢 [${timestamp}] AD INFO: No H5 Games Ads available - Publisher ID may not be verified yet`); 
+        __adBreakWarned = true; 
+      }
+      if(window.__enableAdStub){ 
+        try{ console.log(`🎭 [${timestamp}] AD STUB: Simulating ad break -`, opts||{}); }catch(e){} 
+      }
+    }
+  }catch(e){ 
+    console.error(`💥 [${timestamp}] AD CRITICAL: adBreak wrapper crashed -`, e); 
+    __adLoading = false;
+  } 
+}
+
+// Helper function to check ad status
+function checkAdStatus(){
+  const timestamp = new Date().toISOString();
+  console.log(`🔍 [${timestamp}] AD STATUS CHECK:`);
+  console.log(`   - isOnlineMode: ${isOnlineMode}`);
+  console.log(`   - adBreak function exists: ${typeof adBreak === 'function'}`);
+  console.log(`   - __adBreakWarned: ${__adBreakWarned}`);
+  console.log(`   - __adLoading: ${__adLoading}`);
+  console.log(`   - Publisher ID: ca-pub-369539584`);
+  console.log(`   - Domain: ${window.location.hostname}`);
+  console.log(`   - Protocol: ${window.location.protocol}`);
+  return {
+    isOnlineMode,
+    adBreakAvailable: typeof adBreak === 'function',
+    warned: __adBreakWarned,
+    loading: __adLoading
+  };
+}
 
 // ---------- Firebase (compat) ----------
 const firebaseConfig = {
@@ -1172,7 +1285,20 @@ function deathSequence(){
     clear(); render(); ctx.save(); ctx.globalAlpha = p*0.9; ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,canvas.width/DPR,canvas.height/DPR); ctx.restore();
     if(p < 1) requestAnimationFrame(anim);
     else {
-      try{ if(isOnlineMode) tryAdBreak({ type: 'start', name: 'game-over' }); }catch(e){}
+      console.log(`💀 [${new Date().toISOString()}] GAME OVER: Triggering ad for game over`);
+      try{ tryAdBreak({ 
+        type: 'start', 
+        name: 'game-over',
+        beforeAd: () => {
+          console.log(`📺 [${new Date().toISOString()}] GAMEOVER AD: Starting ad on game over`);
+          showToast('Watch this ad to continue...', 3000);
+        },
+        afterAd: () => {
+          console.log(`✅ [${new Date().toISOString()}] GAMEOVER AD: Completed`);
+        }
+      }); }catch(e){ 
+        console.error(`💥 [${new Date().toISOString()}] GAMEOVER AD ERROR: Failed to show game over ad -`, e); 
+      }
       const overlayE = document.getElementById('overlay'); if(overlayE) overlayE.classList.remove('hidden');
       const hi = document.getElementById('homeInfo'); if(hi) hi.innerHTML = `<h3>You Died</h3><p>Score: ${player.score} — press Start to reset.</p>`;
       const shopPanel = document.getElementById('shopPanel'); if(shopPanel) shopPanel.classList.add('hidden');
@@ -1215,7 +1341,21 @@ function createRoom(code, allowBotsFlag){
       }
       uploadPlayerState();
       // Creator reward: offer a rewarded ad immediately (only online)
-      try{ tryAdBreak({ type: 'reward', name: 'create-room', force: true }); }catch(e){}
+      console.log(`🏠 [${new Date().toISOString()}] ROOM CREATED: Triggering rewarded ad for room creator`);
+      try{ tryAdBreak({ 
+        type: 'reward', 
+        name: 'create-room-reward',
+        beforeAd: () => {
+          console.log(`🎁 [${new Date().toISOString()}] REWARD AD: Starting - User must watch to continue`);
+          showToast('Watch the ad to get your room creation reward!', 3000);
+        },
+        afterAd: () => {
+          console.log(`🎉 [${new Date().toISOString()}] REWARD AD: Completed - Reward granted`);
+          showToast('Thank you! Room creation reward granted!', 2000);
+        }
+      }); }catch(e){ 
+        console.error(`💥 [${new Date().toISOString()}] ROOM AD ERROR: Failed to show reward ad -`, e); 
+      }
       // show a simple countdown in the home info so creator sees expiry and a Join button
       try{
         const hi = document.getElementById('homeInfo'); if(hi){
@@ -1274,6 +1414,24 @@ function joinRoom(code){
       try{ firebaseDB.ref('/players/' + firebaseUid).update({ room: code, x: player.x, y: player.y, ts: Date.now(), username: username || 'Guest', score: player.score || 0 }); }catch(e){ console.warn('failed to upload after joinRoom', e); }
     }
     uploadPlayerState();
+    
+    // Show ad when joining a room
+    console.log(`🚪 [${new Date().toISOString()}] ROOM JOINED: Triggering ad for room join`);
+    try{ tryAdBreak({ 
+      type: 'start', 
+      name: 'join-room',
+      beforeAd: () => {
+        console.log(`📺 [${new Date().toISOString()}] JOIN AD: Starting ad before room entry`);
+        showToast('Please watch this ad to join the room...', 3000);
+      },
+      afterAd: () => {
+        console.log(`✅ [${new Date().toISOString()}] JOIN AD: Completed - Room joined successfully`);
+        showToast('Welcome to the room!', 2000);
+      }
+    }); }catch(e){ 
+      console.error(`💥 [${new Date().toISOString()}] JOIN AD ERROR: Failed to show join ad -`, e); 
+    }
+    
     showToast('Joined room: ' + code + (allowBots ? ' (with bots)' : ' (no bots)'), 1800);
     return true;
   }).catch(err=>{
@@ -1314,6 +1472,25 @@ function spectatePlayer(uid){ if(!firebaseConnected){ showToast('Connect to Fire
 // username handling
 const usernameInput = document.getElementById('usernameInput'); const setNameBtn = document.getElementById('setNameBtn'); const nameErr = document.getElementById('nameErr');
 let username = localStorage.getItem('playerName') || 'Guest'; if(ui.usernameDisplay) ui.usernameDisplay.textContent = username; if(usernameInput) usernameInput.value = (username==='Guest' ? '' : username);
+
+// Disable set pin button if no username
+function updateSetPinButton(){
+  const setPinBtn = document.getElementById('setPinBtn');
+  if(setPinBtn){
+    if(!username || username === 'Guest'){
+      setPinBtn.disabled = true;
+      setPinBtn.style.opacity = '0.5';
+      setPinBtn.style.pointerEvents = 'none';
+      setPinBtn.title = 'Set a username first';
+    } else {
+      setPinBtn.disabled = false;
+      setPinBtn.style.opacity = '';
+      setPinBtn.style.pointerEvents = '';
+      setPinBtn.title = '';
+    }
+  }
+}
+updateSetPinButton();
 const BANNED = ['fuck','shit','bitch','cunt','asshole','dick','bastard','damn','whore','motherfucker','nigger','faggot'];
 function normalizeName(s){ s = s.toLowerCase(); const map = { '0':'o','1':'i','3':'e','4':'a','5':'s','7':'t','@':'a','$':'s' }; let out=''; for(const ch of s){ if(map[ch]) out += map[ch]; else if(/[a-z0-9]/.test(ch)) out += ch; } return out; }
 function levenshtein(a,b){ if(a===b) return 0; const m=a.length, n=b.length; const dp = Array.from({length:m+1},(_,i)=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j; for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost = a[i-1]===b[j-1]?0:1; dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost); } } return dp[m][n]; }
@@ -1346,6 +1523,7 @@ if(setNameBtn){ setNameBtn.addEventListener('click', async ()=>{ const val = (us
   const unique = await checkUsernameUnique(val);
   if(!unique.ok){ if(nameErr) nameErr.textContent = unique.reason; return; }
   username = val; localStorage.setItem('playerName', username); if(ui.usernameDisplay) ui.usernameDisplay.textContent = username; if(nameErr) nameErr.textContent=''; showToast('Username accepted: ' + username, 1800);
+  updateSetPinButton();
   // upload state right away (so others see your name)
   if(firebaseConnected && firebaseDB && firebaseUid){
     try{ await firebaseDB.ref('/players/' + firebaseUid).update({ username: username, ts: Date.now() }); }catch(e){ console.warn('failed to update username in firebase', e); }
@@ -1447,16 +1625,42 @@ function signOut(){
 }
 
 async function deleteAccountFromFirebase(){
-  if(!confirm('Delete your account permanently? This will remove your PIN, profile, and scores. This CANNOT be undone.')) return;
+  // Check if user has a PIN set
+  if(!window.pinSet && !localStorage.getItem('pinSet')){
+    showToast('You must have a PIN set to delete your account.', 3000);
+    return;
+  }
+  
+  // Ask for PIN confirmation before deletion
+  const pin = prompt('Enter your PIN to confirm account deletion:');
+  if(!pin) return;
+  
   const ok = await ensureFirebaseConnected();
   if(!ok){ showToast('Connect to Firebase to delete account.'); return; }
+  
+  // Verify PIN
+  const hashedPin = await hashPin(pin);
+  try{
+    const pinSnap = await firebaseDB.ref('/pins/' + firebaseUid).once('value');
+    const pinData = pinSnap.val();
+    if(!pinData || pinData.hash !== hashedPin){
+      showToast('Incorrect PIN. Account deletion cancelled.', 3000);
+      return;
+    }
+  }catch(e){
+    showToast('Could not verify PIN.', 2000);
+    return;
+  }
+  
+  if(!confirm('✋ FINAL WARNING: This will permanently delete your account, PIN, and all scores. This CANNOT be undone. Continue?')) return;
+  
   try{
     await Promise.all([
       firebaseDB.ref('/pins/' + firebaseUid).remove(),
       firebaseDB.ref('/players/' + firebaseUid).remove(),
       firebaseDB.ref('/bestScores/' + firebaseUid).remove()
     ]);
-    showToast('Account deleted.');
+    showToast('Account deleted successfully.');
     isLoggedIn = false;
     username = 'Guest';
     localStorage.removeItem('playerName');
@@ -1465,14 +1669,58 @@ async function deleteAccountFromFirebase(){
     window.pinSet = false;
     if(ui.usernameDisplay) ui.usernameDisplay.textContent = 'Guest';
     updatePinMenuButtons();
+    updateSetPinButton();
   }catch(e){
     console.error('delete account failed', e);
     showToast('Could not delete account.');
   }
 }
 
+// Clean up inactive accounts (90+ days)
+async function cleanupInactiveAccounts(){
+  if(!firebaseConnected || !firebaseDB) return;
+  try{
+    const cutoff = Date.now() - (91 * 24 * 60 * 60 * 1000); // 91 days ago
+    const playersSnap = await firebaseDB.ref('/players').once('value');
+    const players = playersSnap.val() || {};
+    
+    let cleanedCount = 0;
+    for(const uid in players){
+      const player = players[uid];
+      const lastSeen = player.ts || 0;
+      if(lastSeen < cutoff && player.username !== 'Guest'){
+        console.log('Cleaning up inactive account:', player.username, uid);
+        await Promise.all([
+          firebaseDB.ref('/pins/' + uid).remove(),
+          firebaseDB.ref('/players/' + uid).remove(),
+          firebaseDB.ref('/bestScores/' + uid).remove()
+        ]);
+        cleanedCount++;
+      }
+    }
+    if(cleanedCount > 0){
+      console.log(`Cleaned up ${cleanedCount} inactive accounts`);
+    }
+  }catch(e){
+    console.warn('Account cleanup failed:', e);
+  }
+}
+
 // wire modal controls
-const setPinBtn = document.getElementById('setPinBtn'); if(setPinBtn) setPinBtn.addEventListener('click', ()=>{ openPinModal(); });
+const setPinBtn = document.getElementById('setPinBtn'); if(setPinBtn) setPinBtn.addEventListener('click', ()=>{
+  if(!username || username === 'Guest'){
+    showToast('You must set a username before creating a PIN.', 3000);
+    return;
+  }
+  if(!firebaseConnected){
+    showToast('Please connect to Firebase first.', 2000);
+    ensureFirebaseConnected().then(ok => {
+      if(ok) openPinModal();
+    });
+    return;
+  }
+  openPinModal();
+});
 
 const signOutBtn = document.getElementById('signOutBtn');
 if(signOutBtn) signOutBtn.addEventListener('click', ()=>{ signOut(); });
@@ -1601,7 +1849,8 @@ function startGame(online, withBots=true){
     setTimeout(()=>{ try{ spawnBotsAcrossMap(420); }catch(e){} }, 180);
   }  // Only spawn bots if withBots is true
   for(let i=0;i<120;i++) spawnBubbleAround(player.x, player.y); ensureAudioStarted(); setRunning(true);
-  try{ if(isOnlineMode) tryAdBreak({ type: 'start', name: 'restart-game' }); }catch(e){}
+  // Ads only on explicit user actions, not automatic restart
+  console.log(`🎮 [${new Date().toISOString()}] GAME STARTED: No ad shown - only on explicit actions`);
   if(online){ ensureFirebaseConnected().then(ok=>{ if(ok){ showToast('Online mode: connected to Firebase' + (withBots ? '' : ' (no bots)'),1600); uploadPlayerState(); } else { showToast('Could not connect to Firebase — starting offline',2600); } }); } else { rebuildLeaderboards(); }
   // ensure a small bot population so online-with-bots reliably has bots
   if(withBots){ setTimeout(()=>{ ensureBotPopulation(120); }, 120); }
@@ -1620,15 +1869,40 @@ document.getElementById('overlay').classList.remove('hidden'); setRunning(false)
 function isMobileDevice(){ try{ return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints>0) || ('ontouchstart' in window && navigator.maxTouchPoints === 0); }catch(e){ return false; } }
 if(isMobileDevice()){
   try{
-    const overlayE = document.getElementById('overlay'); if(overlayE){ overlayE.classList.remove('hidden'); const hi = document.getElementById('homeInfo'); if(hi) hi.innerHTML = '<h3>Mobile Not Supported</h3><p>Please use a desktop with keyboard + mouse to play this game.</p>'; }
-    // hide any mobile-specific controls if present
-    const joy = document.getElementById('joystick'); if(joy) joy.style.display = 'none'; const boost = document.getElementById('boostMobile'); if(boost) boost.style.display = 'none'; const mb = document.getElementById('mobileSettingsBtn'); if(mb) mb.style.display = 'none';
-    controlMode = 'mouse'; updateControlUI();
+    // Block mobile access with non-dismissible overlay
+    const mobileBlock = document.createElement('div');
+    mobileBlock.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:system-ui;color:white;text-align:center;padding:20px;user-select:none;-webkit-user-select:none;pointer-events:none;';
+    mobileBlock.innerHTML = `
+      <div style="max-width:400px">
+        <h2 style="margin-bottom:16px;font-size:24px;color:#ff6b6b">📱 Mobile Platform Not Supported</h2>
+        <p style="font-size:16px;line-height:1.6;margin-bottom:20px">Sorry, we don't support mobile devices. Please use a computer with keyboard and mouse to continue playing Aqua Odyssey.</p>
+        <div style="font-size:14px;opacity:0.8">This restriction cannot be bypassed.</div>
+      </div>
+    `;
+    document.body.appendChild(mobileBlock);
+    // Prevent any interaction with the game
+    document.body.style.pointerEvents = 'none';
+    document.documentElement.style.pointerEvents = 'none';
   }catch(e){}
 }
 
 // self-tests
 window.runTests = function(){ try { console.assert(typeof setRunning === 'function', 'setRunning should exist'); console.assert(document.getElementById('btnPause'), 'Pause button exists'); console.log('Self-tests passed.'); } catch(e){ console.error('Self-tests failed', e); } };
+
+// Ad debugging functions
+window.checkAdStatus = checkAdStatus;
+window.testAd = function(type = 'reward', name = 'test-ad') {
+  console.log(`🧪 [${new Date().toISOString()}] TEST AD: Manual ad test triggered`);
+  tryAdBreak({ type, name });
+};
+window.testRewardAd = function() { testAd('reward', 'manual-reward-test'); };
+window.testStartAd = function() { testAd('start', 'manual-start-test'); };
+
+console.log(`🔧 [${new Date().toISOString()}] DEBUG: Ad debugging functions loaded:`);
+console.log(`   - checkAdStatus() - Check ad system status`);
+console.log(`   - testAd(type, name) - Test manual ad`);
+console.log(`   - testRewardAd() - Test reward ad`);
+console.log(`   - testStartAd() - Test start ad`);
 window.__game = {player, foods, enemies, bubbles, onlinePlayers, remotePlayers, currentRoom};
 
 // initial leader render
@@ -1636,12 +1910,50 @@ rebuildLeaderboards();
 
 // On page load, restore login state and update menu buttons
 const savedUsername = localStorage.getItem('playerName');
+const savedUid = localStorage.getItem('linkedAccountUid');
 if(savedUsername && savedUsername !== 'Guest') {
   username = savedUsername;
   if(ui.usernameDisplay) ui.usernameDisplay.textContent = username;
   isLoggedIn = true;
+  
+  // Auto-login if we have saved credentials
+  if(savedUid && firebaseConnected){
+    // Verify account still exists
+    firebaseDB.ref('/players/' + savedUid).once('value').then(snap => {
+      if(snap.exists()){
+        const data = snap.val();
+        username = data.username || savedUsername;
+        localStorage.setItem('playerName', username);
+        if(ui.usernameDisplay) ui.usernameDisplay.textContent = username;
+        window.linkedAccountUid = savedUid;
+        window.linkedAccountData = data;
+        showToast('Welcome back, ' + username + '!', 2000);
+      } else {
+        // Account was deleted, clean up local storage
+        localStorage.removeItem('playerName');
+        localStorage.removeItem('linkedAccountUid');
+        localStorage.removeItem('pinSet');
+        username = 'Guest';
+        isLoggedIn = false;
+        if(ui.usernameDisplay) ui.usernameDisplay.textContent = 'Guest';
+        showToast('Your account was deleted due to inactivity.', 4000);
+      }
+      updatePinMenuButtons();
+      updateSetPinButton();
+    }).catch(e => {
+      console.warn('Auto-login verification failed:', e);
+    });
+  }
 }
 updatePinMenuButtons();
+updateSetPinButton();
+
+// Run cleanup periodically (every 24 hours)
+if(typeof setInterval !== 'undefined'){
+  setInterval(cleanupInactiveAccounts, 24 * 60 * 60 * 1000);
+  // Also run once on load after a delay
+  setTimeout(cleanupInactiveAccounts, 5000);
+}
 </script>
 </body>
 </html>
