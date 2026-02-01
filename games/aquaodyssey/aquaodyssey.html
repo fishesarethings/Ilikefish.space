@@ -141,10 +141,79 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <!-- H5 Games Ads (AdSense) -->
-<script async
+<script
+  async
   data-ad-client="ca-pub-369539584"
   data-ad-frequency-hint="180s"
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
+  crossorigin="anonymous">
+</script>
+
+<script>
+  // Wait for ads to load and set up verification
+  function waitForAds(maxWait = 5000) {
+    const startTime = Date.now();
+    const timestamp = new Date().toISOString();
+    
+    console.log(`⏳ [${timestamp}] ADS INIT: Waiting for H5 Games Ads to load...`);
+    console.log(`🔍 [${timestamp}] ADS INFO: Publisher ID: ca-pub-369539584`);
+    console.log(`🌐 [${timestamp}] ADS INFO: Current domain: ${window.location.hostname}`);
+    console.log(`📡 [${timestamp}] ADS INFO: Protocol: ${window.location.protocol}`);
+    
+    return new Promise((resolve) => {
+      function checkAds() {
+        const elapsed = Date.now() - startTime;
+        const checkTime = new Date().toISOString();
+        
+        if (typeof window.adBreak === 'function') {
+          console.log(`✅ [${checkTime}] ADS LOADED: adBreak function is available!`);
+          console.log(`🎯 [${checkTime}] ADS READY: H5 Games Ads initialization complete`);
+          resolve(true);
+          return;
+        }
+        
+        if (elapsed > maxWait) {
+          console.log(`❌ [${checkTime}] ADS TIMEOUT: Failed to load after ${maxWait}ms`);
+          console.log(`🔧 [${checkTime}] ADS DEBUG: Checking common issues...`);
+          console.log(`   - Domain verified: ${window.location.hostname}`);
+          console.log(`   - HTTPS: ${window.location.protocol === 'https:'}`);
+          console.log(`   - Script loaded: ${document.querySelector('script[src*="adsbygoogle"]') !== null}`);
+          console.log(`   - adBreak exists: ${typeof window.adBreak}`);
+          resolve(false);
+          return;
+        }
+        
+        if (elapsed % 500 < 16) { // Log every 500ms
+          console.log(`⏱️ [${checkTime}] ADS WAITING: Still loading... (${elapsed}ms)`);
+        }
+        
+        setTimeout(checkAds, 50);
+      }
+      
+      // Start checking after script loads
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkAds);
+      } else {
+        checkAds();
+      }
+    });
+  }
+  
+  // Initialize ads when page loads
+  waitForAds().then((loaded) => {
+    const timestamp = new Date().toISOString();
+    if (loaded) {
+      console.log(`🎉 [${timestamp}] ADS SUCCESS: H5 Games Ads is ready to use!`);
+    } else {
+      console.log(`⚠️ [${timestamp}] ADS FAILED: H5 Games Ads did not load properly`);
+      console.log(`🔧 [${timestamp}] ADS HELP: Common fixes:`);
+      console.log(`   1. Ensure domain is verified in AdSense`);
+      console.log(`   2. Check that Publisher ID is correct: ca-pub-369539584`);
+      console.log(`   3. Verify you're on HTTPS (not file://)`);
+      console.log(`   4. Try clearing browser cache`);
+      console.log(`   5. Check AdSense account approval status`);
+    }
+  });
 </script>
 
 </head>
@@ -765,11 +834,27 @@ function checkAdStatus(){
   console.log(`   - Publisher ID: ca-pub-369539584`);
   console.log(`   - Domain: ${window.location.hostname}`);
   console.log(`   - Protocol: ${window.location.protocol}`);
+  console.log(`   - HTTPS: ${window.location.protocol === 'https:'}`);
+  console.log(`   - Ads script loaded: ${document.querySelector('script[src*="adsbygoogle"]') !== null}`);
+  console.log(`   - Current URL: ${window.location.href}`);
+  
+  // Additional debug info
+  if (typeof window.adBreak === 'function') {
+    console.log(`   ✅ AD BREAK: Function is available`);
+  } else {
+    console.log(`   ❌ AD BREAK: Function NOT available`);
+    console.log(`   🔧 TRY: Running waitForAds() manually...`);
+    waitForAds(2000);
+  }
+  
   return {
     isOnlineMode,
     adBreakAvailable: typeof adBreak === 'function',
     warned: __adBreakWarned,
-    loading: __adLoading
+    loading: __adLoading,
+    domain: window.location.hostname,
+    protocol: window.location.protocol,
+    https: window.location.protocol === 'https:'
   };
 }
 
@@ -1897,12 +1982,42 @@ window.testAd = function(type = 'reward', name = 'test-ad') {
 };
 window.testRewardAd = function() { testAd('reward', 'manual-reward-test'); };
 window.testStartAd = function() { testAd('start', 'manual-start-test'); };
+window.retryAds = function() {
+  console.log(`🔄 [${new Date().toISOString()}] ADS RETRY: Manually retrying ad initialization...`);
+  waitForAds(3000).then((success) => {
+    const timestamp = new Date().toISOString();
+    if (success) {
+      console.log(`✅ [${timestamp}] ADS RETRY SUCCESS: Ads are now available!`);
+    } else {
+      console.log(`❌ [${timestamp}] ADS RETRY FAILED: Still no ads available`);
+    }
+  });
+};
+window.debugAds = function() {
+  const timestamp = new Date().toISOString();
+  console.log(`🔬 [${timestamp}] ADS DEBUG REPORT:`);
+  console.log(`   Script tag:`, document.querySelector('script[src*="adsbygoogle"]'));
+  console.log(`   Window.adBreak:`, typeof window.adBreak, window.adBreak);
+  console.log(`   Page loaded:`, document.readyState);
+  console.log(`   User agent:`, navigator.userAgent.substring(0, 100));
+  console.log(`   Cookies enabled:`, navigator.cookieEnabled);
+  console.log(`   Do not track:`, navigator.doNotTrack);
+  return checkAdStatus();
+};
 
 console.log(`🔧 [${new Date().toISOString()}] DEBUG: Ad debugging functions loaded:`);
 console.log(`   - checkAdStatus() - Check ad system status`);
 console.log(`   - testAd(type, name) - Test manual ad`);
 console.log(`   - testRewardAd() - Test reward ad`);
 console.log(`   - testStartAd() - Test start ad`);
+console.log(`   - retryAds() - Manually retry ad loading`);
+console.log(`   - debugAds() - Full debug report`);
+
+// Auto-check ads after page loads
+setTimeout(() => {
+  console.log(`🔍 [${new Date().toISOString()}] AUTO-CHECK: Running automatic ad status check...`);
+  checkAdStatus();
+}, 3000);
 window.__game = {player, foods, enemies, bubbles, onlinePlayers, remotePlayers, currentRoom};
 
 // initial leader render
