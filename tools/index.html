@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Clean Multi Counter</title>
 
 <style>
@@ -16,13 +17,20 @@
 * {
   box-sizing:border-box;
   font-family:system-ui,sans-serif;
+  overscroll-behavior: none;
+}
+
+html, body {
+  margin:0;
+  padding:0;
+  height:100%;
+  overflow:hidden;
+  touch-action:none;
 }
 
 body {
-  margin:0;
   background:var(--bg);
   color:var(--fg);
-  height:100vh;
   display:flex;
   flex-direction:column;
 }
@@ -147,7 +155,7 @@ const timersEl = document.getElementById("timers");
 const overlay = document.getElementById("overlay");
 const overviewContent = document.getElementById("overviewContent");
 
-/* HAPTIC */
+/* ANDROID-ONLY HAPTIC */
 function haptic() {
   if (navigator.vibrate) navigator.vibrate(10);
 }
@@ -217,9 +225,9 @@ function render() {
 
     attachTouch(
       num,
-      () => { t.value++; haptic(); save(); render(); },                // swipe right
-      () => { if (t.value > 0) { t.value--; haptic(); save(); render(); } }, // swipe left
-      () => { t.value++; haptic(); save(); render(); }                 // tap
+      () => { t.value++; haptic(); save(); render(); },
+      () => { if (t.value > 0) { t.value--; haptic(); save(); render(); } },
+      () => { t.value++; haptic(); save(); render(); }
     );
 
     const ctrls = document.createElement("div");
