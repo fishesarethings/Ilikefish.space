@@ -17,19 +17,19 @@
 * {
   box-sizing:border-box;
   font-family:system-ui,sans-serif;
-  overscroll-behavior: none;
 }
 
 html, body {
   margin:0;
   padding:0;
   height:100%;
+  width:100%;
   overflow:hidden;
-  touch-action:none;
+  position:fixed;
+  background:var(--bg);
 }
 
 body {
-  background:var(--bg);
   color:var(--fg);
   display:flex;
   flex-direction:column;
@@ -147,6 +147,30 @@ main {
 </div>
 
 <script>
+/* ========= HARD IOS LOCK ========= */
+
+/* Prevent scroll */
+document.addEventListener(
+  "touchmove",
+  e => e.preventDefault(),
+  { passive:false }
+);
+
+/* Prevent pinch zoom */
+["gesturestart","gesturechange","gestureend"].forEach(evt =>
+  document.addEventListener(evt, e => e.preventDefault())
+);
+
+/* Prevent double-tap zoom */
+let lastTap = 0;
+document.addEventListener("touchend", e => {
+  const now = Date.now();
+  if (now - lastTap < 300) e.preventDefault();
+  lastTap = now;
+}, { passive:false });
+
+/* ========= APP LOGIC ========= */
+
 let state = JSON.parse(localStorage.getItem("state")) || {
   timers:[{ value:0, label:"" }]
 };
@@ -154,11 +178,6 @@ let state = JSON.parse(localStorage.getItem("state")) || {
 const timersEl = document.getElementById("timers");
 const overlay = document.getElementById("overlay");
 const overviewContent = document.getElementById("overviewContent");
-
-/* ANDROID-ONLY HAPTIC */
-function haptic() {
-  if (navigator.vibrate) navigator.vibrate(10);
-}
 
 function save() {
   localStorage.setItem("state", JSON.stringify(state));
@@ -197,11 +216,11 @@ function attachTouch(el, onRight, onLeft, onTap) {
   el.addEventListener("touchstart", e => {
     startX = e.touches[0].clientX;
     moved = false;
-  }, {passive:true});
+  });
 
   el.addEventListener("touchmove", e => {
     if (Math.abs(e.touches[0].clientX - startX) > 10) moved = true;
-  }, {passive:true});
+  });
 
   el.addEventListener("touchend", e => {
     const dx = e.changedTouches[0].clientX - startX;
@@ -225,9 +244,9 @@ function render() {
 
     attachTouch(
       num,
-      () => { t.value++; haptic(); save(); render(); },
-      () => { if (t.value > 0) { t.value--; haptic(); save(); render(); } },
-      () => { t.value++; haptic(); save(); render(); }
+      () => { t.value++; save(); render(); },
+      () => { if (t.value > 0) { t.value--; save(); render(); } },
+      () => { t.value++; save(); render(); }
     );
 
     const ctrls = document.createElement("div");
@@ -238,7 +257,6 @@ function render() {
     minus.onclick = () => {
       if (t.value > 0) {
         t.value--;
-        haptic();
         save();
         render();
       }
@@ -248,7 +266,6 @@ function render() {
     plus.textContent = "+";
     plus.onclick = () => {
       t.value++;
-      haptic();
       save();
       render();
     };
@@ -277,7 +294,6 @@ function render() {
 
 function renderOverview() {
   overviewContent.innerHTML = "";
-
   const total = state.timers.reduce((s,t)=>s+t.value,0);
   const multiple = state.timers.length > 1;
 
