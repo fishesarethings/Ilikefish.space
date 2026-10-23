@@ -3,21 +3,6 @@
 <head>
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
-  <!-- ==== EZOIC: Privacy + Header (insert near top of <head>, before other ad scripts) ==== -->
-<!-- Load privacy scripts first (Gatekeeper) -->
- 
-<script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-<script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
-
-<!-- Ezoic header script -->
- 
-<script async src="//www.ezojs.com/ezoic/sa.min.js"></script>
-<script>
-  window.ezstandalone = window.ezstandalone || {};
-  ezstandalone.cmd = ezstandalone.cmd || [];
-</script>
-
-<!-- ==== END EZOIC ==== -->
   <!-- NOTE: Google Analytics & AdSense will be injected dynamically AFTER consent.
        The script tags below use data-src and will not load automatically. -->
   <script id="gtag-placeholder" type="text/plain" data-category="analytics" data-src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
@@ -90,7 +75,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <script src="/assets/js/loco.js" defer></script>
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
-  <script src="/assets/js/graphs.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
 
   <link rel="canonical" href="https://ilikefish.space/">
@@ -363,10 +347,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </div>
   </div>
 
-  <!-- Core Scripts -->
-  <script src="/assets/js/server.js" defer></script>
-  <script src="/assets/js/fullscreen.js" defer></script>
-
   <!-- Cookie & Consent logic (minimal & self-contained) -->
   <script>
     (function(){
@@ -408,7 +388,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         s.src = src;
         if (el.getAttribute('crossorigin')) s.crossOrigin = el.getAttribute('crossorigin');
         s.async = true;
-        s.setAttribute('data-injected-by','ilf-consent');
         document.head.appendChild(s);
         // if it's gtag init block, eval after script loaded
         if (el.id === 'gtag-init') {
@@ -528,6 +507,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       document.addEventListener('DOMContentLoaded', () => {
         showBannerIfNeeded();
         fixBlankLinks();
+        if (location.hash === '#cookie-settings') {
+          const openBtn = document.getElementById('ilf-open-settings');
+          if (openBtn) openBtn.click();
+        }
       });
 
       // expose function to open settings (used by terms page)
