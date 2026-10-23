@@ -3,42 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Game Package — I like fishes _</title>
+  <title>Game Maker — I like fishes _</title>
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <style>
-    :root { --accent:#007aff; --bg:#f7f9fc; --card:#fff; --muted:#5a6a7a; --danger:#e53935; --ok:#1e8e3e; }
+    :root { --accent:#007aff; --bg:#f7f9fc; --card:#fff; --muted:#5a6a7a; --danger:#e53935; --ok:#1e8e3e; --ink:#111; }
     * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color:#111; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); overflow-x:hidden; }
     nav { position: fixed; top:0; left:0; right:0; background: rgba(255,255,255,0.92); z-index:1000; border-bottom:1px solid rgba(0,0,0,0.06); backdrop-filter: blur(8px); }
     nav ul { display:flex; justify-content:center; gap:1.5rem; list-style:none; padding:1rem; margin:0; }
     nav a { color:#333; text-decoration:none; font-weight:600; transition: color .15s; }
     nav a:hover { color: var(--accent); }
 
-    .hero { text-align:center; padding: 78px 18px 14px; }
-    .hero h1 { margin:0; font-size:1.8rem; letter-spacing:-.5px; }
-    .hero p { color: var(--muted); margin:6px 0 0; }
+    /* Views */
+    .view { display:none; animation: fadeIn .4s ease both; }
+    .view.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    @keyframes ripple { 0% { transform: scale(0); opacity:.5; } 100% { transform: scale(2.5); opacity:0; } }
 
-    .wrap { max-width: 1180px; margin: 0 auto 30px; padding: 0 18px; display:grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
-    @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+    /* Landing */
+    .landing { min-height: 88vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 90px 18px 40px; }
+    .landing h1 { font-size: 2.6rem; letter-spacing:-1px; margin:0; animation: fadeInUp .6s ease both; }
+    .landing .sub { color: var(--muted); font-size:1.05rem; max-width:560px; margin:12px auto 30px; animation: fadeInUp .7s ease both; }
+    .cta { position:relative; overflow:hidden; padding:16px 34px; font-size:1.05rem; font-weight:700; border:none; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); color:#fff; cursor:pointer; box-shadow: 0 10px 30px rgba(0,122,255,0.35); transition: transform .15s ease, box-shadow .2s ease; animation: fadeInUp .8s ease both; }
+    .cta:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 36px rgba(0,122,255,0.45); }
+    .cta:active { transform: scale(.97); }
+    .cta .rip { position:absolute; border-radius:50%; background: rgba(255,255,255,0.6); width:20px; height:20px; margin-left:-10px; margin-top:-10px; pointer-events:none; animation: ripple .6s ease-out; }
 
-    .card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:18px; box-shadow:0 6px 20px rgba(0,0,0,0.05); animation: fadeInUp .45s ease both; }
-    @keyframes fadeInUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
+    /* Projects view */
+    .projects { max-width: 1100px; margin: 0 auto 40px; padding: 0 18px; }
+    .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 20px 0 16px; flex-wrap:wrap; gap:10px; }
+    .projects-header h2 { margin:0; font-size:1.5rem; }
+    .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+    .proj-card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); cursor:pointer; transition: transform .15s ease, box-shadow .2s ease; animation: fadeInUp .4s ease both; position:relative; }
+    .proj-card:hover { transform: translateY(-4px); box-shadow:0 12px 28px rgba(0,0,0,0.1); }
+    .proj-card .pname { font-weight:700; font-size:1.05rem; margin-bottom:4px; }
+    .proj-card .pslug { font-size:.8rem; color: var(--muted); }
+    .proj-card .pdate { font-size:.75rem; color: var(--muted); margin-top:8px; }
+    .proj-card .del { position:absolute; top:10px; right:10px; background:transparent; border:none; color: var(--muted); cursor:pointer; font-size:1rem; padding:2px 6px; }
+    .proj-card .del:hover { color: var(--danger); }
+    .new-proj { display:flex; align-items:center; justify-content:center; min-height:140px; border:2px dashed #c9d3e3; background:transparent; color: var(--muted); font-weight:600; cursor:pointer; transition: all .2s; }
+    .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; }
 
-    .col-left { position: sticky; top: 78px; display:flex; flex-direction:column; gap:14px; }
+    /* Editor */
+    .editor { max-width: 1180px; margin: 0 auto 30px; padding: 0 18px; display:grid; grid-template-columns: 220px 1fr 300px; gap:16px; align-items:start; }
+    @media (max-width: 1000px) { .editor { grid-template-columns: 1fr; } }
+    .side { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.05); position:sticky; top:78px; }
+    .side h3 { margin:0 0 10px; font-size:.95rem; }
+    .menu-item { padding:9px 11px; border-radius:9px; cursor:pointer; font-size:.88rem; font-weight:600; color: var(--muted); transition: all .15s; margin-bottom:4px; }
+    .menu-item:hover { background:#f0f3f8; color: var(--ink); }
+    .menu-item.active { background: var(--accent); color:#fff; }
+    .menu-item:last-child { margin-top:8px; border-top:1px solid #eef2f7; padding-top:12px; }
 
-    /* preview card */
-    .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
-    .gc img { width:100%; height:100%; object-fit:cover; display:block; }
-    .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.85rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
-    .gc .title-bar { position:absolute; left:0; right:0; bottom:0; padding:10px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%); color:#fff; font-weight:700; font-size:.95rem; }
-    .meta { font-size:.82rem; color: var(--muted); line-height:1.5; }
-    .meta b { color:#111; }
-
-    /* test frame */
-    .test-frame { width:100%; height:320px; border:1px solid #e3e8f0; border-radius:12px; background:#0b1020; }
-    .test-frame iframe { width:100%; height:100%; border:0; border-radius:12px; }
-    .test-empty { display:flex; align-items:center; justify-content:center; height:100%; color:#9aa; font-size:.85rem; text-align:center; padding:12px; }
+    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    .panel-section { display:none; animation: fadeIn .3s ease; }
+    .panel-section.active { display:block; }
 
     .row { margin-bottom:12px; }
     label { display:block; font-weight:600; margin-bottom:5px; font-size:.88rem; }
@@ -48,7 +69,6 @@
     .hint { font-size:.74rem; color: var(--muted); margin-top:3px; }
     .err { font-size:.74rem; color: var(--danger); margin-top:3px; display:none; }
     .err.show { display:block; }
-
     .checkbox { display:flex; align-items:center; gap:9px; padding:9px 11px; background:#f8fafc; border-radius:9px; border:1px solid #eef2f7; font-size:.88rem; }
 
     .drop { border:2px dashed #c9d3e3; border-radius:10px; padding:12px; text-align:center; color: var(--muted); background:#fafcff; transition: all .2s; cursor:pointer; font-size:.85rem; }
@@ -67,6 +87,18 @@
     button.primary:hover { background:#0066d6; }
     button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
+    /* right preview col */
+    .preview-col { position:sticky; top:78px; display:flex; flex-direction:column; gap:14px; }
+    .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
+    .gc img { width:100%; height:100%; object-fit:cover; display:block; }
+    .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.85rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
+    .gc .title-bar { position:absolute; left:0; right:0; bottom:0; padding:10px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%); color:#fff; font-weight:700; font-size:.95rem; }
+    .meta { font-size:.82rem; color: var(--muted); line-height:1.5; }
+    .meta b { color:#111; }
+    .test-frame { width:100%; height:260px; border:1px solid #e3e8f0; border-radius:12px; background:#0b1020; overflow:hidden; }
+    .test-frame iframe { width:100%; height:100%; border:0; }
+    .test-empty { display:flex; align-items:center; justify-content:center; height:100%; color:#9aa; font-size:.82rem; text-align:center; padding:12px; }
+
     .status { margin-top:10px; font-size:.85rem; min-height:1.2em; }
     .status.ok { color: var(--ok); }
     .status.bad { color: var(--danger); }
@@ -78,6 +110,10 @@
 
     .note { background:#f0f6ff; border:1px solid #d6e4ff; border-radius:9px; padding:10px; font-size:.8rem; color:#0b3b5a; margin-top:12px; line-height:1.35; }
 
+    .explorer { background:#f8fafc; border:1px solid #eef2f7; border-radius:9px; padding:10px; font-size:.8rem; color: var(--muted); max-height:140px; overflow:auto; }
+    .explorer .f { padding:4px 6px; border-radius:6px; }
+    .explorer .f:hover { background:#eef2f7; }
+
     footer { text-align:center; color: var(--muted); font-size:.82rem; padding:20px 18px; border-top:1px solid rgba(0,0,0,0.06); margin-top:30px; }
   </style>
 </head>
@@ -86,102 +122,146 @@
     <ul>
       <li><a href="/">Home</a></li>
       <li><a href="/games">Games</a></li>
-      <li><a href="/gamepack">Game package</a></li>
+      <li><a href="/gamepack">Game Maker</a></li>
     </ul>
   </nav>
 
-  <div class="hero">
-    <h1>Game Package</h1>
-    <p>Upload, preview, test, then submit. No account or email exposed.</p>
+  <!-- Landing -->
+  <div class="view active" id="view-landing">
+    <div class="landing">
+      <h1>Game Maker</h1>
+      <p class="sub">Build, preview, test and submit your HTML5 game. Everything stays in your browser until you're ready.</p>
+      <button class="cta" id="startBtn">Get started
+        <span class="rip" style="display:none"></span>
+      </button>
+    </div>
   </div>
 
-  <div class="wrap">
-    <!-- LEFT: preview + testing -->
-    <div class="col-left">
-      <div class="card">
-        <div class="gc">
-          <img id="pvIcon" src="" alt="" style="display:none">
-          <div class="placeholder" id="pvPlaceholder">Icon preview</div>
-          <div class="title-bar" id="pvTitle">Game name</div>
-        </div>
-        <div class="meta" style="margin-top:10px">
-          <div><b>Slug:</b> <span id="pvSlug">—</span></div>
-          <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
-          <div><b>Files:</b> <span id="pvFiles">0</span></div>
-        </div>
+  <!-- Projects -->
+  <div class="view" id="view-projects">
+    <div class="projects">
+      <div class="projects-header">
+        <h2>Your projects</h2>
+        <button class="primary" id="newProjBtn">+ New project</button>
       </div>
-      <div class="card">
-        <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
-        <div class="test-frame" id="testFrame">
-          <div class="test-empty" id="testEmpty">Upload an entry HTML file to test it here.</div>
-        </div>
-      </div>
+      <div class="proj-grid" id="projGrid"></div>
     </div>
+  </div>
 
-    <!-- RIGHT: form -->
-    <div class="card">
-      <div class="row">
-        <label for="name">Game name</label>
-        <input type="text" id="name" placeholder="My Awesome Game">
-        <div class="err" id="err-name">Name is required.</div>
-      </div>
-      <div class="row">
-        <label for="slug">Folder / slug</label>
-        <input type="text" id="slug" placeholder="my-awesome-game">
-        <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
-        <div class="err" id="err-slug">Slug is required.</div>
-      </div>
-      <div class="row">
-        <label for="description">Description</label>
-        <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
-      </div>
-      <div class="row">
-        <label for="touchInstructions">Touch instructions</label>
-        <input type="text" id="touchInstructions" placeholder="Tap to play.">
-      </div>
-      <div class="row">
-        <div class="checkbox">
-          <input type="checkbox" id="touch" checked>
-          <span>Playable on touch devices (phones/tablets)</span>
+  <!-- Editor -->
+  <div class="view" id="view-editor">
+    <div class="editor">
+      <div class="side">
+        <h3>Sections</h3>
+        <div class="menu-item active" data-sec="details">Details</div>
+        <div class="menu-item" data-sec="files">Files</div>
+        <div class="menu-item" data-sec="review">Review</div>
+        <div class="menu-item" data-sec="test">Live test</div>
+        <h3 style="margin-top:12px;">Files</h3>
+        <div class="explorer" id="explorer">No files yet.</div>
+        <div class="actions" style="margin-top:10px;">
+          <button id="backToProjects" style="width:100%;">← Projects</button>
         </div>
       </div>
 
-      <div class="row">
-        <label>Icon (300×300 PNG)</label>
-        <div class="drop" id="iconDrop">
-          <div>Drop icon here or click to browse</div>
-          <input type="file" id="iconFile" accept="image/*">
+      <div class="panel">
+        <div class="panel-section active" data-sec="details">
+          <div class="row">
+            <label for="name">Game name</label>
+            <input type="text" id="name" placeholder="My Awesome Game">
+            <div class="err" id="err-name">Name is required.</div>
+          </div>
+          <div class="row">
+            <label for="slug">Folder / slug</label>
+            <input type="text" id="slug" placeholder="my-awesome-game">
+            <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
+            <div class="err" id="err-slug">Slug is required.</div>
+          </div>
+          <div class="row">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
+          </div>
+          <div class="row">
+            <label for="touchInstructions">Touch instructions</label>
+            <input type="text" id="touchInstructions" placeholder="Tap to play.">
+          </div>
+          <div class="row">
+            <div class="checkbox">
+              <input type="checkbox" id="touch" checked>
+              <span>Playable on touch devices (phones/tablets)</span>
+            </div>
+          </div>
         </div>
-        <div class="preview">
-          <img id="iconPreview" src="" alt="icon preview" style="display:none">
-          <span class="hint" id="iconName">No file selected</span>
+
+        <div class="panel-section" data-sec="files">
+          <div class="row">
+            <label>Icon (300×300 PNG)</label>
+            <div class="drop" id="iconDrop">
+              <div>Drop icon here or click to browse</div>
+              <input type="file" id="iconFile" accept="image/*">
+            </div>
+            <div class="preview">
+              <img id="iconPreview" src="" alt="icon preview" style="display:none">
+              <span class="hint" id="iconName">No file selected</span>
+            </div>
+          </div>
+          <div class="row">
+            <label>Game entry HTML</label>
+            <div class="drop" id="entryDrop">
+              <div>Drop entry HTML here or click to browse</div>
+              <input type="file" id="entryFile" accept=".html,text/html">
+            </div>
+            <div class="hint" id="entryName">No file selected</div>
+          </div>
+          <div class="row">
+            <label>Additional files (CSS, JS, assets)</label>
+            <div class="drop" id="extraDrop">
+              <div>Drop additional files here or click to browse</div>
+              <input type="file" id="extraFiles" multiple>
+            </div>
+            <div class="file-list" id="extraNames">No files selected</div>
+          </div>
         </div>
-      </div>
-      <div class="row">
-        <label>Game entry HTML</label>
-        <div class="drop" id="entryDrop">
-          <div>Drop entry HTML here or click to browse</div>
-          <input type="file" id="entryFile" accept=".html,text/html">
+
+        <div class="panel-section" data-sec="review">
+          <div class="row">
+            <label>Review your submission</label>
+            <div class="meta" id="review"></div>
+          </div>
+          <div class="actions">
+            <button class="primary" type="button" id="saveBtn">Save project</button>
+            <button type="button" id="downloadBtn">Download config.json</button>
+            <button type="button" id="sendBtn">Send request</button>
+          </div>
+          <div class="status" id="status"></div>
+          <div class="note">
+            <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save project" keeps your work. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
+          </div>
         </div>
-        <div class="hint" id="entryName">No file selected</div>
-      </div>
-      <div class="row">
-        <label>Additional files (CSS, JS, assets)</label>
-        <div class="drop" id="extraDrop">
-          <div>Drop additional files here or click to browse</div>
-          <input type="file" id="extraFiles" multiple>
+
+        <div class="panel-section" data-sec="test">
+          <div class="row">
+            <label>Live test</label>
+            <div class="test-frame" id="testFrame">
+              <div class="test-empty">Upload an entry HTML file to test it here.</div>
+            </div>
+          </div>
         </div>
-        <div class="file-list" id="extraNames">No files selected</div>
       </div>
 
-      <div class="actions">
-        <button class="primary" type="button" id="saveBtn">Save draft</button>
-        <button type="button" id="downloadBtn">Download config.json</button>
-        <button type="button" id="sendBtn">Send request</button>
-      </div>
-      <div class="status" id="status"></div>
-      <div class="note">
-        <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save draft" keeps your work. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
+      <div class="preview-col">
+        <div class="card">
+          <div class="gc">
+            <img id="pvIcon" src="" alt="" style="display:none">
+            <div class="placeholder" id="pvPlaceholder">Icon preview</div>
+            <div class="title-bar" id="pvTitle">Game name</div>
+          </div>
+          <div class="meta" style="margin-top:10px">
+            <div><b>Slug:</b> <span id="pvSlug">—</span></div>
+            <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
+            <div><b>Files:</b> <span id="pvFiles">0</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -206,6 +286,10 @@
         clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200);
       };
 
+      const PROJECTS_KEY = 'ilf_gm_projects';
+      const VISITED_KEY = 'ilf_gm_visited';
+      const CURRENT_KEY = 'ilf_gm_current';
+
       let iconDataUrl = '';
       let entryFileName = '';
       let entryFileObj = null;
@@ -213,6 +297,11 @@
       let extraFileNames = [];
       let existingSlugs = new Set();
       let existingNames = new Set();
+      let currentProjectId = null;
+
+      function loadProjects() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY) || '[]'); } catch (e) { return []; } }
+      function saveProjects(p) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(p)); }
+      function newId() { return 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
 
       (async function loadExisting() {
         try {
@@ -240,9 +329,7 @@
         const name = $('#name').value.trim();
         const slug = $('#slug').value.trim() || slugify(name);
         return {
-          name: name,
-          folder: slug,
-          icon: 'icon.png',
+          name: name, folder: slug, icon: 'icon.png',
           entry: entryFileName || (slug + '.html'),
           description: $('#description').value.trim(),
           touchInstructions: $('#touchInstructions').value.trim() || 'Tap to play.',
@@ -258,8 +345,98 @@
         return '';
       }
 
-      function hasRequiredFiles() {
-        return !!iconDataUrl && !!entryFileName;
+      function hasRequiredFiles() { return !!iconDataUrl && !!entryFileName; }
+
+      function showView(name) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + name).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function renderProjects() {
+        const grid = $('#projGrid');
+        const projects = loadProjects();
+        grid.innerHTML = '';
+        projects.forEach((p, i) => {
+          const card = document.createElement('div');
+          card.className = 'proj-card';
+          card.style.animationDelay = (i * 0.05) + 's';
+          card.innerHTML = '<button class="del" data-id="' + p.id + '" title="Delete">✕</button>' +
+            '<div class="pname">' + escapeHtml(p.name || 'Untitled') + '</div>' +
+            '<div class="pslug">' + escapeHtml(p.slug || '') + '</div>' +
+            '<div class="pdate">Updated ' + new Date(p.updatedAt).toLocaleString() + '</div>';
+          card.addEventListener('click', (e) => { if (e.target.classList.contains('del')) return; openProject(p.id); });
+          card.querySelector('.del').addEventListener('click', (e) => { e.stopPropagation(); deleteProject(p.id); });
+          grid.appendChild(card);
+        });
+        const newCard = document.createElement('div');
+        newCard.className = 'proj-card new-proj';
+        newCard.innerHTML = '<div>+ New project</div>';
+        newCard.addEventListener('click', () => newProject());
+        grid.appendChild(newCard);
+      }
+
+      function newProject() {
+        currentProjectId = newId();
+        resetEditor();
+        showView('editor');
+        setSection('details');
+      }
+
+      function openProject(id) {
+        const projects = loadProjects();
+        const p = projects.find(x => x.id === id);
+        if (!p) return;
+        currentProjectId = id;
+        // restore
+        $('#name').value = p.name || '';
+        $('#slug').value = p.slug || '';
+        $('#description').value = p.description || '';
+        $('#touchInstructions').value = p.touchInstructions || '';
+        $('#touch').checked = p.touch !== false;
+        iconDataUrl = p.iconDataUrl || '';
+        entryFileName = p.entryFileName || '';
+        extraFileNames = p.extraFileNames || [];
+        if (iconDataUrl) { $('#iconPreview').src = iconDataUrl; $('#iconPreview').style.display = 'block'; $('#iconName').textContent = 'Restored'; }
+        else { $('#iconPreview').style.display = 'none'; $('#iconName').textContent = 'No file selected'; }
+        $('#entryName').textContent = entryFileName || 'No file selected';
+        $('#extraNames').innerHTML = extraFileNames.length ? extraFileNames.map(n => '<span>' + escapeHtml(n) + '</span>').join('') : 'No files selected';
+        // test frame
+        if (p.entryContent) {
+          const blob = new Blob([p.entryContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          $('#testFrame').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+        } else {
+          $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        }
+        updatePreview();
+        showView('editor');
+        setSection('details');
+      }
+
+      function deleteProject(id) {
+        if (!confirm('Delete this project?')) return;
+        const projects = loadProjects().filter(p => p.id !== id);
+        saveProjects(projects);
+        renderProjects();
+        toast('Project deleted', 'ok');
+      }
+
+      function resetEditor() {
+        $('#name').value = ''; $('#slug').value = ''; $('#description').value = '';
+        $('#touchInstructions').value = ''; $('#touch').checked = true;
+        iconDataUrl = ''; entryFileName = ''; entryFileObj = null; extraFileNames = [];
+        $('#iconPreview').style.display = 'none'; $('#iconName').textContent = 'No file selected';
+        $('#entryName').textContent = 'No file selected';
+        $('#extraNames').textContent = 'No files selected';
+        $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        updatePreview();
+      }
+
+      function setSection(name) {
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.sec === name));
+        document.querySelectorAll('.panel-section').forEach(s => s.classList.toggle('active', s.dataset.sec === name));
+        if (name === 'review') updateReview();
       }
 
       function updatePreview() {
@@ -269,15 +446,58 @@
         $('#pvSlug').textContent = slug;
         $('#pvTouch').textContent = $('#touch').checked ? 'yes' : 'no';
         $('#pvFiles').textContent = (entryFileName ? 1 : 0) + extraFileNames.length + (iconDataUrl ? 1 : 0);
-        if (iconDataUrl) {
-          $('#pvIcon').src = iconDataUrl; $('#pvIcon').style.display = 'block';
-          $('#pvPlaceholder').style.display = 'none';
-        } else {
-          $('#pvIcon').style.display = 'none'; $('#pvPlaceholder').style.display = 'flex';
-        }
+        if (iconDataUrl) { $('#pvIcon').src = iconDataUrl; $('#pvIcon').style.display = 'block'; $('#pvPlaceholder').style.display = 'none'; }
+        else { $('#pvIcon').style.display = 'none'; $('#pvPlaceholder').style.display = 'flex'; }
+        // explorer
+        const files = [];
+        if (iconDataUrl) files.push('icon.png');
+        if (entryFileName) files.push(entryFileName);
+        extraFileNames.forEach(f => files.push(f));
+        const ex = $('#explorer');
+        ex.innerHTML = files.length ? files.map(f => '<div class="f">' + escapeHtml(f) + '</div>').join('') : 'No files yet.';
       }
 
-      // Icon
+      function updateReview() {
+        const cfg = buildConfig();
+        $('#review').innerHTML =
+          '<div><b>Name:</b> ' + escapeHtml(cfg.name || '—') + '</div>' +
+          '<div><b>Slug:</b> ' + escapeHtml(cfg.folder || '—') + '</div>' +
+          '<div><b>Entry:</b> ' + escapeHtml(cfg.entry) + '</div>' +
+          '<div><b>Touch:</b> ' + cfg.touch + '</div>' +
+          '<div><b>Files:</b> ' + (iconDataUrl ? 'icon.png, ' : '') + (entryFileName || '') + (extraFileNames.length ? ', ' + extraFileNames.join(', ') : '') + '</div>' +
+          '<div><b>Description:</b> ' + escapeHtml(cfg.description || '—') + '</div>';
+      }
+
+      function buildConfig() {
+        const name = $('#name').value.trim();
+        const slug = $('#slug').value.trim() || slugify(name);
+        return { name, folder: slug, icon: 'icon.png', entry: entryFileName || (slug + '.html'),
+          description: $('#description').value.trim(),
+          touchInstructions: $('#touchInstructions').value.trim() || 'Tap to play.',
+          touch: $('#touch').checked };
+      }
+
+      function duplicateError(cfg) {
+        const slug = String(cfg.folder || '').trim().toLowerCase();
+        const name = String(cfg.name || '').trim().toLowerCase();
+        if (slug && existingSlugs.has(slug)) return 'A game with this slug/folder already exists.';
+        if (name && existingNames.has(name)) return 'A game with this name already exists.';
+        return '';
+      }
+
+      function hasRequiredFiles() { return !!iconDataUrl && !!entryFileName; }
+
+      // menu
+      document.querySelectorAll('.menu-item').forEach(m => m.addEventListener('click', () => setSection(m.dataset.sec)));
+      $('#backToProjects').addEventListener('click', () => { saveCurrentProject(true); showView('projects'); renderProjects(); });
+
+      // inputs
+      ['#name', '#slug', '#touch'].forEach(sel => {
+        const el = $(sel);
+        if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
+      });
+
+      // icon
       const iconDrop = $('#iconDrop'); const iconInput = $('#iconFile');
       iconDrop.addEventListener('click', () => iconInput.click());
       iconDrop.addEventListener('dragover', (e) => { e.preventDefault(); iconDrop.classList.add('drag'); });
@@ -292,7 +512,7 @@
         r.readAsDataURL(f);
       });
 
-      // Entry
+      // entry
       const entryDrop = $('#entryDrop'); const entryInput = $('#entryFile');
       entryDrop.addEventListener('click', () => entryInput.click());
       entryDrop.addEventListener('dragover', (e) => { e.preventDefault(); entryDrop.classList.add('drag'); });
@@ -303,20 +523,28 @@
         entryFileName = f ? f.name : '';
         entryFileObj = f || null;
         $('#entryName').textContent = entryFileName || 'No file selected';
-        // live test
         if (entryObjectUrl) URL.revokeObjectURL(entryObjectUrl);
         entryObjectUrl = null;
         const frame = $('#testFrame');
         if (f) {
-          entryObjectUrl = URL.createObjectURL(f);
-          frame.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+          const r = new FileReader();
+          r.onload = () => {
+            const content = r.result;
+            const blob = new Blob([content], { type: 'text/html' });
+            entryObjectUrl = URL.createObjectURL(blob);
+            frame.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+            // store content for project save
+            window.__entryContent = content;
+          };
+          r.readAsText(f);
         } else {
           frame.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          window.__entryContent = '';
         }
         updatePreview();
       });
 
-      // Extra
+      // extra
       const extraDrop = $('#extraDrop'); const extraInput = $('#extraFiles');
       extraDrop.addEventListener('click', () => extraInput.click());
       extraDrop.addEventListener('dragover', (e) => { e.preventDefault(); extraDrop.classList.add('drag'); });
@@ -329,21 +557,34 @@
         updatePreview();
       });
 
-      ['#name', '#slug', '#touch'].forEach(sel => {
-        const el = $(sel);
-        if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
-      });
+      function saveCurrentProject(silent) {
+        if (!currentProjectId) return;
+        const projects = loadProjects();
+        const idx = projects.findIndex(p => p.id === currentProjectId);
+        const data = {
+          id: currentProjectId,
+          name: $('#name').value.trim() || 'Untitled',
+          slug: $('#slug').value.trim() || slugify($('#name').value.trim()),
+          description: $('#description').value.trim(),
+          touchInstructions: $('#touchInstructions').value.trim(),
+          touch: $('#touch').checked,
+          iconDataUrl, entryFileName, extraFileNames,
+          entryContent: window.__entryContent || '',
+          updatedAt: Date.now()
+        };
+        if (idx >= 0) projects[idx] = { ...projects[idx], ...data };
+        else { data.createdAt = Date.now(); projects.unshift(data); }
+        saveProjects(projects);
+        if (!silent) toast('Project saved', 'ok');
+      }
 
-      // Actions
+      // actions
       $('#saveBtn').addEventListener('click', () => {
         const cfg = buildConfig();
         const err = duplicateError(cfg);
         if (err) { status(err, 'bad'); toast(err, 'bad'); return; }
-        try {
-          localStorage.setItem('ilf_game_draft', JSON.stringify(cfg));
-          status('Draft saved in this browser.', 'ok');
-          toast('Draft saved', 'ok');
-        } catch (e) { status('Could not save draft.', 'bad'); }
+        saveCurrentProject(false);
+        status('Project saved.', 'ok');
       });
 
       $('#downloadBtn').addEventListener('click', () => {
@@ -367,6 +608,7 @@
         const err = duplicateError(cfg);
         if (err) { status(err, 'bad'); toast(err, 'bad'); return; }
         if (!hasRequiredFiles()) { status('Upload icon and entry HTML before submitting.', 'bad'); toast('Missing files', 'bad'); return; }
+        saveCurrentProject(true);
         const title = encodeURIComponent('Game submission: ' + cfg.name);
         const body = encodeURIComponent(
           '### Game submission\n\n' +
@@ -386,19 +628,34 @@
         toast('Submission opened', 'ok');
       });
 
-      try {
-        const d = localStorage.getItem('ilf_game_draft');
-        if (d) {
-          const cfg = JSON.parse(d);
-          if (cfg.name) $('#name').value = cfg.name;
-          if (cfg.folder) $('#slug').value = cfg.folder;
-          if (cfg.description) $('#description').value = cfg.description;
-          if (cfg.touchInstructions) $('#touchInstructions').value = cfg.touchInstructions;
-          $('#touch').checked = cfg.touch !== false;
-          status('Restored saved draft.');
-          updatePreview();
+      // Landing button
+      $('#startBtn').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const rip = document.createElement('span');
+        rip.className = 'rip';
+        const rect = btn.getBoundingClientRect();
+        rip.style.left = (e.clientX - rect.left) + 'px';
+        rip.style.top = (e.clientY - rect.top) + 'px';
+        btn.appendChild(rip);
+        setTimeout(() => rip.remove(), 600);
+        const visited = localStorage.getItem(VISITED_KEY) === '1';
+        if (!visited) {
+          localStorage.setItem(VISITED_KEY, '1');
+          newProject();
+        } else {
+          renderProjects();
+          showView('projects');
         }
-      } catch (e) {}
+      });
+
+      $('#newProjBtn').addEventListener('click', () => newProject());
+
+      // restore current project if any
+      const cur = localStorage.getItem(CURRENT_KEY);
+      if (cur) { /* optional auto-open */ }
+
+      // cleanup object urls on unload
+      window.addEventListener('beforeunload', () => { if (entryObjectUrl) URL.revokeObjectURL(entryObjectUrl); });
 
       updatePreview();
     })();
