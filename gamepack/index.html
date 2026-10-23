@@ -29,10 +29,13 @@
     .landing { min-height: 90vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 90px 18px 40px; position:relative; }
     .landing h1 { font-size: 2.8rem; letter-spacing:-1px; margin:0; animation: fadeInUp .6s ease both; }
     .landing .sub { color: var(--muted); font-size:1.05rem; max-width:560px; margin:12px auto 34px; animation: fadeInUp .7s ease both; }
-    .cta { position:relative; overflow:visible; padding:17px 40px; font-size:1.08rem; font-weight:700; border:none; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); color:#fff; cursor:pointer; box-shadow: 0 10px 30px rgba(0,122,255,0.35); transition: transform .18s ease, box-shadow .25s ease, background .3s ease, filter .3s ease; animation: fadeInUp .8s ease both; }
-    .cta:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 40px rgba(0,122,255,0.5); filter: saturate(0.2) brightness(0.85); }
+    .cta { position:relative; overflow:visible; padding:17px 40px; font-size:1.08rem; font-weight:700; border:none; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); color:#fff; cursor:pointer; box-shadow: 0 10px 30px rgba(0,122,255,0.35); transition: transform .18s ease, box-shadow .25s ease, filter .3s ease; animation: fadeInUp .8s ease both; }
+    .cta::before { content:''; position:absolute; inset:0; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); filter: grayscale(1) brightness(0.6); opacity:0; pointer-events:none; -webkit-mask: radial-gradient(circle 70px at var(--mx,50%) var(--my,50%), black 0%, transparent 100%); mask: radial-gradient(circle 70px at var(--mx,50%) var(--my,50%), black 0%, transparent 100%); transition: opacity .2s; }
+    .cta:hover::before { opacity:1; }
+    .cta:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 40px rgba(0,122,255,0.5); }
     .cta:active { transform: scale(.95); }
-    .cta .particle { position:absolute; width:10px; height:10px; border-radius:50%; pointer-events:none; animation: burst .75s ease-out forwards; }
+    .cta .particle { position:absolute; pointer-events:none; animation: burst .85s ease-out forwards; }
+    @keyframes burst { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0); opacity:0; } }
 
     /* Projects */
     .projects { max-width: 1000px; margin: 0 auto 40px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
@@ -50,7 +53,10 @@
     .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; transform: translateY(-3px); }
 
     /* Editor */
-    .editor { max-width: 900px; margin: 0 auto 30px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
+    .editor { max-width: 1100px; margin: 0 auto 30px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
+    .editor-grid { display:grid; grid-template-columns: 200px 1fr 220px; gap:14px; align-items:start; }
+    @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } }
+    .col-side { display:flex; flex-direction:column; gap:12px; }
     .tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
     .tab { padding:9px 16px; border-radius:999px; background:#f0f3f8; color: var(--muted); font-weight:600; font-size:.85rem; cursor:pointer; transition: all .2s; border:1px solid transparent; }
     .tab:hover { background:#e6ecf5; color: var(--ink); }
@@ -163,122 +169,125 @@
         <div class="tab locked" data-sec="review">4. Review</div>
       </div>
 
-      <div class="panel">
-        <div class="panel-section active" data-sec="details">
-          <div class="row">
-            <label for="name">Game name</label>
-            <input type="text" id="name" placeholder="My Awesome Game">
-            <div class="err" id="err-name">Name is required.</div>
-          </div>
-          <div class="row">
-            <label for="slug">Folder / slug</label>
-            <input type="text" id="slug" placeholder="my-awesome-game">
-            <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
-            <div class="err" id="err-slug">Slug is required.</div>
-          </div>
-          <div class="row">
-            <label for="description">Description</label>
-            <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
-          </div>
-          <div class="row">
-            <label for="touchInstructions">Touch instructions</label>
-            <input type="text" id="touchInstructions" placeholder="Tap to play.">
-          </div>
-          <div class="row">
-            <div class="checkbox">
-              <input type="checkbox" id="touch" checked>
-              <span>Playable on touch devices (phones/tablets)</span>
+      <div class="editor-grid">
+        <div class="col-side">
+          <div class="card" style="padding:12px;">
+            <div class="gc">
+              <img id="pvIcon" src="" alt="" style="display:none">
+              <div class="placeholder" id="pvPlaceholder">Icon preview</div>
+              <div class="title-bar" id="pvTitle">Game name</div>
             </div>
-          </div>
-          <div class="actions">
-            <button class="primary" type="button" id="nextBtn">Next →</button>
+            <div class="meta" style="margin-top:8px">
+              <div><b>Slug:</b> <span id="pvSlug">—</span></div>
+              <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
+              <div><b>Files:</b> <span id="pvFiles">0</span></div>
+            </div>
+            <div class="explorer" id="explorer" style="margin-top:8px;">No files yet.</div>
           </div>
         </div>
 
-        <div class="panel-section" data-sec="files">
-          <div class="row">
-            <label>Icon (300×300 PNG)</label>
-            <div class="drop" id="iconDrop">
-              <div>Drop icon here or click to browse</div>
-              <input type="file" id="iconFile" accept="image/*">
+        <div class="panel">
+          <div class="panel-section active" data-sec="details">
+            <div class="row">
+              <label for="name">Game name</label>
+              <input type="text" id="name" placeholder="My Awesome Game">
+              <div class="err" id="err-name">Name is required.</div>
             </div>
-            <div class="preview">
-              <img id="iconPreview" src="" alt="icon preview" style="display:none">
-              <span class="hint" id="iconName">No file selected</span>
+            <div class="row">
+              <label for="slug">Folder / slug</label>
+              <input type="text" id="slug" placeholder="my-awesome-game">
+              <div class="hint">Lowercase, no spaces.</div>
+              <div class="err" id="err-slug">Slug is required.</div>
+            </div>
+            <div class="row">
+              <label for="description">Description</label>
+              <textarea id="description" placeholder="Short summary."></textarea>
+            </div>
+            <div class="row">
+              <label for="touchInstructions">Touch instructions</label>
+              <input type="text" id="touchInstructions" placeholder="Tap to play.">
+            </div>
+            <div class="row">
+              <div class="checkbox">
+                <input type="checkbox" id="touch" checked>
+                <span>Touch devices</span>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="button" id="nextBtn">Next →</button>
             </div>
           </div>
-          <div class="row">
-            <label>Game entry HTML</label>
-            <div class="drop" id="entryDrop">
-              <div>Drop entry HTML here or click to browse</div>
-              <input type="file" id="entryFile" accept=".html,text/html">
+
+          <div class="panel-section" data-sec="files">
+            <div class="row">
+              <label>Icon (300×300 PNG)</label>
+              <div class="drop" id="iconDrop">
+                <div>Drop icon or click</div>
+                <input type="file" id="iconFile" accept="image/*">
+              </div>
+              <div class="preview">
+                <img id="iconPreview" src="" alt="icon preview" style="display:none">
+                <span class="hint" id="iconName">No file</span>
+              </div>
             </div>
-            <div class="hint" id="entryName">No file selected</div>
-          </div>
-          <div class="row">
-            <label>Additional files (CSS, JS, assets)</label>
-            <div class="drop" id="extraDrop">
-              <div>Drop additional files here or click to browse</div>
-              <input type="file" id="extraFiles" multiple>
+            <div class="row">
+              <label>Game entry HTML</label>
+              <div class="drop" id="entryDrop">
+                <div>Drop entry HTML or click</div>
+                <input type="file" id="entryFile" accept=".html,text/html">
+              </div>
+              <div class="hint" id="entryName">No file selected</div>
             </div>
-            <div class="file-list" id="extraNames">No files selected</div>
+            <div class="row">
+              <label>Additional files</label>
+              <div class="drop" id="extraDrop">
+                <div>Drop files or click</div>
+                <input type="file" id="extraFiles" multiple>
+              </div>
+              <div class="file-list" id="extraNames">No files selected</div>
+            </div>
+            <div class="actions">
+              <button type="button" id="prevBtn">← Back</button>
+              <button class="primary" type="button" id="nextBtn2">Next →</button>
+            </div>
           </div>
-          <div class="actions">
-            <button type="button" id="prevBtn">← Back</button>
-            <button class="primary" type="button" id="nextBtn2">Next →</button>
+
+          <div class="panel-section" data-sec="test">
+            <div class="row">
+              <label>Live test</label>
+              <div class="test-frame" id="testFrame">
+                <div class="test-empty">Upload an entry HTML file to test it here.</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="button" id="prevBtn2">← Back</button>
+              <button class="primary" type="button" id="nextBtn3">Next →</button>
+            </div>
+          </div>
+
+          <div class="panel-section" data-sec="review">
+            <div class="row">
+              <label>Review</label>
+              <div class="meta" id="review"></div>
+            </div>
+            <div class="actions">
+              <button type="button" id="prevBtn3">← Back</button>
+              <button class="primary" type="button" id="saveBtn">Save project</button>
+              <button type="button" id="downloadZipBtn">Download zip</button>
+              <button type="button" id="downloadBtn">config.json</button>
+              <button type="button" id="sendBtn">Send request</button>
+            </div>
+            <div class="status" id="status"></div>
+            <div class="note">All required files (icon + entry HTML) must be provided. Send request opens a GitHub issue (no email).</div>
           </div>
         </div>
 
-        <div class="panel-section" data-sec="test">
-          <div class="row">
-            <label>Live test</label>
-            <div class="test-frame" id="testFrame">
+        <div class="col-side">
+          <div class="card" style="padding:12px;">
+            <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
+            <div class="test-frame" id="testFrame2">
               <div class="test-empty">Upload an entry HTML file to test it here.</div>
             </div>
-          </div>
-          <div class="actions">
-            <button type="button" id="prevBtn2">← Back</button>
-            <button class="primary" type="button" id="nextBtn3">Next →</button>
-          </div>
-        </div>
-
-        <div class="panel-section" data-sec="review">
-          <div class="row">
-            <label>Review your submission</label>
-            <div class="meta" id="review"></div>
-          </div>
-          <div class="actions">
-            <button type="button" id="prevBtn3">← Back</button>
-            <button class="primary" type="button" id="saveBtn">Save project</button>
-            <button type="button" id="downloadZipBtn">Download project (zip)</button>
-            <button type="button" id="downloadBtn">Download config.json</button>
-            <button type="button" id="sendBtn">Send request</button>
-          </div>
-          <div class="status" id="status"></div>
-          <div class="note">
-            <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save project" keeps your work. "Download project (zip)" bundles everything. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
-          </div>
-        </div>
-      </div>
-
-      <div class="preview-row">
-        <div class="card" style="padding:14px;">
-          <div class="gc">
-            <img id="pvIcon" src="" alt="" style="display:none">
-            <div class="placeholder" id="pvPlaceholder">Icon preview</div>
-            <div class="title-bar" id="pvTitle">Game name</div>
-          </div>
-          <div class="meta" style="margin-top:10px">
-            <div><b>Slug:</b> <span id="pvSlug">—</span></div>
-            <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
-            <div><b>Files:</b> <span id="pvFiles">0</span></div>
-          </div>
-          <div class="explorer" id="explorer" style="margin-top:10px;">No files yet.</div>
-        </div>
-        <div class="card" style="padding:14px;">
-          <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
-          <div class="test-frame" id="testFrame2">
-            <div class="test-empty">Upload an entry HTML file to test it here.</div>
           </div>
         </div>
       </div>
@@ -811,6 +820,14 @@
         toast('Submission opened', 'ok');
       });
 
+      // Landing color drain follows cursor
+      const cta = $('#startBtn');
+      cta.addEventListener('mousemove', (e) => {
+        const r = cta.getBoundingClientRect();
+        cta.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+        cta.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+      });
+
       // Landing
       $('#startBtn').addEventListener('click', (e) => {
         const btn = e.currentTarget;
@@ -826,20 +843,24 @@
         for (let i = 0; i < 40; i++) {
           const p = document.createElement('span');
           p.className = 'particle';
-          const angle = (i / 40) * Math.PI * 2 + Math.random() * 0.3;
-          const dist = 100 + Math.random() * 140;
+          const angle = (i / 40) * Math.PI * 2 + Math.random() * 0.4;
+          const dist = 120 + Math.random() * 180;
           p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
           p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+          p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
           p.style.background = colors[i % colors.length];
-          p.style.width = (6 + Math.random()*8) + 'px';
-          p.style.height = p.style.width;
-          p.style.left = (e.clientX - rect.left - 5) + 'px';
-          p.style.top = (e.clientY - rect.top - 5) + 'px';
+          const sz = 4 + Math.random() * 8;
+          p.style.width = sz + 'px';
+          p.style.height = sz + 'px';
+          p.style.borderRadius = '1px';
+          p.style.left = (e.clientX - rect.left - sz/2) + 'px';
+          p.style.top = (e.clientY - rect.top - sz/2) + 'px';
           btn.appendChild(p);
           setTimeout(() => p.remove(), 900);
         }
-        btn.style.transform = 'scale(0.9)';
-        setTimeout(() => { btn.style.transform = ''; }, 200);
+        btn.style.transition = 'transform .4s ease, opacity .4s ease';
+        btn.style.transform = 'scale(0)';
+        btn.style.opacity = '0';
         const visited = localStorage.getItem(VISITED_KEY) === '1';
         setTimeout(() => {
           if (!visited) {
