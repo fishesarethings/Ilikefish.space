@@ -90,6 +90,11 @@
         <input type="file" id="entryFile" accept=".html,text/html">
         <div class="hint" id="entryName">No file selected</div>
       </div>
+      <div class="row">
+        <label for="extraFiles">Additional files (CSS, JS, assets)</label>
+        <input type="file" id="extraFiles" multiple>
+        <div class="hint" id="extraNames">No files selected</div>
+      </div>
 
       <div class="actions">
         <button id="saveBtn" class="primary" type="button">Save draft</button>
@@ -117,6 +122,29 @@
 
       let iconDataUrl = '';
       let entryFileName = '';
+      let extraFileNames = [];
+      let existingSlugs = new Set();
+      let existingNames = new Set();
+
+      // Load existing games to prevent duplicate slugs/names
+      (async function loadExisting() {
+        try {
+          const idx = await fetch('/games/index.json').then(r => r.json());
+          if (Array.isArray(idx.folders)) {
+            await Promise.all(idx.folders.map(async (slug) => {
+              try {
+                const cfg = await fetch('/games/' + slug + '/config.json').then(r => r.json());
+                if (cfg) {
+                  if (cfg.folder) existingSlugs.add(String(cfg.folder).toLowerCase());
+                  if (cfg.slug) existingSlugs.add(String(cfg.slug).toLowerCase());
+                  existingSlugs.add(String(slug).toLowerCase());
+                  if (cfg.name) existingNames.add(String(cfg.name).trim().toLowerCase());
+                }
+              } catch (e) {}
+            }));
+          }
+        } catch (e) {}
+      })();
 
       $('#iconFile').addEventListener('change', (e) => {
         const f = e.target.files && e.target.files[0];
@@ -132,6 +160,20 @@
         entryFileName = f ? f.name : '';
         $('#entryName').textContent = entryFileName || 'No file selected';
       });
+
+      $('#extraFiles').addEventListener('change', (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        extraFileNames = files.map(f => f.name);
+        $('#extraNames').textContent = extraFileNames.length ? extraFileNames.join(', ') : 'No files selected';
+      });
+
+      function duplicateError(cfg) {
+        const slug = String(cfg.folder || '').trim().toLowerCase();
+        const name = String(cfg.name || '').trim().toLowerCase();
+        if (slug && existingSlugs.has(slug)) return 'A game with this slug/folder already exists.';
+        if (name && existingNames.has(name)) return 'A game with this name already exists.';
+        return '';
+      }
 
       function buildConfig() {
         const name = $('#name').value.trim();
@@ -150,6 +192,8 @@
       $('#saveBtn').addEventListener('click', () => {
         try {
           const cfg = buildConfig();
+          const err = duplicateError(cfg);
+          if (err) { status(err); return; }
           localStorage.setItem('ilf_game_draft', JSON.stringify(cfg));
           status('Draft saved in this browser.');
         } catch (e) { status('Could not save draft.'); }
@@ -157,6 +201,8 @@
 
       $('#downloadBtn').addEventListener('click', () => {
         const cfg = buildConfig();
+        const err = duplicateError(cfg);
+        if (err) { status(err); return; }
         const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -172,6 +218,8 @@
       $('#sendBtn').addEventListener('click', () => {
         const cfg = buildConfig();
         if (!cfg.name) { status('Please enter a game name.'); return; }
+        const err = duplicateError(cfg);
+        if (err) { status(err); return; }
         const title = encodeURIComponent('Game submission: ' + cfg.name);
         const body = encodeURIComponent(
           '### Game submission\n\n' +
@@ -180,7 +228,8 @@
           '- Entry file: ' + cfg.entry + '\n' +
           '- Icon file: icon.png\n' +
           '- Touch support: ' + cfg.touch + '\n' +
-          '- Touch instructions: ' + cfg.touchInstructions + '\n\n' +
+          '- Touch instructions: ' + cfg.touchInstructions + '\\n' +
+          '- Additional files: ' + (extraFileNames.length ? extraFileNames.join(', ') : 'none') + '\\n\\n' +
           '### Description\n' + cfg.description + '\n\n' +
           '### Notes\nPlease attach the game files (HTML, CSS, JS, icon.png) to this issue or open a PR adding /games/' + cfg.folder + '/.\n'
         );
