@@ -15,76 +15,70 @@
     nav a { color:#333; text-decoration:none; font-weight:600; transition: color .15s; }
     nav a:hover { color: var(--accent); }
 
-    .hero { text-align:center; padding: 90px 18px 20px; }
-    .hero h1 { margin:0; font-size:2rem; letter-spacing:-.5px; }
-    .hero p { color: var(--muted); margin:8px 0 0; }
+    .hero { text-align:center; padding: 78px 18px 14px; }
+    .hero h1 { margin:0; font-size:1.8rem; letter-spacing:-.5px; }
+    .hero p { color: var(--muted); margin:6px 0 0; }
 
-    .wrap { max-width: 1100px; margin: 0 auto 40px; padding: 0 18px; display:grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
-    @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+    .wrap { max-width: 1180px; margin: 0 auto 30px; padding: 0 18px; display:grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
 
-    .card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:16px; padding:22px; box-shadow:0 8px 24px rgba(0,0,0,0.05); animation: fadeInUp .5s ease both; }
-    @keyframes fadeInUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform: translateY(0); } }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:18px; box-shadow:0 6px 20px rgba(0,0,0,0.05); animation: fadeInUp .45s ease both; }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
 
-    .steps { display:flex; gap:8px; margin-bottom:18px; }
-    .step { flex:1; padding:10px 12px; border-radius:10px; background:#f0f3f8; color: var(--muted); font-weight:600; font-size:.9rem; text-align:center; cursor:pointer; transition: all .2s; border:1px solid transparent; }
-    .step.active { background: var(--accent); color:#fff; }
-    .step.done { background:#e6f0ff; color: var(--accent); }
+    .col-left { position: sticky; top: 78px; display:flex; flex-direction:column; gap:14px; }
 
-    .section { display:none; animation: fadeIn .3s ease; }
-    .section.active { display:block; }
+    /* preview card */
+    .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
+    .gc img { width:100%; height:100%; object-fit:cover; display:block; }
+    .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.85rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
+    .gc .title-bar { position:absolute; left:0; right:0; bottom:0; padding:10px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%); color:#fff; font-weight:700; font-size:.95rem; }
+    .meta { font-size:.82rem; color: var(--muted); line-height:1.5; }
+    .meta b { color:#111; }
 
-    .row { margin-bottom:16px; }
-    label { display:block; font-weight:600; margin-bottom:6px; font-size:.92rem; }
-    input[type="text"], textarea { width:100%; box-sizing:border-box; padding:11px 13px; border:1px solid #d6dbe6; border-radius:10px; font:inherit; background:#fff; transition: border-color .15s, box-shadow .15s; }
+    /* test frame */
+    .test-frame { width:100%; height:320px; border:1px solid #e3e8f0; border-radius:12px; background:#0b1020; }
+    .test-frame iframe { width:100%; height:100%; border:0; border-radius:12px; }
+    .test-empty { display:flex; align-items:center; justify-content:center; height:100%; color:#9aa; font-size:.85rem; text-align:center; padding:12px; }
+
+    .row { margin-bottom:12px; }
+    label { display:block; font-weight:600; margin-bottom:5px; font-size:.88rem; }
+    input[type="text"], textarea { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid #d6dbe6; border-radius:9px; font:inherit; background:#fff; transition: border-color .15s, box-shadow .15s; font-size:.9rem; }
     input[type="text"]:focus, textarea:focus { outline:none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
-    textarea { min-height:100px; resize:vertical; }
-    .hint { font-size:.78rem; color: var(--muted); margin-top:4px; }
-    .err { font-size:.78rem; color: var(--danger); margin-top:4px; display:none; }
+    textarea { min-height:70px; resize:vertical; }
+    .hint { font-size:.74rem; color: var(--muted); margin-top:3px; }
+    .err { font-size:.74rem; color: var(--danger); margin-top:3px; display:none; }
     .err.show { display:block; }
 
-    .checkbox { display:flex; align-items:center; gap:10px; padding:12px; background:#f8fafc; border-radius:10px; border:1px solid #eef2f7; }
-    .checkbox input { width:auto; }
+    .checkbox { display:flex; align-items:center; gap:9px; padding:9px 11px; background:#f8fafc; border-radius:9px; border:1px solid #eef2f7; font-size:.88rem; }
 
-    .drop { border:2px dashed #c9d3e3; border-radius:12px; padding:18px; text-align:center; color: var(--muted); background:#fafcff; transition: all .2s; cursor:pointer; }
+    .drop { border:2px dashed #c9d3e3; border-radius:10px; padding:12px; text-align:center; color: var(--muted); background:#fafcff; transition: all .2s; cursor:pointer; font-size:.85rem; }
     .drop:hover, .drop.drag { border-color: var(--accent); background:#f0f6ff; color: var(--accent); }
     .drop input { display:none; }
-    .preview { display:flex; align-items:center; gap:12px; margin-top:10px; }
-    .preview img { width:72px; height:72px; border-radius:12px; object-fit:cover; border:1px solid #eee; background:#f2f4f6; }
+    .preview { display:flex; align-items:center; gap:10px; margin-top:8px; }
+    .preview img { width:56px; height:56px; border-radius:9px; object-fit:cover; border:1px solid #eee; background:#f2f4f6; }
+    .file-list { margin-top:8px; font-size:.8rem; color: var(--muted); }
+    .file-list span { display:inline-block; background:#f0f3f8; padding:3px 7px; border-radius:5px; margin:2px 3px 2px 0; }
 
-    .file-list { margin-top:10px; font-size:.85rem; color: var(--muted); }
-    .file-list span { display:inline-block; background:#f0f3f8; padding:4px 8px; border-radius:6px; margin:2px 4px 2px 0; }
-
-    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
-    button { padding:11px 18px; border-radius:10px; border:1px solid #d6dbe6; background:#fff; cursor:pointer; font-weight:600; transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease; }
-    button:hover { transform: translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    button { padding:9px 15px; border-radius:9px; border:1px solid #d6dbe6; background:#fff; cursor:pointer; font-weight:600; transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease; font-size:.88rem; }
+    button:hover { transform: translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.08); }
     button:active { transform: translateY(0); }
     button.primary { background: var(--accent); color:#fff; border-color: var(--accent); }
     button.primary:hover { background:#0066d6; }
-    button.ghost { background:transparent; }
-    button:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+    button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
-    .status { margin-top:12px; font-size:.9rem; min-height:1.3em; transition: opacity .2s; }
+    .status { margin-top:10px; font-size:.85rem; min-height:1.2em; }
     .status.ok { color: var(--ok); }
     .status.bad { color: var(--danger); }
 
-    /* preview card */
-    .preview-card { position:sticky; top:90px; }
-    .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:14px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
-    .gc img { width:100%; height:100%; object-fit:cover; display:block; }
-    .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.9rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
-    .gc .title-bar { position:absolute; left:0; right:0; bottom:0; padding:12px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%); color:#fff; font-weight:700; }
-    .preview-meta { margin-top:12px; font-size:.85rem; color: var(--muted); }
-    .preview-meta b { color:#111; }
-
-    .toast { position:fixed; left:50%; transform:translateX(-50%) translateY(20px); bottom:24px; background:#222; color:#fff; padding:10px 16px; border-radius:10px; opacity:0; transition: all .25s; z-index:9999; pointer-events:none; }
+    .toast { position:fixed; left:50%; transform:translateX(-50%) translateY(20px); bottom:20px; background:#222; color:#fff; padding:9px 15px; border-radius:9px; opacity:0; transition: all .25s; z-index:9999; pointer-events:none; font-size:.88rem; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
     .toast.ok { background: var(--ok); }
     .toast.bad { background: var(--danger); }
 
-    .note { background:#f0f6ff; border:1px solid #d6e4ff; border-radius:10px; padding:12px; font-size:.85rem; color:#0b3b5a; margin-top:16px; line-height:1.4; }
+    .note { background:#f0f6ff; border:1px solid #d6e4ff; border-radius:9px; padding:10px; font-size:.8rem; color:#0b3b5a; margin-top:12px; line-height:1.35; }
 
-    footer { text-align:center; color: var(--muted); font-size:.85rem; padding:24px 18px; border-top:1px solid rgba(0,0,0,0.06); margin-top:40px; }
+    footer { text-align:center; color: var(--muted); font-size:.82rem; padding:20px 18px; border-top:1px solid rgba(0,0,0,0.06); margin-top:30px; }
   </style>
 </head>
 <body>
@@ -98,116 +92,96 @@
 
   <div class="hero">
     <h1>Game Package</h1>
-    <p>Package your HTML5 game and submit it for review. No account or email is exposed.</p>
+    <p>Upload, preview, test, then submit. No account or email exposed.</p>
   </div>
 
   <div class="wrap">
-    <div class="card">
-      <div class="steps">
-        <div class="step active" data-step="1">1. Details</div>
-        <div class="step" data-step="2">2. Files</div>
-        <div class="step" data-step="3">3. Review</div>
-      </div>
-
-      <!-- Step 1 -->
-      <div class="section active" data-section="1">
-        <div class="row">
-          <label for="name">Game name</label>
-          <input type="text" id="name" placeholder="My Awesome Game">
-          <div class="err" id="err-name">Name is required.</div>
-        </div>
-        <div class="row">
-          <label for="slug">Folder / slug</label>
-          <input type="text" id="slug" placeholder="my-awesome-game">
-          <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
-          <div class="err" id="err-slug">Slug is required.</div>
-        </div>
-        <div class="row">
-          <label for="description">Description</label>
-          <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
-        </div>
-        <div class="row">
-          <label for="touchInstructions">Touch instructions</label>
-          <input type="text" id="touchInstructions" placeholder="Tap to play.">
-        </div>
-        <div class="row">
-          <div class="checkbox">
-            <input type="checkbox" id="touch" checked>
-            <span>Playable on touch devices (phones/tablets)</span>
-          </div>
-        </div>
-        <div class="actions">
-          <button class="primary" type="button" id="next1">Next: Files →</button>
-        </div>
-      </div>
-
-      <!-- Step 2 -->
-      <div class="section" data-section="2">
-        <div class="row">
-          <label>Icon (300×300 PNG)</label>
-          <div class="drop" id="iconDrop">
-            <div>Drop icon here or click to browse</div>
-            <input type="file" id="iconFile" accept="image/*">
-          </div>
-          <div class="preview">
-            <img id="iconPreview" src="" alt="icon preview" style="display:none">
-            <span class="hint" id="iconName">No file selected</span>
-          </div>
-        </div>
-        <div class="row">
-          <label>Game entry HTML</label>
-          <div class="drop" id="entryDrop">
-            <div>Drop entry HTML here or click to browse</div>
-            <input type="file" id="entryFile" accept=".html,text/html">
-          </div>
-          <div class="hint" id="entryName">No file selected</div>
-        </div>
-        <div class="row">
-          <label>Additional files (CSS, JS, assets)</label>
-          <div class="drop" id="extraDrop">
-            <div>Drop additional files here or click to browse</div>
-            <input type="file" id="extraFiles" multiple>
-          </div>
-          <div class="file-list" id="extraNames">No files selected</div>
-        </div>
-        <div class="actions">
-          <button type="button" id="back2">← Back</button>
-          <button class="primary" type="button" id="next2">Next: Review →</button>
-        </div>
-      </div>
-
-      <!-- Step 3 -->
-      <div class="section" data-section="3">
-        <div class="row">
-          <label>Review your submission</label>
-          <div class="preview-meta" id="review"></div>
-        </div>
-        <div class="actions">
-          <button type="button" id="back3">← Back</button>
-          <button class="primary" type="button" id="saveBtn">Save draft</button>
-          <button type="button" id="downloadBtn">Download config.json</button>
-          <button type="button" id="sendBtn">Send request</button>
-        </div>
-        <div class="status" id="status"></div>
-        <div class="note">
-          <strong>How submission works:</strong> "Save draft" keeps your work in this browser. "Download config.json" gives you the metadata file to place in your game folder. "Send request" opens a GitHub issue (no email shared) with your game details so the maintainer can review, test, and accept it into the library.
-        </div>
-      </div>
-    </div>
-
-    <!-- Live preview -->
-    <div class="preview-card">
-      <div class="card" style="animation-delay:.1s">
+    <!-- LEFT: preview + testing -->
+    <div class="col-left">
+      <div class="card">
         <div class="gc">
           <img id="pvIcon" src="" alt="" style="display:none">
           <div class="placeholder" id="pvPlaceholder">Icon preview</div>
           <div class="title-bar" id="pvTitle">Game name</div>
         </div>
-        <div class="preview-meta">
+        <div class="meta" style="margin-top:10px">
           <div><b>Slug:</b> <span id="pvSlug">—</span></div>
           <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
           <div><b>Files:</b> <span id="pvFiles">0</span></div>
         </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
+        <div class="test-frame" id="testFrame">
+          <div class="test-empty" id="testEmpty">Upload an entry HTML file to test it here.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: form -->
+    <div class="card">
+      <div class="row">
+        <label for="name">Game name</label>
+        <input type="text" id="name" placeholder="My Awesome Game">
+        <div class="err" id="err-name">Name is required.</div>
+      </div>
+      <div class="row">
+        <label for="slug">Folder / slug</label>
+        <input type="text" id="slug" placeholder="my-awesome-game">
+        <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
+        <div class="err" id="err-slug">Slug is required.</div>
+      </div>
+      <div class="row">
+        <label for="description">Description</label>
+        <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
+      </div>
+      <div class="row">
+        <label for="touchInstructions">Touch instructions</label>
+        <input type="text" id="touchInstructions" placeholder="Tap to play.">
+      </div>
+      <div class="row">
+        <div class="checkbox">
+          <input type="checkbox" id="touch" checked>
+          <span>Playable on touch devices (phones/tablets)</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <label>Icon (300×300 PNG)</label>
+        <div class="drop" id="iconDrop">
+          <div>Drop icon here or click to browse</div>
+          <input type="file" id="iconFile" accept="image/*">
+        </div>
+        <div class="preview">
+          <img id="iconPreview" src="" alt="icon preview" style="display:none">
+          <span class="hint" id="iconName">No file selected</span>
+        </div>
+      </div>
+      <div class="row">
+        <label>Game entry HTML</label>
+        <div class="drop" id="entryDrop">
+          <div>Drop entry HTML here or click to browse</div>
+          <input type="file" id="entryFile" accept=".html,text/html">
+        </div>
+        <div class="hint" id="entryName">No file selected</div>
+      </div>
+      <div class="row">
+        <label>Additional files (CSS, JS, assets)</label>
+        <div class="drop" id="extraDrop">
+          <div>Drop additional files here or click to browse</div>
+          <input type="file" id="extraFiles" multiple>
+        </div>
+        <div class="file-list" id="extraNames">No files selected</div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="button" id="saveBtn">Save draft</button>
+        <button type="button" id="downloadBtn">Download config.json</button>
+        <button type="button" id="sendBtn">Send request</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="note">
+        <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save draft" keeps your work. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
       </div>
     </div>
   </div>
@@ -223,7 +197,6 @@
     (function () {
       'use strict';
       const $ = (s) => document.querySelector(s);
-      const $$ = (s) => Array.from(document.querySelectorAll(s));
       const status = (m, kind) => {
         const el = $('#status'); if (!el) return;
         el.textContent = m; el.className = 'status' + (kind ? ' ' + kind : '');
@@ -235,12 +208,12 @@
 
       let iconDataUrl = '';
       let entryFileName = '';
+      let entryFileObj = null;
+      let entryObjectUrl = null;
       let extraFileNames = [];
       let existingSlugs = new Set();
       let existingNames = new Set();
-      let currentStep = 1;
 
-      // Load existing games to prevent duplicates
       (async function loadExisting() {
         try {
           const idx = await fetch('/games/index.json').then(r => r.json());
@@ -261,6 +234,7 @@
       })();
 
       function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+      function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
       function buildConfig() {
         const name = $('#name').value.trim();
@@ -284,28 +258,8 @@
         return '';
       }
 
-      function validateStep1() {
-        let ok = true;
-        const name = $('#name').value.trim();
-        const slug = $('#slug').value.trim() || slugify(name);
-        $('#err-name').classList.toggle('show', !name);
-        $('#err-slug').classList.toggle('show', !slug);
-        if (!name || !slug) ok = false;
-        const cfg = buildConfig();
-        const dup = duplicateError(cfg);
-        if (dup) { status(dup, 'bad'); ok = false; }
-        return ok;
-      }
-
-      function setStep(n) {
-        currentStep = n;
-        $$('.section').forEach(s => s.classList.toggle('active', Number(s.dataset.section) === n));
-        $$('.step').forEach(s => {
-          const sn = Number(s.dataset.step);
-          s.classList.toggle('active', sn === n);
-          s.classList.toggle('done', sn < n);
-        });
-        if (n === 3) updateReview();
+      function hasRequiredFiles() {
+        return !!iconDataUrl && !!entryFileName;
       }
 
       function updatePreview() {
@@ -323,29 +277,8 @@
         }
       }
 
-      function updateReview() {
-        const cfg = buildConfig();
-        $('#review').innerHTML =
-          '<div><b>Name:</b> ' + escapeHtml(cfg.name || '—') + '</div>' +
-          '<div><b>Slug:</b> ' + escapeHtml(cfg.folder || '—') + '</div>' +
-          '<div><b>Entry:</b> ' + escapeHtml(cfg.entry) + '</div>' +
-          '<div><b>Touch:</b> ' + cfg.touch + '</div>' +
-          '<div><b>Files:</b> ' + (iconDataUrl ? 'icon.png, ' : '') + (entryFileName || '') + (extraFileNames.length ? ', ' + extraFileNames.join(', ') : '') + '</div>' +
-          '<div><b>Description:</b> ' + escapeHtml(cfg.description || '—') + '</div>';
-      }
-
-      function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-      // Step navigation
-      $('#next1').addEventListener('click', () => { if (validateStep1()) setStep(2); });
-      $('#next2').addEventListener('click', () => setStep(3));
-      $('#back2').addEventListener('click', () => setStep(1));
-      $('#back3').addEventListener('click', () => setStep(2));
-      $$('.step').forEach(s => s.addEventListener('click', () => setStep(Number(s.dataset.step))));
-
-      // Icon upload with drag-drop
-      const iconDrop = $('#iconDrop');
-      const iconInput = $('#iconFile');
+      // Icon
+      const iconDrop = $('#iconDrop'); const iconInput = $('#iconFile');
       iconDrop.addEventListener('click', () => iconInput.click());
       iconDrop.addEventListener('dragover', (e) => { e.preventDefault(); iconDrop.classList.add('drag'); });
       iconDrop.addEventListener('dragleave', () => iconDrop.classList.remove('drag'));
@@ -359,9 +292,8 @@
         r.readAsDataURL(f);
       });
 
-      // Entry upload
-      const entryDrop = $('#entryDrop');
-      const entryInput = $('#entryFile');
+      // Entry
+      const entryDrop = $('#entryDrop'); const entryInput = $('#entryFile');
       entryDrop.addEventListener('click', () => entryInput.click());
       entryDrop.addEventListener('dragover', (e) => { e.preventDefault(); entryDrop.classList.add('drag'); });
       entryDrop.addEventListener('dragleave', () => entryDrop.classList.remove('drag'));
@@ -369,13 +301,23 @@
       entryInput.addEventListener('change', (e) => {
         const f = e.target.files && e.target.files[0];
         entryFileName = f ? f.name : '';
+        entryFileObj = f || null;
         $('#entryName').textContent = entryFileName || 'No file selected';
+        // live test
+        if (entryObjectUrl) URL.revokeObjectURL(entryObjectUrl);
+        entryObjectUrl = null;
+        const frame = $('#testFrame');
+        if (f) {
+          entryObjectUrl = URL.createObjectURL(f);
+          frame.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+        } else {
+          frame.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        }
         updatePreview();
       });
 
-      // Extra files
-      const extraDrop = $('#extraDrop');
-      const extraInput = $('#extraFiles');
+      // Extra
+      const extraDrop = $('#extraDrop'); const extraInput = $('#extraFiles');
       extraDrop.addEventListener('click', () => extraInput.click());
       extraDrop.addEventListener('dragover', (e) => { e.preventDefault(); extraDrop.classList.add('drag'); });
       extraDrop.addEventListener('dragleave', () => extraDrop.classList.remove('drag'));
@@ -387,13 +329,10 @@
         updatePreview();
       });
 
-      // Live preview updates
       ['#name', '#slug', '#touch'].forEach(sel => {
         const el = $(sel);
-        if (el) el.addEventListener('input', updatePreview);
-        if (el) el.addEventListener('change', updatePreview);
+        if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
       });
-      if ($('#touch')) $('#touch').addEventListener('change', updatePreview);
 
       // Actions
       $('#saveBtn').addEventListener('click', () => {
@@ -411,6 +350,7 @@
         const cfg = buildConfig();
         const err = duplicateError(cfg);
         if (err) { status(err, 'bad'); toast(err, 'bad'); return; }
+        if (!hasRequiredFiles()) { status('Upload icon and entry HTML first.', 'bad'); toast('Missing files', 'bad'); return; }
         const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -426,6 +366,7 @@
         if (!cfg.name) { status('Please enter a game name.', 'bad'); toast('Name required', 'bad'); return; }
         const err = duplicateError(cfg);
         if (err) { status(err, 'bad'); toast(err, 'bad'); return; }
+        if (!hasRequiredFiles()) { status('Upload icon and entry HTML before submitting.', 'bad'); toast('Missing files', 'bad'); return; }
         const title = encodeURIComponent('Game submission: ' + cfg.name);
         const body = encodeURIComponent(
           '### Game submission\n\n' +
@@ -445,7 +386,6 @@
         toast('Submission opened', 'ok');
       });
 
-      // Restore draft
       try {
         const d = localStorage.getItem('ilf_game_draft');
         if (d) {
