@@ -54,7 +54,7 @@
 
     /* Editor */
     .editor { max-width: 1100px; margin: 0 auto 30px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
-    .editor-grid { display:grid; grid-template-columns: 200px 1fr 220px; gap:14px; align-items:start; }
+    .editor-grid { display:grid; grid-template-columns: 170px 1fr 230px; gap:12px; align-items:start; }
     @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } }
     .col-side { display:flex; flex-direction:column; gap:12px; }
     .tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
@@ -64,7 +64,9 @@
     .tab.locked { opacity:.4; cursor:not-allowed; }
     .tab.done { background:#e6f0ff; color: var(--accent); }
 
-    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:20px; box-shadow:0 6px 18px rgba(0,0,0,0.05); max-width:640px; margin: 0 auto; }
+    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .form-grid .row { margin-bottom:10px; }
     .panel-section { display:none; animation: fadeIn .3s ease; }
     .panel-section.active { display:block; }
 
@@ -187,7 +189,8 @@
         </div>
 
         <div class="panel">
-          <div class="panel-section active" data-sec="details">
+        <div class="panel-section active" data-sec="details">
+          <div class="form-grid">
             <div class="row">
               <label for="name">Game name</label>
               <input type="text" id="name" placeholder="My Awesome Game">
@@ -199,24 +202,27 @@
               <div class="hint">Lowercase, no spaces.</div>
               <div class="err" id="err-slug">Slug is required.</div>
             </div>
-            <div class="row">
-              <label for="description">Description</label>
-              <textarea id="description" placeholder="Short summary."></textarea>
-            </div>
+          </div>
+          <div class="row">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Short summary."></textarea>
+          </div>
+          <div class="form-grid">
             <div class="row">
               <label for="touchInstructions">Touch instructions</label>
               <input type="text" id="touchInstructions" placeholder="Tap to play.">
             </div>
             <div class="row">
-              <div class="checkbox">
+              <div class="checkbox" style="margin-top:22px;">
                 <input type="checkbox" id="touch" checked>
                 <span>Touch devices</span>
               </div>
             </div>
-            <div class="actions">
-              <button class="primary" type="button" id="nextBtn">Next →</button>
-            </div>
           </div>
+          <div class="actions">
+            <button class="primary" type="button" id="nextBtn">Next →</button>
+          </div>
+        </div>
 
           <div class="panel-section" data-sec="files">
             <div class="row">
@@ -840,7 +846,7 @@
         flash.style.top = (rect.top + rect.height/2) + 'px';
         document.body.appendChild(flash);
         setTimeout(() => flash.remove(), 900);
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 22; i++) {
           const p = document.createElement('span');
           p.className = 'particle';
           const angle = (i / 40) * Math.PI * 2 + Math.random() * 0.4;
