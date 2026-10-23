@@ -1,0 +1,11 @@
+{
+  "name": "Fishcore: Data Dive",
+  "folder": "fishcore",
+  "icon": "fishcore.png",
+  "entry": "fishcore.html",
+  "featured": true,
+  "featuredOrder": 6,
+  "description": "Go and push the fish to the limit!",
+  "touchInstructions": "Move the fish with your finger.",
+  "touch": true
+}

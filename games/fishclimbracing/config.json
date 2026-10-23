@@ -1,0 +1,9 @@
+{
+  "name": "Fish Climb Racing \u2014 Swim Upstream",
+  "folder": "fishclimbracing",
+  "icon": "icon.png",
+  "entry": "fishclimbracing.html",
+  "description": "Go and play this new Fish Climb Racing, where you get to swim upstream!",
+  "touchInstructions": "Tap to play.",
+  "touch": true
+}

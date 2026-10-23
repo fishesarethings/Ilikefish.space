@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Game Package — I like fishes _</title>
+  <link rel="icon" href="/assets/img/ilikefish.space-500px.ico">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #f7f9fc; color: #111; }
+    nav { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); z-index: 1000; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    nav ul { display: flex; justify-content: center; gap: 1.5rem; list-style: none; padding: 1rem; margin: 0; }
+    nav a { color: #333; text-decoration: none; font-weight: 600; }
+    nav a:hover { color: #007aff; }
+    .wrap { max-width: 760px; margin: 80px auto 40px; padding: 0 18px; }
+    h1 { margin: 0 0 6px; font-size: 1.6rem; }
+    .sub { color: #555; margin: 0 0 20px; }
+    .card { background: #fff; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 18px; box-shadow: 0 6px 18px rgba(0,0,0,0.04); animation: fadeInUp .5s ease both; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .wrap { animation: fadeIn .4s ease both; }
+    .row { margin-bottom: 14px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
+    input[type="text"], textarea, select { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d6dbe6; border-radius: 8px; font: inherit; background: #fff; }
+    textarea { min-height: 90px; resize: vertical; }
+    .hint { font-size: 0.8rem; color: #666; margin-top: 4px; }
+    .preview { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .preview img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; border: 1px solid #eee; background: #f2f4f6; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    button { padding: 10px 16px; border-radius: 8px; border: 1px solid #d6dbe6; background: #fff; cursor: pointer; font-weight: 600; transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+    button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+    button:active { transform: translateY(0); }
+    button.primary { background: #007aff; color: #fff; border-color: #007aff; }
+    button.primary:hover { background: #0066d6; }
+    .status { margin-top: 12px; font-size: 0.9rem; color: #333; min-height: 1.2em; }
+    .note { background: #f0f6ff; border: 1px solid #d6e4ff; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #0b3b5a; margin-top: 16px; }
+    footer { text-align: center; color: #666; font-size: 0.85rem; padding: 24px 18px; border-top: 1px solid rgba(0,0,0,0.06); margin-top: 40px; }
+    .checkbox { display: flex; align-items: center; gap: 8px; }
+    .checkbox input { width: auto; }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/games">Games</a></li>
+      <li><a href="/gamepack">Game package</a></li>
+    </ul>
+  </nav>
+
+  <div class="wrap">
+    <h1>Game Package</h1>
+    <p class="sub">Package your HTML5 game and submit it for review. No account or email is exposed.</p>
+
+    <div class="card">
+      <div class="row">
+        <label for="name">Game name</label>
+        <input type="text" id="name" placeholder="My Awesome Game">
+      </div>
+      <div class="row">
+        <label for="slug">Folder / slug</label>
+        <input type="text" id="slug" placeholder="my-awesome-game">
+        <div class="hint">Lowercase, no spaces. Used as /games/&lt;slug&gt;/.</div>
+      </div>
+      <div class="row">
+        <label for="description">Description</label>
+        <textarea id="description" placeholder="A short 1-2 sentence summary shown in the game loader."></textarea>
+      </div>
+      <div class="row">
+        <label for="touch">Touch support</label>
+        <div class="checkbox">
+          <input type="checkbox" id="touch" checked>
+          <span>Playable on touch devices (phones/tablets)</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="touchInstructions">Touch instructions</label>
+        <input type="text" id="touchInstructions" placeholder="Tap to play.">
+      </div>
+      <div class="row">
+        <label for="iconFile">Icon (300×300 PNG)</label>
+        <input type="file" id="iconFile" accept="image/*">
+        <div class="preview">
+          <img id="iconPreview" src="" alt="icon preview">
+          <span class="hint" id="iconName">No file selected</span>
+        </div>
+      </div>
+      <div class="row">
+        <label for="entryFile">Game entry HTML</label>
+        <input type="file" id="entryFile" accept=".html,text/html">
+        <div class="hint" id="entryName">No file selected</div>
+      </div>
+
+      <div class="actions">
+        <button id="saveBtn" class="primary" type="button">Save draft</button>
+        <button id="downloadBtn" type="button">Download config.json</button>
+        <button id="sendBtn" type="button">Send request</button>
+      </div>
+      <div class="status" id="status"></div>
+
+      <div class="note">
+        <strong>How submission works:</strong> "Save draft" keeps your work in this browser. "Download config.json" gives you the metadata file to place in your game folder. "Send request" opens a GitHub issue (no email shared) with your game details so the maintainer can review, test, and accept it into the library.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Dedicated to the public domain under the <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.</p>
+    <p>© 2025 fishesarethings — No rights reserved. <a href="/terms.html">Terms</a> • <a href="/privacy.html">Privacy</a></p>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+      const $ = (s) => document.querySelector(s);
+      const status = (m) => { const el = $('#status'); if (el) el.textContent = m; };
+
+      let iconDataUrl = '';
+      let entryFileName = '';
+
+      $('#iconFile').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) { iconDataUrl = ''; $('#iconName').textContent = 'No file selected'; $('#iconPreview').src = ''; return; }
+        $('#iconName').textContent = f.name;
+        const r = new FileReader();
+        r.onload = () => { iconDataUrl = r.result; $('#iconPreview').src = iconDataUrl; };
+        r.readAsDataURL(f);
+      });
+
+      $('#entryFile').addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        entryFileName = f ? f.name : '';
+        $('#entryName').textContent = entryFileName || 'No file selected';
+      });
+
+      function buildConfig() {
+        const name = $('#name').value.trim();
+        const slug = $('#slug').value.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        return {
+          name: name,
+          folder: slug,
+          icon: 'icon.png',
+          entry: entryFileName || (slug + '.html'),
+          description: $('#description').value.trim(),
+          touchInstructions: $('#touchInstructions').value.trim() || 'Tap or click to play.',
+          touch: $('#touch').checked
+        };
+      }
+
+      $('#saveBtn').addEventListener('click', () => {
+        try {
+          const cfg = buildConfig();
+          localStorage.setItem('ilf_game_draft', JSON.stringify(cfg));
+          status('Draft saved in this browser.');
+        } catch (e) { status('Could not save draft.'); }
+      });
+
+      $('#downloadBtn').addEventListener('click', () => {
+        const cfg = buildConfig();
+        const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'config.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        status('config.json downloaded.');
+      });
+
+      $('#sendBtn').addEventListener('click', () => {
+        const cfg = buildConfig();
+        if (!cfg.name) { status('Please enter a game name.'); return; }
+        const title = encodeURIComponent('Game submission: ' + cfg.name);
+        const body = encodeURIComponent(
+          '### Game submission\n\n' +
+          '- Name: ' + cfg.name + '\n' +
+          '- Slug/folder: ' + cfg.folder + '\n' +
+          '- Entry file: ' + cfg.entry + '\n' +
+          '- Icon file: icon.png\n' +
+          '- Touch support: ' + cfg.touch + '\n' +
+          '- Touch instructions: ' + cfg.touchInstructions + '\n\n' +
+          '### Description\n' + cfg.description + '\n\n' +
+          '### Notes\nPlease attach the game files (HTML, CSS, JS, icon.png) to this issue or open a PR adding /games/' + cfg.folder + '/.\n'
+        );
+        const url = 'https://github.com/fishesarethings/Ilikefish.space/issues/new?title=' + title + '&body=' + body;
+        window.open(url, '_blank', 'noopener');
+        status('Opened GitHub issue in a new tab. Attach your game files there.');
+      });
+
+      try {
+        const d = localStorage.getItem('ilf_game_draft');
+        if (d) {
+          const cfg = JSON.parse(d);
+          if (cfg.name) $('#name').value = cfg.name;
+          if (cfg.folder) $('#slug').value = cfg.folder;
+          if (cfg.description) $('#description').value = cfg.description;
+          if (cfg.touchInstructions) $('#touchInstructions').value = cfg.touchInstructions;
+          $('#touch').checked = cfg.touch !== false;
+          status('Restored saved draft.');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <script src="/assets/js/sw-register.js" defer></script>
+  <script src="/assets/js/version-check.js" defer></script>
+</body>
+</html>

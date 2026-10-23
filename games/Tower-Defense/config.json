@@ -1,0 +1,15 @@
+{
+  "name": "Tower Defense",
+  "folder": "Tower-Defense",
+  "icon": "icon.png",
+  "entry": "Tower-defense.html",
+  "featured": true,
+  "featuredOrder": 2,
+  "description": "A game in which you defend an path from enemies with towers that you build, and keep going till the enimies take over.",
+  "touchInstructions": "Tap or click to play.",
+  "controllerMapping": {
+    "buttons": {},
+    "axes": {}
+  },
+  "touch": true
+}

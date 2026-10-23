@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Battle Fish I</title>
+  <!-- Tailwind CDN for styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React & ReactDOM (development builds) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel to compile JSX in-browser (only for quick demos) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* small page background so the game pops */
+    body { background: linear-gradient(180deg,#071129 0%, #0b2a44 100%); height:100vh; margin:0; display:flex; align-items:center; justify-content:center; }
+  </style>
+</head>
+<body>
+  <div id="root" class="w-full max-w-[980px] mx-auto p-6"></div>
+
+  <!-- Game component — uses JSX and React from the CDN -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const GAME_WIDTH = 900;
+    const GAME_HEIGHT = 400;
+    const BASE_HP = 5000;
+
+    const FISH_UNITS = [
+      { name: "Minnow", color: "#6ec6ff", cost: 50, hp: 50, atk: 5, atkSpeed: 1000, speed: 1.2, cooldown: 2 },
+      { name: "Clownfish", color: "orange", stripe: "white", cost: 100, hp: 120, atk: 10, atkSpeed: 1200, speed: 1, cooldown: 3 },
+      { name: "Puffer", color: "#f5d76e", cost: 150, hp: 300, atk: 8, atkSpeed: 1500, speed: 0.6, cooldown: 5 },
+      { name: "Swordfish", color: "#4ab6ff", cost: 200, hp: 100, atk: 25, atkSpeed: 800, speed: 1.8, cooldown: 6 },
+      { name: "Jellyfish", color: "#c6a0ff", cost: 300, hp: 80, atk: 20, atkSpeed: 1000, speed: 1, cooldown: 7 },
+      { name: "Angler", color: "#3a3a75", cost: 400, hp: 150, atk: 40, atkSpeed: 2000, speed: 0.8, cooldown: 10 },
+      { name: "Shark", color: "gray", cost: 600, hp: 600, atk: 60, atkSpeed: 1500, speed: 1, cooldown: 12 },
+      { name: "Whale", color: "#1f3b6e", cost: 1000, hp: 1200, atk: 120, atkSpeed: 2000, speed: 0.5, cooldown: 20 }
+    ];
+
+    const uid = () => Math.random().toString(36).substr(2, 9);
+
+    function BattleFish() {
+      const [bubbles, setBubbles] = useState(200);
+      const [incomeLevel, setIncomeLevel] = useState(1);
+      const [reefHP, setReefHP] = useState(BASE_HP);
+      const [boatHP, setBoatHP] = useState(BASE_HP);
+      const [playerUnits, setPlayerUnits] = useState([]);
+      const [enemyUnits, setEnemyUnits] = useState([]);
+      const [cooldowns, setCooldowns] = useState({});
+      const [tailFrame, setTailFrame] = useState(0);
+      const [gameOver, setGameOver] = useState("");
+
+      useEffect(() => {
+        if (reefHP <= 0) setGameOver("You Died");
+        else if (boatHP <= 0) setGameOver("You Won!");
+      }, [reefHP, boatHP]);
+
+      useEffect(() => {
+        if (gameOver) return;
+        const income = setInterval(() => setBubbles(b => b + incomeLevel * 5), 1000);
+        return () => clearInterval(income);
+      }, [incomeLevel, gameOver]);
+
+      useEffect(() => {
+        if (gameOver) return;
+        const spawner = setInterval(() => {
+          const template = FISH_UNITS[Math.floor(Math.random() * 3)];
+          spawnEnemy(template);
+        }, 8000);
+        return () => clearInterval(spawner);
+      }, [gameOver]);
+
+      useEffect(() => {
+        if (gameOver) return;
+        const loop = setInterval(() => updateUnits(), 50);
+        return () => clearInterval(loop);
+      });
+
+      useEffect(() => {
+        const anim = setInterval(() => setTailFrame(f => (f + 1) % 2), 300);
+        return () => clearInterval(anim);
+      }, []);
+
+      const spawnFish = (fish) => {
+        if (bubbles < fish.cost || cooldowns[fish.name] || gameOver) return;
+        setBubbles(b => b - fish.cost);
+        setPlayerUnits(u => [...u, { id: uid(), ...fish, maxHp: fish.hp, hp: fish.hp, x: 80, side: "player", atkCooldown: 0 }]);
+        setCooldowns(c => ({ ...c, [fish.name]: fish.cooldown }));
+      };
+
+      useEffect(() => {
+        if (gameOver) return;
+        const cd = setInterval(() => {
+          setCooldowns(c => {
+            const nc = { ...c };
+            for (let k in nc) if (nc[k] > 0) nc[k] -= 1;
+            return nc;
+          });
+        }, 1000);
+        return () => clearInterval(cd);
+      }, [gameOver]);
+
+      const spawnEnemy = (fish) => {
+        setEnemyUnits(u => [...u, { id: uid(), ...fish, maxHp: fish.hp, hp: fish.hp, x: GAME_WIDTH - 100, side: "enemy", atkCooldown: 0 }]);
+      };
+
+      const updateUnits = () => {
+        if (reefHP <= 0 || boatHP <= 0) return;
+
+        const newPlayers = [...playerUnits];
+        const newEnemies = [...enemyUnits];
+
+        newPlayers.forEach((p) => {
+          const target = newEnemies.find(e => Math.abs(e.x - p.x) < 30);
+          if (target) {
+            if (p.atkCooldown <= 0) {
+              target.hp = Math.max(0, target.hp - p.atk);
+              p.atkCooldown = p.atkSpeed / 50;
+            }
+          } else {
+            p.x += p.speed;
+          }
+          p.atkCooldown = Math.max(0, p.atkCooldown - 1);
+          if (p.x >= GAME_WIDTH - 80 && !target) setBoatHP(hp => Math.max(0, hp - p.atk));
+        });
+
+        newEnemies.forEach((e) => {
+          const target = newPlayers.find(p => Math.abs(e.x - p.x) < 30);
+          if (target) {
+            if (e.atkCooldown <= 0) {
+              target.hp = Math.max(0, target.hp - e.atk);
+              e.atkCooldown = e.atkSpeed / 50;
+            }
+          } else {
+            e.x -= e.speed;
+          }
+          e.atkCooldown = Math.max(0, e.atkCooldown - 1);
+          if (e.x <= 80 && !target) setReefHP(hp => Math.max(0, hp - e.atk));
+        });
+
+        setPlayerUnits(newPlayers.filter(u => u.hp > 0));
+        setEnemyUnits(newEnemies.filter(u => u.hp > 0));
+      };
+
+      const renderFish = (u, facingRight) => {
+        const dir = facingRight ? 1 : -1;
+        const cx = u.x;
+        const cy = 200;
+        const tailAngle = tailFrame === 0 ? 0 : 10 * dir;
+
+        return (
+          <g transform={`scale(${dir},1)`} key={u.id}>
+            <defs>
+              <linearGradient id={`grad-${u.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={u.color} />
+                <stop offset="100%" stopColor="#ffffff55" />
+              </linearGradient>
+            </defs>
+            <ellipse cx={cx * dir} cy={cy} rx={u.name === "Whale" ? 30 : 15} ry={u.name === "Whale" ? 15 : 8} fill={`url(#grad-${u.id})`} stroke="black" strokeWidth="2" />
+            {u.name === "Clownfish" && (
+              <>
+                <rect x={cx * dir - 10} y={cy - 8} width={4} height={16} fill={u.stripe} />
+                <rect x={cx * dir + 6} y={cy - 8} width={4} height={16} fill={u.stripe} />
+              </>
+            )}
+            {u.name === "Swordfish" && <line x1={cx * dir + 15} y1={cy} x2={cx * dir + 30} y2={cy} stroke="black" strokeWidth="3" />}
+            {u.name === "Puffer" && <circle cx={cx * dir} cy={cy} r={12} fill={u.color} stroke="black" strokeWidth="2" />}
+            {u.name === "Shark" && <polygon points={`${cx * dir - 10},${cy - 5} ${cx * dir + 20},${cy} ${cx * dir - 10},${cy + 5}`} fill="darkgray" stroke="black" />}
+            {u.name === "Angler" && (
+              <>
+                <line x1={cx * dir + 10} y1={cy - 10} x2={cx * dir + 18} y2={cy - 18} stroke="yellow" strokeWidth="2" />
+                <circle cx={cx * dir + 18} cy={cy - 18} r={3} fill="yellow" />
+              </>
+            )}
+            <circle cx={cx * dir + 10} cy={cy - 3} r={2} fill="white" />
+            <circle cx={cx * dir + 10} cy={cy - 3} r={1} fill="black" />
+            <polygon
+              points={`${cx * dir - 15},${cy - 2} ${cx * dir - 25},${cy} ${cx * dir - 15},${cy + 2}`}
+              fill={u.color}
+              stroke="black"
+              transform={`rotate(${tailAngle},${cx * dir - 15},${cy})`}
+            />
+          </g>
+        );
+      };
+
+      return (
+        <div className="flex flex-col items-center">
+          {gameOver && (
+            <div className="absolute text-5xl font-bold text-white bg-black bg-opacity-70 p-8 rounded-xl mt-40">
+              {gameOver}
+            </div>
+          )}
+
+          <div className="flex gap-4 backdrop-blur-xl bg-white/20 shadow-2xl p-6 rounded-3xl w-[900px] justify-center border border-white/40">
+            <button className="bg-gradient-to-r from-yellow-300 to-yellow-500 text-black font-semibold px-4 py-2 rounded-2xl shadow-lg hover:scale-105 transition" onClick={() => { if (bubbles >= 100) { setBubbles(b => b - 100); setIncomeLevel(l => l + 1); } }}>Upgrade Income ({incomeLevel})</button>
+            <button className="bg-gradient-to-r from-green-300 to-green-500 text-black font-semibold px-4 py-2 rounded-2xl shadow-lg hover:scale-105 transition" onClick={() => { if (bubbles >= 200) { setBubbles(b => b - 200); setReefHP(hp => Math.min(BASE_HP, hp + 500)); } }}>Heal Reef</button>
+          </div>
+
+          <div className="text-black font-extrabold mt-2 text-lg bg-white/40 backdrop-blur-md px-4 py-1 rounded-xl shadow">💧 Bubbles: {bubbles}</div>
+
+          <svg width={GAME_WIDTH} height={GAME_HEIGHT} className="bg-gradient-to-b from-sky-200 to-blue-500 mt-2 border-4 border-blue-600 rounded">
+            <defs>
+              <linearGradient id="hpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#4dff88" />
+                <stop offset="100%" stopColor="#00cc44" />
+              </linearGradient>
+            </defs>
+            <rect x={20} y={150} width={40} height={100} fill="coral" stroke="black" />
+            <text x={20} y={140} fill="white" className="font-bold drop-shadow-lg">Reef HP: {reefHP}</text>
+
+            <rect x={GAME_WIDTH - 60} y={150} width={40} height={100} fill="brown" stroke="black" />
+            <text x={GAME_WIDTH - 140} y={140} fill="white" className="font-bold drop-shadow-lg">Boat HP: {boatHP}</text>
+
+            {playerUnits.map(u => (
+              <g key={u.id}>
+                {renderFish(u, true)}
+                <rect x={u.x - 15} y={180} width={30} height={6} rx={3} fill="#ff4d4d" />
+                <rect x={u.x - 15} y={180} width={(u.hp / u.maxHp) * 30} height={6} rx={3} fill="url(#hpGrad)" />
+              </g>
+            ))}
+
+            {enemyUnits.map(u => (
+              <g key={u.id}>
+                {renderFish(u, false)}
+                <rect x={u.x - 15} y={180} width={30} height={6} rx={3} fill="#ff4d4d" />
+                <rect x={u.x - 15} y={180} width={(u.hp / u.maxHp) * 30} height={6} rx={3} fill="url(#hpGrad)" />
+              </g>
+            ))}
+          </svg>
+
+          <div className="flex gap-3 mt-4 backdrop-blur-xl bg-white/10 p-4 rounded-3xl shadow-2xl border border-white/30">
+            {FISH_UNITS.map(f => (
+              <button key={f.name} className={`px-4 py-2 rounded-2xl shadow-lg font-semibold transition-all hover:scale-110 border border-white/40 ${bubbles >= f.cost && !cooldowns[f.name] && !gameOver ? "bg-blue-400/80" : "bg-gray-400/60"}`} onClick={() => spawnFish(f)}>
+                {f.name} ({f.cost}) {cooldowns[f.name] ? `CD:${cooldowns[f.name]}` : ""}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 text-black font-extrabold text-lg bg-white/40 backdrop-blur-md px-4 py-1 rounded-xl shadow">Total Currency: 💧 {bubbles}</div>
+        </div>
+      );
+    }
+
+    // Render into the page
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<BattleFish />);
+  </script>
+</body>
+</html>

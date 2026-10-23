@@ -1,0 +1,10 @@
+{
+  "name": "Fish Battle I",
+  "folder": "battlefishi",
+  "icon": "fishbattle1.png",
+  "entry": "battlefishi.html",
+  "featured": true,
+  "featuredOrder": 8,
+  "description": "Battle the fish",
+  "touch": true
+}

@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZV53VVVSK3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config','G-ZV53VVVSK3');
+  </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mine Tycoon - Idle Mining Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2c1810, #1a0f08);
+            color: #f8e9a1;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(51, 34, 17, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(248, 233, 161, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+
+
+
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(68, 45, 23, 0.8);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(248, 233, 161, 0.2);
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .mine-visual {
+            background: linear-gradient(to bottom, #8B4513, #654321, #3E2723);
+            height: 400px;
+            border-radius: 15px;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-bottom: 30px;
+            border: 3px solid #8B4513;
+        }
+
+        .mine-level {
+            width: 100%;
+            height: 100px;
+            position: relative;
+            border-bottom: 2px solid #654321;
+            background: linear-gradient(to right, #3E2723, #2E1A0F, #3E2723);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mine-level:nth-child(even) {
+            background: linear-gradient(to right, #2E1A0F, #1A0F08, #2E1A0F);
+        }
+
+        .level-info {
+            position: absolute;
+            left: 10px;
+            top: 5px;
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .mine-shaft {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(to bottom, #2E1A0F, #1A0F08);
+            border-left: 2px solid #654321;
+            border-right: 2px solid #654321;
+            z-index: 1;
+        }
+
+        .tunnel {
+            position: absolute;
+            width: 180px;
+            height: 40px;
+            background: linear-gradient(to right, #1A0F08, #2E1A0F);
+            border: 2px solid #654321;
+            border-radius: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 10px;
+        }
+
+        .tunnel.left {
+            left: 20px;
+        }
+
+        .tunnel.right {
+            right: 20px;
+        }
+
+        .tunnel.empty {
+            background: rgba(68, 45, 23, 0.3);
+            border: 2px dashed #654321;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tunnel.empty:hover {
+            background: rgba(68, 45, 23, 0.5);
+            border-color: #ffd700;
+        }
+
+        .tunnel-button {
+            color: #ffd700;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .miner {
+            width: 25px;
+            height: 35px;
+            background: #FF6B35;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            border: 2px solid #D2691E;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .miner::before {
+            content: '👷';
+            position: absolute;
+            font-size: 16px;
+            top: -2px;
+        }
+
+        .miner.mining {
+            animation: mining-action 1s infinite ease-in-out;
+        }
+
+        @keyframes mining-action {
+            0%, 100% { transform: scale(1) rotate(-2deg); }
+            50% { transform: scale(1.05) rotate(2deg); }
+        }
+
+        .cart {
+            width: 30px;
+            height: 20px;
+            background: #DC143C;
+            border-radius: 3px;
+            border: 2px solid #8B0000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: white;
+            font-weight: bold;
+            transition: all 1s ease-in-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .cart.loaded {
+            background: #DAA520;
+            border-color: #B8860B;
+            box-shadow: 0 0 10px rgba(218, 165, 32, 0.5);
+        }
+
+        .cart.collecting-left {
+            animation: cart-collect-left 1s ease-in-out forwards;
+        }
+
+        .cart.collecting-right {
+            animation: cart-collect-right 1s ease-in-out forwards;
+        }
+
+        .cart.returning-left {
+            animation: cart-return-left 1s ease-in-out forwards;
+        }
+
+        .cart.returning-right {
+            animation: cart-return-right 1s ease-in-out forwards;
+        }
+
+        @keyframes cart-collect-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-140px); }
+        }
+
+        @keyframes cart-collect-right {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(140px); }
+        }
+
+        @keyframes cart-return-left {
+            0% { transform: translateX(-140px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes cart-return-right {
+            0% { transform: translateX(140px); }
+            100% { transform: translateX(0); }
+        }
+
+        .lift {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%) translateY(0px);
+            width: 40px;
+            height: 60px;
+            background: #696969;
+            border-radius: 8px;
+            border: 3px solid #404040;
+            transition: all 1s ease-in-out;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+
+
+        .lift.moving {
+            transition: transform 2s ease-in-out;
+        }
+
+        .shop-section {
+            background: rgba(68, 45, 23, 0.6);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(248, 233, 161, 0.2);
+        }
+
+        .shop-title {
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .shop-buttons {
+            display: grid;
+            gap: 15px;
+        }
+
+        .shop-btn {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #2c1810;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .shop-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ffed4e, #ffd700);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .shop-btn:disabled {
+            background: #666;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .production-rate {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #90EE90;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #ddd;
+        }
+
+        .gold-popup {
+            position: absolute;
+            color: #ffd700;
+            font-weight: bold;
+            pointer-events: none;
+            animation: goldFloat 2s ease-out forwards;
+            z-index: 100;
+        }
+
+        @keyframes goldFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        @keyframes diamondFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            20% {
+                transform: translateY(-10px) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(0.8);
+            }
+        }
+
+        .fish-explosion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .fish-emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: fishExplode 3s ease-out forwards;
+            pointer-events: none;
+            left: 50%;
+            top: 50%;
+        }
+
+        @keyframes fishExplode {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.1) rotate(0deg);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(calc(-50% + var(--final-x) * 0.3), calc(-50% + var(--final-y) * 0.3)) scale(1.2) rotate(72deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--final-x)), calc(-50% + var(--final-y))) scale(0.8) rotate(360deg);
+            }
+        }
+
+        .rebirth-popup {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 24, 16, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+            border: 3px solid #ff6b35;
+            box-shadow: 0 0 30px rgba(255, 107, 53, 0.5);
+        }
+
+        .rebirth-popup.show {
+            display: flex;
+        }
+
+        .rebirth-popup h3 {
+            color: #ff6b35;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+
+        .rebirth-popup p {
+            color: #f8e9a1;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .rebirth-popup-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .rebirth-popup-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .rebirth-confirm {
+            background: linear-gradient(135deg, #ff6b35, #ff8c42);
+            color: white;
+        }
+
+        .rebirth-confirm:hover {
+            background: linear-gradient(135deg, #ff8c42, #ff6b35);
+            transform: translateY(-2px);
+        }
+
+        .rebirth-cancel {
+            background: linear-gradient(135deg, #666, #888);
+            color: white;
+        }
+
+        .rebirth-cancel:hover {
+            background: linear-gradient(135deg, #888, #666);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 640px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+           
+            .stats-panel {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+           
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1 id="game-title">⛏️ Mine Tycoon ⛏️</h1>
+            <p>Build your mining empire!</p>
+        </div>
+
+
+
+        <div class="stats-panel">
+            <div class="stat-card">
+                <div>💰 Gold</div>
+                <div class="stat-value" id="gold-display">0</div>
+            </div>
+            <div class="stat-card">
+                <div>🏗️ Levels</div>
+                <div class="stat-value" id="levels-display">1</div>
+            </div>
+            <div class="stat-card">
+                <div>🚇 Tunnels</div>
+                <div class="stat-value" id="tunnels-display">0</div>
+            </div>
+            <div class="stat-card">
+                <div>👷 Workers</div>
+                <div class="stat-value" id="workers-display">0</div>
+            </div>
+            <div class="stat-card">
+                <div>🔄 Rebirths</div>
+                <div class="stat-value" id="rebirths-display">0</div>
+            </div>
+            <div class="stat-card">
+                <div>💎 Lifetime</div>
+                <div class="stat-value" id="lifetime-display">1K</div>
+            </div>
+        </div>
+
+        <div class="production-rate">
+            ⛏️ Workers mining <span id="ore-per-second">0</span> ore/sec | 🚋 Cart capacity: <span id="cart-capacity">5</span> ore
+        </div>
+
+        <div class="mine-visual" id="mine-visual">
+            <div class="mine-shaft"></div>
+            <div id="mine-levels"></div>
+            <div class="lift" id="lift"></div>
+        </div>
+
+        <div class="shop-section">
+            <h2 class="shop-title">🏪 Upgrade Shop</h2>
+            <div class="shop-buttons" style="position: relative;">
+                <button class="shop-btn" id="dig-level">
+                    🏗️ Dig New Level - Cost: <span id="level-cost">25</span> gold
+                </button>
+                <button class="shop-btn" id="hire-worker">
+                    👷 Hire Worker - Cost: <span id="worker-cost">13</span> gold
+                </button>
+
+                <button class="shop-btn" id="upgrade-workers">
+                    ⚡ Upgrade Worker Speed - Cost: <span id="worker-upgrade-cost">25</span> gold
+                </button>
+                <button class="shop-btn" id="upgrade-carts">
+                    🚋 Upgrade Cart Storage (<span id="cart-increase">+25</span>) - Cost: <span id="cart-upgrade-cost">19</span> gold
+                </button>
+                <button class="shop-btn" id="rebirth-btn" style="background: linear-gradient(135deg, #ff6b35, #ff8c42); display: none;">
+                    🔄 REBIRTH - 5x Profit Forever! (Requires <span id="rebirth-cost-display">1,000,000</span> 💎 lifetime)
+                </button>
+               
+                <div class="rebirth-popup" id="rebirth-popup">
+                    <h3>🔄 REBIRTH CONFIRMATION 🔄</h3>
+                    <p>You will lose ALL current progress but gain:</p>
+                    <p>• 5x profit multiplier FOREVER!<br>
+                    • Keep your <span id="popup-rebirths">0</span> rebirths<br>
+                    • Keep your <span id="popup-lifetime">0</span> lifetime gold</p>
+                    <p>Next rebirth will cost <span id="popup-next-cost">5M</span> lifetime gold.</p>
+                    <p><strong>Are you absolutely sure?</strong></p>
+                    <div class="rebirth-popup-buttons">
+                        <button class="rebirth-popup-btn rebirth-confirm" id="confirm-rebirth">YES, REBIRTH!</button>
+                        <button class="rebirth-popup-btn rebirth-cancel" id="cancel-rebirth">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>How to Play:</strong><br>
+            • Click empty tunnel slots to build new tunnels<br>
+            • Hire workers to mine ore directly into carts<br>
+            • Workers mine at their speed level (shown on worker)<br>
+            • Carts fill up gradually as workers mine<br>
+            • Lift transports full carts to surface for gold<br>
+            • Upgrade worker speed to mine faster!
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            gold: 1000,
+            levels: 1,
+            tunnels: [], // Array of tunnel objects: {level, side, workers, cart, ore, cartOre, cartCapacity}
+            workers: 0,
+            liftSpeed: 1,
+            levelCost: 25,
+            workerCost: 13,
+            liftCost: 50,
+            tunnelCost: 15,
+            workerUpgradeCost: 25,
+            cartCapacity: 5,
+            cartUpgradeCost: 19,
+            unlockedMines: [true, false, false], // Track which mines are unlocked
+            rebirths: 0, // Number of rebirths
+            profitMultiplier: 1, // Multiplier for gold earned
+            lifetimeGold: 1000, // Total gold earned throughout all rebirths
+            rebirthCost: 1000000 // Cost for next rebirth (starts at 1 million)
+        };
+
+        // Easter egg variables
+        let titleClickCount = 0;
+        let titleClickTimer = null;
+
+        // DOM elements
+        const goldDisplay = document.getElementById('gold-display');
+        const levelsDisplay = document.getElementById('levels-display');
+        const tunnelsDisplay = document.getElementById('tunnels-display');
+        const workersDisplay = document.getElementById('workers-display');
+        const rebirthsDisplay = document.getElementById('rebirths-display');
+        const lifetimeDisplay = document.getElementById('lifetime-display');
+        const orePerSecondDisplay = document.getElementById('ore-per-second');
+        const cartCapacityDisplay = document.getElementById('cart-capacity');
+        const levelCostDisplay = document.getElementById('level-cost');
+        const workerCostDisplay = document.getElementById('worker-cost');
+
+        const workerUpgradeCostDisplay = document.getElementById('worker-upgrade-cost');
+        const cartUpgradeCostDisplay = document.getElementById('cart-upgrade-cost');
+        const cartIncreaseDisplay = document.getElementById('cart-increase');
+        const mineVisual = document.getElementById('mine-visual');
+        const mineLevels = document.getElementById('mine-levels');
+
+        const digLevelBtn = document.getElementById('dig-level');
+        const hireWorkerBtn = document.getElementById('hire-worker');
+
+        const upgradeWorkersBtn = document.getElementById('upgrade-workers');
+        const upgradeCartsBtn = document.getElementById('upgrade-carts');
+        const rebirthBtn = document.getElementById('rebirth-btn');
+        const rebirthCostDisplay = document.getElementById('rebirth-cost-display');
+
+
+
+        // Create mine levels with tunnels
+        function createMineLevels() {
+            mineLevels.innerHTML = '';
+           
+            // Update mine shaft height to match all levels
+            const mineShaft = document.querySelector('.mine-shaft');
+            if (mineShaft) {
+                mineShaft.style.height = (gameState.levels * 100) + 'px';
+            }
+           
+            for (let i = 0; i < gameState.levels; i++) {
+                const level = document.createElement('div');
+                level.className = 'mine-level';
+               
+                const levelInfo = document.createElement('div');
+                levelInfo.className = 'level-info';
+                levelInfo.textContent = `Level ${i + 1}`;
+                level.appendChild(levelInfo);
+               
+                // Left tunnel
+                const leftTunnel = gameState.tunnels.find(t => t.level === i && t.side === 'left');
+                const leftTunnelDiv = document.createElement('div');
+               
+                if (leftTunnel) {
+                    leftTunnelDiv.className = 'tunnel left';
+                   
+                    // Add workers on the left side with speed indicator
+                    const workersContainer = document.createElement('div');
+                    workersContainer.style.display = 'flex';
+                    workersContainer.style.gap = '2px';
+                    for (let w = 0; w < leftTunnel.workers; w++) {
+                        const worker = document.createElement('div');
+                        worker.className = 'miner mining';
+                        worker.style.animationDelay = (w * 0.2) + 's';
+                        worker.textContent = leftTunnel.workerSpeed || 1;
+                        workersContainer.appendChild(worker);
+                    }
+                    leftTunnelDiv.appendChild(workersContainer);
+                   
+                    // Add cart on the right side
+                    if (leftTunnel.cart) {
+                        const cart = document.createElement('div');
+                        cart.className = 'cart';
+                        cart.textContent = `${leftTunnel.cartOre || 0}/${leftTunnel.cartCapacity}`;
+                        if (leftTunnel.cartOre > 0) {
+                            cart.classList.add('loaded');
+                        }
+                        leftTunnelDiv.appendChild(cart);
+                    }
+                } else {
+                    leftTunnelDiv.className = 'tunnel left empty';
+                    leftTunnelDiv.innerHTML = '<div class="tunnel-button">Build Tunnel<br>💰' + gameState.tunnelCost + '</div>';
+                    leftTunnelDiv.onclick = () => buildTunnel(i, 'left');
+                }
+                level.appendChild(leftTunnelDiv);
+               
+                // Right tunnel
+                const rightTunnel = gameState.tunnels.find(t => t.level === i && t.side === 'right');
+                const rightTunnelDiv = document.createElement('div');
+               
+                if (rightTunnel) {
+                    rightTunnelDiv.className = 'tunnel right';
+                   
+                    // Add cart on the left side
+                    if (rightTunnel.cart) {
+                        const cart = document.createElement('div');
+                        cart.className = 'cart';
+                        cart.textContent = `${rightTunnel.cartOre || 0}/${rightTunnel.cartCapacity}`;
+                        if (rightTunnel.cartOre > 0) {
+                            cart.classList.add('loaded');
+                        }
+                        rightTunnelDiv.appendChild(cart);
+                    }
+                   
+                    // Add workers on the right side with speed indicator
+                    const workersContainer = document.createElement('div');
+                    workersContainer.style.display = 'flex';
+                    workersContainer.style.gap = '2px';
+                    for (let w = 0; w < rightTunnel.workers; w++) {
+                        const worker = document.createElement('div');
+                        worker.className = 'miner mining';
+                        worker.style.animationDelay = (w * 0.2) + 's';
+                        worker.textContent = rightTunnel.workerSpeed || 1;
+                        workersContainer.appendChild(worker);
+                    }
+                    rightTunnelDiv.appendChild(workersContainer);
+                } else {
+                    rightTunnelDiv.className = 'tunnel right empty';
+                    rightTunnelDiv.innerHTML = '<div class="tunnel-button">Build Tunnel<br>💰' + gameState.tunnelCost + '</div>';
+                    rightTunnelDiv.onclick = () => buildTunnel(i, 'right');
+                }
+                level.appendChild(rightTunnelDiv);
+               
+                mineLevels.appendChild(level);
+            }
+        }
+
+        // Build new tunnel
+        function buildTunnel(level, side) {
+            if (gameState.gold >= gameState.tunnelCost) {
+                gameState.gold -= gameState.tunnelCost;
+                gameState.tunnels.push({
+                    level: level,
+                    side: side,
+                    workers: 0,
+                    cart: true,
+                    ore: 0,
+                    cartOre: 0,
+                    cartCapacity: gameState.cartCapacity,
+                    workerSpeed: 1
+                });
+                gameState.tunnelCost = Math.floor(gameState.tunnelCost * 1.4);
+                updateDisplay();
+            }
+        }
+
+        // Calculate mining rate
+        function calculateMiningRate() {
+            let totalRate = 0;
+            gameState.tunnels.forEach(tunnel => {
+                if (tunnel.workers > 0) {
+                    totalRate += tunnel.workers * (tunnel.workerSpeed || 1);
+                }
+            });
+            return totalRate;
+        }
+
+        // Format large numbers
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return Math.floor(num).toLocaleString();
+        }
+
+
+
+
+
+        // Update display
+        function updateDisplay() {
+            goldDisplay.textContent = Math.floor(gameState.gold).toLocaleString();
+            levelsDisplay.textContent = gameState.levels;
+            tunnelsDisplay.textContent = gameState.tunnels.length;
+            workersDisplay.textContent = gameState.workers;
+            rebirthsDisplay.textContent = gameState.rebirths;
+            lifetimeDisplay.textContent = formatNumber(gameState.lifetimeGold);
+            orePerSecondDisplay.textContent = calculateMiningRate();
+            cartCapacityDisplay.textContent = gameState.cartCapacity;
+            levelCostDisplay.textContent = gameState.levelCost;
+            workerCostDisplay.textContent = gameState.workerCost;
+
+            workerUpgradeCostDisplay.textContent = gameState.workerUpgradeCost;
+            cartUpgradeCostDisplay.textContent = gameState.cartUpgradeCost;
+            rebirthCostDisplay.textContent = formatNumber(gameState.rebirthCost);
+           
+            // Update cart increase display based on current capacity
+            let capacityIncrease = 25;
+            if (gameState.cartCapacity >= 1500) {
+                capacityIncrease = 250;
+            } else if (gameState.cartCapacity >= 750) {
+                capacityIncrease = 100;
+            } else if (gameState.cartCapacity >= 400) {
+                capacityIncrease = 75;
+            }
+            cartIncreaseDisplay.textContent = '+' + capacityIncrease;
+
+            // Update button states
+            digLevelBtn.disabled = gameState.gold < gameState.levelCost;
+            hireWorkerBtn.disabled = gameState.gold < gameState.workerCost || gameState.tunnels.length === 0;
+
+            upgradeWorkersBtn.disabled = gameState.gold < gameState.workerUpgradeCost || gameState.workers === 0;
+            upgradeCartsBtn.disabled = gameState.gold < gameState.cartUpgradeCost || gameState.tunnels.length === 0;
+
+            // Show/hide rebirth button based on lifetime gold earned
+            if (gameState.lifetimeGold >= gameState.rebirthCost) {
+                rebirthBtn.style.display = 'block';
+                rebirthBtn.disabled = false;
+            } else {
+                rebirthBtn.style.display = 'none';
+            }
+
+            // Update visual elements
+            createMineLevels();
+        }
+
+        // Show popup animation
+        function showPopup(amount, type, x, y) {
+            const popup = document.createElement('div');
+            popup.className = 'gold-popup';
+           
+            if (type === 'diamond') {
+                popup.textContent = amount; // Already includes diamond emoji and formatting
+                popup.style.color = '#00FFFF';
+                popup.style.fontSize = '1.5rem';
+                popup.style.textShadow = '0 0 10px #00FFFF, 0 0 20px #00FFFF';
+                popup.style.animation = 'diamondFloat 3s ease-out forwards';
+            } else {
+                popup.textContent = '+' + amount + (type === 'ore' ? ' 🪨' : ' 💰');
+                popup.style.color = type === 'ore' ? '#8B4513' : '#ffd700';
+            }
+           
+            popup.style.left = (x || Math.random() * 80 + 10) + '%';
+            popup.style.top = (y || 30) + '%';
+            mineVisual.appendChild(popup);
+
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, type === 'diamond' ? 3000 : 2000);
+        }
+
+
+
+        // Show rebirth popup
+        function showRebirthPopup() {
+            if (gameState.lifetimeGold >= gameState.rebirthCost) {
+                // Update popup content with current values
+                document.getElementById('popup-rebirths').textContent = gameState.rebirths;
+                document.getElementById('popup-lifetime').textContent = formatNumber(gameState.lifetimeGold);
+                document.getElementById('popup-next-cost').textContent = formatNumber(gameState.rebirthCost * 5);
+               
+                // Show the popup
+                document.getElementById('rebirth-popup').classList.add('show');
+            }
+        }
+
+        // Hide rebirth popup
+        function hideRebirthPopup() {
+            document.getElementById('rebirth-popup').classList.remove('show');
+        }
+
+        // Rebirth function
+        function rebirth() {
+            // Increase rebirth count and profit multiplier
+            gameState.rebirths++;
+            gameState.profitMultiplier *= 5;
+            gameState.rebirthCost *= 5;
+           
+            // Reset everything except rebirths, multiplier, lifetime gold, and rebirth cost
+            const savedRebirths = gameState.rebirths;
+            const savedMultiplier = gameState.profitMultiplier;
+            const savedLifetimeGold = gameState.lifetimeGold;
+            const savedRebirthCost = gameState.rebirthCost;
+           
+            // Reset game state
+            gameState.gold = 1000;
+            gameState.levels = 1;
+            gameState.tunnels = [];
+            gameState.workers = 0;
+            gameState.liftSpeed = 1;
+            gameState.levelCost = 25;
+            gameState.workerCost = 13;
+            gameState.liftCost = 50;
+            gameState.tunnelCost = 15;
+            gameState.workerUpgradeCost = 25;
+            gameState.cartCapacity = 5;
+            gameState.cartUpgradeCost = 19;
+            gameState.unlockedMines = [true, false, false];
+           
+            // Restore persistent values
+            gameState.rebirths = savedRebirths;
+            gameState.profitMultiplier = savedMultiplier;
+            gameState.lifetimeGold = savedLifetimeGold;
+            gameState.rebirthCost = savedRebirthCost;
+           
+            // Hide popup and update display
+            hideRebirthPopup();
+            updateDisplay();
+            showPopup(`🔄 REBIRTH! ${savedMultiplier}x Profit Forever!`, 'diamond');
+           
+            // Reset lift position
+            setTimeout(() => {
+                const lift = document.getElementById('lift');
+                if (lift) {
+                    lift.style.transform = `translateX(-50%) translateY(40px)`;
+                    lift.classList.remove('moving');
+                }
+            }, 100);
+        }
+
+
+
+        // Dig new level
+        function digNewLevel() {
+            if (gameState.gold >= gameState.levelCost) {
+                gameState.gold -= gameState.levelCost;
+                gameState.levels++;
+                gameState.levelCost = Math.floor(gameState.levelCost * 1.6);
+                updateDisplay();
+               
+                // Move lift to new bottom position
+                setTimeout(() => {
+                    const lift = document.getElementById('lift');
+                    if (lift && !lift.classList.contains('moving')) {
+                        const bottomPosition = (gameState.levels - 1) * 100 + 40;
+                        lift.style.transform = `translateX(-50%) translateY(${bottomPosition}px)`;
+                    }
+                }, 200);
+            }
+        }
+
+        // Hire worker
+        function hireWorker() {
+            if (gameState.gold >= gameState.workerCost && gameState.tunnels.length > 0) {
+                // Find tunnel with least workers
+                let targetTunnel = gameState.tunnels.reduce((min, tunnel) =>
+                    tunnel.workers < min.workers ? tunnel : min
+                );
+               
+                gameState.gold -= gameState.workerCost;
+                targetTunnel.workers++;
+                gameState.workers++;
+                gameState.workerCost = Math.floor(gameState.workerCost * 1.3);
+                updateDisplay();
+            }
+        }
+
+
+
+        // Upgrade workers
+        function upgradeWorkers() {
+            if (gameState.gold >= gameState.workerUpgradeCost && gameState.workers > 0) {
+                gameState.gold -= gameState.workerUpgradeCost;
+                gameState.tunnels.forEach(tunnel => {
+                    if (tunnel.workers > 0) {
+                        tunnel.workerSpeed++;
+                    }
+                });
+                gameState.workerUpgradeCost = Math.floor(gameState.workerUpgradeCost * 1.5);
+                updateDisplay();
+               
+                // Reset lift to bottom position after upgrade
+                setTimeout(() => {
+                    const lift = document.getElementById('lift');
+                    if (lift && !lift.classList.contains('moving')) {
+                        const bottomPosition = (gameState.levels - 1) * 100 + 40;
+                        lift.style.transform = `translateX(-50%) translateY(${bottomPosition}px)`;
+                    }
+                }, 200);
+            }
+        }
+
+        // Upgrade carts
+        function upgradeCarts() {
+            if (gameState.gold >= gameState.cartUpgradeCost && gameState.tunnels.length > 0) {
+                gameState.gold -= gameState.cartUpgradeCost;
+               
+                // Scale cart capacity increase based on current capacity
+                let capacityIncrease = 25; // Default increase
+                if (gameState.cartCapacity >= 1500) {
+                    capacityIncrease = 250;
+                } else if (gameState.cartCapacity >= 750) {
+                    capacityIncrease = 100;
+                } else if (gameState.cartCapacity >= 400) {
+                    capacityIncrease = 75;
+                }
+               
+                gameState.cartCapacity += capacityIncrease;
+                // Update all existing carts
+                gameState.tunnels.forEach(tunnel => {
+                    tunnel.cartCapacity = gameState.cartCapacity;
+                });
+                gameState.cartUpgradeCost = Math.floor(gameState.cartUpgradeCost * 1.8);
+                updateDisplay();
+            }
+        }
+
+        // Mining phase - workers dig ore directly into carts
+        function miningPhase() {
+            gameState.tunnels.forEach(tunnel => {
+                if (tunnel.workers > 0 && tunnel.cartOre < tunnel.cartCapacity) {
+                    // Each worker mines ore per second based on their speed upgrade
+                    // workerSpeed 1 = 1 ore/sec, workerSpeed 2 = 1.2 ore/sec, etc.
+                    const orePerSecond = tunnel.workers * tunnel.workerSpeed;
+                    const spaceInCart = tunnel.cartCapacity - tunnel.cartOre;
+                    const oreToMine = Math.min(orePerSecond, spaceInCart);
+                   
+                    if (oreToMine > 0) {
+                        // Check for diamond chance (0.001% per ore mined)
+                        for (let i = 0; i < oreToMine; i++) {
+                            if (Math.random() < 0.00001) { // 0.001% chance
+                                // Diamond found!
+                                let diamondReward;
+                                if (gameState.gold > 100000) {
+                                    diamondReward = gameState.gold * 10;
+                                } else {
+                                    diamondReward = 2500000;
+                                }
+                               
+                                gameState.gold += diamondReward;
+                                gameState.lifetimeGold += diamondReward;
+                               
+                                // Show diamond popup
+                                showPopup(`💎 DIAMOND! +${formatNumber(diamondReward)}`, 'diamond',
+                                    Math.random() * 60 + 20, Math.random() * 30 + 20);
+                               
+                                break; // Only one diamond per tunnel per second max
+                            }
+                        }
+                       
+                        tunnel.cartOre += oreToMine;
+                        // Remove the separate ore storage since it goes directly to cart
+                        tunnel.ore = 0;
+                    }
+                }
+            });
+        }
+
+        // Cart collection phase - no longer needed since ore goes directly to carts
+        function cartCollectionPhase() {
+            // This phase is now simplified since workers mine directly into carts
+            // Just update visual states for loaded carts and their display text
+            gameState.tunnels.forEach(tunnel => {
+                const levelElement = document.querySelectorAll('.mine-level')[tunnel.level];
+                if (levelElement) {
+                    const tunnelElement = levelElement.querySelector(`.tunnel.${tunnel.side}`);
+                    if (tunnelElement) {
+                        const cart = tunnelElement.querySelector('.cart');
+                        if (cart) {
+                            // Update cart display text
+                            cart.textContent = `${tunnel.cartOre || 0}/${tunnel.cartCapacity}`;
+                           
+                            if (tunnel.cartOre > 0) {
+                                cart.classList.add('loaded');
+                            } else {
+                                cart.classList.remove('loaded');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Transport phase - lift moves full carts only
+        function transportPhase() {
+            // Check if there are any full carts to collect
+            const fullCarts = gameState.tunnels.filter(tunnel => tunnel.cartOre >= tunnel.cartCapacity);
+           
+            if (fullCarts.length > 0) {
+                const lift = document.getElementById('lift');
+               
+                // Only start collection if lift is not already moving
+                if (!lift.classList.contains('moving')) {
+                    lift.classList.add('moving');
+                   
+                    // Step 1: Move to bottom of mine shaft and wait 1 second
+                    const bottomPosition = (gameState.levels - 1) * 100 + 40;
+                    lift.style.transform = `translateX(-50%) translateY(${bottomPosition}px)`;
+                   
+                    setTimeout(() => {
+                        // Step 2: Start collecting from each full cart
+                        collectFromCarts(fullCarts, 0, lift);
+                    }, 1000); // Wait 1 second at bottom
+                }
+            }
+        }
+
+        // Collect from carts one by one
+        function collectFromCarts(fullCarts, cartIndex, lift) {
+            if (cartIndex >= fullCarts.length) {
+                // All carts collected, go to surface
+                const mineHeight = gameState.levels * 100;
+                const surfacePosition = -mineHeight - 100; // Go completely off-screen
+                lift.style.transform = `translateX(-50%) translateY(${surfacePosition}px)`;
+               
+                // Calculate total gold but don't add it yet (10 gold per ore)
+                const totalGold = fullCarts.reduce((sum, cart) => sum + cart.cartCapacity, 0) * 10;
+               
+                // Wait for lift to reach the top, then give gold and show popup
+                setTimeout(() => {
+                    const multipliedGold = totalGold * gameState.profitMultiplier;
+                    gameState.gold += multipliedGold;
+                    gameState.lifetimeGold += multipliedGold; // Track lifetime earnings
+                    showPopup(multipliedGold, 'gold');
+                }, 2000); // Wait 2 seconds for lift to reach top
+               
+                // Return to bottom after delivering
+                setTimeout(() => {
+                    const bottomPosition = (gameState.levels - 1) * 100 + 40;
+                    lift.style.transform = `translateX(-50%) translateY(${bottomPosition}px)`;
+                   
+                    setTimeout(() => {
+                        lift.classList.remove('moving');
+                    }, 1000);
+                }, 3000); // Start return after 3 seconds
+               
+                return;
+            }
+           
+            const currentCart = fullCarts[cartIndex];
+           
+            // Move lift to current cart's level (stay in center shaft)
+            const cartLevelPosition = currentCart.level * 100 + 50;
+            lift.style.transform = `translateX(-50%) translateY(${cartLevelPosition}px)`;
+           
+            // Wait for lift to reach the correct level, then collect
+            setTimeout(() => {
+                // Only collect when lift is at the same level as the cart
+                currentCart.cartOre = 0;
+               
+                // Update cart visual
+                const levelElement = document.querySelectorAll('.mine-level')[currentCart.level];
+                if (levelElement) {
+                    const tunnelElement = levelElement.querySelector(`.tunnel.${currentCart.side}`);
+                    if (tunnelElement) {
+                        const cart = tunnelElement.querySelector('.cart');
+                        if (cart) {
+                            cart.classList.remove('loaded');
+                            cart.textContent = `0/${currentCart.cartCapacity}`;
+                        }
+                    }
+                }
+               
+                // Move to next cart after a brief pause
+                setTimeout(() => {
+                    collectFromCarts(fullCarts, cartIndex + 1, lift);
+                }, 500);
+            }, 1000); // Wait 1 second for lift to reach the level
+        }
+
+        // Game loop
+        function gameLoop() {
+            miningPhase();
+            cartCollectionPhase();
+            transportPhase();
+            updateDisplay();
+        }
+
+        // Fish explosion function
+        function createFishExplosion() {
+            const fishContainer = document.createElement('div');
+            fishContainer.className = 'fish-explosion';
+            document.body.appendChild(fishContainer);
+           
+            // Create 30 fish emojis
+            for (let i = 0; i < 30; i++) {
+                const fish = document.createElement('div');
+                fish.className = 'fish-emoji';
+                fish.textContent = '🐟';
+               
+                // Calculate explosion direction (360 degrees divided by number of fish)
+                const angle = (i / 30) * 360;
+                const distance = 200 + Math.random() * 300; // Random distance from center
+               
+                // Convert angle to radians and calculate final position
+                const radian = (angle * Math.PI) / 180;
+                const finalX = Math.cos(radian) * distance;
+                const finalY = Math.sin(radian) * distance;
+               
+                // Set custom CSS properties for the final position
+                fish.style.setProperty('--final-x', finalX + 'px');
+                fish.style.setProperty('--final-y', finalY + 'px');
+               
+                // Random size variation
+                const size = 1 + Math.random() * 2;
+                fish.style.fontSize = size + 'rem';
+               
+                // Slight random delay for more natural explosion
+                fish.style.animationDelay = Math.random() * 0.3 + 's';
+               
+                fishContainer.appendChild(fish);
+            }
+           
+            // Remove the fish explosion after animation completes
+            setTimeout(() => {
+                if (fishContainer.parentNode) {
+                    fishContainer.parentNode.removeChild(fishContainer);
+                }
+            }, 4000);
+        }
+
+        // Easter egg function
+        function handleTitleClick() {
+            titleClickCount++;
+           
+            // Reset timer
+            if (titleClickTimer) {
+                clearTimeout(titleClickTimer);
+            }
+           
+            // Reset counter after 3 seconds of no clicks
+            titleClickTimer = setTimeout(() => {
+                titleClickCount = 0;
+            }, 3000);
+           
+            // Check if 7 clicks reached
+            if (titleClickCount === 7) {
+                gameState.gold += 1000000;
+                gameState.lifetimeGold += 1000000;
+                showPopup('🎉 SECRET BONUS! +1,000,000', 'diamond', 50, 10);
+                createFishExplosion(); // Add fish explosion!
+                titleClickCount = 0; // Reset counter
+                updateDisplay();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('game-title').addEventListener('click', handleTitleClick);
+        digLevelBtn.addEventListener('click', digNewLevel);
+        hireWorkerBtn.addEventListener('click', hireWorker);
+
+        upgradeWorkersBtn.addEventListener('click', upgradeWorkers);
+        upgradeCartsBtn.addEventListener('click', upgradeCarts);
+        rebirthBtn.addEventListener('click', showRebirthPopup);
+        document.getElementById('confirm-rebirth').addEventListener('click', rebirth);
+        document.getElementById('cancel-rebirth').addEventListener('click', hideRebirthPopup);
+
+        // Load saved game
+        function loadGame() {
+            const saved = localStorage.getItem('mineTycoonSave');
+            if (saved) {
+                const savedState = JSON.parse(saved);
+                gameState = { ...gameState, ...savedState };
+                // Ensure all tunnels have cart capacity
+                gameState.tunnels.forEach(tunnel => {
+                    if (!tunnel.cartCapacity) {
+                        tunnel.cartCapacity = gameState.cartCapacity;
+                    }
+                    if (tunnel.cartOre === undefined) {
+                        tunnel.cartOre = 0;
+                    }
+                });
+            }
+        }
+
+        // Save game
+        function saveGame() {
+            localStorage.setItem('mineTycoonSave', JSON.stringify(gameState));
+        }
+
+        // Initialize game
+        loadGame();
+        updateDisplay();
+       
+        // Set initial lift position to bottom of mine
+        function setLiftToBottom() {
+            const lift = document.getElementById('lift');
+            const bottomPosition = (gameState.levels - 1) * 100 + 40;
+            lift.style.transform = `translateX(-50%) translateY(${bottomPosition}px)`;
+        }
+       
+        // Set lift to bottom initially
+        setTimeout(setLiftToBottom, 100);
+
+        // Start game loop (runs every second)
+        setInterval(gameLoop, 1000);
+
+        // Save game every 5 seconds
+        setInterval(saveGame, 5000);
+
+        // Save on page unload
+        window.addEventListener('beforeunload', saveGame);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97505a7614fc864f',t:'MTc1NjE4MDEwNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

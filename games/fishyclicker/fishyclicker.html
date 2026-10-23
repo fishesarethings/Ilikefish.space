@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fishy Clicker</title>
+<link rel="icon" href="/fishyclicker.png" type="image/png" sizes="1920x1820">
+<link rel="shortcut icon" href="/fishyclicker.png">
+<style>
+  :root { --bg: #a0e7ff; --panel: rgba(255,255,255,0.94); }
+  html,body{height:100%;margin:0}
+  body{
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    background: var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    overflow:hidden;
+  }
+
+  /* UI */
+  #stats { position: fixed; top:12px; left:12px; z-index:110; background:var(--panel); padding:8px 10px; border-radius:8px; font-size:13px; color:#023047; box-shadow:0 6px 18px rgba(0,0,0,0.12); text-align:left; }
+  #winCountdown { position: fixed; top:12px; right:12px; z-index:110; background:rgba(0,0,0,0.6); color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; display:none; }
+
+  #totalClicks { font-weight:700; font-size:2rem; color:#023047; text-shadow:0 1px 0 rgba(255,255,255,0.6); margin-bottom:12px; z-index:105; text-align:center; }
+  #fish { width:220px; height:220px; --scale:1; animation:pulse 1800ms infinite ease-in-out; transform-origin:center; z-index:105; display:flex; align-items:center; justify-content:center; }
+  #fish-inner{ width:100%; height:100%; background:url('fishyclicker.png') no-repeat center/contain; transition:transform 120ms ease; will-change:transform; pointer-events:auto; }
+
+  @keyframes pulse { 0%{ transform: scale(var(--scale,1)); } 50%{ transform: scale(calc(var(--scale,1) * 1.06)); } 100%{ transform: scale(var(--scale,1)); } }
+
+  #bottomBar { position:fixed; right:18px; bottom:18px; z-index:115; }
+  #resetBtn{ font-size:1.9rem; background:none; border:none; cursor:pointer; padding:8px; }
+
+  #dialog{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; padding:20px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.25); display:none; z-index:150; width:300px; text-align:center; }
+  #dialog .buttons{display:flex;gap:8px;justify-content:center;margin-top:8px}
+
+  /* overlay initially behind fish */
+  #winOverlay{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:min(700px,92vw); padding:22px; border-radius:12px; background:linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,255,255,0.94)); box-shadow:0 20px 60px rgba(0,0,0,0.35); display:none; z-index:120; text-align:center; }
+  #winOverlay.hiddenTop{ z-index:120; } 
+  #winOverlay h1{ margin:6px 0; font-size:30px; color:#ff6b00 }
+  #winOverlay .controls{ margin-top:12px; display:flex; gap:10px; justify-content:center; }
+
+  .confetti{ position:fixed; pointer-events:none; z-index:300; will-change:transform,opacity; }
+  .showerFish{ position:fixed; background:url('fishyclicker.png') no-repeat center/contain; pointer-events:none; z-index:310; will-change:left,top,transform,opacity; filter:drop-shadow(0 6px 12px rgba(0,0,0,0.15)); border-radius:6px; }
+
+  @keyframes smallPulse { 0%{ transform:scale(1); } 50%{ transform:scale(1.08); } 100%{ transform:scale(1); } }
+  .showerFish{ animation: smallPulse 1200ms infinite ease-in-out; }
+
+  .condenseTransition { transition: left 640ms ease, top 640ms ease, transform 640ms ease; }
+
+  button:active{ transform:translateY(1px); }
+  .closeX{ position:absolute; right:12px; top:8px; font-size:18px; cursor:pointer; color:#666; }
+
+</style>
+</head>
+<body>
+  <div id="stats">
+    <div>Total Clicking Time: <span id="clickTime">0</span>s</div>
+    <div>Total Played: <span id="playTime">0</span>s</div>
+  </div>
+  <div id="winCountdown">30s</div>
+
+  <div style="display:flex;flex-direction:column;align-items:center;z-index:105;">
+    <div id="totalClicks">Total Clicks: 0</div>
+    <div id="fish" role="button" aria-label="Fishy Clicker">
+      <div id="fish-inner" title="Click the fish"></div>
+    </div>
+  </div>
+
+  <div id="bottomBar"><button id="resetBtn" title="Reset all data">⚠️</button></div>
+
+  <div id="dialog" aria-hidden="true">
+    <p><strong>Are you sure you want to reset all data?</strong></p>
+    <p>Confirm available in <span id="dialogCountdown">5</span>s</p>
+    <div class="buttons">
+      <button id="confirmBtn" disabled>Confirm</button>
+      <button id="cancelBtn">Cancel</button>
+    </div>
+  </div>
+
+  <div id="winOverlay" class="hiddenTop" role="dialog" aria-modal="true">
+    <div class="closeX" id="overlayClose">✕</div>
+    <h1>🎉 Congrats! You beat the game! 🎉</h1>
+    <p>The screen is full. Enjoy the celebration.</p>
+    <div class="controls">
+      <button class="btn btn-restart" id="overlayRestart">Restart</button>
+      <button class="btn btn-close" id="overlayKeep">Close</button>
+    </div>
+  </div>
+
+<script>
+/* W removed. Minimal changes otherwise. */
+const STORAGE_KEY = 'fishyclicker_fullfill_v2';
+let state = { totalClicks:0, totalClickTime:0, accumulatedPlaySeconds:0, isInfinite:false, winStarted:false, winCompleted:false };
+
+let sessionStart = Date.now();
+let clicking = false;
+let playTick = null, clickTick = null;
+
+const SHOWER = { active:false, arr:[], raf:null, spawnedFromTop:0, condensing:false, spawnerIntervalId: null };
+
+const totalClicksEl = document.getElementById('totalClicks');
+const fish = document.getElementById('fish');
+const fishInner = document.getElementById('fish-inner');
+const clickTimeEl = document.getElementById('clickTime');
+const playTimeEl = document.getElementById('playTime');
+const winCountdownEl = document.getElementById('winCountdown');
+const dialog = document.getElementById('dialog');
+const dialogCountdownEl = document.getElementById('dialogCountdown');
+const confirmBtn = document.getElementById('confirmBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const resetBtn = document.getElementById('resetBtn');
+const winOverlay = document.getElementById('winOverlay');
+const overlayRestart = document.getElementById('overlayRestart');
+const overlayKeep = document.getElementById('overlayKeep');
+const overlayClose = document.getElementById('overlayClose');
+
+function loadState(){ try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) Object.assign(state, JSON.parse(raw)); }catch(e){ console.warn(e); } }
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ console.warn(e); } }
+
+/* init */
+loadState();
+sessionStart = Date.now();
+playTick = setInterval(()=>{ updateUI(); saveState(); },1000);
+clickTick = setInterval(()=>{ if(clicking){ state.totalClickTime++; clickTimeEl.textContent = state.totalClickTime; saveState(); } },1000);
+
+/* expose increment for external auto-clickers */
+window.incrementClick = function(){
+  if(state.isInfinite){ updateUI(); return; }
+  state.totalClicks = (state.totalClicks||0) + 1;
+  saveState();
+  const amp = Math.min(2 + state.totalClicks * 0.002, 10);
+  const dir = Math.random()<0.5? -1:1;
+  fishInner.style.transition = 'transform 100ms ease';
+  fishInner.style.transform = `translateX(${dir*amp}px)`;
+  setTimeout(()=> fishInner.style.transform = 'translateX(0)', 120);
+  updateUI();
+};
+
+/* click handlers */
+fish.addEventListener('mousedown', e=>{ if(e.button!==0) return; clicking=true; window.incrementClick(); });
+fish.addEventListener('mouseup', ()=> clicking=false);
+fish.addEventListener('mouseleave', ()=> clicking=false);
+
+/* disable right-click and block keyboard input entirely (W removed) */
+document.addEventListener('contextmenu', e=> e.preventDefault());
+document.addEventListener('keydown', e=>{
+  e.preventDefault(); // block all keyboard input now
+});
+
+/* reset dialog */
+resetBtn.addEventListener('click', ()=>{
+  dialog.style.display='block'; dialog.setAttribute('aria-hidden','false');
+  let c=5; dialogCountdownEl.textContent = c; confirmBtn.disabled = true;
+  const iv = setInterval(()=>{ c--; dialogCountdownEl.textContent=c; if(c<=0){ confirmBtn.disabled=false; clearInterval(iv);} },1000);
+});
+cancelBtn.addEventListener('click', ()=>{ dialog.style.display='none'; dialog.setAttribute('aria-hidden','true'); });
+confirmBtn.addEventListener('click', ()=>{ resetAllData(); dialog.style.display='none'; dialog.setAttribute('aria-hidden','true'); });
+
+/* UI update */
+function getPlayedSeconds(){ return state.accumulatedPlaySeconds + Math.floor((Date.now() - sessionStart)/1000); }
+function updateUI(){
+  totalClicksEl.textContent = 'Total Clicks: ' + (state.isInfinite ? '∞' : (state.totalClicks||0));
+  const base = state.isInfinite ? 1e6 : (state.totalClicks||0);
+  const scale = Math.min(1 + base*0.002, 1.5);
+  fish.style.setProperty('--scale', String(scale));
+  clickTimeEl.textContent = state.totalClickTime;
+  playTimeEl.textContent = getPlayedSeconds();
+}
+
+/* ---------- WIN flow & spawn ---------- */
+
+function beginWinFlow(){
+  if(state.winStarted) return;
+  state.winStarted = true; saveState();
+  spawnWaveFromSides(10, 0.9);
+  setTimeout(()=> {
+    startCelebrationStart();
+    startTopSpawner();
+    if(!SHOWER.raf) SHOWER.raf = requestAnimationFrame(simulateShower);
+  }, 700);
+}
+
+/* unified entrypoint to begin or resume (used on reload) */
+function beginOrResumeWinFlow(){
+  if(!state.winStarted) beginWinFlow();
+  else resumeWinFlow();
+}
+
+/* resume ensures spawner + RAF + celebration start */
+function resumeWinFlow(){
+  startCelebrationStart();
+  startTopSpawner();
+  if(!SHOWER.raf) SHOWER.raf = requestAnimationFrame(simulateShower);
+}
+
+/* spawn from sides */
+function spawnWaveFromSides(num=10, speedMult=1){
+  const w = window.innerWidth, h = window.innerHeight;
+  for(let i=0;i<num;i++){
+    const fromLeft = Math.random()<0.5;
+    const size = 42 + Math.random()*36;
+    const y = 40 + Math.random()*(h-120);
+    const x = fromLeft ? -size - (Math.random()*60) : w + (Math.random()*60);
+    const vx = fromLeft ? (1 + Math.random()*1.8) : -(1 + Math.random()*1.8);
+    const vy = (Math.random()*1 - 0.5);
+    createShowerFish(x, y, vx*speedMult, vy, size);
+  }
+  if(!SHOWER.raf) SHOWER.raf = requestAnimationFrame(simulateShower);
+}
+
+/* top spawner: uses SHOWER.spawnerIntervalId so it can be restarted on reload safely */
+function startTopSpawner(){
+  if(SHOWER.spawnerIntervalId) return;
+  const w = window.innerWidth;
+  const spawnSpeed = 6;
+  const spawnInterval = 140;
+  SHOWER.spawnerIntervalId = setInterval(()=>{
+    for(let i=0;i<spawnSpeed;i++){
+      const x = Math.random() * Math.max(1, (w - 40));
+      const y = - (6 + Math.random()*120);
+      const vx = (Math.random()*2 - 1) * 0.38;
+      const vy = 0.06 + Math.random()*0.38;
+      const size = 34 + Math.random()*48;
+      const obj = createShowerFish(x, y, vx, vy, size);
+      obj.gravity = 0.22 + Math.random()*0.14;
+      SHOWER.spawnedFromTop++;
+    }
+    if(!SHOWER.raf) SHOWER.raf = requestAnimationFrame(simulateShower);
+    if(SHOWER.condensing && SHOWER.spawnerIntervalId){
+      clearInterval(SHOWER.spawnerIntervalId);
+      SHOWER.spawnerIntervalId = null;
+    }
+  }, spawnInterval);
+}
+
+/* create fish object */
+function createShowerFish(x,y,vx,vy,size){
+  const el = document.createElement('div');
+  el.className = 'showerFish';
+  el.style.width = size + 'px';
+  el.style.height = size + 'px';
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.opacity = '1';
+  el.style.transition = '';
+  document.body.appendChild(el);
+  const obj = {
+    el, x, y, vx, vy, r: Math.max(12, size/2), mass: size*0.06 + 1,
+    gravity: 0.22 + Math.random()*0.14, restitution: 0.58 + Math.random()*0.22, bounces:0, size, settled:false
+  };
+  SHOWER.arr.push(obj);
+  return obj;
+}
+
+/* compute grid capacity */
+function computeFullCapacity(){
+  const arr = SHOWER.arr;
+  let avgSize = 44;
+  if(arr.length){
+    avgSize = Math.max(30, Math.round(arr.reduce((s,o)=>s+(o.size||o.r*2),0)/arr.length));
+  }
+  const cell = Math.max(30, Math.round(avgSize * 0.95));
+  const cols = Math.floor(window.innerWidth / cell) || 1;
+  const rows = Math.floor(window.innerHeight / cell) || 1;
+  const capacity = cols * rows;
+  return { capacity, cols, rows, cell, offsetX: Math.max(0, Math.floor((window.innerWidth - cols*cell)/2)), offsetY: Math.max(0, Math.floor((window.innerHeight - rows*cell)/2)) };
+}
+
+/* physics simulation */
+function simulateShower(){
+  const arr = SHOWER.arr;
+  const w = window.innerWidth, h = window.innerHeight;
+  const gx = 0.012;
+
+  for(let i=0;i<arr.length;i++){
+    const o = arr[i];
+    o.vx += gx * (1/o.mass);
+    o.vy += o.gravity * 0.98;
+    o.x += o.vx; o.y += o.vy;
+    if(o.x < 0){ o.x = 0; o.vx = -o.vx * o.restitution; o.vx *= 0.88; }
+    if(o.x + o.r*2 > w){ o.x = w - o.r*2; o.vx = -o.vx * o.restitution; o.vx *= 0.88; }
+    if(o.y + o.r*2 >= h - 6){
+      o.y = h - o.r*2 - 6;
+      if(Math.abs(o.vy) > 0.6){ o.vy = -o.vy * o.restitution; o.vx *= 0.92; } else { o.vy = 0; }
+      o.bounces++;
+    }
+  }
+
+  // collisions
+  for(let i=0;i<arr.length;i++){
+    for(let j=i+1;j<arr.length;j++){
+      const a = arr[i], b = arr[j];
+      const dx = (a.x + a.r) - (b.x + b.r);
+      const dy = (a.y + a.r) - (b.y + b.r);
+      const dist = Math.hypot(dx,dy);
+      const minD = a.r + b.r;
+      if(dist > 0 && dist < minD){
+        const overlap = 0.5 * (minD - dist + 0.01);
+        const nx = dx/dist, ny = dy/dist;
+        a.x += nx * overlap; a.y += ny * overlap;
+        b.x -= nx * overlap; b.y -= ny * overlap;
+        const rvx = a.vx - b.vx, rvy = a.vy - b.vy;
+        const rel = rvx*nx + rvy*ny;
+        if(rel < 0){
+          const e = Math.min(a.restitution, b.restitution);
+          const jimp = -(1+e) * rel / (1/a.mass + 1/b.mass);
+          const ix = jimp*nx, iy = jimp*ny;
+          a.vx += ix / a.mass; a.vy += iy / a.mass;
+          b.vx -= ix / b.mass; b.vy -= iy / b.mass;
+        }
+      }
+    }
+  }
+
+  // update DOM
+  for(const o of arr){
+    o.el.style.left = o.x + 'px';
+    o.el.style.top = o.y + 'px';
+    o.el.style.transform = `rotate(${o.vx*3}deg)`;
+  }
+
+  // detect capacity and condense
+  if(!SHOWER.condensing && arr.length > 40){
+    const grid = computeFullCapacity();
+    if(arr.length >= grid.capacity){
+      SHOWER.condensing = true;
+      if(SHOWER.spawnerIntervalId){ clearInterval(SHOWER.spawnerIntervalId); SHOWER.spawnerIntervalId = null; }
+      condenseFullScreen(grid);
+    }
+  }
+
+  SHOWER.raf = requestAnimationFrame(simulateShower);
+}
+
+/* condense without teleport (force reflow first) */
+function condenseFullScreen(grid){
+  const arr = SHOWER.arr;
+  arr.sort((A,B)=> A.y - B.y || A.x - B.x);
+  const useCount = Math.min(arr.length, grid.capacity);
+  for(let i=0;i<useCount;i++){
+    const o = arr[i];
+    const r = Math.floor(i / grid.cols);
+    const c = i % grid.cols;
+    const targetX = grid.offsetX + c*grid.cell + (grid.cell - o.size)/2;
+    const targetY = grid.offsetY + r*grid.cell + (grid.cell - o.size)/2;
+    o.vx = 0; o.vy = 0; o.gravity = 0;
+    o.el.style.left = o.x + 'px';
+    o.el.style.top = o.y + 'px';
+    void o.el.offsetWidth; // force layout so transition animates
+    o.el.classList.add('condenseTransition');
+    o.x = targetX; o.y = targetY;
+    o.el.style.left = o.x + 'px';
+    o.el.style.top = o.y + 'px';
+    o.el.style.transform = `rotate(0deg)`;
+    (function(obj){ setTimeout(()=>{ try{ obj.el.classList.remove('condenseTransition'); }catch(e){} }, 700); })(o);
+  }
+
+  // show overlay behind fish
+  winOverlay.style.display = 'block';
+  winOverlay.classList.add('hiddenTop');
+
+  state.winCompleted = true;
+  saveState();
+
+  // stop RAF so fish remain static
+  if(SHOWER.raf){ cancelAnimationFrame(SHOWER.raf); SHOWER.raf = null; }
+}
+
+/* confetti + simple procedural sound */
+function generateConfetti(){
+  const colors = ['#ffcc00','#ff4d6d','#66ff66','#66ccff','#a96bff','#ff9f43'];
+  const count = 120;
+  for(let i=0;i<count;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    const size = (Math.random()*12)+6;
+    c.style.width = size+'px'; c.style.height = size+'px';
+    c.style.left = (Math.random()*window.innerWidth)+'px';
+    c.style.top = (-Math.random()*200 - 20) + 'px';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.opacity = (0.7 + Math.random()*0.3);
+    c.style.borderRadius = (Math.random()>0.5? '2px':'50%');
+    document.body.appendChild(c);
+    animateConfetti(c);
+  }
+}
+function animateConfetti(el){
+  const speed = 2 + Math.random()*4;
+  let top = parseFloat(el.style.top), left = parseFloat(el.style.left);
+  const drift = (Math.random()*2 - 1) * 0.8, rotSpeed = (Math.random()*6 - 3);
+  el._rot = Math.random()*360;
+  el._confettiTimer = setInterval(()=>{
+    top += speed; left += Math.sin(top/20)*2 + drift;
+    el._rot += rotSpeed;
+    el.style.top = top+'px'; el.style.left = left+'px'; el.style.transform = `rotate(${el._rot}deg)`;
+    if(top > window.innerHeight + 60){ clearInterval(el._confettiTimer); el.remove(); }
+  },16);
+}
+function playWinSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const freqs = [440,660,880];
+    freqs.forEach((f,i)=>{
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type='sine'; osc.frequency.value = f; g.gain.value = 0; osc.connect(g); g.connect(ctx.destination);
+      osc.start(now + i*0.06);
+      g.gain.setValueAtTime(0, now + i*0.06); g.gain.linearRampToValueAtTime(0.18, now + i*0.06 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + i*0.06 + 1.2);
+      osc.stop(now + i*0.06 + 1.25);
+    });
+  }catch(e){ console.warn('Audio failed', e); }
+}
+function startCelebrationStart(){ generateConfetti(); playWinSound(); }
+
+/* reset & save */
+function resetAllData(){
+  state.accumulatedPlaySeconds = getPlayedSeconds();
+  state = { totalClicks:0, totalClickTime:0, accumulatedPlaySeconds:0, isInfinite:false, winStarted:false, winCompleted:false };
+  sessionStart = Date.now();
+  saveState();
+  document.querySelectorAll('.showerFish, .confetti').forEach(e=>{ try{ e.remove(); }catch(e){} });
+  SHOWER.arr = []; if(SHOWER.raf){ cancelAnimationFrame(SHOWER.raf); SHOWER.raf=null; }
+  if(SHOWER.spawnerIntervalId){ clearInterval(SHOWER.spawnerIntervalId); SHOWER.spawnerIntervalId = null; }
+  winOverlay.style.display='none';
+  winCountdownEl.style.display='none';
+  updateUI();
+}
+window.addEventListener('beforeunload', ()=>{ state.accumulatedPlaySeconds = getPlayedSeconds(); saveState(); });
+
+/* overlay controls */
+overlayKeep.addEventListener('click', ()=> winOverlay.style.display='none');
+overlayClose.addEventListener('click', ()=> winOverlay.style.display='none');
+overlayRestart.addEventListener('click', ()=> { resetAllData(); winOverlay.style.display='none'; });
+
+/* ---------- resume on load if infinite ---------- */
+if(state.isInfinite && !state.winCompleted){
+  setTimeout(()=> beginOrResumeWinFlow(), 220);
+}
+
+/* helpers */
+updateUI();
+function getPlayedSeconds(){ return state.accumulatedPlaySeconds + Math.floor((Date.now() - sessionStart)/1000); }
+
+</script>
+</body>
+</html>

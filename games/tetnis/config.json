@@ -1,0 +1,15 @@
+{
+  "name": "Tetnis",
+  "folder": "tetnis",
+  "icon": "icon.png",
+  "entry": "tetnis.html",
+  "featured": true,
+  "featuredOrder": 4,
+  "description": "A fun blocky game with sharp iron blocks!",
+  "touchInstructions": "Tap or swipe to move and rotate.",
+  "controllerMapping": {
+    "buttons": {},
+    "axes": {}
+  },
+  "touch": true
+}

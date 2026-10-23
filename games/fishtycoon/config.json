@@ -1,0 +1,11 @@
+{
+  "name": "Fish Tycoon",
+  "folder": "fishtycoon",
+  "icon": "fishtycoon.png",
+  "entry": "fishtycoon.html",
+  "featured": true,
+  "featuredOrder": 7,
+  "description": "Get fishing! Stop reading this description and get fishing and see how many fish you can get in this fish tycoon!",
+  "touchInstructions": "Tap buttons",
+  "touch": true
+}
