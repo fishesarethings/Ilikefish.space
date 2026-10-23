@@ -33,7 +33,7 @@
     .cta .rip { position:absolute; border-radius:50%; background: rgba(255,255,255,0.6); width:20px; height:20px; margin-left:-10px; margin-top:-10px; pointer-events:none; animation: ripple .6s ease-out; }
 
     /* Projects view */
-    .projects { max-width: 1100px; margin: 0 auto 40px; padding: 0 18px; }
+    .projects { max-width: 1100px; margin: 0 auto 40px; padding: 80px 18px 0; }
     .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 20px 0 16px; flex-wrap:wrap; gap:10px; }
     .projects-header h2 { margin:0; font-size:1.5rem; }
     .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
@@ -48,9 +48,9 @@
     .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; }
 
     /* Editor */
-    .editor { max-width: 1180px; margin: 0 auto 30px; padding: 0 18px; display:grid; grid-template-columns: 220px 1fr 300px; gap:16px; align-items:start; }
+    .editor { max-width: 1180px; margin: 0 auto 30px; padding: 80px 18px 0; display:grid; grid-template-columns: 220px 1fr 300px; gap:16px; align-items:start; }
     @media (max-width: 1000px) { .editor { grid-template-columns: 1fr; } }
-    .side { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.05); position:sticky; top:78px; }
+    .side { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.05); position:sticky; top:78px; max-height: calc(100vh - 90px); overflow-y: auto; }
     .side h3 { margin:0 0 10px; font-size:.95rem; }
     .menu-item { padding:9px 11px; border-radius:9px; cursor:pointer; font-size:.88rem; font-weight:600; color: var(--muted); transition: all .15s; margin-bottom:4px; }
     .menu-item:hover { background:#f0f3f8; color: var(--ink); }
@@ -88,7 +88,7 @@
     button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
     /* right preview col */
-    .preview-col { position:sticky; top:78px; display:flex; flex-direction:column; gap:14px; }
+    .preview-col { position:sticky; top:78px; max-height: calc(100vh - 90px); overflow-y: auto; display:flex; flex-direction:column; gap:14px; }
     .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
     .gc img { width:100%; height:100%; object-fit:cover; display:block; }
     .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.85rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
@@ -434,9 +434,14 @@
       }
 
       function setSection(name) {
-        document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.sec === name));
+        document.querySelectorAll('.menu-item').forEach(m => {
+          m.classList.toggle('active', m.dataset.sec === name);
+          if (m.dataset.sec === name) { try { m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {} }
+        });
         document.querySelectorAll('.panel-section').forEach(s => s.classList.toggle('active', s.dataset.sec === name));
         if (name === 'review') updateReview();
+        const panel = document.querySelector('.panel');
+        if (panel) panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
       }
 
       function updatePreview() {
