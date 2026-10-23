@@ -38,7 +38,7 @@
     @keyframes burst { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0); opacity:0; } }
 
     /* Projects */
-    .projects { max-width: 1000px; margin: 0 auto 40px; padding: 80px 18px 0; animation: fadeIn .4s ease both; }
+    .projects { max-width: 1000px; margin: 0 auto; padding: 80px 18px 40px; min-height: 100vh; display:flex; flex-direction:column; justify-content:center; animation: fadeIn .4s ease both; }
     .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 16px 0 18px; flex-wrap:wrap; gap:10px; }
     .projects-header h2 { margin:0; font-size:1.5rem; }
     .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:16px; }
@@ -54,7 +54,7 @@
 
     /* Editor */
     .editor { max-width: 1180px; margin: 0 auto 30px; padding: 96px 18px 0; animation: fadeIn .4s ease both; }
-    .editor-grid { display:grid; grid-template-columns: 260px 1fr 320px; gap:18px; align-items:start; }
+    .editor-grid { display:grid; grid-template-columns: 320px 1fr; gap:20px; align-items:start; }
     @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } }
     .col-side { display:flex; flex-direction:column; gap:12px; }
     .tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
@@ -173,7 +173,7 @@
 
       <div class="editor-grid">
         <div class="col-side">
-          <div class="card" style="padding:12px;">
+          <div class="card" style="padding:16px;">
             <div class="gc">
               <img id="pvIcon" src="" alt="" style="display:none">
               <div class="placeholder" id="pvPlaceholder">Icon preview</div>
@@ -285,14 +285,6 @@
           </div>
         </div>
 
-        <div class="col-side">
-          <div class="card" style="padding:12px;">
-            <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
-            <div class="test-frame" id="testFrame2">
-              <div class="test-empty">Upload an entry HTML file to test it here.</div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -437,10 +429,10 @@
           const blob = new Blob([entryContent], { type: 'text/html' });
           const url = URL.createObjectURL(blob);
           $('#testFrame').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
-          $('#testFrame2').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+          var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
         } else {
           $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
-          $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
         showView('editor');
@@ -463,7 +455,7 @@
         $('#entryName').textContent = 'No file selected';
         $('#extraNames').textContent = 'No files selected';
         $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
-        $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         updatePreview();
       }
 
@@ -605,7 +597,7 @@
         entryObjectUrl = null;
         const frameHtml = f ? '' : '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         $('#testFrame').innerHTML = frameHtml || $('#testFrame').innerHTML;
-        $('#testFrame2').innerHTML = frameHtml || $('#testFrame2').innerHTML;
+        var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = frameHtml || _tf2.innerHTML;
         if (f) {
           const r = new FileReader();
           r.onload = () => {
@@ -613,12 +605,12 @@
             const blob = new Blob([entryContent], { type: 'text/html' });
             entryObjectUrl = URL.createObjectURL(blob);
             $('#testFrame').innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
-            $('#testFrame2').innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+            var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
           };
           r.readAsText(f);
         } else {
           $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
-          $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
       });
