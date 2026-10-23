@@ -64,7 +64,7 @@
     .tab.locked { opacity:.4; cursor:not-allowed; }
     .tab.done { background:#e6f0ff; color: var(--accent); }
 
-    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:22px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:22px; box-shadow:0 6px 18px rgba(0,0,0,0.05); min-height: 360px; }
     .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .form-grid .row { margin-bottom:10px; }
     .panel-section { display:none; animation: fadeIn .3s ease; }
@@ -272,12 +272,6 @@
             <div class="row">
               <label>Review your submission</label>
               <div class="meta" id="review" style="background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #eef2f7;"></div>
-            </div>
-            <div class="row">
-              <label>Live test</label>
-              <div class="test-frame" id="testFrame3" style="height:200px;">
-                <div class="test-empty">Upload an entry HTML file to test it here.</div>
-              </div>
             </div>
             <div class="actions">
               <button type="button" id="prevBtn3">← Back</button>
@@ -562,12 +556,14 @@
       function updateReview() {
         const cfg = buildConfig();
         $('#review').innerHTML =
-          '<div><b>Name:</b> ' + escapeHtml(cfg.name || '—') + '</div>' +
-          '<div><b>Slug:</b> ' + escapeHtml(cfg.folder || '—') + '</div>' +
-          '<div><b>Entry:</b> ' + escapeHtml(cfg.entry) + '</div>' +
-          '<div><b>Touch:</b> ' + cfg.touch + '</div>' +
-          '<div><b>Files:</b> ' + (iconDataUrl ? 'icon.png, ' : '') + (entryFileName || '') + (extraFileNames.length ? ', ' + extraFileNames.join(', ') : '') + '</div>' +
-          '<div><b>Description:</b> ' + escapeHtml(cfg.description || '—') + '</div>';
+          '<div style="display:grid; grid-template-columns: auto 1fr; gap:6px 12px; align-items:baseline;">' +
+          '<b>Name</b><span>' + escapeHtml(cfg.name || '—') + '</span>' +
+          '<b>Slug</b><span>' + escapeHtml(cfg.folder || '—') + '</span>' +
+          '<b>Entry</b><span>' + escapeHtml(cfg.entry) + '</span>' +
+          '<b>Touch</b><span>' + cfg.touch + '</span>' +
+          '<b>Files</b><span>' + (iconDataUrl ? 'icon.png, ' : '') + (entryFileName || '') + (extraFileNames.length ? ', ' + extraFileNames.join(', ') : '') + '</span>' +
+          '<b>Description</b><span>' + escapeHtml(cfg.description || '—') + '</span>' +
+          '</div>';
       }
 
       ['#name', '#slug', '#touch'].forEach(sel => {
