@@ -34,15 +34,21 @@
     .cta:hover::before { opacity:1; }
     .cta:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 40px rgba(0,122,255,0.5); }
     .cta:active { transform: scale(.95); }
-    .cta .particle { position:absolute; pointer-events:none; animation: burst .85s ease-out forwards; }
+    .particle { position:fixed; pointer-events:none; z-index:9998; animation: burst .85s ease-out forwards; }
     @keyframes burst { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0); opacity:0; } }
+    .cta.launching { animation:none; pointer-events:none; transform: scale(.86); opacity:0; transition: transform .3s ease, opacity .3s ease; }
+    .landing.out h1, .landing.out .sub, .landing.out .cta { animation:none; }
+    .landing.out h1, .landing.out .sub { opacity:0; transform: translateY(-16px); }
+    .landing h1, .landing .sub { transition: opacity .4s ease, transform .4s ease; }
+    .morph { position:fixed; z-index:9000; background:#007aff; border-radius:999px; box-shadow:0 24px 70px rgba(0,122,255,.35); pointer-events:none; will-change:left,top,width,height,opacity,background-color; }
 
     /* Projects */
-    .projects { max-width: 1000px; margin: 0 auto; padding: 80px 18px 40px; min-height: 100vh; display:flex; flex-direction:column; justify-content:center; animation: fadeIn .4s ease both; }
-    .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 16px 0 18px; flex-wrap:wrap; gap:10px; }
+    .projects { max-width: 1000px; margin: 0 auto; padding: 80px 18px 40px; min-height: 100vh; display:flex; flex-direction:column; justify-content:center; animation: menuIn .6s cubic-bezier(.22,.8,.24,1) both; }
+    @keyframes menuIn { from { opacity:0; transform: translateY(14px) scale(.985); } to { opacity:1; transform:none; } }
+    .projects-header { display:flex; align-items:center; justify-content:center; text-align:center; margin: 16px 0 18px; flex-wrap:wrap; gap:10px; }
     .projects-header h2 { margin:0; font-size:1.5rem; }
-    .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:16px; }
-    .proj-card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); cursor:pointer; transition: transform .18s ease, box-shadow .2s ease; animation: fadeInUp .4s ease both; position:relative; }
+    .proj-grid { display:flex; flex-wrap:wrap; justify-content:center; gap:16px; }
+    .proj-card { flex: 0 1 280px; background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); cursor:pointer; transition: transform .18s ease, box-shadow .2s ease; animation: fadeInUp .4s ease both; position:relative; }
     .proj-card:hover { transform: translateY(-5px); box-shadow:0 14px 30px rgba(0,0,0,0.1); }
     .proj-card .pname { font-weight:700; font-size:1.05rem; margin-bottom:4px; }
     .proj-card .pslug { font-size:.8rem; color: var(--muted); }
@@ -94,6 +100,8 @@
     button:active { transform: translateY(0); }
     button.primary { background: var(--accent); color:#fff; border-color: var(--accent); }
     button.primary:hover { background:#0066d6; }
+    button.primary.send { background: linear-gradient(135deg, var(--accent), #4aa3ff); border:0; box-shadow: 0 8px 22px rgba(0,122,255,.38); }
+    button.primary.send:hover { background: linear-gradient(135deg, #0066d6, #2f93ff); box-shadow: 0 10px 28px rgba(0,122,255,.5); }
     button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
     /* preview + test below panel, centered */
@@ -155,7 +163,6 @@
     <div class="projects">
       <div class="projects-header">
         <h2>Your projects</h2>
-        <button class="primary" id="newProjBtn">+ New project</button>
       </div>
       <div class="proj-grid" id="projGrid"></div>
     </div>
@@ -274,10 +281,10 @@
             </div>
             <div class="actions">
               <button type="button" id="prevBtn3">← Back</button>
-              <button class="primary" type="button" id="saveBtn">Save project</button>
+              <button type="button" id="saveBtn">Save project</button>
               <button type="button" id="downloadZipBtn">Download zip</button>
               <button type="button" id="downloadBtn">config.json</button>
-              <button type="button" id="sendBtn">Send request</button>
+              <button class="primary send" type="button" id="sendBtn">Send request</button>
             </div>
             <div class="status" id="status"></div>
             <div class="note">All required files (icon + entry HTML) must be provided. Send request opens a GitHub issue (no email).</div>
@@ -309,7 +316,6 @@
       };
 
       const PROJECTS_KEY = 'ilf_gm_projects';
-      const VISITED_KEY = 'ilf_gm_visited';
 
       let iconDataUrl = '';
       let entryFileName = '';
@@ -830,22 +836,44 @@
       });
 
       // Landing
-      $('#startBtn').addEventListener('click', (e) => {
-        const btn = e.currentTarget;
-        const rect = btn.getBoundingClientRect();
+      let starting = false;
+      cta.addEventListener('click', (e) => {
+        if (starting) return;
+        starting = true;
+        cta.disabled = true;
+        const rect = cta.getBoundingClientRect();
+        const cx = e.clientX || (rect.left + rect.width / 2);
+        const cy = e.clientY || (rect.top + rect.height / 2);
         const colors = ['#ff7a00','#ff4d6d','#4aa3ff','#007aff','#ffd166','#06d6a0','#ffffff'];
-        // flash overlay
+        const landing = document.querySelector('.landing');
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const finish = () => {
+          starting = false;
+          cta.disabled = false;
+          cta.classList.remove('launching');
+          landing.classList.remove('out');
+        };
+
+        if (reduce) {
+          renderProjects();
+          showView('projects');
+          finish();
+          return;
+        }
+
         const flash = document.createElement('div');
         flash.className = 'flash';
-        flash.style.left = (rect.left + rect.width/2) + 'px';
-        flash.style.top = (rect.top + rect.height/2) + 'px';
+        flash.style.left = cx + 'px';
+        flash.style.top = cy + 'px';
         document.body.appendChild(flash);
         setTimeout(() => flash.remove(), 900);
-        for (let i = 0; i < 22; i++) {
+
+        for (let i = 0; i < 26; i++) {
           const p = document.createElement('span');
           p.className = 'particle';
-          const angle = (i / 40) * Math.PI * 2 + Math.random() * 0.4;
-          const dist = 120 + Math.random() * 180;
+          const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.35;
+          const dist = 90 + Math.random() * 190;
           p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
           p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
           p.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
@@ -854,28 +882,48 @@
           p.style.width = sz + 'px';
           p.style.height = sz + 'px';
           p.style.borderRadius = '1px';
-          p.style.left = (e.clientX - rect.left - sz/2) + 'px';
-          p.style.top = (e.clientY - rect.top - sz/2) + 'px';
-          btn.appendChild(p);
+          p.style.left = (cx - sz / 2) + 'px';
+          p.style.top = (cy - sz / 2) + 'px';
+          document.body.appendChild(p);
           setTimeout(() => p.remove(), 900);
         }
-        btn.style.transition = 'transform .4s ease, opacity .4s ease';
-        btn.style.transform = 'scale(0)';
-        btn.style.opacity = '0';
-        const visited = localStorage.getItem(VISITED_KEY) === '1';
+
+        // The button stretches into the sheet that becomes the projects menu.
+        const targetW = Math.min(window.innerWidth - 48, 980);
+        const targetH = Math.min(window.innerHeight - 110, 640);
+        const targetLeft = (window.innerWidth - targetW) / 2;
+        const targetTop = (window.innerHeight - targetH) / 2;
+        const morph = document.createElement('div');
+        morph.className = 'morph';
+        morph.style.left = rect.left + 'px';
+        morph.style.top = rect.top + 'px';
+        morph.style.width = rect.width + 'px';
+        morph.style.height = rect.height + 'px';
+        document.body.appendChild(morph);
+
+        cta.classList.add('launching');
+        landing.classList.add('out');
+
+        morph.animate([
+          { left: rect.left + 'px', top: rect.top + 'px', width: rect.width + 'px', height: rect.height + 'px', borderRadius: '999px', backgroundColor: '#007aff' },
+          { left: targetLeft + 'px', top: targetTop + 'px', width: targetW + 'px', height: targetH + 'px', borderRadius: '26px', backgroundColor: '#007aff' }
+        ], { duration: 600, easing: 'cubic-bezier(.25,.6,.25,1)', fill: 'forwards' });
+
         setTimeout(() => {
-          if (!visited) {
-            localStorage.setItem(VISITED_KEY, '1');
-            newProject();
-          } else {
-            renderProjects();
-            showView('projects');
-          }
-        }, 500);
+          renderProjects();
+          showView('projects');
+          window.scrollTo(0, 0);
+          morph.animate([
+            { backgroundColor: '#007aff' },
+            { backgroundColor: '#ffffff' }
+          ], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+          const fade = morph.animate([
+            { opacity: 1 },
+            { opacity: 0 }
+          ], { duration: 340, delay: 160, easing: 'ease', fill: 'forwards' });
+          fade.onfinish = () => { morph.remove(); finish(); };
+        }, 600);
       });
-
-      $('#newProjBtn').addEventListener('click', () => newProject());
-
       // restore
       try {
         const d = localStorage.getItem('ilf_game_draft');
