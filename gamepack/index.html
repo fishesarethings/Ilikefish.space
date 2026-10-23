@@ -38,7 +38,7 @@
     @keyframes burst { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity:1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0); opacity:0; } }
 
     /* Projects */
-    .projects { max-width: 1000px; margin: 0 auto 40px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
+    .projects { max-width: 1000px; margin: 0 auto 40px; padding: 80px 18px 0; animation: fadeIn .4s ease both; }
     .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 16px 0 18px; flex-wrap:wrap; gap:10px; }
     .projects-header h2 { margin:0; font-size:1.5rem; }
     .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:16px; }
@@ -53,8 +53,8 @@
     .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; transform: translateY(-3px); }
 
     /* Editor */
-    .editor { max-width: 1100px; margin: 0 auto 30px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
-    .editor-grid { display:grid; grid-template-columns: 170px 1fr 230px; gap:12px; align-items:start; }
+    .editor { max-width: 1100px; margin: 0 auto 30px; padding: 80px 18px 0; animation: fadeIn .4s ease both; }
+    .editor-grid { display:grid; grid-template-columns: 150px 1fr 190px; gap:14px; align-items:start; }
     @media (max-width: 900px) { .editor-grid { grid-template-columns: 1fr; } }
     .col-side { display:flex; flex-direction:column; gap:12px; }
     .tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
@@ -64,7 +64,7 @@
     .tab.locked { opacity:.4; cursor:not-allowed; }
     .tab.done { background:#e6f0ff; color: var(--accent); }
 
-    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:22px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
     .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .form-grid .row { margin-bottom:10px; }
     .panel-section { display:none; animation: fadeIn .3s ease; }
@@ -72,7 +72,7 @@
 
     .row { margin-bottom:12px; }
     label { display:block; font-weight:600; margin-bottom:5px; font-size:.88rem; }
-    input[type="text"], textarea { width:100%; box-sizing:border-box; padding:9px 11px; border:1px solid #d6dbe6; border-radius:9px; font:inherit; background:#fff; transition: border-color .15s, box-shadow .15s; font-size:.9rem; }
+    input[type="text"], textarea { width:100%; box-sizing:border-box; padding:12px 14px; border:1px solid #d6dbe6; border-radius:10px; font:inherit; background:#fff; transition: border-color .15s, box-shadow .15s; font-size:1rem; }
     input[type="text"]:focus, textarea:focus { outline:none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
     textarea { min-height:70px; resize:vertical; }
     .hint { font-size:.74rem; color: var(--muted); margin-top:3px; }
@@ -190,8 +190,7 @@
 
         <div class="panel">
         <div class="panel-section active" data-sec="details">
-          <div class="form-grid">
-            <div class="row">
+          <div class="row">
               <label for="name">Game name</label>
               <input type="text" id="name" placeholder="My Awesome Game">
               <div class="err" id="err-name">Name is required.</div>
@@ -207,8 +206,7 @@
             <label for="description">Description</label>
             <textarea id="description" placeholder="Short summary."></textarea>
           </div>
-          <div class="form-grid">
-            <div class="row">
+          <div class="row">
               <label for="touchInstructions">Touch instructions</label>
               <input type="text" id="touchInstructions" placeholder="Tap to play.">
             </div>
@@ -218,7 +216,6 @@
                 <span>Touch devices</span>
               </div>
             </div>
-          </div>
           <div class="actions">
             <button class="primary" type="button" id="nextBtn">Next →</button>
           </div>
