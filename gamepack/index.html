@@ -270,8 +270,14 @@
 
           <div class="panel-section" data-sec="review">
             <div class="row">
-              <label>Review</label>
-              <div class="meta" id="review"></div>
+              <label>Review your submission</label>
+              <div class="meta" id="review" style="background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #eef2f7;"></div>
+            </div>
+            <div class="row">
+              <label>Live test</label>
+              <div class="test-frame" id="testFrame3" style="height:200px;">
+                <div class="test-empty">Upload an entry HTML file to test it here.</div>
+              </div>
             </div>
             <div class="actions">
               <button type="button" id="prevBtn3">← Back</button>
@@ -430,9 +436,11 @@
           const url = URL.createObjectURL(blob);
           $('#testFrame').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
           var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+          var _tf3 = $('#testFrame3'); if (_tf3) _tf3.innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
         } else {
           $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
           var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          var _tf3 = $('#testFrame3'); if (_tf3) _tf3.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
         showView('editor');
@@ -598,6 +606,7 @@
         const frameHtml = f ? '' : '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         $('#testFrame').innerHTML = frameHtml || $('#testFrame').innerHTML;
         var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = frameHtml || _tf2.innerHTML;
+        var _tf3 = $('#testFrame3'); if (_tf3) _tf3.innerHTML = frameHtml || _tf3.innerHTML;
         if (f) {
           const r = new FileReader();
           r.onload = () => {
@@ -606,11 +615,13 @@
             entryObjectUrl = URL.createObjectURL(blob);
             $('#testFrame').innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
             var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+            var _tf3 = $('#testFrame3'); if (_tf3) _tf3.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
           };
           r.readAsText(f);
         } else {
           $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
           var _tf2 = $('#testFrame2'); if (_tf2) _tf2.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          var _tf3 = $('#testFrame3'); if (_tf3) _tf3.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
       });
