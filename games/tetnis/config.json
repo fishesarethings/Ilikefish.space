@@ -10,5 +10,6 @@
   "controllerMapping": {
     "buttons": {},
     "axes": {}
-  }
+  },
+  "touch": true
 }

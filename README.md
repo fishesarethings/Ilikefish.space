@@ -68,6 +68,7 @@ Example `config.json` (required fields):
   "entry": "<slug>.html",
   "description": "A short, 1–2 sentence summary of the game shown in the game loader.",
   "touchInstructions": "Tap or click to play.",
+  "touch": true,
   "controllerMapping": { "buttons": {}, "axes": {} }
 }
 ```
@@ -94,7 +95,7 @@ Example `config.json` (required fields):
 
 ### Game Discovery
 
-* `games-list.js` fetches `/games/index.json` → each `config.json` → renders cards in Featured & All sections. The loader reads `name`, `description`, `icon`, `entry` and `touchInstructions` from each `config.json`.
+* `games-list.js` fetches `/games/index.json` → each `config.json` → renders cards in Featured & All sections. The loader reads `name`, `description`, `icon`, `entry`, `touchInstructions` and `touch` from each `config.json`. Games with `"touch": false` (or missing) are hidden on touch-primary devices (phones/tablets); all games are shown on desktops.
 
 ### Server Stats
 

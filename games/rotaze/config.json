@@ -1,10 +1,11 @@
 {
-  "name":"Rotaze",
-  "folder":"rotaze",
-  "icon":"icon.png",
-  "entry":"rotaze.html",
+  "name": "Rotaze",
+  "folder": "rotaze",
+  "icon": "icon.png",
+  "entry": "rotaze.html",
   "featured": true,
   "featuredOrder": 1,
   "description": "Difficult but fun rotating maze game. Fun and a good challenge!",
-  "touchInstructions":"Tap to play."
+  "touchInstructions": "Tap to play.",
+  "touch": true
 }

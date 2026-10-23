@@ -331,11 +331,11 @@
       currentModalState = 'preparing';
       els.confirmBtn.disabled = true;
       runStepCountdown(3, 'Step 1: preparing update', els, () => {
-        // step1 complete -> present final confirmation (or auto proceed)
+        // step1 complete -> auto proceed to final step
         currentModalState = 'idle';
-        els.message.innerHTML = `Final confirmation required. This will reload the site to apply the update. You may cancel.`;
-        els.confirmBtn.disabled = false;
-        // ensure confirm's click starts final step
+        els.message.innerHTML = `Finalizing update. This will reload the site to apply the update.`;
+        els.confirmBtn.disabled = true;
+        setTimeout(() => { startFinalStep(); }, 400);
       });
     };
 
@@ -370,19 +370,9 @@
     els.confirmBtn.__ilf_handler = function (ev) {
       ev.preventDefault();
       // clicking when idle -> run step1
-      if (currentModalState === 'idle') {
-        startStep1();
-        // after step1 completes the user must click again to run final step; wait for that click
-        // attach a one-time listener to confirm to trigger final step once
-        const onceFinal = function onceFinalFn(e2) {
-          e2.preventDefault();
-          startFinalStep();
-          // remove this onceFinal listener
-          if (els.confirmBtn) els.confirmBtn.removeEventListener('click', onceFinalFn);
-        };
-        // Use setTimeout to attach after the immediate click to avoid re-triggering
-        setTimeout(() => { if (els.confirmBtn) els.confirmBtn.addEventListener('click', onceFinal); }, 1200);
-      } else if (currentModalState === 'preparing') {
+       if (currentModalState === 'idle') {
+         startStep1();
+       } else if (currentModalState === 'preparing') {
         // prevent spamming
       } else if (currentModalState === 'finalizing') {
         // already finalizing

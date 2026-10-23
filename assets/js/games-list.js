@@ -29,6 +29,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   const featuredGames = [];
 
+  const isTouchDevice = (typeof window !== 'undefined') &&
+    (window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false);
+
   // Load configs one by one, render immediately
   for (const slug of index.folders) {
     console.log(`[games-list] loading config for "${slug}"…`);
@@ -37,11 +40,16 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const game = await resp.json();
 
-      // fallback: ensure folder set
-      game.folder = game.folder || slug;
-      console.log(`[games-list] loaded game config:`, game);
+       // fallback: ensure folder set
+       game.folder = game.folder || slug;
+       console.log(`[games-list] loaded game config:`, game);
 
-      // Add to featured buffer
+       if (isTouchDevice && game.touch !== true) {
+         console.log(`[games-list] skipping non-touch game "${slug}" on touch device`);
+         continue;
+       }
+
+       // Add to featured buffer
       if (game.featured) {
         featuredGames.push(game);
         // Keep featured sorted as we go

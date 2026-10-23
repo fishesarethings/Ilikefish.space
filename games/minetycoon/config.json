@@ -1,7 +1,8 @@
 {
-  "name":"⛏️ Mine Tycoon ⛏️",
-  "folder":"minetycoon",
-  "icon":"icon.png",
-  "entry":"minetycoon.html",
-  "touchInstructions":"Tap to play."
+  "name": "\u26cf\ufe0f Mine Tycoon \u26cf\ufe0f",
+  "folder": "minetycoon",
+  "icon": "icon.png",
+  "entry": "minetycoon.html",
+  "touchInstructions": "Tap to play.",
+  "touch": true
 }

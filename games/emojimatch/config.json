@@ -1,8 +1,9 @@
 {
-  "name":"Emoji Match",
-  "folder":"emojimatch",
-  "icon":"icon.png",
-  "entry":"emojimatch.html",
+  "name": "Emoji Match",
+  "folder": "emojimatch",
+  "icon": "icon.png",
+  "entry": "emojimatch.html",
   "description": "Match the emojies to the topic!",
-  "touchInstructions":"Tap to play."
+  "touchInstructions": "Tap to play.",
+  "touch": true
 }
