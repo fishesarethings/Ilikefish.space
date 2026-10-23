@@ -15,49 +15,48 @@
     nav a { color:#333; text-decoration:none; font-weight:600; transition: color .15s; }
     nav a:hover { color: var(--accent); }
 
-    /* Views */
-    .view { display:none; animation: fadeIn .4s ease both; }
+    .view { display:none; animation: fadeIn .45s ease both; }
     .view.active { display:block; }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-    @keyframes fadeInUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-    @keyframes ripple { 0% { transform: scale(0); opacity:.5; } 100% { transform: scale(2.5); opacity:0; } }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    @keyframes burst { 0% { transform: translate(0,0) scale(1); opacity:1; } 100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; } }
+    @keyframes morphIn { 0% { transform: scale(0.6); opacity:0; filter: blur(8px); } 100% { transform: scale(1); opacity:1; filter: blur(0); } }
 
     /* Landing */
-    .landing { min-height: 88vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 90px 18px 40px; }
-    .landing h1 { font-size: 2.6rem; letter-spacing:-1px; margin:0; animation: fadeInUp .6s ease both; }
-    .landing .sub { color: var(--muted); font-size:1.05rem; max-width:560px; margin:12px auto 30px; animation: fadeInUp .7s ease both; }
-    .cta { position:relative; overflow:hidden; padding:16px 34px; font-size:1.05rem; font-weight:700; border:none; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); color:#fff; cursor:pointer; box-shadow: 0 10px 30px rgba(0,122,255,0.35); transition: transform .15s ease, box-shadow .2s ease; animation: fadeInUp .8s ease both; }
-    .cta:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 36px rgba(0,122,255,0.45); }
-    .cta:active { transform: scale(.97); }
-    .cta .rip { position:absolute; border-radius:50%; background: rgba(255,255,255,0.6); width:20px; height:20px; margin-left:-10px; margin-top:-10px; pointer-events:none; animation: ripple .6s ease-out; }
+    .landing { min-height: 90vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 90px 18px 40px; position:relative; }
+    .landing h1 { font-size: 2.8rem; letter-spacing:-1px; margin:0; animation: fadeInUp .6s ease both; }
+    .landing .sub { color: var(--muted); font-size:1.05rem; max-width:560px; margin:12px auto 34px; animation: fadeInUp .7s ease both; }
+    .cta { position:relative; overflow:visible; padding:17px 40px; font-size:1.08rem; font-weight:700; border:none; border-radius:999px; background: linear-gradient(135deg, var(--accent), #4aa3ff); color:#fff; cursor:pointer; box-shadow: 0 10px 30px rgba(0,122,255,0.35); transition: transform .18s ease, box-shadow .25s ease, background .3s ease, filter .3s ease; animation: fadeInUp .8s ease both; }
+    .cta:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 16px 40px rgba(0,122,255,0.5); background: linear-gradient(135deg, #ff7a00, #ff4d6d); filter: saturate(1.2); }
+    .cta:active { transform: scale(.95); }
+    .cta .particle { position:absolute; width:10px; height:10px; border-radius:50%; pointer-events:none; animation: burst .75s ease-out forwards; }
 
-    /* Projects view */
-    .projects { max-width: 1100px; margin: 0 auto 40px; padding: 80px 18px 0; }
-    .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 20px 0 16px; flex-wrap:wrap; gap:10px; }
+    /* Projects */
+    .projects { max-width: 1000px; margin: 0 auto 40px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
+    .projects-header { display:flex; align-items:center; justify-content:space-between; margin: 16px 0 18px; flex-wrap:wrap; gap:10px; }
     .projects-header h2 { margin:0; font-size:1.5rem; }
-    .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
-    .proj-card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); cursor:pointer; transition: transform .15s ease, box-shadow .2s ease; animation: fadeInUp .4s ease both; position:relative; }
-    .proj-card:hover { transform: translateY(-4px); box-shadow:0 12px 28px rgba(0,0,0,0.1); }
+    .proj-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:16px; }
+    .proj-card { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.05); cursor:pointer; transition: transform .18s ease, box-shadow .2s ease; animation: fadeInUp .4s ease both; position:relative; }
+    .proj-card:hover { transform: translateY(-5px); box-shadow:0 14px 30px rgba(0,0,0,0.1); }
     .proj-card .pname { font-weight:700; font-size:1.05rem; margin-bottom:4px; }
     .proj-card .pslug { font-size:.8rem; color: var(--muted); }
     .proj-card .pdate { font-size:.75rem; color: var(--muted); margin-top:8px; }
-    .proj-card .del { position:absolute; top:10px; right:10px; background:transparent; border:none; color: var(--muted); cursor:pointer; font-size:1rem; padding:2px 6px; }
+    .proj-card .del { position:absolute; top:10px; right:10px; background:transparent; border:none; color: var(--muted); cursor:pointer; font-size:1rem; padding:2px 6px; transition: color .15s; }
     .proj-card .del:hover { color: var(--danger); }
-    .new-proj { display:flex; align-items:center; justify-content:center; min-height:140px; border:2px dashed #c9d3e3; background:transparent; color: var(--muted); font-weight:600; cursor:pointer; transition: all .2s; }
-    .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; }
+    .new-proj { display:flex; align-items:center; justify-content:center; min-height:130px; border:2px dashed #c9d3e3; background:transparent; color: var(--muted); font-weight:600; cursor:pointer; transition: all .2s; border-radius:14px; }
+    .new-proj:hover { border-color: var(--accent); color: var(--accent); background:#f0f6ff; transform: translateY(-3px); }
 
     /* Editor */
-    .editor { max-width: 1180px; margin: 0 auto 30px; padding: 80px 18px 0; display:grid; grid-template-columns: 220px 1fr 300px; gap:16px; align-items:start; }
-    @media (max-width: 1000px) { .editor { grid-template-columns: 1fr; } }
-    .side { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(0,0,0,0.05); position:sticky; top:78px; max-height: calc(100vh - 90px); overflow-y: auto; }
-    .side h3 { margin:0 0 10px; font-size:.95rem; }
-    .menu-item { padding:9px 11px; border-radius:9px; cursor:pointer; font-size:.88rem; font-weight:600; color: var(--muted); transition: all .15s; margin-bottom:4px; }
-    .menu-item:hover { background:#f0f3f8; color: var(--ink); }
-    .menu-item.active { background: var(--accent); color:#fff; }
-    .menu-item:last-child { margin-top:8px; border-top:1px solid #eef2f7; padding-top:12px; }
+    .editor { max-width: 900px; margin: 0 auto 30px; padding: 80px 18px 0; animation: morphIn .5s ease both; }
+    .tabs { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .tab { padding:9px 16px; border-radius:999px; background:#f0f3f8; color: var(--muted); font-weight:600; font-size:.85rem; cursor:pointer; transition: all .2s; border:1px solid transparent; }
+    .tab:hover { background:#e6ecf5; color: var(--ink); }
+    .tab.active { background: var(--accent); color:#fff; box-shadow:0 4px 14px rgba(0,122,255,0.3); }
+    .tab.locked { opacity:.4; cursor:not-allowed; }
+    .tab.done { background:#e6f0ff; color: var(--accent); }
 
-    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:18px; box-shadow:0 6px 18px rgba(0,0,0,0.05); }
+    .panel { background: var(--card); border:1px solid rgba(0,0,0,0.06); border-radius:14px; padding:20px; box-shadow:0 6px 18px rgba(0,0,0,0.05); max-width:640px; margin: 0 auto; }
     .panel-section { display:none; animation: fadeIn .3s ease; }
     .panel-section.active { display:block; }
 
@@ -79,7 +78,7 @@
     .file-list { margin-top:8px; font-size:.8rem; color: var(--muted); }
     .file-list span { display:inline-block; background:#f0f3f8; padding:3px 7px; border-radius:5px; margin:2px 3px 2px 0; }
 
-    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; justify-content:center; }
     button { padding:9px 15px; border-radius:9px; border:1px solid #d6dbe6; background:#fff; cursor:pointer; font-weight:600; transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease; font-size:.88rem; }
     button:hover { transform: translateY(-1px); box-shadow:0 3px 10px rgba(0,0,0,0.08); }
     button:active { transform: translateY(0); }
@@ -87,8 +86,9 @@
     button.primary:hover { background:#0066d6; }
     button:disabled { opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
 
-    /* right preview col */
-    .preview-col { position:sticky; top:78px; max-height: calc(100vh - 90px); overflow-y: auto; display:flex; flex-direction:column; gap:14px; }
+    /* preview + test below panel, centered */
+    .preview-row { max-width:900px; margin: 16px auto 0; display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+    @media (max-width: 720px) { .preview-row { grid-template-columns: 1fr; } }
     .gc { width:100%; aspect-ratio: 1; background:#fff; border-radius:12px; overflow:hidden; border:1px solid #eee; position:relative; box-shadow:0 4px 14px rgba(0,0,0,0.06); }
     .gc img { width:100%; height:100%; object-fit:cover; display:block; }
     .gc .placeholder { display:flex; align-items:center; justify-content:center; height:100%; color: var(--muted); font-size:.85rem; background: linear-gradient(135deg,#eef4ff,#f7f9fc); }
@@ -99,7 +99,7 @@
     .test-frame iframe { width:100%; height:100%; border:0; }
     .test-empty { display:flex; align-items:center; justify-content:center; height:100%; color:#9aa; font-size:.82rem; text-align:center; padding:12px; }
 
-    .status { margin-top:10px; font-size:.85rem; min-height:1.2em; }
+    .status { margin-top:10px; font-size:.85rem; min-height:1.2em; text-align:center; }
     .status.ok { color: var(--ok); }
     .status.bad { color: var(--danger); }
 
@@ -110,11 +110,16 @@
 
     .note { background:#f0f6ff; border:1px solid #d6e4ff; border-radius:9px; padding:10px; font-size:.8rem; color:#0b3b5a; margin-top:12px; line-height:1.35; }
 
-    .explorer { background:#f8fafc; border:1px solid #eef2f7; border-radius:9px; padding:10px; font-size:.8rem; color: var(--muted); max-height:140px; overflow:auto; }
+    .explorer { background:#f8fafc; border:1px solid #eef2f7; border-radius:9px; padding:10px; font-size:.8rem; color: var(--muted); max-height:120px; overflow:auto; }
     .explorer .f { padding:4px 6px; border-radius:6px; }
     .explorer .f:hover { background:#eef2f7; }
 
     footer { text-align:center; color: var(--muted); font-size:.82rem; padding:20px 18px; border-top:1px solid rgba(0,0,0,0.06); margin-top:30px; }
+
+    @media (max-width: 600px) {
+      .landing h1 { font-size:2rem; }
+      .cta { padding:14px 28px; font-size:1rem; }
+    }
   </style>
 </head>
 <body>
@@ -131,9 +136,7 @@
     <div class="landing">
       <h1>Game Maker</h1>
       <p class="sub">Build, preview, test and submit your HTML5 game. Everything stays in your browser until you're ready.</p>
-      <button class="cta" id="startBtn">Get started
-        <span class="rip" style="display:none"></span>
-      </button>
+      <button class="cta" id="startBtn">Get started</button>
     </div>
   </div>
 
@@ -151,17 +154,11 @@
   <!-- Editor -->
   <div class="view" id="view-editor">
     <div class="editor">
-      <div class="side">
-        <h3>Sections</h3>
-        <div class="menu-item active" data-sec="details">Details</div>
-        <div class="menu-item" data-sec="files">Files</div>
-        <div class="menu-item" data-sec="review">Review</div>
-        <div class="menu-item" data-sec="test">Live test</div>
-        <h3 style="margin-top:12px;">Files</h3>
-        <div class="explorer" id="explorer">No files yet.</div>
-        <div class="actions" style="margin-top:10px;">
-          <button id="backToProjects" style="width:100%;">← Projects</button>
-        </div>
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-sec="details">1. Details</div>
+        <div class="tab" data-sec="files">2. Files</div>
+        <div class="tab locked" data-sec="test">3. Live test</div>
+        <div class="tab locked" data-sec="review">4. Review</div>
       </div>
 
       <div class="panel">
@@ -190,6 +187,9 @@
               <input type="checkbox" id="touch" checked>
               <span>Playable on touch devices (phones/tablets)</span>
             </div>
+          </div>
+          <div class="actions">
+            <button class="primary" type="button" id="nextBtn">Next →</button>
           </div>
         </div>
 
@@ -221,21 +221,9 @@
             </div>
             <div class="file-list" id="extraNames">No files selected</div>
           </div>
-        </div>
-
-        <div class="panel-section" data-sec="review">
-          <div class="row">
-            <label>Review your submission</label>
-            <div class="meta" id="review"></div>
-          </div>
           <div class="actions">
-            <button class="primary" type="button" id="saveBtn">Save project</button>
-            <button type="button" id="downloadBtn">Download config.json</button>
-            <button type="button" id="sendBtn">Send request</button>
-          </div>
-          <div class="status" id="status"></div>
-          <div class="note">
-            <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save project" keeps your work. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
+            <button type="button" id="prevBtn">← Back</button>
+            <button class="primary" type="button" id="nextBtn2">Next →</button>
           </div>
         </div>
 
@@ -246,11 +234,33 @@
               <div class="test-empty">Upload an entry HTML file to test it here.</div>
             </div>
           </div>
+          <div class="actions">
+            <button type="button" id="prevBtn2">← Back</button>
+            <button class="primary" type="button" id="nextBtn3">Next →</button>
+          </div>
+        </div>
+
+        <div class="panel-section" data-sec="review">
+          <div class="row">
+            <label>Review your submission</label>
+            <div class="meta" id="review"></div>
+          </div>
+          <div class="actions">
+            <button type="button" id="prevBtn3">← Back</button>
+            <button class="primary" type="button" id="saveBtn">Save project</button>
+            <button type="button" id="downloadZipBtn">Download project (zip)</button>
+            <button type="button" id="downloadBtn">Download config.json</button>
+            <button type="button" id="sendBtn">Send request</button>
+          </div>
+          <div class="status" id="status"></div>
+          <div class="note">
+            <strong>How submission works:</strong> All required files (icon + entry HTML) must be provided. "Save project" keeps your work. "Download project (zip)" bundles everything. "Download config.json" gives metadata. "Send request" opens a GitHub issue (no email shared) for review → accept → appears in library.
+          </div>
         </div>
       </div>
 
-      <div class="preview-col">
-        <div class="card">
+      <div class="preview-row">
+        <div class="card" style="padding:14px;">
           <div class="gc">
             <img id="pvIcon" src="" alt="" style="display:none">
             <div class="placeholder" id="pvPlaceholder">Icon preview</div>
@@ -260,6 +270,13 @@
             <div><b>Slug:</b> <span id="pvSlug">—</span></div>
             <div><b>Touch:</b> <span id="pvTouch">yes</span></div>
             <div><b>Files:</b> <span id="pvFiles">0</span></div>
+          </div>
+          <div class="explorer" id="explorer" style="margin-top:10px;">No files yet.</div>
+        </div>
+        <div class="card" style="padding:14px;">
+          <div style="font-weight:600; margin-bottom:8px; font-size:.9rem;">Live test</div>
+          <div class="test-frame" id="testFrame2">
+            <div class="test-empty">Upload an entry HTML file to test it here.</div>
           </div>
         </div>
       </div>
@@ -288,16 +305,19 @@
 
       const PROJECTS_KEY = 'ilf_gm_projects';
       const VISITED_KEY = 'ilf_gm_visited';
-      const CURRENT_KEY = 'ilf_gm_current';
 
       let iconDataUrl = '';
       let entryFileName = '';
       let entryFileObj = null;
       let entryObjectUrl = null;
+      let entryContent = '';
       let extraFileNames = [];
+      let extraFilesData = [];
       let existingSlugs = new Set();
       let existingNames = new Set();
       let currentProjectId = null;
+      let currentSection = 'details';
+      const sectionOrder = ['details', 'files', 'test', 'review'];
 
       function loadProjects() { try { return JSON.parse(localStorage.getItem(PROJECTS_KEY) || '[]'); } catch (e) { return []; } }
       function saveProjects(p) { localStorage.setItem(PROJECTS_KEY, JSON.stringify(p)); }
@@ -328,13 +348,10 @@
       function buildConfig() {
         const name = $('#name').value.trim();
         const slug = $('#slug').value.trim() || slugify(name);
-        return {
-          name: name, folder: slug, icon: 'icon.png',
-          entry: entryFileName || (slug + '.html'),
+        return { name, folder: slug, icon: 'icon.png', entry: entryFileName || (slug + '.html'),
           description: $('#description').value.trim(),
           touchInstructions: $('#touchInstructions').value.trim() || 'Tap to play.',
-          touch: $('#touch').checked
-        };
+          touch: $('#touch').checked };
       }
 
       function duplicateError(cfg) {
@@ -388,7 +405,6 @@
         const p = projects.find(x => x.id === id);
         if (!p) return;
         currentProjectId = id;
-        // restore
         $('#name').value = p.name || '';
         $('#slug').value = p.slug || '';
         $('#description').value = p.description || '';
@@ -397,17 +413,20 @@
         iconDataUrl = p.iconDataUrl || '';
         entryFileName = p.entryFileName || '';
         extraFileNames = p.extraFileNames || [];
+        extraFilesData = p.extraFilesData || [];
+        entryContent = p.entryContent || '';
         if (iconDataUrl) { $('#iconPreview').src = iconDataUrl; $('#iconPreview').style.display = 'block'; $('#iconName').textContent = 'Restored'; }
         else { $('#iconPreview').style.display = 'none'; $('#iconName').textContent = 'No file selected'; }
         $('#entryName').textContent = entryFileName || 'No file selected';
         $('#extraNames').innerHTML = extraFileNames.length ? extraFileNames.map(n => '<span>' + escapeHtml(n) + '</span>').join('') : 'No files selected';
-        // test frame
-        if (p.entryContent) {
-          const blob = new Blob([p.entryContent], { type: 'text/html' });
+        if (entryContent) {
+          const blob = new Blob([entryContent], { type: 'text/html' });
           const url = URL.createObjectURL(blob);
           $('#testFrame').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+          $('#testFrame2').innerHTML = '<iframe src="' + url + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
         } else {
           $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
         showView('editor');
@@ -416,8 +435,7 @@
 
       function deleteProject(id) {
         if (!confirm('Delete this project?')) return;
-        const projects = loadProjects().filter(p => p.id !== id);
-        saveProjects(projects);
+        saveProjects(loadProjects().filter(p => p.id !== id));
         renderProjects();
         toast('Project deleted', 'ok');
       }
@@ -425,24 +443,84 @@
       function resetEditor() {
         $('#name').value = ''; $('#slug').value = ''; $('#description').value = '';
         $('#touchInstructions').value = ''; $('#touch').checked = true;
-        iconDataUrl = ''; entryFileName = ''; entryFileObj = null; extraFileNames = [];
+        iconDataUrl = ''; entryFileName = ''; entryFileObj = null; entryContent = '';
+        extraFileNames = []; extraFilesData = [];
         $('#iconPreview').style.display = 'none'; $('#iconName').textContent = 'No file selected';
         $('#entryName').textContent = 'No file selected';
         $('#extraNames').textContent = 'No files selected';
         $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         updatePreview();
       }
 
       function setSection(name) {
-        document.querySelectorAll('.menu-item').forEach(m => {
-          m.classList.toggle('active', m.dataset.sec === name);
-          if (m.dataset.sec === name) { try { m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {} }
+        // validation for advancing
+        currentSection = name;
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(t => {
+          const sec = t.dataset.sec;
+          t.classList.toggle('active', sec === name);
+          const idx = sectionOrder.indexOf(sec);
+          const curIdx = sectionOrder.indexOf(name);
+          t.classList.toggle('locked', idx > curIdx + 1);
+          t.classList.toggle('done', idx < curIdx);
         });
         document.querySelectorAll('.panel-section').forEach(s => s.classList.toggle('active', s.dataset.sec === name));
         if (name === 'review') updateReview();
-        const panel = document.querySelector('.panel');
-        if (panel) panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
       }
+
+      function validateSection(name) {
+        if (name === 'details') {
+          const nameV = $('#name').value.trim();
+          const slugV = $('#slug').value.trim() || slugify(nameV);
+          let ok = true;
+          $('#err-name').classList.toggle('show', !nameV);
+          $('#err-slug').classList.toggle('show', !slugV);
+          if (!nameV || !slugV) ok = false;
+          const cfg = buildConfig();
+          const dup = duplicateError(cfg);
+          if (dup) { status(dup, 'bad'); toast(dup, 'bad'); ok = false; }
+          return ok;
+        }
+        if (name === 'files') {
+          if (!hasRequiredFiles()) { status('Upload icon and entry HTML first.', 'bad'); toast('Missing files', 'bad'); return false; }
+          return true;
+        }
+        return true;
+      }
+
+      function nextSection() {
+        const idx = sectionOrder.indexOf(currentSection);
+        if (idx < 0 || idx >= sectionOrder.length - 1) return;
+        const next = sectionOrder[idx + 1];
+        if (!validateSection(currentSection)) return;
+        setSection(next);
+      }
+
+      // Tab clicks
+      document.querySelectorAll('.tab').forEach(t => {
+        t.addEventListener('click', () => {
+          if (t.classList.contains('locked')) return;
+          setSection(t.dataset.sec);
+        });
+      });
+
+      // Next buttons
+      $('#nextBtn').addEventListener('click', nextSection);
+      $('#nextBtn2').addEventListener('click', nextSection);
+      $('#nextBtn3').addEventListener('click', nextSection);
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        const idx = sectionOrder.indexOf(currentSection);
+        if (idx > 0) setSection(sectionOrder[idx - 1]);
+      });
+      document.getElementById('prevBtn2').addEventListener('click', () => {
+        const idx = sectionOrder.indexOf(currentSection);
+        if (idx > 0) setSection(sectionOrder[idx - 1]);
+      });
+      document.getElementById('prevBtn3').addEventListener('click', () => {
+        const idx = sectionOrder.indexOf(currentSection);
+        if (idx > 0) setSection(sectionOrder[idx - 1]);
+      });
 
       function updatePreview() {
         const name = $('#name').value.trim() || 'Game name';
@@ -453,7 +531,6 @@
         $('#pvFiles').textContent = (entryFileName ? 1 : 0) + extraFileNames.length + (iconDataUrl ? 1 : 0);
         if (iconDataUrl) { $('#pvIcon').src = iconDataUrl; $('#pvIcon').style.display = 'block'; $('#pvPlaceholder').style.display = 'none'; }
         else { $('#pvIcon').style.display = 'none'; $('#pvPlaceholder').style.display = 'flex'; }
-        // explorer
         const files = [];
         if (iconDataUrl) files.push('icon.png');
         if (entryFileName) files.push(entryFileName);
@@ -473,36 +550,12 @@
           '<div><b>Description:</b> ' + escapeHtml(cfg.description || '—') + '</div>';
       }
 
-      function buildConfig() {
-        const name = $('#name').value.trim();
-        const slug = $('#slug').value.trim() || slugify(name);
-        return { name, folder: slug, icon: 'icon.png', entry: entryFileName || (slug + '.html'),
-          description: $('#description').value.trim(),
-          touchInstructions: $('#touchInstructions').value.trim() || 'Tap to play.',
-          touch: $('#touch').checked };
-      }
-
-      function duplicateError(cfg) {
-        const slug = String(cfg.folder || '').trim().toLowerCase();
-        const name = String(cfg.name || '').trim().toLowerCase();
-        if (slug && existingSlugs.has(slug)) return 'A game with this slug/folder already exists.';
-        if (name && existingNames.has(name)) return 'A game with this name already exists.';
-        return '';
-      }
-
-      function hasRequiredFiles() { return !!iconDataUrl && !!entryFileName; }
-
-      // menu
-      document.querySelectorAll('.menu-item').forEach(m => m.addEventListener('click', () => setSection(m.dataset.sec)));
-      $('#backToProjects').addEventListener('click', () => { saveCurrentProject(true); showView('projects'); renderProjects(); });
-
-      // inputs
       ['#name', '#slug', '#touch'].forEach(sel => {
         const el = $(sel);
         if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
       });
 
-      // icon
+      // Icon
       const iconDrop = $('#iconDrop'); const iconInput = $('#iconFile');
       iconDrop.addEventListener('click', () => iconInput.click());
       iconDrop.addEventListener('dragover', (e) => { e.preventDefault(); iconDrop.classList.add('drag'); });
@@ -517,7 +570,7 @@
         r.readAsDataURL(f);
       });
 
-      // entry
+      // Entry
       const entryDrop = $('#entryDrop'); const entryInput = $('#entryFile');
       entryDrop.addEventListener('click', () => entryInput.click());
       entryDrop.addEventListener('dragover', (e) => { e.preventDefault(); entryDrop.classList.add('drag'); });
@@ -530,26 +583,27 @@
         $('#entryName').textContent = entryFileName || 'No file selected';
         if (entryObjectUrl) URL.revokeObjectURL(entryObjectUrl);
         entryObjectUrl = null;
-        const frame = $('#testFrame');
+        const frameHtml = f ? '' : '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+        $('#testFrame').innerHTML = frameHtml || $('#testFrame').innerHTML;
+        $('#testFrame2').innerHTML = frameHtml || $('#testFrame2').innerHTML;
         if (f) {
           const r = new FileReader();
           r.onload = () => {
-            const content = r.result;
-            const blob = new Blob([content], { type: 'text/html' });
+            entryContent = r.result;
+            const blob = new Blob([entryContent], { type: 'text/html' });
             entryObjectUrl = URL.createObjectURL(blob);
-            frame.innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
-            // store content for project save
-            window.__entryContent = content;
+            $('#testFrame').innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
+            $('#testFrame2').innerHTML = '<iframe src="' + entryObjectUrl + '" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock"></iframe>';
           };
           r.readAsText(f);
         } else {
-          frame.innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
-          window.__entryContent = '';
+          $('#testFrame').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
+          $('#testFrame2').innerHTML = '<div class="test-empty">Upload an entry HTML file to test it here.</div>';
         }
         updatePreview();
       });
 
-      // extra
+      // Extra
       const extraDrop = $('#extraDrop'); const extraInput = $('#extraFiles');
       extraDrop.addEventListener('click', () => extraInput.click());
       extraDrop.addEventListener('dragover', (e) => { e.preventDefault(); extraDrop.classList.add('drag'); });
@@ -558,6 +612,12 @@
       extraInput.addEventListener('change', (e) => {
         const files = e.target.files ? Array.from(e.target.files) : [];
         extraFileNames = files.map(f => f.name);
+        extraFilesData = [];
+        files.forEach(f => {
+          const r = new FileReader();
+          r.onload = () => { extraFilesData.push({ name: f.name, data: r.result }); };
+          r.readAsDataURL(f);
+        });
         $('#extraNames').innerHTML = extraFileNames.length ? extraFileNames.map(n => '<span>' + escapeHtml(n) + '</span>').join('') : 'No files selected';
         updatePreview();
       });
@@ -573,8 +633,7 @@
           description: $('#description').value.trim(),
           touchInstructions: $('#touchInstructions').value.trim(),
           touch: $('#touch').checked,
-          iconDataUrl, entryFileName, extraFileNames,
-          entryContent: window.__entryContent || '',
+          iconDataUrl, entryFileName, extraFileNames, extraFilesData, entryContent,
           updatedAt: Date.now()
         };
         if (idx >= 0) projects[idx] = { ...projects[idx], ...data };
@@ -583,7 +642,95 @@
         if (!silent) toast('Project saved', 'ok');
       }
 
-      // actions
+      // CRC32 + ZIP
+      function crc32(bytes) {
+        let crc = 0xFFFFFFFF;
+        const table = crc32.table || (crc32.table = (function(){
+          const t = new Uint32Array(256);
+          for (let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c = (c&1)? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[i]=c>>>0; }
+          return t;
+        })());
+        for (let i=0;i<bytes.length;i++) crc = table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+      }
+      function strToBytes(s) { return new TextEncoder().encode(s); }
+      function dataUrlToBytes(url) {
+        const b64 = url.split(',')[1] || '';
+        const bin = atob(b64);
+        const arr = new Uint8Array(bin.length);
+        for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+        return arr;
+      }
+      function createZip(files) {
+        const enc = new TextEncoder();
+        const entries = [];
+        let localOffset = 0;
+        for (const f of files) {
+          const nameBytes = enc.encode(f.name);
+          const data = f.data instanceof Uint8Array ? f.data : new Uint8Array(f.data);
+          const crc = crc32(data);
+          const localHeader = new Uint8Array(30 + nameBytes.length);
+          const lv = new DataView(localHeader.buffer);
+          lv.setUint32(0, 0x04034b50, true);
+          lv.setUint16(4, 20, true);
+          lv.setUint16(6, 0, true);
+          lv.setUint16(8, 0, true);
+          lv.setUint16(10, 0, true);
+          lv.setUint16(12, 0, true);
+          lv.setUint32(14, crc, true);
+          lv.setUint32(18, data.length, true);
+          lv.setUint32(22, data.length, true);
+          lv.setUint16(26, nameBytes.length, true);
+          lv.setUint16(28, 0, true);
+          localHeader.set(nameBytes, 30);
+          entries.push({ nameBytes, data, crc, localOffset, localHeader });
+          localOffset += localHeader.length + data.length;
+        }
+        const parts = [];
+        for (const e of entries) { parts.push(e.localHeader); parts.push(e.data); }
+        const cdParts = [];
+        let cdSize = 0;
+        for (const e of entries) {
+          const cd = new Uint8Array(46 + e.nameBytes.length);
+          const cv = new DataView(cd.buffer);
+          cv.setUint32(0, 0x02014b50, true);
+          cv.setUint16(4, 20, true);
+          cv.setUint16(6, 20, true);
+          cv.setUint16(8, 0, true);
+          cv.setUint16(10, 0, true);
+          cv.setUint16(12, 0, true);
+          cv.setUint16(14, 0, true);
+          cv.setUint32(16, e.crc, true);
+          cv.setUint32(20, e.data.length, true);
+          cv.setUint32(24, e.data.length, true);
+          cv.setUint16(28, e.nameBytes.length, true);
+          cv.setUint16(30, 0, true);
+          cv.setUint16(32, 0, true);
+          cv.setUint16(34, 0, true);
+          cv.setUint16(36, 0, true);
+          cv.setUint32(38, 0, true);
+          cv.setUint32(42, e.localOffset, true);
+          cd.set(e.nameBytes, 46);
+          cdParts.push(cd);
+          cdSize += cd.length;
+        }
+        const cdStart = localOffset;
+        for (const c of cdParts) parts.push(c);
+        const eocd = new Uint8Array(22);
+        const ev = new DataView(eocd.buffer);
+        ev.setUint32(0, 0x06054b50, true);
+        ev.setUint16(4, 0, true);
+        ev.setUint16(6, 0, true);
+        ev.setUint16(8, entries.length, true);
+        ev.setUint16(10, entries.length, true);
+        ev.setUint32(12, cdSize, true);
+        ev.setUint32(16, cdStart, true);
+        ev.setUint16(20, 0, true);
+        parts.push(eocd);
+        return new Blob(parts, { type: 'application/zip' });
+      }
+
+      // Actions
       $('#saveBtn').addEventListener('click', () => {
         const cfg = buildConfig();
         const err = duplicateError(cfg);
@@ -605,6 +752,29 @@
         URL.revokeObjectURL(url);
         status('config.json downloaded.', 'ok');
         toast('Downloaded config.json', 'ok');
+      });
+
+      $('#downloadZipBtn').addEventListener('click', () => {
+        const cfg = buildConfig();
+        const err = duplicateError(cfg);
+        if (err) { status(err, 'bad'); toast(err, 'bad'); return; }
+        if (!hasRequiredFiles()) { status('Upload icon and entry HTML first.', 'bad'); toast('Missing files', 'bad'); return; }
+        const files = [];
+        files.push({ name: 'config.json', data: strToBytes(JSON.stringify(cfg, null, 2)) });
+        if (iconDataUrl) files.push({ name: 'icon.png', data: dataUrlToBytes(iconDataUrl) });
+        if (entryContent) files.push({ name: cfg.entry || 'game.html', data: strToBytes(entryContent) });
+        extraFilesData.forEach(f => {
+          // f.data is data URL
+          try { files.push({ name: f.name, data: dataUrlToBytes(f.data) }); } catch (e) {}
+        });
+        const blob = createZip(files);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = (cfg.folder || 'project') + '.zip';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        status('Project zip downloaded.', 'ok');
+        toast('Downloaded zip', 'ok');
       });
 
       $('#sendBtn').addEventListener('click', () => {
@@ -633,34 +803,48 @@
         toast('Submission opened', 'ok');
       });
 
-      // Landing button
+      // Landing
       $('#startBtn').addEventListener('click', (e) => {
         const btn = e.currentTarget;
-        const rip = document.createElement('span');
-        rip.className = 'rip';
         const rect = btn.getBoundingClientRect();
-        rip.style.left = (e.clientX - rect.left) + 'px';
-        rip.style.top = (e.clientY - rect.top) + 'px';
-        btn.appendChild(rip);
-        setTimeout(() => rip.remove(), 600);
-        const visited = localStorage.getItem(VISITED_KEY) === '1';
-        if (!visited) {
-          localStorage.setItem(VISITED_KEY, '1');
-          newProject();
-        } else {
-          renderProjects();
-          showView('projects');
+        const colors = ['#ff7a00','#ff4d6d','#4aa3ff','#007aff','#ffd166','#06d6a0'];
+        for (let i = 0; i < 28; i++) {
+          const p = document.createElement('span');
+          p.className = 'particle';
+          const angle = (i / 28) * Math.PI * 2;
+          const dist = 60 + Math.random() * 80;
+          p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+          p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+          p.style.background = colors[i % colors.length];
+          p.style.left = (e.clientX - rect.left + rect.width/2 - 5) + 'px';
+          p.style.top = (e.clientY - rect.top + rect.height/2 - 5) + 'px';
+          btn.appendChild(p);
+          setTimeout(() => p.remove(), 800);
         }
+        btn.style.transform = 'scale(0.9)';
+        setTimeout(() => { btn.style.transform = ''; }, 200);
+        const visited = localStorage.getItem(VISITED_KEY) === '1';
+        setTimeout(() => {
+          if (!visited) {
+            localStorage.setItem(VISITED_KEY, '1');
+            newProject();
+          } else {
+            renderProjects();
+            showView('projects');
+          }
+        }, 500);
       });
 
       $('#newProjBtn').addEventListener('click', () => newProject());
 
-      // restore current project if any
-      const cur = localStorage.getItem(CURRENT_KEY);
-      if (cur) { /* optional auto-open */ }
-
-      // cleanup object urls on unload
-      window.addEventListener('beforeunload', () => { if (entryObjectUrl) URL.revokeObjectURL(entryObjectUrl); });
+      // restore
+      try {
+        const d = localStorage.getItem('ilf_game_draft');
+        if (d) {
+          const cfg = JSON.parse(d);
+          // not auto-loading; projects handle persistence
+        }
+      } catch (e) {}
 
       updatePreview();
     })();
