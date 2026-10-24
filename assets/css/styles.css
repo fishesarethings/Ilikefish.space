@@ -7,7 +7,9 @@ nav {
   position: fixed;
   top: 0;
   width: 100%;
-  background: rgba(255,255,255,0.85);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+  border-bottom: 1px solid rgba(15,23,42,0.07);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 6px 20px rgba(15,23,42,0.06);
   z-index: 1000;
 }
 nav ul {
@@ -62,6 +64,22 @@ nav a {
   background-position: center;
 }
 
+.scroll-track {
+  padding: 0;
+}
+
+.scroll-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
 /* Cards container */
 .cards-container {
   display: flex;
@@ -80,8 +98,12 @@ nav a {
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   padding: 1rem 1rem 1.25rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cards-row::-webkit-scrollbar {
+  display: none;
 }
 
 .cards-row .game-card {
@@ -89,17 +111,17 @@ nav a {
   scroll-snap-align: start;
 }
 
-.cards-row::-webkit-scrollbar {
-  height: 8px;
-}
+@media (max-width: 800px) {
+  .scroll-track {
+    height: auto !important;
+  }
 
-.cards-row::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 10px;
-}
-
-.cards-row::-webkit-scrollbar-track {
-  background: transparent;
+  .scroll-pin {
+    position: static;
+    height: auto;
+    min-height: 0;
+    padding: 2rem 1rem;
+  }
 }
 
 @media (max-width: 600px) {
