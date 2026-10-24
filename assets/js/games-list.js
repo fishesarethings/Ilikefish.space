@@ -102,8 +102,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     recHome.classList.remove('ilf-reveal', 'is-visible');
     delete recHome.dataset.revealReady;
     const picked = window.ILF_RECS
-      ? window.ILF_RECS.recommended(games, 5)
-      : games.slice(0, 5);
+      ? window.ILF_RECS.recommended(games, 8)
+      : games.slice(0, 8);
     recHome.innerHTML = '';
     picked.forEach(game => recHome.append(renderGameCard(game)));
     initRowReveal(recHome);
@@ -163,13 +163,42 @@ window.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('storage', () => refreshPersonalised(true));
 
   // Turn vertical wheel movement into horizontal movement while a game row is
-  // fully in view. Once the row reaches its end, normal page scrolling resumes.
-  // Touch devices keep native swipe + page scrolling.
+  // fully in view. First the row is centred; then it scrolls to its end before
+  // the page is allowed to continue. Touch devices keep native swipe + page scroll.
   if (window.matchMedia && window.matchMedia('(pointer: fine)').matches &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const rowStates = new WeakMap();
+    let centringUntil = 0;
+
+    function animateRow(row, target) {
+      let state = rowStates.get(row);
+      if (!state) {
+        state = { target: row.scrollLeft, frame: 0 };
+        rowStates.set(row, state);
+      }
+      state.target = target;
+      if (state.frame) return;
+
+      function step() {
+        const distance = state.target - row.scrollLeft;
+        if (Math.abs(distance) < 0.8) {
+          row.scrollLeft = state.target;
+          state.frame = 0;
+          return;
+        }
+        row.scrollLeft += distance * 0.24;
+        state.frame = requestAnimationFrame(step);
+      }
+      state.frame = requestAnimationFrame(step);
+    }
+
     window.addEventListener('wheel', event => {
       if (event.ctrlKey || event.metaKey) return;
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      if (performance.now() < centringUntil) {
+        event.preventDefault();
+        return;
+      }
 
       const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
       if (!delta) return;
@@ -177,8 +206,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       const rows = Array.from(document.querySelectorAll('.cards-row')).filter(row => {
         const rect = row.getBoundingClientRect();
         return rect.height > 0 &&
-          rect.top >= -2 &&
-          rect.bottom <= window.innerHeight + 2 &&
+          rect.top >= -4 &&
+          rect.bottom <= window.innerHeight + 4 &&
           row.scrollWidth > row.clientWidth + 2;
       });
       if (!rows.length) return;
@@ -191,13 +220,26 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
 
       const row = rows[0];
+      const rect = row.getBoundingClientRect();
+      const centreOffset = Math.abs((rect.top + rect.height / 2) - window.innerHeight / 2);
+
+      // Bring the menu to the middle of the viewport before taking over scrolling.
+      if (centreOffset > 36) {
+        event.preventDefault();
+        const top = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        centringUntil = performance.now() + 450;
+        return;
+      }
+
       const max = row.scrollWidth - row.clientWidth;
+      const target = Math.max(0, Math.min(max, row.scrollLeft + delta));
       if (delta > 0 && row.scrollLeft < max - 1) {
         event.preventDefault();
-        row.scrollLeft = Math.min(max, row.scrollLeft + delta);
+        animateRow(row, target);
       } else if (delta < 0 && row.scrollLeft > 1) {
         event.preventDefault();
-        row.scrollLeft = Math.max(0, row.scrollLeft + delta);
+        animateRow(row, target);
       }
     }, { passive: false });
   }
