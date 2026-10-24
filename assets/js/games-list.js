@@ -162,16 +162,46 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   window.addEventListener('storage', () => refreshPersonalised(true));
 
-  document.addEventListener('ilf:history-changed', event => {
-    const detail = event.detail || {};
-    if (typeof detail.feedback !== 'number' || !detail.folder) return;
-    const marker = 'folder=' + encodeURIComponent(detail.folder);
-    document.querySelectorAll('.game-card').forEach(card => {
-      if ((card.getAttribute('href') || '').includes(marker)) {
-        paintThumbButtons(card, detail.feedback);
+  // Turn vertical wheel movement into horizontal movement while a game row is
+  // fully in view. Once the row reaches its end, normal page scrolling resumes.
+  // Touch devices keep native swipe + page scrolling.
+  if (window.matchMedia && window.matchMedia('(pointer: fine)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.addEventListener('wheel', event => {
+      if (event.ctrlKey || event.metaKey) return;
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
+      const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      if (!delta) return;
+
+      const rows = Array.from(document.querySelectorAll('.cards-row')).filter(row => {
+        const rect = row.getBoundingClientRect();
+        return rect.height > 0 &&
+          rect.top >= -2 &&
+          rect.bottom <= window.innerHeight + 2 &&
+          row.scrollWidth > row.clientWidth + 2;
+      });
+      if (!rows.length) return;
+
+      rows.sort((a, b) => {
+        const ar = a.getBoundingClientRect();
+        const br = b.getBoundingClientRect();
+        return Math.abs((ar.top + ar.height / 2) - window.innerHeight / 2) -
+          Math.abs((br.top + br.height / 2) - window.innerHeight / 2);
+      });
+
+      const row = rows[0];
+      const max = row.scrollWidth - row.clientWidth;
+      if (delta > 0 && row.scrollLeft < max - 1) {
+        event.preventDefault();
+        row.scrollLeft = Math.min(max, row.scrollLeft + delta);
+      } else if (delta < 0 && row.scrollLeft > 1) {
+        event.preventDefault();
+        row.scrollLeft = Math.max(0, row.scrollLeft + delta);
       }
-    });
-  });
+    }, { passive: false });
+  }
+
 });
 
 function renderGameCard(game) {
@@ -186,19 +216,11 @@ function renderGameCard(game) {
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
 
-  const feedback = window.ILF_RECS ? window.ILF_RECS.feedbackFor(game.folder) : 0;
-
   link.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <div class="card-actions">
-        <button type="button" class="play-btn">Play</button>
-        <div class="thumb-row" aria-label="Tune recommendations">
-          <button type="button" class="thumb-btn" data-thumb="up" aria-label="More games like ${game.name}" title="More like this" aria-pressed="${feedback === 1}">👍</button>
-          <button type="button" class="thumb-btn" data-thumb="down" aria-label="Fewer games like ${game.name}" title="Less like this" aria-pressed="${feedback === -1}">👎</button>
-        </div>
-      </div>
+      <button type="button" class="play-btn">Play</button>
     </div>
   `;
 
@@ -212,36 +234,5 @@ function renderGameCard(game) {
     });
   }
 
-  const up = link.querySelector('[data-thumb="up"]');
-  const down = link.querySelector('[data-thumb="down"]');
-  paintThumbButtons(link, feedback);
-
-  [up, down].forEach(button => {
-    if (!button) return;
-    button.addEventListener('click', (evt) => {
-      evt.preventDefault();
-      evt.stopPropagation();
-      if (!window.ILF_RECS) return;
-      const wanted = button.getAttribute('data-thumb') === 'up' ? 1 : -1;
-      const current = window.ILF_RECS.feedbackFor(game.folder);
-      const next = current === wanted ? 0 : wanted;
-      window.ILF_RECS.recordFeedback(game.folder, next);
-      paintThumbButtons(link, next);
-    });
-  });
-
   return link;
-}
-
-function paintThumbButtons(card, value) {
-  const up = card.querySelector('[data-thumb="up"]');
-  const down = card.querySelector('[data-thumb="down"]');
-  if (up) {
-    up.classList.toggle('is-on', value === 1);
-    up.setAttribute('aria-pressed', String(value === 1));
-  }
-  if (down) {
-    down.classList.toggle('is-on', value === -1);
-    down.setAttribute('aria-pressed', String(value === -1));
-  }
 }

@@ -6,11 +6,11 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=25" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=32" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=25" defer></script>
-  <script src="/assets/js/ads-config.js?v=25" defer></script>
-  <script src="/assets/js/ads.js?v=25" defer></script>
+  <script src="/assets/js/recommendations.js?v=32" defer></script>
+  <script src="/assets/js/ads-config.js?v=32" defer></script>
+  <script src="/assets/js/ads.js?v=32" defer></script>
   <style>
     :root{
       --bg:#f7f8fb;--surface:#fff;--ink:#111827;--muted:#667085;
@@ -18,10 +18,7 @@
       --shadow:0 12px 30px rgba(15,23,42,.07);
     }
     body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,#f7f8fb 260px,#f7f8fb 100%)}
-    .site-header{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 24px;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-    .site-header .brand{display:flex;align-items:center;gap:8px;font-size:1.05rem;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.02em}
-    .site-header .brand img{display:block;width:34px;height:34px;object-fit:contain}
-    .site-header .brand:hover{color:var(--accent-dark)}
+    .site-header{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:18px;padding:12px 24px;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
     .site-header nav{display:flex;align-items:center;gap:22px}
     .site-header nav a{color:#475467;text-decoration:none;font-weight:600;font-size:.95rem}
     .site-header nav a:hover{color:var(--accent)}
@@ -58,9 +55,32 @@
     .thumb-icon-btn.is-on{background:#e8f5e9;border-color:#79c77d}
     #dislikeBtn.is-on{background:#ffebee;border-color:#ef9a9a}
     .thumb-icon-btn:disabled{opacity:.42;cursor:not-allowed}
-    .game-stats{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;margin-top:14px;padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05);color:#475467;font-size:.88rem;font-weight:600}
+    .game-stats{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 14px;width:max-content;max-width:100%;margin:14px auto 0;padding:9px 16px;background:var(--surface);border:1px solid var(--line);border-radius:999px;box-shadow:0 8px 24px rgba(15,23,42,.05);color:#475467;font:600 .88rem/1.35 Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;text-align:center;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+    .game-stats:hover{border-color:#cfe0ff;box-shadow:0 10px 28px rgba(0,122,255,.12)}
+    .game-stats:active{transform:scale(.99)}
     .game-stats[hidden]{display:none}
     .game-stats span:first-child{color:#b45309;font-weight:800}
+    .game-stats-more{color:var(--accent);font-size:1rem;line-height:1}
+    .streak-modal{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(4,8,15,.58)}
+    .streak-modal[hidden]{display:none}
+    .streak-dialog{position:relative;width:100%;max-width:430px;max-height:90vh;overflow:auto;padding:22px;background:#fff;border-radius:20px;box-shadow:0 26px 80px rgba(2,10,24,.32)}
+    .streak-close{position:absolute;top:10px;right:12px;border:0;background:transparent;color:#667085;font-size:1.4rem;line-height:1;cursor:pointer}
+    .streak-title{margin:0;text-align:center;font-size:1.25rem;letter-spacing:-.02em}
+    .streak-game-name{margin:4px 0 16px;text-align:center;color:var(--muted);font-size:.88rem;font-weight:600}
+    .streak-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:6px;color:#98a2b3;font-size:.68rem;font-weight:800;text-align:center;text-transform:uppercase}
+    .streak-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+    .streak-day{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:42px;padding:3px 2px;border:1px solid transparent;border-radius:10px;background:#f6f8fb;color:#667085;font-family:inherit;font-size:.8rem;font-weight:700;line-height:1.1;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+    .streak-day:hover{background:#eef4ff;border-color:#cfe0ff}
+    .streak-day:active{transform:scale(.96)}
+    .streak-day.has-play{background:#fff4e8;border-color:#fed7aa;color:#9a3412}
+    .streak-day.is-today{box-shadow:0 0 0 2px rgba(0,122,255,.35)}
+    .streak-day.is-future{opacity:.35;cursor:default}
+    .streak-day .day-fire{font-size:.8rem;line-height:1}
+    .streak-day .day-num{font-weight:800}
+    .streak-day-detail{min-height:1.3em;margin:14px 0;text-align:center;color:#475467;font-size:.9rem}
+    .streak-share{width:100%;padding:11px 14px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;font-family:inherit;font-size:.92rem;font-weight:800;line-height:1.2;cursor:pointer;box-shadow:0 10px 22px rgba(0,122,255,.2);transition:filter .16s ease,transform .16s ease}
+    .streak-share:hover{filter:brightness(1.05)}
+    .streak-share:active{transform:scale(.99)}
     .options{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;padding:12px 14px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
     .toggle-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#f7f9fc;color:#344054;cursor:pointer;font-size:.88rem;font-weight:600;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,color .16s ease}
     .toggle-btn[aria-pressed="true"]{background:#eef5ff;border-color:#cfe0ff;color:var(--accent-dark)}
@@ -100,8 +120,6 @@
 
     @media (max-width:720px){
       .site-header{padding:9px 14px 6px;gap:4px;flex-wrap:wrap}
-      .site-header .brand{font-size:.98rem}
-      .site-header .brand span{display:none}
       .site-header nav{width:100%;justify-content:center;gap:18px;padding-top:2px}
       .site-header nav a{font-size:.84rem}
       .container{margin:12px auto 28px;padding:0 12px}
@@ -115,7 +133,9 @@
       .desc h2{font-size:1.08rem}
       .options{padding:10px;border-radius:12px}
       .toggle-btn{font-size:.84rem;padding:8px 10px}
-      .game-stats{padding:10px 12px;gap:5px 12px;font-size:.82rem;border-radius:12px}
+      .game-stats{padding:9px 12px;gap:5px 10px;font-size:.8rem;border-radius:14px;width:auto;margin-left:auto;margin-right:auto}
+      .streak-dialog{padding:20px 16px;border-radius:16px}
+      .streak-day{min-height:38px;border-radius:8px;font-size:.74rem}
       .more-games{padding:16px 0 0}
       .more-games h3{font-size:1.15rem}
       .games-grid{gap:10px}
@@ -126,10 +146,6 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/" aria-label="ilikefish.space home">
-      <img src="/assets/img/ilikefish.space_no_bg_resize.png" alt="" width="34" height="34">
-      <span>ilikefish.space</span>
-    </a>
     <nav>
       <a href="/">Home</a>
       <a href="/games">Games</a>
@@ -196,11 +212,12 @@
       </div>
     </div>
 
-    <div class="game-stats" id="gameStats" hidden>
+    <button class="game-stats" id="gameStats" type="button" hidden aria-haspopup="dialog" title="View play calendar">
       <span id="gameStatStreak"></span>
       <span id="gameStatTime"></span>
       <span id="gameStatAvg"></span>
-    </div>
+      <span class="game-stats-more">📅</span>
+    </button>
 
     <section class="desc">
       <h2 id="descTitle">Description</h2>
@@ -249,6 +266,20 @@
     </p>
   </footer>
 
+  <div id="streakModal" class="streak-modal" hidden>
+    <div class="streak-dialog" role="dialog" aria-modal="true" aria-labelledby="streakTitle">
+      <button id="streakClose" class="streak-close" type="button" aria-label="Close play calendar">×</button>
+      <h2 id="streakTitle" class="streak-title">🔥 1-day streak</h2>
+      <p id="streakGameName" class="streak-game-name"></p>
+      <div class="streak-weekdays" aria-hidden="true">
+        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+      </div>
+      <div id="streakCalendar" class="streak-calendar"></div>
+      <p id="streakDayDetail" class="streak-day-detail">Tap a day with a fire to see its play time.</p>
+      <button id="streakShare" class="streak-share" type="button">Share streak</button>
+    </div>
+  </div>
+
   <div id="toast" class="ilf-toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -292,6 +323,13 @@
         const gameStatStreak = document.getElementById('gameStatStreak');
         const gameStatTime = document.getElementById('gameStatTime');
         const gameStatAvg = document.getElementById('gameStatAvg');
+        const streakModal = document.getElementById('streakModal');
+        const streakTitle = document.getElementById('streakTitle');
+        const streakGameName = document.getElementById('streakGameName');
+        const streakCalendar = document.getElementById('streakCalendar');
+        const streakDayDetail = document.getElementById('streakDayDetail');
+        const streakShare = document.getElementById('streakShare');
+        const streakClose = document.getElementById('streakClose');
         const nextBtn = document.getElementById('nextBtn');
 
         function formatDuration(seconds){
@@ -340,6 +378,112 @@
           gameStatAvg.textContent = '~' + formatDuration(average) + ' avg session';
         }
 
+        function localDateKey(date){
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return year + '-' + month + '-' + day;
+        }
+
+        function selectStreakDay(button, date, seconds, played){
+          document.querySelectorAll('.streak-day.is-selected').forEach(el => el.classList.remove('is-selected'));
+          if (button) button.classList.add('is-selected');
+          const label = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+          streakDayDetail.textContent = label + ' · ' +
+            (played ? formatDuration(seconds) + ' played' : 'No playtime recorded');
+        }
+
+        function renderStreakCalendar(folder){
+          if (!streakCalendar || !window.ILF_RECS) return;
+          const calendar = window.ILF_RECS.getGameCalendar(folder);
+          const live = playSession && playSession.active && playSession.folder === folder
+            ? (Date.now() - playSession.started) / 1000
+            : 0;
+
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const start = new Date(today);
+          start.setDate(today.getDate() - today.getDay() - 28);
+
+          streakCalendar.innerHTML = '';
+          const buttons = [];
+
+          for (let i = 0; i < 35; i += 1) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+            const key = localDateKey(date);
+            const day = calendar.days[key] || {};
+            const played = (Number(day.plays) || 0) > 0 || (Number(day.seconds) || 0) > 0;
+            const seconds = (Number(day.seconds) || 0) + (key === localDateKey(today) ? live : 0);
+            const future = date > today;
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'streak-day' +
+              (played ? ' has-play' : '') +
+              (key === localDateKey(today) ? ' is-today' : '') +
+              (future ? ' is-future' : '');
+            button.disabled = future;
+            button.innerHTML = '<span class="day-num">' + date.getDate() + '</span>' +
+              (played ? '<span class="day-fire">🔥</span>' : '');
+            button.setAttribute('aria-label',
+              date.toLocaleDateString() + ' — ' + (played ? formatDuration(seconds) + ' played' : 'no play'));
+            button.addEventListener('click', () => selectStreakDay(button, date, seconds, played));
+            streakCalendar.appendChild(button);
+            if (played) buttons.push({ button, date, seconds, played });
+          }
+
+          const todayButton = buttons.find(item => localDateKey(item.date) === localDateKey(today));
+          const lastPlayed = buttons[buttons.length - 1];
+          if (todayButton) selectStreakDay(todayButton.button, todayButton.date, todayButton.seconds, true);
+          else if (lastPlayed) selectStreakDay(lastPlayed.button, lastPlayed.date, lastPlayed.seconds, true);
+          else streakDayDetail.textContent = 'Play this game to start filling the calendar.';
+        }
+
+        function openStreakCalendar(){
+          if (!currentFolder || !window.ILF_RECS || !streakModal) return;
+          const stats = window.ILF_RECS.getGameStats(currentFolder);
+          if (!stats) return;
+          streakTitle.textContent = stats.streak.count
+            ? '🔥 ' + stats.streak.count + '-day streak'
+            : '🔥 Start a streak';
+          streakGameName.textContent = gameTitle.textContent || '';
+          renderStreakCalendar(currentFolder);
+          streakModal.hidden = false;
+          gameStats.setAttribute('aria-expanded', 'true');
+          document.body.style.overflow = 'hidden';
+          if (streakClose) streakClose.focus();
+        }
+
+        function closeStreakCalendar(){
+          if (!streakModal) return;
+          streakModal.hidden = true;
+          gameStats.setAttribute('aria-expanded', 'false');
+          document.body.style.overflow = '';
+          gameStats.focus();
+        }
+
+        async function shareStreak(){
+          if (!currentFolder || !window.ILF_RECS) return;
+          const stats = window.ILF_RECS.getGameStats(currentFolder);
+          if (!stats) return;
+          const text = 'I\'m on a ' + stats.streak.count + '-day ' +
+            (gameTitle.textContent || 'game') + ' streak on ilikefish.space!';
+          const url = location.href;
+          if (navigator.share) {
+            try {
+              await navigator.share({ title: 'ilikefish.space', text: text, url: url });
+              return;
+            } catch (e) { /* fall through */ }
+          }
+          try {
+            await navigator.clipboard.writeText(text + ' ' + url);
+            showToast('Streak copied');
+          } catch (e) {
+            prompt('Copy this streak', text + ' ' + url);
+          }
+        }
+
         function setPlayerThumb(wanted){
           if (!currentFolder || !window.ILF_RECS) return;
           const current = window.ILF_RECS.feedbackFor(currentFolder);
@@ -351,6 +495,17 @@
 
         if (likeBtn) likeBtn.addEventListener('click', () => setPlayerThumb(1));
         if (dislikeBtn) dislikeBtn.addEventListener('click', () => setPlayerThumb(-1));
+        if (gameStats) gameStats.addEventListener('click', openStreakCalendar);
+        if (streakClose) streakClose.addEventListener('click', closeStreakCalendar);
+        if (streakShare) streakShare.addEventListener('click', shareStreak);
+        if (streakModal) {
+          streakModal.addEventListener('click', event => {
+            if (event.target === streakModal) closeStreakCalendar();
+          });
+        }
+        document.addEventListener('keydown', event => {
+          if (event.key === 'Escape' && streakModal && !streakModal.hidden) closeStreakCalendar();
+        });
 
         if (nextBtn) {
           nextBtn.addEventListener('click', async () => {

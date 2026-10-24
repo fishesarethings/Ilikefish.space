@@ -23,53 +23,12 @@ nav a {
   text-decoration: none;
 }
 
-.nav-brand {
-  position: absolute;
-  left: 1.25rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  color: #111;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: .95rem;
-  letter-spacing: -.02em;
-  z-index: 1;
-}
 
-.nav-brand img {
-  display: block;
-  width: 34px;
-  height: 34px;
-  object-fit: contain;
-}
-
-@media (max-width: 700px) {
-  .nav-brand {
-    left: .65rem;
-  }
-
-  .nav-brand span {
-    display: none;
-  }
-
-  nav ul {
-    padding-left: 2.7rem;
-    padding-right: .5rem;
-  }
-}
 
 @media (max-width: 480px) {
   nav a {
     margin: 0 .55rem;
     font-size: .9rem;
-  }
-
-  .nav-brand img {
-    width: 30px;
-    height: 30px;
   }
 }
 
@@ -98,7 +57,7 @@ nav a {
 
 /* Interactive sections */
 .section-interactive {
-  padding: 5rem 2rem;
+  padding: 2.5rem 2rem;
   background-size: cover;
   background-position: center;
 }
@@ -118,11 +77,9 @@ nav a {
   overflow-x: auto;
   overflow-y: hidden;
   justify-content: flex-start;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 1.5rem 1rem 1.75rem;
+  padding: 1rem 1rem 1.25rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
@@ -146,11 +103,20 @@ nav a {
 }
 
 @media (max-width: 600px) {
+  .section-interactive {
+    padding: 2rem 1rem;
+  }
+
+  .cards-row {
+    padding: 1rem .5rem 1.25rem;
+  }
+
   .cards-row .game-card {
     flex-basis: min(72vw, 300px);
   }
+}
 
-  /* Rows slide in as they enter the viewport. */
+/* Rows slide in as they enter the viewport. */
 .cards-row.ilf-reveal .game-card {
   opacity: 0;
   transform: translateX(38px);
@@ -160,6 +126,14 @@ nav a {
 
 .cards-row.ilf-reveal.is-visible .game-card {
   opacity: 1;
+  transform: translateX(0);
+}
+
+#recommended-games.ilf-reveal .game-card {
+  transform: translateX(-38px);
+}
+
+#recommended-games.ilf-reveal.is-visible .game-card {
   transform: translateX(0);
 }
 
@@ -173,10 +147,59 @@ nav a {
     transform: none;
     transition: none;
   }
+}
 
-  .thumb-btn.is-on {
-    animation: none;
-  }
+.game-card {
+  width: 300px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.game-card:hover {
+  transform: scale(1.035);
+}
+
+.game-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  padding: 2.5rem 1rem 1rem;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.72) 100%);
+  color: #fff;
+}
+
+.card-info h3 {
+  margin: 0 0 .55rem;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.play-btn {
+  display: inline-block;
+  padding: 4px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: #fff;
+  color: #111;
+  font: 600 .75rem/1.4 Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  cursor: pointer;
+}
+
+.play-btn:hover {
+  background: #eaf3ff;
 }
 
 /* Copy & fullscreen box */
