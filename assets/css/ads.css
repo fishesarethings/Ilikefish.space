@@ -1,0 +1,67 @@
+/* Ad placements. Kept deliberately plain so ads never look like site controls. */
+.ilf-ad-shell {
+  display: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 970px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+.ilf-ad-shell.is-active {
+  display: block;
+}
+
+/* Google supports hiding unfilled units with data-ad-status. This keeps the
+   labels and reserved space from showing when there is nothing to display. */
+.ilf-ad-shell.is-unfilled {
+  display: none !important;
+}
+
+.ilf-ad-label {
+  margin: 0 0 6px;
+  color: #8b929c;
+  font: 600 10px/1.2 Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  letter-spacing: .14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ilf-ad-slot {
+  width: 100%;
+  min-height: 0;
+}
+
+.ilf-ad-shell.is-active .ilf-ad-slot {
+  min-height: 100px;
+}
+
+.ilf-ad-slot ins.adsbygoogle {
+  display: block;
+  width: 100%;
+}
+
+ins.adsbygoogle[data-ad-status="unfilled"] {
+  display: none !important;
+}
+
+/* A full-width band between homepage sections. */
+.ilf-ad-band {
+  padding: 0;
+  background: transparent;
+}
+
+/* Do not cover the game in semi-fullscreen. */
+body.semi-full .ilf-ad-shell {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .ilf-ad-shell {
+    padding: 14px 12px;
+  }
+
+  .ilf-ad-label {
+    font-size: 9px;
+  }
+}
