@@ -187,9 +187,9 @@ window.addEventListener('DOMContentLoaded', async () => {
           return;
         }
         row.scrollLeft += distance * 0.24;
-        state.frame = requestAnimationFrame(step);
+        state.frame = setTimeout(step, 16);
       }
-      state.frame = requestAnimationFrame(step);
+      state.frame = setTimeout(step, 16);
     }
 
     window.addEventListener('wheel', event => {
@@ -228,7 +228,18 @@ window.addEventListener('DOMContentLoaded', async () => {
         event.preventDefault();
         const top = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-        centringUntil = performance.now() + 450;
+        centringUntil = performance.now() + 760;
+
+        // AOS / late layout changes can move the section slightly while the
+        // smooth scroll is running. Correct to the exact centre before locking.
+        setTimeout(() => {
+          const current = row.getBoundingClientRect();
+          const offset = (current.top + current.height / 2) - window.innerHeight / 2;
+          if (Math.abs(offset) > 3) {
+            window.scrollTo({ top: window.scrollY + offset, behavior: 'auto' });
+          }
+          centringUntil = 0;
+        }, 720);
         return;
       }
 
