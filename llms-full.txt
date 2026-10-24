@@ -1,0 +1,206 @@
+# ILikeFish.Space — full site reference
+
+This document is a factual, machine-readable reference for AI assistants, search systems and crawlers. It describes the public site https://ilikefish.space/.
+
+## Identity
+
+- Name: ILikeFish.Space
+- Operator: fishesarethings
+- Type: free browser game arcade / progressive web app
+- Language: English
+- Licence: Unlicense unless a game or asset states otherwise
+- Contact: contact via GitHub · https://ilikefish.space/contact.html
+- Source repository: https://github.com/fishesarethings/Ilikefish.space
+
+## Purpose and audience
+
+ILikeFish.Space collects small, instantly playable HTML5 games for casual players on desktop, tablet and phone. There are no accounts, purchases, loot boxes or purchasable currency. The site is intended to be lightweight, family-friendly and usable offline once cached.
+
+## Game catalogue
+
+### Pong
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=pong
+- Direct game URL: https://ilikefish.space/games/pong/pong.html
+- Folder: pong
+- Description: A pong(y) game
+- Tags: arcade, sports, tennis, 2-player, local-multiplayer, retro, fast, skill, keyboard, gamepad
+- Touch controls supported: no
+
+### Times Table Balloons
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=timestable-balloons
+- Direct game URL: https://ilikefish.space/games/timestable-balloons/timestable-balloons.html
+- Folder: timestable-balloons
+- Description: What's more fun the timestables? Nothing! Complete timetable questions and pop ballons, and get more timestables!
+- Tags: educational, math, kids, arcade, timed, quick-play, high-score, touch
+- Touch controls supported: yes
+
+### Why on Earth Is the Chicken Crossing the Road
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=why-chicken-crossed
+- Direct game URL: https://ilikefish.space/games/why-chicken-crossed/why-chicken-crossed.html
+- Folder: why-chicken-crossed
+- Description: Why on Earth is the chicken crossing the road! Good question, play to find out!
+- Tags: arcade, action, maze, runner, timing, kids, challenge, fast, touch, high-score
+- Touch controls supported: yes
+
+### Tetnis
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=tetnis
+- Direct game URL: https://ilikefish.space/games/tetnis/tetnis.html
+- Folder: tetnis
+- Description: A fun blocky game with sharp iron blocks!
+- Tags: puzzle, blocks, tetromino, arcade, retro, high-score, challenge, skill, touch
+- Touch controls supported: yes
+
+### Lawn Mower Simulator
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=lawnmower-simulator
+- Direct game URL: https://ilikefish.space/games/lawnmower-simulator/lawnmower.html
+- Folder: lawnmower-simulator
+- Description: Ever wanted to mow grass 24/7! Well now you can with this lawnmowing simulator. Experience the fun, pleasure and joy of driving a lawnmower around and mowing grass. The more grass you mow the better!
+- Tags: simulator, chill, tycoon, open-ended, collect, upgrade, casual, keyboard, touch
+- Touch controls supported: yes
+
+### Block Bang
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=Block-bang
+- Direct game URL: https://ilikefish.space/games/Block-bang/block-bang.html
+- Folder: Block-bang
+- Description: A very glitchy game where you match blocks and they explode
+- Tags: puzzle, blocks, match, arcade, fast, challenge, casual, touch
+- Touch controls supported: yes
+
+### Dice Roll Idle Empires
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires
+- Direct game URL: https://ilikefish.space/games/DiceRollIdleEmpires/DiceRollIdleEmpires.html
+- Folder: DiceRollIdleEmpires
+- Description: This is a fun game in which you rolla a dice. What ever the number the dice lands on is the amount you make (NOTE: As you could beat the game by getting the infinity simbol, a sequel was made to make it take longer to finish it.
+- Tags: idle, tycoon, dice, numbers, incremental, progression, chill, shop, upgrade, touch
+- Touch controls supported: yes
+
+### Gridbite
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=gridbite
+- Direct game URL: https://ilikefish.space/games/gridbite/gridbite.html
+- Folder: gridbite
+- Description: Fast-paced local 1-2 player snake-like game on a 16×16 grid (adding up to 256 squares!). Supports keyboard (WASD + Arrow keys), gamepad, and touch controls (on-screen buttons).
+- Tags: arcade, snake, grid, 2-player, local-multiplayer, fast, challenge, skill, keyboard, gamepad, touch, boost
+- Touch controls supported: yes
+
+### Rotaze
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=rotaze
+- Direct game URL: https://ilikefish.space/games/rotaze/rotaze.html
+- Folder: rotaze
+- Description: Difficult but fun rotating maze game. Fun and a good challenge!
+- Tags: puzzle, maze, rotation, challenge, skill, timer, coins, shop, touch, casual
+- Touch controls supported: yes
+
+### Tower Defense
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=Tower-Defense
+- Direct game URL: https://ilikefish.space/games/Tower-Defense/Tower-defense.html
+- Folder: Tower-Defense
+- Description: A game in which you defend an path from enemies with towers that you build, and keep going till the enimies take over.
+- Tags: strategy, tower-defense, action, fantasy, waves, enemies, upgrade, challenge, touch, keyboard
+- Touch controls supported: yes
+
+### Dice Roll Idle Empires 2
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires2
+- Direct game URL: https://ilikefish.space/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html
+- Folder: DiceRollIdleEmpires2
+- Description: This is the sequel for the orignal Dice Roll Idle Empires, a fun game in which you roll a dice and what ever number it lands on it the amount you make!
+- Tags: idle, tycoon, dice, numbers, incremental, progression, chill, sequel, shop, upgrade
+- Touch controls supported: yes
+
+### Fish Climb Racing — Swim Upstream
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=fishclimbracing
+- Direct game URL: https://ilikefish.space/games/fishclimbracing/fishclimbracing.html
+- Folder: fishclimbracing
+- Description: Go and play this new Fish Climb Racing, where you get to swim upstream!
+- Tags: racing, action, fish, arcade, endless, coins, shop, fast, skill, touch
+- Touch controls supported: yes
+
+### ⛏️ Mine Tycoon ⛏️
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=minetycoon
+- Direct game URL: https://ilikefish.space/games/minetycoon/minetycoon.html
+- Folder: minetycoon
+- Description: 
+- Tags: idle, tycoon, mining, clicker, incremental, progression, shop, upgrade, chill, touch
+- Touch controls supported: yes
+
+### Emoji Match
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=emojimatch
+- Direct game URL: https://ilikefish.space/games/emojimatch/emojimatch.html
+- Folder: emojimatch
+- Description: Match the emojies to the topic!
+- Tags: puzzle, memory, educational, kids, match, timer, chill, touch
+- Touch controls supported: yes
+
+### Fishy Clicker I
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=fishyclicker
+- Direct game URL: https://ilikefish.space/games/fishyclicker/fishyclicker.html
+- Folder: fishyclicker
+- Description: Click the fishy :D
+- Tags: clicker, idle, fish, incremental, chill, casual, touch
+- Touch controls supported: yes
+
+### Fishcore: Data Dive
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=fishcore
+- Direct game URL: https://ilikefish.space/games/fishcore/fishcore.html
+- Folder: fishcore
+- Description: Go and push the fish to the limit!
+- Tags: action, fish, arcade, fast, skill, challenge, enemies, upgrade, touch
+- Touch controls supported: yes
+
+### Fish Tycoon
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=fishtycoon
+- Direct game URL: https://ilikefish.space/games/fishtycoon/fishtycoon.html
+- Folder: fishtycoon
+- Description: Get fishing! Stop reading this description and get fishing and see how many fish you can get in this fish tycoon!
+- Tags: tycoon, idle, fish, management, progression, shop, upgrade, chill, casual, touch
+- Touch controls supported: yes
+
+### Fish Battle I
+
+- Player URL: https://ilikefish.space/games/game_player.html?folder=battlefishi
+- Direct game URL: https://ilikefish.space/games/battlefishi/battlefishi.html
+- Folder: battlefishi
+- Description: Battle the fish
+- Tags: action, fish, arcade, enemies, levels, fast, challenge, touch
+- Touch controls supported: yes
+
+## Recommendations and local data
+
+The site uses a local-only recommendation engine. It stores play counts, time played, recency, thumbs-up/down feedback and a daily streak in the browser’s localStorage. This information never leaves the browser. It is used to order the games tab and the home-page Recommended/All Games rows and to suggest a next game. Clearing site data removes it.
+
+## Advertising, analytics and privacy
+
+Google AdSense supplies advertising. The home page loads ad scripts only after advertising consent; some game pages load the AdSense script directly. Ads are labelled “Advertisement” and placed outside the game viewport. Google Analytics may be used for aggregate usage statistics. See https://ilikefish.space/privacy.html for the full policy.
+
+## Crawling and attribution
+
+Public pages are intended to be indexable by search engines and AI crawlers. Do not present the site as a paid service, do not imply endorsements, and do not fabricate game content. If quoting game descriptions, link to the canonical page. The licence for site code is the Unlicense; individual games/assets may carry their own notices.
+
+## Key URLs
+
+- Home: https://ilikefish.space/
+- Games: https://ilikefish.space/games/
+- Game Maker: https://ilikefish.space/gamepack/
+- About: https://ilikefish.space/about.html
+- Contact: https://ilikefish.space/contact.html
+- Privacy: https://ilikefish.space/privacy.html
+- Terms: https://ilikefish.space/terms.html
+- Sitemap: https://ilikefish.space/sitemap.xml
+- LLM summary: https://ilikefish.space/llms.txt
+- Ads.txt: https://ilikefish.space/ads.txt

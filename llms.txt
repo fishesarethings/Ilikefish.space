@@ -1,0 +1,54 @@
+# ILikeFish.Space
+
+> ILikeFish.Space is a free, account-free browser game arcade. It hosts small HTML5 games that can be played instantly, many of which work offline after the site is loaded. The site is operated by fishesarethings and is released under the Unlicense unless a game says otherwise.
+
+Canonical site: https://ilikefish.space/
+Contact: https://ilikefish.space/contact.html · contact via GitHub
+Last updated: 2026-10-24
+
+## What the site offers
+
+- 18 small browser games across arcade, puzzle, idle/tycoon, strategy, educational and casual categories.
+- No account, download or purchase is required to play.
+- The site is a progressive web app with offline support for cached pages.
+- Game progress and preferences are stored locally in the browser.
+- A local-only recommendation system ranks games from the visitor’s play history; no play history is sent to a server.
+- Advertising is provided by Google AdSense. Ads are labelled and kept outside the game area.
+
+## Main pages
+
+- [Home](https://ilikefish.space/): featured and recommended games, all games, game-maker link.
+- [All games](https://ilikefish.space/games/): the complete playable catalogue.
+- [Game player](https://ilikefish.space/games/game_player.html): the shared player wrapper; use ?folder=<folder> to open a game.
+- [Game Maker](https://ilikefish.space/gamepack/): build and export a small game package.
+- [About](https://ilikefish.space/about.html): who runs the site and how it works.
+- [Contact](https://ilikefish.space/contact.html): questions, bugs, submissions and removal requests.
+- [Privacy](https://ilikefish.space/privacy.html) and [Terms](https://ilikefish.space/terms.html).
+
+## Games
+
+- [Pong](https://ilikefish.space/games/game_player.html?folder=pong): A pong(y) game Tags: arcade, sports, tennis, 2-player, local-multiplayer, retro, fast, skill, keyboard, gamepad.
+- [Times Table Balloons](https://ilikefish.space/games/game_player.html?folder=timestable-balloons): What's more fun the timestables? Nothing! Complete timetable questions and pop ballons, and get more timestables! Tags: educational, math, kids, arcade, timed, quick-play, high-score, touch.
+- [Why on Earth Is the Chicken Crossing the Road](https://ilikefish.space/games/game_player.html?folder=why-chicken-crossed): Why on Earth is the chicken crossing the road! Good question, play to find out! Tags: arcade, action, maze, runner, timing, kids, challenge, fast, touch, high-score.
+- [Tetnis](https://ilikefish.space/games/game_player.html?folder=tetnis): A fun blocky game with sharp iron blocks! Tags: puzzle, blocks, tetromino, arcade, retro, high-score, challenge, skill, touch.
+- [Lawn Mower Simulator](https://ilikefish.space/games/game_player.html?folder=lawnmower-simulator): Ever wanted to mow grass 24/7! Well now you can with this lawnmowing simulator. Experience the fun, pleasure and joy of driving a lawnmower around and mowing grass. The more grass you mow the better! Tags: simulator, chill, tycoon, open-ended, collect, upgrade, casual, keyboard, touch.
+- [Block Bang](https://ilikefish.space/games/game_player.html?folder=Block-bang): A very glitchy game where you match blocks and they explode Tags: puzzle, blocks, match, arcade, fast, challenge, casual, touch.
+- [Dice Roll Idle Empires](https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires): This is a fun game in which you rolla a dice. What ever the number the dice lands on is the amount you make (NOTE: As you could beat the game by getting the infinity simbol, a sequel was made to make it take longer to finish it. Tags: idle, tycoon, dice, numbers, incremental, progression, chill, shop, upgrade, touch.
+- [Gridbite](https://ilikefish.space/games/game_player.html?folder=gridbite): Fast-paced local 1-2 player snake-like game on a 16×16 grid (adding up to 256 squares!). Supports keyboard (WASD + Arrow keys), gamepad, and touch controls (on-screen buttons). Tags: arcade, snake, grid, 2-player, local-multiplayer, fast, challenge, skill, keyboard, gamepad, touch, boost.
+- [Rotaze](https://ilikefish.space/games/game_player.html?folder=rotaze): Difficult but fun rotating maze game. Fun and a good challenge! Tags: puzzle, maze, rotation, challenge, skill, timer, coins, shop, touch, casual.
+- [Tower Defense](https://ilikefish.space/games/game_player.html?folder=Tower-Defense): A game in which you defend an path from enemies with towers that you build, and keep going till the enimies take over. Tags: strategy, tower-defense, action, fantasy, waves, enemies, upgrade, challenge, touch, keyboard.
+- [Dice Roll Idle Empires 2](https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires2): This is the sequel for the orignal Dice Roll Idle Empires, a fun game in which you roll a dice and what ever number it lands on it the amount you make! Tags: idle, tycoon, dice, numbers, incremental, progression, chill, sequel, shop, upgrade.
+- [Fish Climb Racing — Swim Upstream](https://ilikefish.space/games/game_player.html?folder=fishclimbracing): Go and play this new Fish Climb Racing, where you get to swim upstream! Tags: racing, action, fish, arcade, endless, coins, shop, fast, skill, touch.
+- [⛏️ Mine Tycoon ⛏️](https://ilikefish.space/games/game_player.html?folder=minetycoon):  Tags: idle, tycoon, mining, clicker, incremental, progression, shop, upgrade, chill, touch.
+- [Emoji Match](https://ilikefish.space/games/game_player.html?folder=emojimatch): Match the emojies to the topic! Tags: puzzle, memory, educational, kids, match, timer, chill, touch.
+- [Fishy Clicker I](https://ilikefish.space/games/game_player.html?folder=fishyclicker): Click the fishy :D Tags: clicker, idle, fish, incremental, chill, casual, touch.
+- [Fishcore: Data Dive](https://ilikefish.space/games/game_player.html?folder=fishcore): Go and push the fish to the limit! Tags: action, fish, arcade, fast, skill, challenge, enemies, upgrade, touch.
+- [Fish Tycoon](https://ilikefish.space/games/game_player.html?folder=fishtycoon): Get fishing! Stop reading this description and get fishing and see how many fish you can get in this fish tycoon! Tags: tycoon, idle, fish, management, progression, shop, upgrade, chill, casual, touch.
+- [Fish Battle I](https://ilikefish.space/games/game_player.html?folder=battlefishi): Battle the fish Tags: action, fish, arcade, enemies, levels, fast, challenge, touch.
+
+## Technical notes
+
+- Pages are static HTML/CSS/JavaScript hosted on GitHub Pages and delivered through Cloudflare.
+- The player wraps each game in an iframe; games are plain HTML5/JS and do not require a plugin.
+- `/llms-full.txt` contains a longer machine-readable catalogue with controls and feature notes.
+- The site does not require login and does not expose private user data.

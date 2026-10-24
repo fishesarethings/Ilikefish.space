@@ -48,6 +48,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   const games = (await Promise.all(index.folders.map(loadConfig))).filter(Boolean);
+  if (window.ILF_RECS) window.ILF_RECS.saveCatalog(games);
 
   const featured = games
     .filter(game => game.featured)
@@ -55,27 +56,73 @@ window.addEventListener('DOMContentLoaded', async () => {
       const aOrder = typeof a.featuredOrder === 'number' ? a.featuredOrder : 999;
       const bOrder = typeof b.featuredOrder === 'number' ? b.featuredOrder : 999;
       return aOrder - bOrder;
-    });
+    })
+    .slice(0, 8);
+
+  function initRowReveal(row) {
+    if (!row || row.dataset.revealReady === '1') return;
+    row.dataset.revealReady = '1';
+    row.classList.add('ilf-reveal');
+
+    const cards = Array.from(row.children).filter(el => el.classList.contains('game-card'));
+    cards.forEach((card, index) => card.style.setProperty('--ilf-i', String(index)));
+
+    if (!('IntersectionObserver' in window) ||
+        (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+      row.classList.add('is-visible');
+      return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        row.classList.add('is-visible');
+        observer.disconnect();
+      });
+    }, { threshold: 0.15 });
+    observer.observe(row);
+  }
+
+  function updateStreak() {
+    const el = document.getElementById('play-streak');
+    if (!el) return;
+    const streak = window.ILF_RECS ? window.ILF_RECS.getStreak() : { count: 0, playedToday: false };
+    if (!streak.count) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    el.textContent = streak.playedToday
+      ? `🔥 ${streak.count}-day streak`
+      : `🔥 ${streak.count}-day streak — play today to keep it`;
+  }
 
   function renderFeatured() {
     if (!feat) return;
     feat.innerHTML = '';
     featured.forEach(game => feat.append(renderGameCard(game)));
+    initRowReveal(feat);
   }
 
   function renderHomeAll() {
     if (!allHome) return;
+    const ordered = window.ILF_RECS ? window.ILF_RECS.rank(games) : games;
     allHome.innerHTML = '';
-    games.forEach(game => allHome.append(renderGameCard(game)));
+    ordered.forEach(game => allHome.append(renderGameCard(game)));
   }
 
   function renderHomeRecommended() {
     if (!recHome) return;
+    recHome.classList.remove('ilf-reveal', 'is-visible');
+    delete recHome.dataset.revealReady;
     const picked = window.ILF_RECS
-      ? window.ILF_RECS.recommended(games, 8)
-      : games.slice(0, 8);
+      ? window.ILF_RECS.recommended(games, 5)
+      : games.slice(0, 5);
     recHome.innerHTML = '';
     picked.forEach(game => recHome.append(renderGameCard(game)));
+    initRowReveal(recHome);
+    updateStreak();
   }
 
   function applySearchFilter() {
@@ -116,6 +163,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const next = historySignature();
     if (!force && next === lastHistory) return;
     lastHistory = next;
+    renderHomeAll();
     renderHomeRecommended();
     renderGamesPage();
   }
@@ -129,6 +177,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!document.hidden) refreshPersonalised(false);
   });
   window.addEventListener('storage', () => refreshPersonalised(true));
+
+  document.addEventListener('ilf:history-changed', event => {
+    const detail = event.detail || {};
+    if (typeof detail.feedback !== 'number' || !detail.folder) return;
+    const marker = 'folder=' + encodeURIComponent(detail.folder);
+    document.querySelectorAll('.game-card').forEach(card => {
+      if ((card.getAttribute('href') || '').includes(marker)) {
+        paintThumbButtons(card, detail.feedback);
+      }
+    });
+  });
 });
 
 function renderGameCard(game) {
@@ -143,11 +202,19 @@ function renderGameCard(game) {
   link.style.textDecoration = 'none';
   link.style.color = 'inherit';
 
+  const feedback = window.ILF_RECS ? window.ILF_RECS.feedbackFor(game.folder) : 0;
+
   link.innerHTML = `
     <img src="/games/${game.folder}/${game.icon}" alt="${game.name}">
     <div class="card-info">
       <h3>${game.name}</h3>
-      <button type="button" class="play-btn">Play</button>
+      <div class="card-actions">
+        <button type="button" class="play-btn">Play</button>
+        <div class="thumb-row" aria-label="Tune recommendations">
+          <button type="button" class="thumb-btn" data-thumb="up" aria-label="More games like ${game.name}" title="More like this" aria-pressed="${feedback === 1}">👍</button>
+          <button type="button" class="thumb-btn" data-thumb="down" aria-label="Fewer games like ${game.name}" title="Less like this" aria-pressed="${feedback === -1}">👎</button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -155,10 +222,42 @@ function renderGameCard(game) {
   if (playBtn) {
     playBtn.addEventListener('click', (evt) => {
       evt.preventDefault();
+      evt.stopPropagation();
       const url = `/games/game_player.html?folder=${encodeURIComponent(game.folder)}`;
       location.href = url;
     });
   }
 
+  const up = link.querySelector('[data-thumb="up"]');
+  const down = link.querySelector('[data-thumb="down"]');
+  paintThumbButtons(link, feedback);
+
+  [up, down].forEach(button => {
+    if (!button) return;
+    button.addEventListener('click', (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      if (!window.ILF_RECS) return;
+      const wanted = button.getAttribute('data-thumb') === 'up' ? 1 : -1;
+      const current = window.ILF_RECS.feedbackFor(game.folder);
+      const next = current === wanted ? 0 : wanted;
+      window.ILF_RECS.recordFeedback(game.folder, next);
+      paintThumbButtons(link, next);
+    });
+  });
+
   return link;
+}
+
+function paintThumbButtons(card, value) {
+  const up = card.querySelector('[data-thumb="up"]');
+  const down = card.querySelector('[data-thumb="down"]');
+  if (up) {
+    up.classList.toggle('is-on', value === 1);
+    up.setAttribute('aria-pressed', String(value === 1));
+  }
+  if (down) {
+    down.classList.toggle('is-on', value === -1);
+    down.setAttribute('aria-pressed', String(value === -1));
+  }
 }

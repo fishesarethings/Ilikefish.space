@@ -9,28 +9,29 @@
   'use strict';
 
   var STORAGE_KEY = 'ilf_play_history_v1';
+  var CATALOG_KEY = 'ilf_game_catalog_v1';
   var MAX_RECENT = 24;
 
   // Hand-written tags give much better results than guessing from titles alone.
   var TAGS = {
-    'pong': ['arcade', 'retro', 'sports', '2-player', 'fast', 'skill'],
-    'timestable-balloons': ['educational', 'math', 'arcade', 'fast', 'kids', 'skill'],
-    'why-chicken-crossed': ['arcade', 'action', 'maze', 'fast', 'challenge', 'kids'],
-    'tetnis': ['puzzle', 'blocks', 'arcade', 'retro', 'challenge', 'skill'],
-    'lawnmower-simulator': ['simulator', 'chill', 'tycoon', 'open-world', 'casual'],
-    'Block-bang': ['puzzle', 'blocks', 'arcade', 'fast', 'challenge', 'casual'],
-    'DiceRollIdleEmpires': ['idle', 'tycoon', 'dice', 'numbers', 'chill', 'casual'],
-    'gridbite': ['arcade', 'snake', 'grid', 'fast', '2-player', 'challenge', 'skill'],
-    'rotaze': ['puzzle', 'maze', 'challenge', 'skill', 'casual'],
-    'Tower-Defense': ['strategy', 'tower-defense', 'action', 'challenge', 'fantasy'],
-    'DiceRollIdleEmpires2': ['idle', 'tycoon', 'dice', 'numbers', 'chill', 'casual', 'sequel'],
-    'fishclimbracing': ['racing', 'action', 'fish', 'arcade', 'fast', 'skill'],
-    'minetycoon': ['idle', 'tycoon', 'mining', 'clicker', 'chill', 'casual'],
-    'emojimatch': ['puzzle', 'memory', 'educational', 'kids', 'chill', 'casual'],
-    'fishyclicker': ['clicker', 'idle', 'fish', 'chill', 'casual'],
-    'fishcore': ['action', 'fish', 'arcade', 'fast', 'skill', 'challenge'],
-    'fishtycoon': ['tycoon', 'idle', 'fish', 'chill', 'management', 'casual'],
-    'battlefishi': ['action', 'fish', 'arcade', '2-player', 'fast', 'challenge']
+    'pong': ['arcade', 'sports', 'tennis', '2-player', 'local-multiplayer', 'retro', 'fast', 'skill', 'keyboard', 'gamepad'],
+    'timestable-balloons': ['educational', 'math', 'kids', 'arcade', 'timed', 'quick-play', 'high-score', 'touch'],
+    'why-chicken-crossed': ['arcade', 'action', 'maze', 'runner', 'timing', 'kids', 'challenge', 'fast', 'touch', 'high-score'],
+    'tetnis': ['puzzle', 'blocks', 'tetromino', 'arcade', 'retro', 'high-score', 'challenge', 'skill', 'touch'],
+    'lawnmower-simulator': ['simulator', 'chill', 'tycoon', 'open-ended', 'collect', 'upgrade', 'casual', 'keyboard', 'touch'],
+    'Block-bang': ['puzzle', 'blocks', 'match', 'arcade', 'fast', 'challenge', 'casual', 'touch'],
+    'DiceRollIdleEmpires': ['idle', 'tycoon', 'dice', 'numbers', 'incremental', 'progression', 'chill', 'shop', 'upgrade', 'touch'],
+    'gridbite': ['arcade', 'snake', 'grid', '2-player', 'local-multiplayer', 'fast', 'challenge', 'skill', 'keyboard', 'gamepad', 'touch', 'boost'],
+    'rotaze': ['puzzle', 'maze', 'rotation', 'challenge', 'skill', 'timer', 'coins', 'shop', 'touch', 'casual'],
+    'Tower-Defense': ['strategy', 'tower-defense', 'action', 'fantasy', 'waves', 'enemies', 'upgrade', 'challenge', 'touch', 'keyboard'],
+    'DiceRollIdleEmpires2': ['idle', 'tycoon', 'dice', 'numbers', 'incremental', 'progression', 'chill', 'sequel', 'shop', 'upgrade'],
+    'fishclimbracing': ['racing', 'action', 'fish', 'arcade', 'endless', 'coins', 'shop', 'fast', 'skill', 'touch'],
+    'minetycoon': ['idle', 'tycoon', 'mining', 'clicker', 'incremental', 'progression', 'shop', 'upgrade', 'chill', 'touch'],
+    'emojimatch': ['puzzle', 'memory', 'educational', 'kids', 'match', 'timer', 'chill', 'touch'],
+    'fishyclicker': ['clicker', 'idle', 'fish', 'incremental', 'chill', 'casual', 'touch'],
+    'fishcore': ['action', 'fish', 'arcade', 'fast', 'skill', 'challenge', 'enemies', 'upgrade', 'touch'],
+    'fishtycoon': ['tycoon', 'idle', 'fish', 'management', 'progression', 'shop', 'upgrade', 'chill', 'casual', 'touch'],
+    'battlefishi': ['action', 'fish', 'arcade', 'enemies', 'levels', 'fast', 'challenge', 'touch']
   };
 
   // Small bonus for direct sequels / sibling games.
@@ -78,7 +79,7 @@
   ];
 
   function emptyState() {
-    return { version: 1, games: {}, recent: [] };
+    return { version: 2, games: {}, recent: [], streak: 0, lastPlayDay: null };
   }
 
   function readState() {
@@ -89,6 +90,8 @@
       if (!parsed || typeof parsed !== 'object') return emptyState();
       if (!parsed.games || typeof parsed.games !== 'object') parsed.games = {};
       if (!Array.isArray(parsed.recent)) parsed.recent = [];
+      if (typeof parsed.streak !== 'number') parsed.streak = 0;
+      if (typeof parsed.lastPlayDay !== 'string') parsed.lastPlayDay = null;
       return parsed;
     } catch (e) {
       return emptyState();
@@ -108,11 +111,32 @@
       state.games[folder] = {
         plays: 0,
         seconds: 0,
+        feedback: 0,
         firstPlayed: Date.now(),
         lastPlayed: 0
       };
     }
     return state.games[folder];
+  }
+
+  function dayKey(timestamp) {
+    var date = timestamp ? new Date(timestamp) : new Date();
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    return date.getFullYear() + '-' + month + '-' + day;
+  }
+
+  function getStreak() {
+    var state = readState();
+    var today = dayKey();
+    var count = Math.max(0, Number(state.streak) || 0);
+
+    if (!state.lastPlayDay) return { count: 0, playedToday: false };
+    if (state.lastPlayDay === today) return { count: count, playedToday: true };
+    if (state.lastPlayDay === dayKey(Date.now() - 86400000)) {
+      return { count: count, playedToday: false };
+    }
+    return { count: 0, playedToday: false };
   }
 
   function recordPlay(folder) {
@@ -124,6 +148,14 @@
     game.lastPlayed = Date.now();
     if (!game.firstPlayed) game.firstPlayed = game.lastPlayed;
 
+    var today = dayKey();
+    if (state.lastPlayDay !== today) {
+      state.streak = state.lastPlayDay === dayKey(Date.now() - 86400000)
+        ? Math.max(1, Number(state.streak) || 0) + 1
+        : 1;
+      state.lastPlayDay = today;
+    }
+
     state.recent = [folder].concat(state.recent.filter(function (item) {
       return item !== folder;
     })).slice(0, MAX_RECENT);
@@ -132,6 +164,27 @@
     try {
       document.dispatchEvent(new CustomEvent('ilf:history-changed', { detail: { folder: folder } }));
     } catch (e) { /* ignore */ }
+  }
+
+  function recordFeedback(folder, value) {
+    if (!folder) return 0;
+    folder = String(folder);
+    var next = Math.max(-1, Math.min(1, Number(value) || 0));
+    var state = readState();
+    var game = ensureGame(state, folder);
+    game.feedback = next;
+    writeState(state);
+    try {
+      document.dispatchEvent(new CustomEvent('ilf:history-changed', { detail: { folder: folder, feedback: next } }));
+    } catch (e) { /* ignore */ }
+    return next;
+  }
+
+  function feedbackFor(folder) {
+    if (!folder) return 0;
+    var state = readState();
+    var game = state.games[folder];
+    return game ? Math.max(-1, Math.min(1, Number(game.feedback) || 0)) : 0;
   }
 
   function recordTime(folder, seconds) {
@@ -155,6 +208,45 @@
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) { /* ignore */ }
+  }
+
+  function saveCatalog(games) {
+    if (!Array.isArray(games) || !games.length) return;
+    try {
+      var minimal = games.map(function (game) {
+        return {
+          folder: game.folder,
+          name: game.name,
+          description: game.description || '',
+          icon: game.icon || '',
+          entry: game.entry || '',
+          featured: !!game.featured,
+          featuredOrder: game.featuredOrder
+        };
+      });
+      localStorage.setItem(CATALOG_KEY, JSON.stringify(minimal));
+    } catch (e) { /* ignore */ }
+  }
+
+  function getCatalog() {
+    try {
+      var raw = localStorage.getItem(CATALOG_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function nextGame(excludeFolder) {
+    var games = getCatalog();
+    if (!games.length) return null;
+    var ranked = rank(games);
+    for (var i = 0; i < ranked.length; i += 1) {
+      if (ranked[i].folder !== excludeFolder) return ranked[i];
+    }
+    return null;
   }
 
   function getTags(game) {
@@ -238,6 +330,9 @@
 
     Object.keys(state.games).forEach(function (folder) {
       var history = state.games[folder] || {};
+      var plays = Number(history.plays) || 0;
+      if (plays <= 0) return;
+
       var source = byFolder[folder] || {
         folder: folder,
         name: folder,
@@ -245,7 +340,6 @@
       };
       var ageDays = history.lastPlayed ? Math.max(0, (now - history.lastPlayed) / 86400000) : 999;
       var recency = 1 / (1 + ageDays / 5);
-      var plays = Math.max(1, Number(history.plays) || 0);
       var seconds = Math.max(0, Number(history.seconds) || 0);
       var engagement = 1 + Math.min(seconds / 600, 1.5) + Math.min(plays, 8) * 0.06;
       var weight = Math.log1p(plays) * recency * engagement;
@@ -265,31 +359,57 @@
     return affinity;
   }
 
+  function feedbackBias(games, state, game) {
+    var byFolder = {};
+    games.forEach(function (item) { byFolder[item.folder] = item; });
+
+    var bias = 0;
+    Object.keys(state.games).forEach(function (folder) {
+      var feedback = Number(state.games[folder].feedback) || 0;
+      if (!feedback) return;
+      var source = byFolder[folder] || { folder: folder, name: folder, description: '' };
+      bias += feedback * 0.22 * similarity(source, game);
+    });
+
+    var direct = state.games[game.folder]
+      ? Number(state.games[game.folder].feedback) || 0
+      : 0;
+    return bias + direct * 0.28;
+  }
+
   function rankWithScores(games, state) {
     var affinity = affinityFor(games, state);
     var today = Math.floor(Date.now() / 86400000);
 
     return games.map(function (game) {
       var history = state.games[game.folder];
-      var played = !!history;
-      var plays = played ? Math.max(1, Number(history.plays) || 1) : 0;
+      var plays = history ? Number(history.plays) || 0 : 0;
+      var played = plays > 0;
+      var feedback = feedbackBias(games, state, game);
       var novelty = played ? 0 : 0.24;
       var prior = game.featured ? 0.18 : 0.03;
       var repeatPenalty = played ? 0.35 / (1 + plays * 0.8) : 1;
       var jitter = (hash(game.folder + ':' + today) % 1000) / 1000 * 0.035;
       var match = affinity[game.folder] || 0;
-      var score = match * repeatPenalty + novelty + prior + jitter;
-      return { game: game, score: score, affinity: match };
+      var score = match * repeatPenalty + feedback + novelty + prior + jitter;
+      return { game: game, score: score, affinity: match, feedback: feedback };
     }).sort(function (a, b) {
       if (b.score !== a.score) return b.score - a.score;
       return String(a.game.name || '').localeCompare(String(b.game.name || ''));
     });
   }
 
+  function hasSignals(state) {
+    if (state.recent.length) return true;
+    return Object.keys(state.games).some(function (folder) {
+      return Number(state.games[folder].feedback) !== 0;
+    });
+  }
+
   function rank(games) {
     if (!Array.isArray(games) || !games.length) return [];
     var state = readState();
-    if (!state.recent.length) return defaultOrder(games);
+    if (!hasSignals(state)) return defaultOrder(games);
     return rankWithScores(games, state).map(function (item) { return item.game; });
   }
 
@@ -324,10 +444,10 @@
 
   function recommended(games, limit) {
     if (!Array.isArray(games) || !games.length) return [];
-    limit = Math.max(1, Number(limit) || 8);
+    limit = Math.max(1, Number(limit) || 5);
     var state = readState();
 
-    if (!state.recent.length) {
+    if (!hasSignals(state)) {
       var byFolder = {};
       games.forEach(function (game) { byFolder[game.folder] = game; });
       var starter = [];
@@ -348,18 +468,30 @@
     }
 
     var ranked = rankWithScores(games, state);
-    var unplayed = ranked.filter(function (item) { return !state.games[item.game.folder]; });
-    var matched = unplayed.filter(function (item) { return item.affinity > 0.06; });
-    var pool = matched.length >= Math.min(limit, 6) ? matched : unplayed;
-    if (pool.length < Math.min(limit, 4)) pool = ranked;
+    var notDisliked = ranked.filter(function (item) {
+      var history = state.games[item.game.folder];
+      return !history || Number(history.feedback) !== -1;
+    });
+    var unplayed = notDisliked.filter(function (item) {
+      var history = state.games[item.game.folder];
+      return !history || (Number(history.plays) || 0) === 0;
+    });
+    var pool = unplayed.length >= limit ? unplayed : notDisliked;
+    if (pool.length < limit) pool = ranked;
     return pickDiverse(pool, limit);
   }
 
   window.ILF_RECS = {
     recordPlay: recordPlay,
     recordTime: recordTime,
+    recordFeedback: recordFeedback,
+    feedbackFor: feedbackFor,
+    getStreak: getStreak,
     getHistory: getHistory,
     clearHistory: clearHistory,
+    saveCatalog: saveCatalog,
+    getCatalog: getCatalog,
+    nextGame: nextGame,
     rank: rank,
     recommended: recommended,
     tagsFor: getTags

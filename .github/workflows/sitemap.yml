@@ -57,7 +57,7 @@ jobs:
           fs.writeFileSync('sitemap.xml', sitemap);
           fs.writeFileSync(
             'robots.txt',
-            `User-agent: *\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`
+            `# AI-readable summary: ${BASE}/llms.txt\nUser-agent: *\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`
           );
 
           console.log(`Generated sitemap.xml with ${urls.size} URLs`);
