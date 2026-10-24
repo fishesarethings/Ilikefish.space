@@ -13,13 +13,8 @@
     gtag('config','G-ZV53VVVSK3');
   </script>
   
-  <!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-53BRKJPX');</script>
-<!-- End Google Tag Manager -->
+  <!-- Google Tag Manager loads after analytics consent -->
+  <script id="gtm-placeholder" type="text/plain" data-category="analytics" data-src="https://www.googletagmanager.com/gtm.js?id=GTM-53BRKJPX"></script>
 
   <script id="adsense-placeholder" type="text/plain" data-category="ads" data-src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
 
@@ -56,17 +51,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2196f3">
 
-  <!-- Structured Data (auto-updated by GitHub Actions) -->
-  <script type="application/ld+json" src="/structured-data.json"></script>
-
   <!-- Core CSS -->
   <link rel="stylesheet" href="/assets/css/styles.css">
   <!-- Locomotive & AOS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <!-- Locomotive, AOS -->
   <script src="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.min.js" defer></script>
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
@@ -90,11 +80,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       "@type": "Organization",
       "name": "fishesarethings",
       "url": "https://ilikefish.space/"
-    },
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://ilikefish.space/games.html?q={search_term_string}",
-      "query-input": "required name=search_term_string"
     }
   }
   </script>
@@ -332,8 +317,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
 
-      © 2025 fishesarethings — No rights reserved.
-      <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="#" id="cookie-settings-link">Cookie settings</a>
+      © 2026 fishesarethings — No rights reserved.
+      <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="/about.html">About</a> • <a href="/contact.html">Contact</a> • <a href="#" id="cookie-settings-link">Cookie settings</a>
     </p>
   </footer>
 
@@ -378,28 +363,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         localStorage.setItem(CONSENT_KEY, JSON.stringify(obj));
       }
 
-      // Deferred script loader: looks for script elements with data-src and injects them.
+      // Deferred script loader: injects scripts with data-src and runs inline gtag config.
       function injectScriptFrom(el) {
-        if (!el || !el.dataset || !el.dataset.src) return;
-        const src = el.dataset.src;
-        const category = el.dataset.category || 'other';
-        // create real script
-        const s = document.createElement('script');
-        s.src = src;
-        if (el.getAttribute('crossorigin')) s.crossOrigin = el.getAttribute('crossorigin');
-        s.async = true;
-        document.head.appendChild(s);
-        // if it's gtag init block, eval after script loaded
+        if (!el) return;
+        // Inline gtag config has no src; run it after gtag.js has loaded.
         if (el.id === 'gtag-init') {
-          // if actual gtag script loaded, we need to run init
-          // run after next tick to let gtag.js initialize
           setTimeout(() => {
             try {
               /* eslint-disable no-eval */
               eval(el.textContent || el.innerText || '');
             } catch (e) { console.warn('gtag init failed', e); }
           }, 800);
+          return;
         }
+        if (!el.dataset || !el.dataset.src) return;
+        const src = el.dataset.src;
+        // create real script
+        const s = document.createElement('script');
+        s.src = src;
+        if (el.getAttribute('crossorigin')) s.crossOrigin = el.getAttribute('crossorigin');
+        s.async = true;
+        document.head.appendChild(s);
       }
 
       // Load category scripts if consent is present for that category
@@ -409,8 +393,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         if (consent.analytics) {
           const gtagPlaceholder = document.getElementById('gtag-placeholder');
           const gtagInit = document.getElementById('gtag-init');
+          const gtmPlaceholder = document.getElementById('gtm-placeholder');
           if (gtagPlaceholder) injectScriptFrom(gtagPlaceholder);
           if (gtagInit) injectScriptFrom(gtagInit);
+          if (gtmPlaceholder) injectScriptFrom(gtmPlaceholder);
         }
         // ads
         if (consent.ads) {

@@ -1,3 +1,20 @@
+name: Generate SEO files
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  seo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Generate SEO files
         env:
           BASE_URL: "https://ilikefish.space"
@@ -5,53 +22,25 @@
           set -euo pipefail
           node <<'EOF'
           const fs = require('fs');
-          const path = require('path');
 
           const BASE = process.env.BASE_URL;
-          const ROOT = process.cwd();
-          const GAMES_DIR = path.join(ROOT, 'games');
-
-          const now = new Date().toISOString();
+          const now = new Date().toISOString().slice(0, 10);
           const urls = new Map();
 
-          // === HELPER ===
           const addUrl = (loc, freq = 'monthly', prio = '0.6') => {
             urls.set(loc, { loc, changefreq: freq, priority: prio });
           };
 
-          // === STATIC PAGES ===
           [
-            '/',
-            '/games.html',
-            '/gamepack.html',
-            '/terms.html',
-            '/privacy.html'
-          ].forEach(p => addUrl(BASE + p, 'weekly', '0.8'));
+            ['/', 'weekly', '1.0'],
+            ['/games/', 'weekly', '0.9'],
+            ['/gamepack/', 'monthly', '0.7'],
+            ['/about.html', 'monthly', '0.6'],
+            ['/contact.html', 'monthly', '0.6'],
+            ['/privacy.html', 'yearly', '0.3'],
+            ['/terms.html', 'yearly', '0.3']
+          ].forEach(([p, freq, prio]) => addUrl(BASE + p, freq, prio));
 
-          // === GAME PAGES (AUTO DISCOVERY) ===
-          if (fs.existsSync(GAMES_DIR)) {
-            const entries = fs.readdirSync(GAMES_DIR, { withFileTypes: true });
-
-            for (const e of entries) {
-              if (!e.isDirectory()) continue;
-
-              const slug = e.name;
-              if (slug.toLowerCase() === 'pong') continue;
-
-              const folder = path.join(GAMES_DIR, slug);
-              const indexHtml = path.join(folder, 'index.html');
-
-              // Prefer folder URL
-              addUrl(`${BASE}/games/${slug}/`, 'monthly', '0.6');
-
-              // Also include standalone html if it exists
-              if (fs.existsSync(indexHtml)) {
-                addUrl(`${BASE}/games/${slug}/index.html`, 'monthly', '0.5');
-              }
-            }
-          }
-
-          // === BUILD XML ===
           const sitemap =
             `<?xml version="1.0" encoding="UTF-8"?>\n` +
             `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
@@ -66,13 +55,23 @@
             `\n</urlset>\n`;
 
           fs.writeFileSync('sitemap.xml', sitemap);
-          console.log(`✅ sitemap.xml generated (${urls.size} URLs)`);
-
-          // === ROBOTS.TXT ===
           fs.writeFileSync(
             'robots.txt',
             `User-agent: *\nAllow: /\n\nSitemap: ${BASE}/sitemap.xml\n`
           );
 
-          console.log('✅ robots.txt updated');
+          console.log(`Generated sitemap.xml with ${urls.size} URLs`);
+          console.log('Generated robots.txt');
           EOF
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sitemap.xml robots.txt
+          if git diff --cached --quiet; then
+            echo "No SEO changes"
+            exit 0
+          fi
+          git commit -m "chore: update sitemap and robots.txt"
+          git push

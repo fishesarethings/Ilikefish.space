@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ilikefish.Space - Game player</title>
+  <title>Play a game — ILikeFish.Space</title>
+  <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
+  <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
   <style>
     :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
@@ -154,8 +156,8 @@
       Dedicated to the public domain under the
       <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
 
-      © 2025 fishesarethings — No rights reserved.
-      <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="#" id="cookie-settings-link">Cookie settings</a>
+      © 2026 fishesarethings — No rights reserved.
+      <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="/about.html">About</a> • <a href="/contact.html">Contact</a> • <a href="/#cookie-settings">Cookie settings</a>
     </p>
   </footer>
 
@@ -532,6 +534,9 @@
 
             if (gameTitle) gameTitle.textContent = title;
             if (descTitle) descTitle.textContent = title;
+            document.title = title + ' — ILikeFish.Space';
+            const metaDescription = document.querySelector('meta[name="description"]');
+            if (metaDescription) metaDescription.setAttribute('content', String(description).replace(/\s+/g, ' ').slice(0, 160));
             const touchHtml = touchInstr ? ('<br><small>' + escapeHtml(touchInstr) + '</small>') : '';
             if (descBody) descBody.innerHTML = formatDescription(description) + (touchOn ? touchHtml : '');
 
@@ -576,7 +581,7 @@
         // optional: fetch site version (best-effort)
         (async function fetchSiteVersion(){
           try{
-            const r = await fetch('/site-version.json', {cache: 'no-store'});
+            const r = await fetch('/version.json', {cache: 'no-store'});
             if (r.ok) {
               const v = await r.json();
               const el = document.getElementById('current-site-version');
