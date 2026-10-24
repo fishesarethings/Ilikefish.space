@@ -140,14 +140,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<!-- H5 Games Ads (AdSense) -->
-<script
-  async
-  data-ad-client="ca-pub-369539584"
-  data-ad-frequency-hint="180s"
-  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
-  crossorigin="anonymous">
-</script>
+<!-- H5 Games Ads removed: this game has no configured Publisher ID. -->
 
 <script>
   // Wait for ads to load and set up verification
@@ -156,7 +149,7 @@
     const timestamp = new Date().toISOString();
     
     console.log(`⏳ [${timestamp}] ADS INIT: Waiting for H5 Games Ads to load...`);
-    console.log(`🔍 [${timestamp}] ADS INFO: Publisher ID: ca-pub-369539584`);
+    console.log(`🔍 [${timestamp}] ADS INFO: Publisher ID: not configured`);
     console.log(`🌐 [${timestamp}] ADS INFO: Current domain: ${window.location.hostname}`);
     console.log(`📡 [${timestamp}] ADS INFO: Protocol: ${window.location.protocol}`);
     
@@ -208,7 +201,7 @@
       console.log(`⚠️ [${timestamp}] ADS FAILED: H5 Games Ads did not load properly`);
       console.log(`🔧 [${timestamp}] ADS HELP: Common fixes:`);
       console.log(`   1. Ensure domain is verified in AdSense`);
-      console.log(`   2. Check that Publisher ID is correct: ca-pub-369539584`);
+      console.log(`   2. H5 Games Ads are not configured for this page`);
       console.log(`   3. Verify you're on HTTPS (not file://)`);
       console.log(`   4. Try clearing browser cache`);
       console.log(`   5. Check AdSense account approval status`);
@@ -831,7 +824,7 @@ function checkAdStatus(){
   console.log(`   - adBreak function exists: ${typeof adBreak === 'function'}`);
   console.log(`   - __adBreakWarned: ${__adBreakWarned}`);
   console.log(`   - __adLoading: ${__adLoading}`);
-  console.log(`   - Publisher ID: ca-pub-369539584`);
+  console.log(`   - Publisher ID: not configured`);
   console.log(`   - Domain: ${window.location.hostname}`);
   console.log(`   - Protocol: ${window.location.protocol}`);
   console.log(`   - HTTPS: ${window.location.protocol === 'https:'}`);

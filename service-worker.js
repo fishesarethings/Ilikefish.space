@@ -1,12 +1,13 @@
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const ESSENTIALS_CACHE = `essentials-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const LOG_PREFIX = '[sw]';
 
 const ESSENTIALS = [
-  '/', '/index.html', '/games/index.html', '/gamepack/index.html', '/offline.html', '/manifest.json', '/terms.html',
+  '/', '/index.html', '/games/index.html', '/gamepack/index.html', '/offline.html', '/manifest.json',
+  '/terms.html', '/privacy.html', '/about.html', '/contact.html',
   '/assets/css/styles.css',
-  '/assets/js/games-list.js', '/assets/js/sw-register.js', '/assets/js/version-check.js', '/assets/js/fullscreen.js',
+  '/assets/js/games-list.js', '/assets/js/sw-register.js', '/assets/js/version-check.js',
   '/assets/js/typing.js', '/assets/js/loco.js',
   '/games/index.json', '/games/game_player.html'
 ];
