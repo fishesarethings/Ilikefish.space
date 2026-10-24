@@ -114,6 +114,7 @@
         feedback: 0,
         streak: 0,
         lastPlayDay: null,
+        days: {},
         firstPlayed: Date.now(),
         lastPlayed: 0
       };
@@ -167,6 +168,17 @@
       plays: plays,
       seconds: seconds,
       averageSeconds: plays ? seconds / plays : 0,
+      streak: gameStreakFromState(state, folder),
+      days: history.days || {}
+    };
+  }
+
+  function getGameCalendar(folder) {
+    var state = readState();
+    var history = state.games[folder];
+    if (!history) return { days: {}, streak: { count: 0, playedToday: false } };
+    return {
+      days: history.days || {},
       streak: gameStreakFromState(state, folder)
     };
   }
@@ -194,6 +206,12 @@
         : 1;
       game.lastPlayDay = today;
     }
+
+    if (!game.days || typeof game.days !== 'object') game.days = {};
+    var playDay = game.days[today] || { plays: 0, seconds: 0 };
+    playDay.plays = (Number(playDay.plays) || 0) + 1;
+    playDay.seconds = Number(playDay.seconds) || 0;
+    game.days[today] = playDay;
 
     state.recent = [folder].concat(state.recent.filter(function (item) {
       return item !== folder;
@@ -236,6 +254,14 @@
     var game = ensureGame(state, folder);
     game.seconds = (game.seconds || 0) + whole;
     game.lastPlayed = Date.now();
+
+    if (!game.days || typeof game.days !== 'object') game.days = {};
+    var today = dayKey();
+    var playDay = game.days[today] || { plays: 0, seconds: 0 };
+    playDay.seconds = (Number(playDay.seconds) || 0) + whole;
+    playDay.plays = Math.max(1, Number(playDay.plays) || 0);
+    game.days[today] = playDay;
+
     writeState(state);
   }
 
@@ -528,6 +554,7 @@
     getStreak: getStreak,
     getGameStreak: getGameStreak,
     getGameStats: getGameStats,
+    getGameCalendar: getGameCalendar,
     getHistory: getHistory,
     clearHistory: clearHistory,
     saveCatalog: saveCatalog,
