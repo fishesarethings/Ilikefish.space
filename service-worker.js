@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v14';
+const CACHE_VERSION = 'v17';
 const ESSENTIALS_CACHE = `essentials-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const LOG_PREFIX = '[sw]';
@@ -8,7 +8,7 @@ const ESSENTIALS = [
   '/terms.html', '/privacy.html', '/about.html', '/contact.html',
   '/assets/css/styles.css', '/assets/css/ads.css',
   '/assets/js/games-list.js', '/assets/js/sw-register.js', '/assets/js/version-check.js',
-  '/assets/js/typing.js', '/assets/js/loco.js', '/assets/js/ads-config.js', '/assets/js/ads.js',
+  '/assets/js/typing.js', '/assets/js/loco.js', '/assets/js/ads-config.js', '/assets/js/ads.js', '/assets/js/recommendations.js',
   '/games/index.json', '/games/game_player.html'
 ];
 
