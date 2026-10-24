@@ -2,15 +2,14 @@
 window.addEventListener('DOMContentLoaded', async () => {
   console.log('[games-list] DOM ready, fetching /games/index.json…');
 
-  // Clear containers
   const feat = document.getElementById('featured-games');
-  if (feat) feat.innerHTML = '';
-
   const allHome = document.getElementById('all-games');
-  if (allHome) allHome.innerHTML = '';
-
+  const recHome = document.getElementById('recommended-games');
   const allPage = document.getElementById('games-container');
-  if (allPage) allPage.innerHTML = '';
+
+  [feat, allHome, recHome, allPage].forEach(el => {
+    if (el) el.innerHTML = '';
+  });
 
   let index;
   try {
@@ -27,59 +26,109 @@ window.addEventListener('DOMContentLoaded', async () => {
     return console.error('[games-list] ❌ index.json.folders is not an Array');
   }
 
-  const featuredGames = [];
-
   const isTouchDevice = (typeof window !== 'undefined') &&
     (window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false);
 
-  // Load configs one by one, render immediately
-  for (const slug of index.folders) {
-    console.log(`[games-list] loading config for "${slug}"…`);
+  async function loadConfig(slug) {
     try {
       const resp = await fetch(`/games/${slug}/config.json`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const game = await resp.json();
+      game.folder = game.folder || slug;
 
-       // fallback: ensure folder set
-       game.folder = game.folder || slug;
-       console.log(`[games-list] loaded game config:`, game);
-
-       if (isTouchDevice && game.touch !== true) {
-         console.log(`[games-list] skipping non-touch game "${slug}" on touch device`);
-         continue;
-       }
-
-       // Add to featured buffer
-      if (game.featured) {
-        featuredGames.push(game);
-        // Keep featured sorted as we go
-        featuredGames.sort((a, b) => {
-          const aOrder = typeof a.featuredOrder === 'number' ? a.featuredOrder : 999;
-          const bOrder = typeof b.featuredOrder === 'number' ? b.featuredOrder : 999;
-          return aOrder - bOrder;
-        });
-
-        // Clear and re-render featured
-        if (feat) {
-          feat.innerHTML = '';
-          for (const f of featuredGames) {
-            feat.append(renderGameCard(f));
-          }
-        }
+      if (isTouchDevice && game.touch !== true) {
+        console.log(`[games-list] skipping non-touch game "${slug}" on touch device`);
+        return null;
       }
-
-      // Render to all immediately
-      const card = renderGameCard(game);
-      if (allHome) allHome.append(card.cloneNode(true));
-      if (allPage) allPage.append(card);
-
+      return game;
     } catch (e) {
       console.error(`[games-list] ❌ failed to load config.json for "${slug}":`, e);
+      return null;
     }
-
-    // Small delay so browser paints between fetches
-    await new Promise(r => setTimeout(r, 100));
   }
+
+  const games = (await Promise.all(index.folders.map(loadConfig))).filter(Boolean);
+
+  const featured = games
+    .filter(game => game.featured)
+    .sort((a, b) => {
+      const aOrder = typeof a.featuredOrder === 'number' ? a.featuredOrder : 999;
+      const bOrder = typeof b.featuredOrder === 'number' ? b.featuredOrder : 999;
+      return aOrder - bOrder;
+    });
+
+  function renderFeatured() {
+    if (!feat) return;
+    feat.innerHTML = '';
+    featured.forEach(game => feat.append(renderGameCard(game)));
+  }
+
+  function renderHomeAll() {
+    if (!allHome) return;
+    allHome.innerHTML = '';
+    games.forEach(game => allHome.append(renderGameCard(game)));
+  }
+
+  function renderHomeRecommended() {
+    if (!recHome) return;
+    const picked = window.ILF_RECS
+      ? window.ILF_RECS.recommended(games, 8)
+      : games.slice(0, 8);
+    recHome.innerHTML = '';
+    picked.forEach(game => recHome.append(renderGameCard(game)));
+  }
+
+  function applySearchFilter() {
+    const input = document.getElementById('search-box');
+    if (!input) return;
+    const term = input.value.trim().toLowerCase();
+    document.querySelectorAll('#games-container .game-card').forEach(card => {
+      const nameEl = card.querySelector('h3');
+      const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+      card.style.display = (!term || name.includes(term)) ? '' : 'none';
+    });
+  }
+
+  function renderGamesPage() {
+    if (!allPage) return;
+    const ordered = window.ILF_RECS ? window.ILF_RECS.rank(games) : games;
+    allPage.innerHTML = '';
+    ordered.forEach(game => allPage.append(renderGameCard(game)));
+    applySearchFilter();
+  }
+
+  renderFeatured();
+  renderHomeAll();
+  renderHomeRecommended();
+  renderGamesPage();
+
+  function historySignature() {
+    try {
+      return window.ILF_RECS ? JSON.stringify(window.ILF_RECS.getHistory()) : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  let lastHistory = historySignature();
+
+  function refreshPersonalised(force) {
+    const next = historySignature();
+    if (!force && next === lastHistory) return;
+    lastHistory = next;
+    renderHomeRecommended();
+    renderGamesPage();
+  }
+
+  // Returning from a game, switching tabs, or playing in another tab should
+  // be reflected immediately the next time the list is visible.
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) refreshPersonalised(true);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) refreshPersonalised(false);
+  });
+  window.addEventListener('storage', () => refreshPersonalised(true));
 });
 
 function renderGameCard(game) {
@@ -88,7 +137,6 @@ function renderGameCard(game) {
     return document.createTextNode('');
   }
 
-  // Minimal change: point to game-player in /games/ and encode folder
   const link = document.createElement('a');
   link.href = `/games/game_player.html?folder=${encodeURIComponent(game.folder)}`;
   link.className = 'game-card';
@@ -103,7 +151,6 @@ function renderGameCard(game) {
     </div>
   `;
 
-  // Wire Play button to the same target (same-tab navigation).
   const playBtn = link.querySelector('.play-btn');
   if (playBtn) {
     playBtn.addEventListener('click', (evt) => {

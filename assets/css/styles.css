@@ -61,6 +61,45 @@ nav a {
   gap: 1rem;
   padding: 1rem;
 }
+
+/* One-row carousels for Recommended / Featured on the home page */
+.cards-row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  justify-content: flex-start;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.5rem 1rem 1.75rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+.cards-row .game-card {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+}
+
+.cards-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.cards-row::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+.cards-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 600px) {
+  .cards-row .game-card {
+    flex-basis: min(72vw, 300px);
+  }
+}
 .game-card {
   width: 300px;
   position: relative;
