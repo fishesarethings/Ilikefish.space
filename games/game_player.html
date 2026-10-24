@@ -6,6 +6,10 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
+  <link rel="stylesheet" href="/assets/css/ads.css" />
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
+  <script src="/assets/js/ads-config.js" defer></script>
+  <script src="/assets/js/ads.js" defer></script>
   <style>
     :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
@@ -136,6 +140,12 @@
       <button id="toggleIcon" class="toggle-btn" aria-pressed="true">Icon: On</button>
       <button id="toggleCompact" class="toggle-btn" aria-pressed="false">Compact: Off</button>
       <button id="toggleSound" class="toggle-btn" aria-pressed="true">Sound: On</button>
+    </div>
+
+    <!-- Sponsored break below the controls, away from the game area -->
+    <div class="ilf-ad-shell ilf-ad-player" data-ilf-ad data-requires-game data-slot-key="player-below" data-format="auto">
+      <div class="ilf-ad-label">Advertisement</div>
+      <div class="ilf-ad-slot"></div>
     </div>
 
     <div class="more-games">
@@ -507,6 +517,7 @@
           currentFolder = folderName || null;
 
           if (!folderName){
+            document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
             if (vp) vp.classList.add('no-game');
@@ -531,6 +542,8 @@
             if (noGameSample) noGameSample.style.display = 'none';
             if (vp) vp.classList.remove('no-game');
             if (iframe) iframe.style.display = 'block';
+            document.body.classList.add('has-game');
+            if (window.ILF_ADS && window.ILF_ADS.refresh) window.ILF_ADS.refresh();
 
             if (gameTitle) gameTitle.textContent = title;
             if (descTitle) descTitle.textContent = title;
@@ -562,6 +575,7 @@
             applyAllPrefs();
           }catch(e){
             console.warn(e);
+            document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
             if (vp) vp.classList.add('no-game');

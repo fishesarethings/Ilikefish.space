@@ -32,6 +32,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   <!-- Core CSS + AOS -->
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <link rel="stylesheet" href="/assets/css/ads.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
 
   <style>
@@ -56,6 +57,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   <!-- Search -->
   <input id="search-box" type="text" placeholder="Search games…" data-aos="fade-up">
+
+  <!-- Sponsored break above the grid -->
+  <div class="ilf-ad-shell" data-ilf-ad data-slot-key="games-top" data-format="auto">
+    <div class="ilf-ad-label">Advertisement</div>
+    <div class="ilf-ad-slot"></div>
+  </div>
 
   <noscript>
     <p style="max-width:900px;margin:1rem auto;padding:0 1rem;text-align:center;color:#555">
@@ -89,6 +96,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <!-- AOS library & loader -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js" defer></script>
   <script src="/assets/js/games-list.js" defer></script>
+  <script src="/assets/js/ads-config.js" defer></script>
+  <script src="/assets/js/ads.js" defer></script>
 
   <!--Footer-->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
