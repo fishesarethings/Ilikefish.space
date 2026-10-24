@@ -212,7 +212,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      section.style.height = `calc(100vh + ${Math.ceil(max)}px)`;
+      section.style.height = `calc(100vh + ${Math.ceil(max * 1.5)}px)`;
       section.dataset.scrollPin = '1';
       row.scrollLeft = 0;
     });
@@ -224,6 +224,64 @@ window.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('resize', setupScrollTracks);
   window.addEventListener('load', setupScrollTracks);
   setupScrollTracks();
+
+  // A quick boundary catch: if a fast scroll is about to jump over a pinned
+  // menu, ease the page to the entrance (or exit, when scrolling back up).
+  // Once inside the track, scrolling is completely native again.
+  if (window.matchMedia && window.matchMedia('(pointer: fine)').matches && !reduceMotion) {
+    let boundaryLock = 0;
+
+    window.addEventListener('wheel', event => {
+      if (event.ctrlKey || event.metaKey) return;
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      if (performance.now() < boundaryLock) {
+        event.preventDefault();
+        return;
+      }
+
+      const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
+      if (!delta) return;
+
+      const tracks = Array.from(document.querySelectorAll('.scroll-track[data-scroll-pin="1"]'))
+        .map(section => {
+          const rect = section.getBoundingClientRect();
+          const extra = section.offsetHeight - window.innerHeight;
+          return { section, rect, extra, top: rect.top };
+        })
+        .filter(item => item.extra > 40);
+
+      let target = null;
+      let destination = 0;
+
+      if (delta > 0) {
+        // Approaching a menu from above: pin it at the top before allowing it
+        // to be scrolled through.
+        const candidates = tracks
+          .filter(item => item.top > 0 && item.top < window.innerHeight * 0.8)
+          .sort((a, b) => a.top - b.top);
+        if (candidates.length) {
+          target = candidates[0];
+          destination = window.scrollY + target.top;
+        }
+      } else {
+        // Coming back up: land at the end of the menu first, then let native
+        // scrolling run the row backwards.
+        const candidates = tracks
+          .filter(item => item.top < -item.extra && item.top > -item.extra - window.innerHeight * 0.8)
+          .sort((a, b) => b.top - a.top);
+        if (candidates.length) {
+          target = candidates[0];
+          destination = window.scrollY + target.top + target.extra;
+        }
+      }
+
+      if (!target) return;
+
+      event.preventDefault();
+      window.scrollTo({ top: Math.max(0, destination), behavior: 'smooth' });
+      boundaryLock = performance.now() + 420;
+    }, { passive: false });
+  }
 
 });
 
