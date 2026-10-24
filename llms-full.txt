@@ -9,7 +9,7 @@ This document is a factual, machine-readable reference for AI assistants, search
 - Type: free browser game arcade / progressive web app
 - Language: English
 - Licence: Unlicense unless a game or asset states otherwise
-- Contact: contact via GitHub · https://ilikefish.space/contact.html
+- Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/Ilikefish.space/issues
 - Source repository: https://github.com/fishesarethings/Ilikefish.space
 
 ## Purpose and audience

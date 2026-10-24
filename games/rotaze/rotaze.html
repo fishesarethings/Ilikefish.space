@@ -52,10 +52,21 @@
     .btn:hover{transform:translateY(-2px)}
 
     /* Minimap */
-    .minimap{position:fixed; right:12px; bottom:12px; width:140px; height:140px; background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; z-index:18}
-    .minimap header{display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-bottom:1px solid var(--border); color:var(--muted); font-size:12px}
-    .minimap canvas{flex:1; background:var(--card2); display:block}
+    .minimap{position:fixed; right:12px; bottom:12px; width:148px; height:152px; background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden; z-index:22}
+    .minimap header{flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px 6px 10px; border-bottom:1px solid var(--border); color:var(--muted); font-size:12px}
+    .minimap header .mini-title{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .minimap header .mini-actions{display:flex; align-items:center; gap:4px; flex:0 0 auto}
+    .minimap header button{padding:4px 7px; font-size:12px; line-height:1; border-radius:9px; box-shadow:none}
+    .minimap canvas{flex:1 1 auto; min-height:0; width:100%; height:auto; background:var(--card2); display:block}
+    .minimap.collapsed{height:auto; width:148px}
+    .minimap.collapsed canvas{display:none}
+    .minimap.collapsed header{border-bottom:0}
     .minimap.expanded{position:fixed; right:50%; bottom:50%; transform:translate(50%,50%); width:min(92vw,1000px); height:min(80vh,760px); border-radius:14px; z-index:60}
+    @media (max-width: 700px){
+      .minimap{width:118px; height:126px; right:8px; bottom:72px; border-radius:14px}
+      .minimap.collapsed{width:118px}
+      .minimap.expanded{width:min(94vw,1000px); height:min(72vh,760px); bottom:50%}
+    }
 
     /* Panels */
     .overlay{position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:saturate(140%) blur(6px); display:none; z-index:30}
@@ -124,10 +135,13 @@
 
   <div class="minimap" id="mini">
     <header>
-      <div>Minimap</div>
-      <button class="btn" style="padding:6px 10px" id="expandMap">Expand</button>
+      <span class="mini-title">Minimap</span>
+      <span class="mini-actions">
+        <button class="btn" type="button" id="collapseMap" title="Minimise minimap" aria-label="Minimise minimap" aria-expanded="true">&#8211;</button>
+        <button class="btn" type="button" id="expandMap" title="Expand minimap" aria-label="Expand minimap">&#10530;</button>
+      </span>
     </header>
-    <canvas id="mapCanvas" width="140" height="120"></canvas>
+    <canvas id="mapCanvas" width="148" height="118"></canvas>
   </div>
 
   <!-- Start Menu (splash) -->
@@ -260,12 +274,16 @@
     const DPR = Math.max(1, window.devicePixelRatio || 1);
     // main canvas: size to css pixels * DPR
     const gw = gameCanvas.clientWidth; const gh = gameCanvas.clientHeight;
-    gameCanvas.width = Math.round(gw * DPR); gameCanvas.height = Math.round(gh * DPR);
-    g.setTransform(DPR,0,0,DPR,0,0);
-    // minimap
+    if (gw > 0 && gh > 0) {
+      gameCanvas.width = Math.round(gw * DPR); gameCanvas.height = Math.round(gh * DPR);
+      g.setTransform(DPR,0,0,DPR,0,0);
+    }
+    // minimap: skip while collapsed/hidden so the canvas keeps a valid size
     const mw = mapCanvas.clientWidth; const mh = mapCanvas.clientHeight;
-    mapCanvas.width = Math.round(mw * DPR); mapCanvas.height = Math.round(mh * DPR);
-    mg.setTransform(DPR,0,0,DPR,0,0);
+    if (mw > 0 && mh > 0) {
+      mapCanvas.width = Math.round(mw * DPR); mapCanvas.height = Math.round(mh * DPR);
+      mg.setTransform(DPR,0,0,DPR,0,0);
+    }
   }
   window.addEventListener('resize', resizeCanvases);
 
@@ -812,9 +830,10 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  if (k === 'm') { // toggle minimap (uses toggleMinimap() if present, falls back to element toggle)
+  if (k === 'm') { // collapse/restore the minimap
     e.preventDefault?.();
-    if (typeof toggleMinimap === 'function') toggleMinimap();
+    const collapse = document.getElementById('collapseMap');
+    if (collapse) collapse.click();
     else _fallbackToggleMinimap();
     return;
   }
@@ -1052,12 +1071,49 @@ gameCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
   $('#openSettings').onclick = ()=> openPanel('settings');
   $('#btnRestart').onclick = ()=> { restartLevel(); };
 
-  // Map expand
+  // Map expand / collapse
   const mini = $('#mini');
   const expandBtn = $('#expandMap');
+  const collapseBtn = $('#collapseMap');
+
+  function syncMapUi(){
+    const expanded = mini.classList.contains('expanded');
+    const collapsed = mini.classList.contains('collapsed');
+    state.mapExpanded = expanded;
+    expandBtn.textContent = expanded ? 'Minimise' : '\u2922';
+    expandBtn.title = expanded ? 'Minimise map' : 'Expand map';
+    expandBtn.setAttribute('aria-label', expanded ? 'Minimise map' : 'Expand map');
+    expandBtn.setAttribute('aria-expanded', String(expanded));
+    collapseBtn.textContent = collapsed ? '+' : '\u2013';
+    collapseBtn.title = collapsed ? 'Restore minimap' : 'Minimise minimap';
+    collapseBtn.setAttribute('aria-label', collapsed ? 'Restore minimap' : 'Minimise minimap');
+    collapseBtn.setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  function toggleMap(){
+    mini.classList.remove('collapsed');
+    mini.classList.toggle('expanded');
+    syncMapUi();
+    resizeCanvases();
+    toast(state.mapExpanded ? 'Map expanded — movement disabled' : 'Map back to corner');
+  }
+
+  function toggleCollapse(){
+    if (mini.classList.contains('expanded')) {
+      mini.classList.remove('expanded');
+      mini.classList.add('collapsed');
+    } else {
+      mini.classList.toggle('collapsed');
+    }
+    syncMapUi();
+    resizeCanvases();
+    toast(mini.classList.contains('collapsed') ? 'Minimap hidden' : 'Minimap shown');
+  }
+
   $('#btnMap').onclick = ()=> toggleMap();
-  $('#expandMap').onclick = ()=> toggleMap();
-  function toggleMap(){ mini.classList.toggle('expanded'); state.mapExpanded = mini.classList.contains('expanded'); resizeCanvases(); if(state.mapExpanded){ expandBtn.textContent = 'Minimise'; toast('Map expanded — movement disabled'); } else { expandBtn.textContent = 'Expand'; toast('Map minimised'); } }
+  expandBtn.onclick = ()=> toggleMap();
+  collapseBtn.onclick = ()=> toggleCollapse();
+  syncMapUi();
 
   // make the Mode label clickable (user requested)
   const modeLabel = $('#modeLabel'); if(modeLabel){ modeLabel.style.cursor='pointer'; modeLabel.addEventListener('click', ()=> openPanel('modes')); }
@@ -1263,8 +1319,8 @@ gameCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
   // Load previous save and boot
   load(); buildShopCombos(); renderShop(); // initial canvas size
-  // set expand button text correctly on load
-  expandBtn.textContent = state.mapExpanded ? 'Minimise' : 'Expand';
+  // sync minimap controls on load
+  syncMapUi();
   resizeCanvases();
   requestAnimationFrame(tick);
 

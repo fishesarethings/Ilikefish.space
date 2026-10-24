@@ -3,7 +3,7 @@
 > ILikeFish.Space is a free, account-free browser game arcade. It hosts small HTML5 games that can be played instantly, many of which work offline after the site is loaded. The site is operated by fishesarethings and is released under the Unlicense unless a game says otherwise.
 
 Canonical site: https://ilikefish.space/
-Contact: https://ilikefish.space/contact.html · contact via GitHub
+Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/Ilikefish.space/issues
 Last updated: 2026-10-24
 
 ## What the site offers
