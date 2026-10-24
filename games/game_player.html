@@ -6,21 +6,28 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=22" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=23" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=22" defer></script>
-  <script src="/assets/js/ads-config.js?v=22" defer></script>
-  <script src="/assets/js/ads.js?v=22" defer></script>
+  <script src="/assets/js/recommendations.js?v=23" defer></script>
+  <script src="/assets/js/ads-config.js?v=23" defer></script>
+  <script src="/assets/js/ads.js?v=23" defer></script>
   <style>
-    :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
-    header{padding:10px 18px;position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}
-    header nav{display:flex;justify-content:center;gap:18px}
-    header a{color:#111;text-decoration:none;font-weight:600}
-    .container{max-width:1200px;margin:18px auto;padding:0 18px;box-sizing:border-box}
+    :root{
+      --bg:#f7f8fb;--surface:#fff;--ink:#111827;--muted:#667085;
+      --accent:#007aff;--accent-dark:#0057d9;--line:rgba(17,24,39,.08);
+      --shadow:0 12px 30px rgba(15,23,42,.07);
+    }
+    body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,#f7f8fb 260px,#f7f8fb 100%)}
+    .site-header{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 24px;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .site-header .brand{font-size:1.05rem;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.02em}
+    .site-header .brand:hover{color:var(--accent-dark)}
+    .site-header nav{display:flex;align-items:center;gap:22px}
+    .site-header nav a{color:#475467;text-decoration:none;font-weight:600;font-size:.95rem}
+    .site-header nav a:hover{color:var(--accent)}
+    .container{max-width:1120px;margin:24px auto 40px;padding:0 20px;box-sizing:border-box}
 
-    /* viewport - neutral by default; .no-game shows the fish pattern */
-    #viewport{background:#f4f7fb;height:64vh;min-height:360px;border-radius:6px;position:relative;overflow:auto;display:flex;align-items:center;justify-content:center}
+    /* game viewport */
+    #viewport{background:#e9eef5;height:min(64vh,720px);min-height:360px;border-radius:16px;border:1px solid var(--line);box-shadow:var(--shadow);position:relative;overflow:auto;display:flex;align-items:center;justify-content:center}
     #viewport.no-game{background:linear-gradient(135deg,#e6f7ff 0%,#f0f9ff 50%,#e6f7ff 100%) !important;color:#0b3b5a}
     #gameFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent}
 
@@ -28,75 +35,96 @@
     .fish-svg{width:120px;height:80px}
     .pulse{animation:pulse 1.6s ease-in-out infinite}
     @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:0.85}100%{transform:scale(1);opacity:1}}
-    .troubleshoot{max-width:780px;text-align:left;background:rgba(255,255,255,0.85);padding:12px;border-radius:8px;color:#093049;font-size:0.95rem}
+    .troubleshoot{max-width:780px;text-align:left;background:rgba(255,255,255,.9);padding:14px;border-radius:12px;border:1px solid var(--line);color:#093049;font-size:.95rem}
 
-    .game-bar{display:flex;align-items:center;gap:12px;padding:10px 6px;margin-top:12px;background:#f2f4f6;border-radius:8px}
-    .game-bar .icon{width:52px;height:52px;border-radius:8px;background:#ddd;overflow:hidden;flex-shrink:0}
-    .game-bar .title{font-weight:700}
-    .game-bar .title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* game header bar */
+    .game-bar{display:flex;align-items:center;gap:12px;padding:12px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+    .game-bar .icon{width:52px;height:52px;border-radius:12px;background:#eef3f9;border:1px solid var(--line);overflow:hidden;flex-shrink:0}
+    .game-bar .title{font-weight:800;font-size:1.02rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .game-bar .controls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .ctrl-btn{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;touch-action:manipulation}
+    .ctrl-btn{background:#f7f9fc;border:1px solid var(--line);color:#344054;padding:9px 11px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.88rem;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+    .ctrl-btn:hover{background:#eef4ff;border-color:#cfe0ff;color:var(--accent-dark)}
+    .ctrl-btn:active{transform:scale(.97)}
     .ctrl-btn svg{width:16px;height:16px}
-    .next-btn{background:#007aff;border-color:#007aff;color:#fff;font-weight:700;transition:background .16s ease,transform .16s ease}
-    .next-btn:hover{background:#0066cc}
-    .next-btn:active{transform:scale(.97)}
+    .next-btn{background:linear-gradient(90deg,var(--accent),var(--accent-dark));border-color:transparent;color:#fff;font-weight:800;box-shadow:0 8px 18px rgba(0,122,255,.22)}
+    .next-btn:hover{background:linear-gradient(90deg,#006fe8,#004fc4);color:#fff;border-color:transparent}
 
-    .desc{padding:18px 6px;text-align:center}
-    .desc p{white-space:pre-wrap;color:var(--muted);max-width:980px;margin:6px auto;overflow-wrap:anywhere}
+    /* description, feedback and controls */
+    .desc{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05);padding:20px 22px;margin-top:14px;text-align:left}
+    .desc h2{margin:0 0 6px;font-size:1.2rem}
+    .desc p{white-space:pre-wrap;color:var(--muted);max-width:100%;margin:6px 0 0;overflow-wrap:anywhere}
     .player-feedback[hidden]{display:none}
-    .player-feedback{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:8px 6px 2px}
-    .feedback-label{font-size:.86rem;color:var(--muted);font-weight:700;margin-right:2px}
-    .feedback-btn{padding:7px 12px;border-radius:999px;border:1px solid #ddd;background:#fff;color:#333;cursor:pointer;font-size:.88rem;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+    .player-feedback{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+    .feedback-label{font-size:.86rem;color:var(--muted);font-weight:800;margin-right:2px}
+    .feedback-btn{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#f7f9fc;color:#344054;cursor:pointer;font-size:.88rem;font-weight:600;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+    .feedback-btn:hover{background:#eef4ff;border-color:#cfe0ff}
     .feedback-btn:active{transform:scale(.96)}
     .feedback-btn.is-on{background:#e8f5e9;border-color:#79c77d;color:#166534}
-    .player-streak{text-align:center;color:#b45309;font-size:.9rem;font-weight:700;margin:4px 0 0}
-    .options{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding-bottom:8px}
-    .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;touch-action:manipulation}
-    .more-games{padding:12px 6px}
+    .options{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;padding:12px 14px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+    .toggle-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#f7f9fc;color:#344054;cursor:pointer;font-size:.88rem;font-weight:600;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,color .16s ease}
+    .toggle-btn[aria-pressed="true"]{background:#eef5ff;border-color:#cfe0ff;color:var(--accent-dark)}
+    .toggle-btn:hover{background:#eef4ff}
+
+    /* more games */
+    .more-games{margin-top:18px;padding:18px 4px 4px}
+    .more-games h3{font-size:1.3rem;margin:0 0 12px;text-align:center}
     .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-    .game-card{width:300px;height:300px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:block;position:relative;flex:0 0 auto}
+    .game-card{width:300px;height:300px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line);display:block;position:relative;flex:0 0 auto;box-shadow:0 8px 24px rgba(15,23,42,.06);transition:transform .2s ease,box-shadow .2s ease}
+    .game-card:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(15,23,42,.12)}
     .game-card .tile{width:100%;height:100%;display:block;position:relative}
     .game-card .tile-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}
-    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);color:#fff;text-align:center;box-sizing:border-box}
-    .game-card .tile-title{display:block;font-size:0.95rem;font-weight:700}
+    .game-card .title-bar{position:absolute;left:0;right:0;bottom:0;padding:10px;background:linear-gradient(180deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.58) 100%);color:#fff;text-align:center;box-sizing:border-box}
+    .game-card .tile-title{display:block;font-size:.95rem;font-weight:700}
     .game-card .placeholder{display:flex;align-items:center;justify-content:center;height:100%;padding:12px;color:var(--muted)}
-    /* hide any legacy small-img rules to avoid conflicts */
     .game-card img:not(.tile-img){display:none}
-    .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999;opacity:0;transition:opacity .18s}
+
+    .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111827;color:#fff;padding:9px 13px;border-radius:10px;z-index:9999;opacity:0;transition:opacity .18s;font-size:.9rem;box-shadow:0 12px 30px rgba(0,0,0,.22)}
     .ilf-toast.show{opacity:1}
-    footer{padding:14px 18px max(14px, env(safe-area-inset-bottom));color:#666;font-size:.9rem;border-top:1px solid rgba(0,0,0,0.04);background:transparent}
+    footer{padding:24px 18px max(24px,env(safe-area-inset-bottom));color:var(--muted);font-size:.86rem;border-top:1px solid var(--line);background:transparent;text-align:center;margin-top:24px}
+    footer p{margin:6px 0}
+    footer a{color:var(--accent);text-decoration:none}
+    footer a:hover{text-decoration:underline}
 
     /* semi-full mode */
-    body.semi-full header, body.semi-full .game-bar, body.semi-full footer { display:none !important }
+    body.semi-full .site-header, body.semi-full .game-bar, body.semi-full .desc,
+    body.semi-full .player-feedback, body.semi-full .options, body.semi-full .more-games,
+    body.semi-full footer { display:none !important }
     body.semi-full .container { max-width:100%; margin:0; padding:0 }
     body.semi-full #viewport { position:fixed !important; top:6px; left:6px; right:6px; bottom:6px; height:auto; z-index:9999; border-radius:0 }
-    #exitSemi{position:fixed;top:12px;right:12px;z-index:10001;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.08);cursor:pointer;display:none}
+    #exitSemi{position:fixed;top:12px;right:12px;z-index:10001;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid var(--line);cursor:pointer;display:none}
     body.semi-full #exitSemi{display:block}
 
     body.compact .desc, body.compact .options, body.compact .more-games,
-    body.compact .player-feedback, body.compact .player-streak { display:none }
+    body.compact .player-feedback { display:none }
 
     @media (max-width:720px){
-      header{padding:8px 12px}
-      header nav{gap:12px;flex-wrap:wrap}
-      .container{margin:10px auto;padding:0 10px}
-      #viewport{height:56vh;min-height:300px}
-      .game-bar{flex-wrap:wrap;gap:8px;padding:8px}
-      .game-bar .title{order:2;flex:1 1 100%}
+      .site-header{padding:10px 14px;gap:10px}
+      .site-header .brand{font-size:.98rem}
+      .site-header nav{gap:11px}
+      .site-header nav a{font-size:.84rem}
+      .container{margin:12px auto 28px;padding:0 12px}
+      #viewport{height:52vh;min-height:280px;border-radius:12px}
+      .game-bar{flex-wrap:wrap;gap:8px;padding:10px;border-radius:12px}
+      .game-bar .title{order:2;flex:1 1 100%;font-size:.98rem}
       .game-bar .controls{order:3;width:100%;margin-left:0;justify-content:flex-start;overflow-x:auto;padding-bottom:2px}
-      .ctrl-btn{flex:0 0 auto;padding:8px;min-width:40px;min-height:40px;justify-content:center}
+      .ctrl-btn{flex:0 0 auto;padding:8px;min-width:40px;min-height:40px;justify-content:center;font-size:.82rem}
       .ctrl-btn span{display:none}
-      .desc{padding:12px 4px}
-      .options{gap:6px}
-      .toggle-btn{padding:7px 9px;font-size:.9rem}
-      .player-feedback{justify-content:flex-start;padding-left:4px}
+      .desc{padding:16px;border-radius:12px}
+      .desc h2{font-size:1.08rem}
+      .player-feedback,.options{padding:10px;border-radius:12px}
+      .player-feedback{justify-content:flex-start}
+      .feedback-btn,.toggle-btn{font-size:.84rem;padding:8px 10px}
+      .more-games{padding:16px 0 0}
+      .more-games h3{font-size:1.15rem}
       .games-grid{gap:10px}
-      .game-card{width:calc(50% - 10px);height:auto;aspect-ratio:1}
+      .game-card{width:calc(50% - 10px);height:auto;aspect-ratio:1;border-radius:12px}
+      footer{padding:20px 12px max(20px,env(safe-area-inset-bottom))}
     }
   </style>
 </head>
 <body>
-  <header>
+  <header class="site-header">
+    <a class="brand" href="/">ILikeFish.Space</a>
     <nav>
       <a href="/">Home</a>
       <a href="/games">Games</a>
@@ -160,17 +188,16 @@
       </div>
     </div>
 
-    <section class="desc">
-      <h2 id="descTitle">Description</h2>
-      <p id="descBody">No description</p>
-    </section>
-
     <div class="player-feedback" id="playerFeedback" hidden>
       <span class="feedback-label">Tune my picks</span>
       <button type="button" class="feedback-btn" data-player-thumb="up" aria-label="More games like this" aria-pressed="false">👍 More like this</button>
       <button type="button" class="feedback-btn" data-player-thumb="down" aria-label="Fewer games like this" aria-pressed="false">👎 Less like this</button>
     </div>
-    <p id="playerStreak" class="player-streak" hidden></p>
+
+    <section class="desc">
+      <h2 id="descTitle">Description</h2>
+      <p id="descBody">No description</p>
+    </section>
 
     <div class="options">
       <button id="toggleTouch" class="toggle-btn" aria-pressed="true">Touch: On</button>
@@ -192,7 +219,7 @@
     </div>
 
     <div class="more-games">
-      <h3 style="text-align:center;margin:6px 0">More games</h3>
+      <h3>More games</h3>
       <div class="games-grid" id="gamesGrid" aria-live="polite"></div>
     </div>
   </div>
@@ -201,7 +228,7 @@
   <button id="exitSemi" title="Exit semi-fullscreen">Exit</button>
 
   <!-- Footer -->
-  <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
+  <footer>
     <p>Site Version: <span id="current-site-version">—</span>
       <button id="check-update" class="btn-disabled" aria-label="Check for updates">🔄 Refresh</button>
     </p>
@@ -253,26 +280,12 @@
         const vp = document.getElementById('viewport');
         const feedbackWrap = document.getElementById('playerFeedback');
         const feedbackButtons = Array.from(document.querySelectorAll('[data-player-thumb]'));
-        const playerStreak = document.getElementById('playerStreak');
         const nextBtn = document.getElementById('nextBtn');
-
-        function updatePlayerStreak(){
-          if (!playerStreak) return;
-          const streak = window.ILF_RECS ? window.ILF_RECS.getStreak() : { count: 0 };
-          if (!streak.count) {
-            playerStreak.hidden = true;
-            playerStreak.textContent = '';
-            return;
-          }
-          playerStreak.hidden = false;
-          playerStreak.textContent = '🔥 ' + streak.count + '-day streak';
-        }
 
         function paintPlayerFeedback(folder){
           if (!feedbackWrap) return;
           if (!folder) {
             feedbackWrap.hidden = true;
-            updatePlayerStreak();
             return;
           }
           const value = window.ILF_RECS ? window.ILF_RECS.feedbackFor(folder) : 0;
@@ -282,7 +295,6 @@
             button.classList.toggle('is-on', value === wanted);
             button.setAttribute('aria-pressed', String(value === wanted));
           });
-          updatePlayerStreak();
         }
 
         feedbackButtons.forEach(button => {
