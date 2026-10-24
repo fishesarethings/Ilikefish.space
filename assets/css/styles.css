@@ -121,6 +121,96 @@ nav a {
   position: absolute;
   bottom: 0;
   width: 100%;
+  box-sizing: border-box;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.thumb-row {
+  display: flex;
+  gap: 4px;
+}
+
+.thumb-btn {
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.18);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+
+.thumb-btn:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+.thumb-btn:active {
+  transform: scale(.84);
+}
+
+.thumb-btn.is-on {
+  background: #00a846;
+  border-color: #00c853;
+  animation: ilf-thumb-pop .25s ease;
+}
+
+@keyframes ilf-thumb-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+
+.play-streak {
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: -.4rem auto 1rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.56);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 1px 10px rgba(0,0,0,.35);
+}
+
+/* Rows slide in as they enter the viewport. */
+.cards-row.ilf-reveal .game-card {
+  opacity: 0;
+  transform: translateX(38px);
+  transition: opacity .55s ease, transform .6s cubic-bezier(.22,.61,.36,1);
+  transition-delay: calc(var(--ilf-i, 0) * 55ms);
+}
+
+.cards-row.ilf-reveal.is-visible .game-card {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cards-row.ilf-reveal.is-visible .game-card:hover {
+  transform: scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cards-row.ilf-reveal .game-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .thumb-btn.is-on {
+    animation: none;
+  }
 }
 
 /* Copy & fullscreen box */

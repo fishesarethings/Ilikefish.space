@@ -52,8 +52,8 @@
   <meta name="theme-color" content="#2196f3">
 
   <!-- Core CSS -->
-  <link rel="stylesheet" href="/assets/css/styles.css?v=18">
-  <link rel="stylesheet" href="/assets/css/ads.css?v=18">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=22">
+  <link rel="stylesheet" href="/assets/css/ads.css?v=22">
   <!-- Locomotive & AOS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
@@ -67,10 +67,11 @@
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
-  <script src="/assets/js/ads-config.js?v=18" defer></script>
-  <script src="/assets/js/ads.js?v=18" defer></script>
+  <script src="/assets/js/ads-config.js?v=22" defer></script>
+  <script src="/assets/js/ads.js?v=22" defer></script>
 
   <link rel="canonical" href="https://ilikefish.space/">
+  <link rel="alternate" type="text/markdown" title="LLM-readable site summary" href="/llms.txt">
 
   <script type="application/ld+json">
   {
@@ -228,16 +229,17 @@
     <h1 id="hero-title" class="typewriter">I like fishes </h1>
   </section>
 
-  <!-- Recommended games (local personalisation) -->
-  <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-games.jpg');">
-    <h2 data-scroll data-scroll-speed="2">Recommended</h2>
-    <div id="recommended-games" class="cards-container cards-row" aria-label="Recommended games"></div>
-  </section>
-
   <!-- Featured Games (below the fold) -->
   <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="2">Featured Games</h2>
     <div id="featured-games" class="cards-container cards-row" aria-label="Featured games"></div>
+  </section>
+
+  <!-- Recommended games (local personalisation) -->
+  <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-games.jpg');">
+    <h2 data-scroll data-scroll-speed="2">Recommended</h2>
+    <p id="play-streak" class="play-streak" hidden></p>
+    <div id="recommended-games" class="cards-container cards-row" aria-label="Recommended games"></div>
   </section>
 
   <!-- Sponsored break between the two game lists -->
@@ -268,8 +270,8 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <script src="/assets/js/recommendations.js?v=18" defer></script>
-  <script src="/assets/js/games-list.js?v=18" defer></script>
+  <script src="/assets/js/recommendations.js?v=22" defer></script>
+  <script src="/assets/js/games-list.js?v=22" defer></script>
 
   <!-- COOKIE BANNER -->
   <div id="ilf-cookie-banner" class="cookie-banner" aria-live="polite" style="display:none;">

@@ -6,18 +6,18 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=18" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=22" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=18" defer></script>
-  <script src="/assets/js/ads-config.js?v=18" defer></script>
-  <script src="/assets/js/ads.js?v=18" defer></script>
+  <script src="/assets/js/recommendations.js?v=22" defer></script>
+  <script src="/assets/js/ads-config.js?v=22" defer></script>
+  <script src="/assets/js/ads.js?v=22" defer></script>
   <style>
     :root{--bg:#ffffff;--muted:#666;--accent:#007aff}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
-    header{padding:10px 18px}
+    header{padding:10px 18px;position:sticky;top:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(10px)}
     header nav{display:flex;justify-content:center;gap:18px}
     header a{color:#111;text-decoration:none;font-weight:600}
-    .container{max-width:1200px;margin:18px auto;padding:0 18px}
+    .container{max-width:1200px;margin:18px auto;padding:0 18px;box-sizing:border-box}
 
     /* viewport - neutral by default; .no-game shows the fish pattern */
     #viewport{background:#f4f7fb;height:64vh;min-height:360px;border-radius:6px;position:relative;overflow:auto;display:flex;align-items:center;justify-content:center}
@@ -33,14 +33,25 @@
     .game-bar{display:flex;align-items:center;gap:12px;padding:10px 6px;margin-top:12px;background:#f2f4f6;border-radius:8px}
     .game-bar .icon{width:52px;height:52px;border-radius:8px;background:#ddd;overflow:hidden;flex-shrink:0}
     .game-bar .title{font-weight:700}
-    .game-bar .controls{margin-left:auto;display:flex;gap:8px}
-    .ctrl-btn{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+    .game-bar .title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .game-bar .controls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .ctrl-btn{background:#fff;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;touch-action:manipulation}
     .ctrl-btn svg{width:16px;height:16px}
+    .next-btn{background:#007aff;border-color:#007aff;color:#fff;font-weight:700;transition:background .16s ease,transform .16s ease}
+    .next-btn:hover{background:#0066cc}
+    .next-btn:active{transform:scale(.97)}
 
     .desc{padding:18px 6px;text-align:center}
-    .desc p{white-space:pre-wrap;color:var(--muted);max-width:980px;margin:6px auto}
+    .desc p{white-space:pre-wrap;color:var(--muted);max-width:980px;margin:6px auto;overflow-wrap:anywhere}
+    .player-feedback[hidden]{display:none}
+    .player-feedback{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:8px 6px 2px}
+    .feedback-label{font-size:.86rem;color:var(--muted);font-weight:700;margin-right:2px}
+    .feedback-btn{padding:7px 12px;border-radius:999px;border:1px solid #ddd;background:#fff;color:#333;cursor:pointer;font-size:.88rem;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+    .feedback-btn:active{transform:scale(.96)}
+    .feedback-btn.is-on{background:#e8f5e9;border-color:#79c77d;color:#166534}
+    .player-streak{text-align:center;color:#b45309;font-size:.9rem;font-weight:700;margin:4px 0 0}
     .options{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding-bottom:8px}
-    .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    .toggle-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;touch-action:manipulation}
     .more-games{padding:12px 6px}
     .games-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
     .game-card{width:300px;height:300px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #eee;display:block;position:relative;flex:0 0 auto}
@@ -53,7 +64,7 @@
     .game-card img:not(.tile-img){display:none}
     .ilf-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#222;color:#fff;padding:8px 12px;border-radius:8px;z-index:9999;opacity:0;transition:opacity .18s}
     .ilf-toast.show{opacity:1}
-    footer{padding:14px 18px;color:#666;font-size:.9rem;border-top:1px solid rgba(0,0,0,0.04);background:transparent}
+    footer{padding:14px 18px max(14px, env(safe-area-inset-bottom));color:#666;font-size:.9rem;border-top:1px solid rgba(0,0,0,0.04);background:transparent}
 
     /* semi-full mode */
     body.semi-full header, body.semi-full .game-bar, body.semi-full footer { display:none !important }
@@ -62,7 +73,26 @@
     #exitSemi{position:fixed;top:12px;right:12px;z-index:10001;padding:8px 10px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.08);cursor:pointer;display:none}
     body.semi-full #exitSemi{display:block}
 
-    @media (max-width:720px){ .game-bar{padding:8px} .ctrl-btn{padding:6px 8px} }
+    body.compact .desc, body.compact .options, body.compact .more-games,
+    body.compact .player-feedback, body.compact .player-streak { display:none }
+
+    @media (max-width:720px){
+      header{padding:8px 12px}
+      header nav{gap:12px;flex-wrap:wrap}
+      .container{margin:10px auto;padding:0 10px}
+      #viewport{height:56vh;min-height:300px}
+      .game-bar{flex-wrap:wrap;gap:8px;padding:8px}
+      .game-bar .title{order:2;flex:1 1 100%}
+      .game-bar .controls{order:3;width:100%;margin-left:0;justify-content:flex-start;overflow-x:auto;padding-bottom:2px}
+      .ctrl-btn{flex:0 0 auto;padding:8px;min-width:40px;min-height:40px;justify-content:center}
+      .ctrl-btn span{display:none}
+      .desc{padding:12px 4px}
+      .options{gap:6px}
+      .toggle-btn{padding:7px 9px;font-size:.9rem}
+      .player-feedback{justify-content:flex-start;padding-left:4px}
+      .games-grid{gap:10px}
+      .game-card{width:calc(50% - 10px);height:auto;aspect-ratio:1}
+    }
   </style>
 </head>
 <body>
@@ -103,6 +133,11 @@
       <div class="icon" id="gameIcon"><img id="gameIconImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>
       <div class="title" id="gameTitle">(Game)</div>
       <div class="controls" id="headerControls">
+        <button id="nextBtn" class="ctrl-btn next-btn" aria-label="Play next recommended game" title="Play next recommended game">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4l10 8-10 8V4z"/><path d="M19 4v16"/></svg>
+          <span>Next</span>
+        </button>
+
         <button id="shareBtn" class="ctrl-btn" aria-label="Share">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v12"/></svg>
           <span>Share</span>
@@ -129,6 +164,13 @@
       <h2 id="descTitle">Description</h2>
       <p id="descBody">No description</p>
     </section>
+
+    <div class="player-feedback" id="playerFeedback" hidden>
+      <span class="feedback-label">Tune my picks</span>
+      <button type="button" class="feedback-btn" data-player-thumb="up" aria-label="More games like this" aria-pressed="false">👍 More like this</button>
+      <button type="button" class="feedback-btn" data-player-thumb="down" aria-label="Fewer games like this" aria-pressed="false">👎 Less like this</button>
+    </div>
+    <p id="playerStreak" class="player-streak" hidden></p>
 
     <div class="options">
       <button id="toggleTouch" class="toggle-btn" aria-pressed="true">Touch: On</button>
@@ -209,6 +251,72 @@
         const gameIconImg = document.getElementById('gameIconImg');
         const noGameSample = document.getElementById('noGameSample');
         const vp = document.getElementById('viewport');
+        const feedbackWrap = document.getElementById('playerFeedback');
+        const feedbackButtons = Array.from(document.querySelectorAll('[data-player-thumb]'));
+        const playerStreak = document.getElementById('playerStreak');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function updatePlayerStreak(){
+          if (!playerStreak) return;
+          const streak = window.ILF_RECS ? window.ILF_RECS.getStreak() : { count: 0 };
+          if (!streak.count) {
+            playerStreak.hidden = true;
+            playerStreak.textContent = '';
+            return;
+          }
+          playerStreak.hidden = false;
+          playerStreak.textContent = '🔥 ' + streak.count + '-day streak';
+        }
+
+        function paintPlayerFeedback(folder){
+          if (!feedbackWrap) return;
+          if (!folder) {
+            feedbackWrap.hidden = true;
+            updatePlayerStreak();
+            return;
+          }
+          const value = window.ILF_RECS ? window.ILF_RECS.feedbackFor(folder) : 0;
+          feedbackWrap.hidden = false;
+          feedbackButtons.forEach(button => {
+            const wanted = button.getAttribute('data-player-thumb') === 'up' ? 1 : -1;
+            button.classList.toggle('is-on', value === wanted);
+            button.setAttribute('aria-pressed', String(value === wanted));
+          });
+          updatePlayerStreak();
+        }
+
+        feedbackButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            if (!currentFolder || !window.ILF_RECS) return;
+            const wanted = button.getAttribute('data-player-thumb') === 'up' ? 1 : -1;
+            const current = window.ILF_RECS.feedbackFor(currentFolder);
+            const next = current === wanted ? 0 : wanted;
+            window.ILF_RECS.recordFeedback(currentFolder, next);
+            paintPlayerFeedback(currentFolder);
+            showToast('Recommendations updated');
+          });
+        });
+
+        if (nextBtn) {
+          nextBtn.addEventListener('click', async () => {
+            let next = window.ILF_RECS ? window.ILF_RECS.nextGame(currentFolder) : null;
+
+            if (!next) {
+              try {
+                const index = await fetch('/games/index.json', { cache: 'no-store' }).then(r => r.json());
+                const folders = Array.isArray(index.folders) ? index.folders : [];
+                const folder = folders.find(item => item !== currentFolder);
+                if (folder) next = { folder: folder };
+              } catch (e) { /* ignore */ }
+            }
+
+            if (next && next.folder) {
+              location.href = '/games/game_player.html?folder=' + encodeURIComponent(next.folder);
+              return;
+            }
+            showToast('No other game available yet');
+          });
+        }
 
         // Local-only play sessions used by the recommendation ranking.
         let playSession = null;
@@ -561,6 +669,7 @@
 
           if (!folderName){
             endPlaySession();
+            paintPlayerFeedback(null);
             document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
@@ -588,6 +697,7 @@
             if (iframe) iframe.style.display = 'block';
             document.body.classList.add('has-game');
             beginPlaySession(folderName, true);
+            paintPlayerFeedback(folderName);
             if (window.ILF_ADS && window.ILF_ADS.refresh) window.ILF_ADS.refresh();
 
             if (gameTitle) gameTitle.textContent = title;
@@ -621,6 +731,7 @@
           }catch(e){
             console.warn(e);
             endPlaySession();
+            paintPlayerFeedback(null);
             document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
