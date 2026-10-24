@@ -6,11 +6,11 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=23" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=24" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881" crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=23" defer></script>
-  <script src="/assets/js/ads-config.js?v=23" defer></script>
-  <script src="/assets/js/ads.js?v=23" defer></script>
+  <script src="/assets/js/recommendations.js?v=24" defer></script>
+  <script src="/assets/js/ads-config.js?v=24" defer></script>
+  <script src="/assets/js/ads.js?v=24" defer></script>
   <style>
     :root{
       --bg:#f7f8fb;--surface:#fff;--ink:#111827;--muted:#667085;
@@ -19,7 +19,8 @@
     }
     body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,#f7f8fb 260px,#f7f8fb 100%)}
     .site-header{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 24px;background:rgba(255,255,255,.93);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-    .site-header .brand{font-size:1.05rem;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.02em}
+    .site-header .brand{display:flex;align-items:center;gap:8px;font-size:1.05rem;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.02em}
+    .site-header .brand img{display:block;width:34px;height:34px;object-fit:contain}
     .site-header .brand:hover{color:var(--accent-dark)}
     .site-header nav{display:flex;align-items:center;gap:22px}
     .site-header nav a{color:#475467;text-decoration:none;font-weight:600;font-size:.95rem}
@@ -53,13 +54,13 @@
     .desc{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05);padding:20px 22px;margin-top:14px;text-align:left}
     .desc h2{margin:0 0 6px;font-size:1.2rem}
     .desc p{white-space:pre-wrap;color:var(--muted);max-width:100%;margin:6px 0 0;overflow-wrap:anywhere}
-    .player-feedback[hidden]{display:none}
-    .player-feedback{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:12px 14px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
-    .feedback-label{font-size:.86rem;color:var(--muted);font-weight:800;margin-right:2px}
-    .feedback-btn{padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#f7f9fc;color:#344054;cursor:pointer;font-size:.88rem;font-weight:600;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,transform .16s ease}
-    .feedback-btn:hover{background:#eef4ff;border-color:#cfe0ff}
-    .feedback-btn:active{transform:scale(.96)}
-    .feedback-btn.is-on{background:#e8f5e9;border-color:#79c77d;color:#166534}
+    .thumb-icon-btn{width:40px;height:40px;padding:0;justify-content:center;font-size:18px;line-height:1}
+    .thumb-icon-btn.is-on{background:#e8f5e9;border-color:#79c77d}
+    #dislikeBtn.is-on{background:#ffebee;border-color:#ef9a9a}
+    .thumb-icon-btn:disabled{opacity:.42;cursor:not-allowed}
+    .game-stats{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;margin-top:14px;padding:11px 14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05);color:#475467;font-size:.88rem;font-weight:600}
+    .game-stats[hidden]{display:none}
+    .game-stats span:first-child{color:#b45309;font-weight:800}
     .options{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start;padding:12px 14px;margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
     .toggle-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#f7f9fc;color:#344054;cursor:pointer;font-size:.88rem;font-weight:600;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,color .16s ease}
     .toggle-btn[aria-pressed="true"]{background:#eef5ff;border-color:#cfe0ff;color:var(--accent-dark)}
@@ -86,8 +87,8 @@
     footer a:hover{text-decoration:underline}
 
     /* semi-full mode */
-    body.semi-full .site-header, body.semi-full .game-bar, body.semi-full .desc,
-    body.semi-full .player-feedback, body.semi-full .options, body.semi-full .more-games,
+    body.semi-full .site-header, body.semi-full .game-bar, body.semi-full .game-stats,
+    body.semi-full .desc, body.semi-full .options, body.semi-full .more-games,
     body.semi-full footer { display:none !important }
     body.semi-full .container { max-width:100%; margin:0; padding:0 }
     body.semi-full #viewport { position:fixed !important; top:6px; left:6px; right:6px; bottom:6px; height:auto; z-index:9999; border-radius:0 }
@@ -95,12 +96,13 @@
     body.semi-full #exitSemi{display:block}
 
     body.compact .desc, body.compact .options, body.compact .more-games,
-    body.compact .player-feedback { display:none }
+    body.compact .game-stats { display:none }
 
     @media (max-width:720px){
-      .site-header{padding:10px 14px;gap:10px}
+      .site-header{padding:9px 14px 6px;gap:4px;flex-wrap:wrap}
       .site-header .brand{font-size:.98rem}
-      .site-header nav{gap:11px}
+      .site-header .brand span{display:none}
+      .site-header nav{width:100%;justify-content:center;gap:18px;padding-top:2px}
       .site-header nav a{font-size:.84rem}
       .container{margin:12px auto 28px;padding:0 12px}
       #viewport{height:52vh;min-height:280px;border-radius:12px}
@@ -111,9 +113,9 @@
       .ctrl-btn span{display:none}
       .desc{padding:16px;border-radius:12px}
       .desc h2{font-size:1.08rem}
-      .player-feedback,.options{padding:10px;border-radius:12px}
-      .player-feedback{justify-content:flex-start}
-      .feedback-btn,.toggle-btn{font-size:.84rem;padding:8px 10px}
+      .options{padding:10px;border-radius:12px}
+      .toggle-btn{font-size:.84rem;padding:8px 10px}
+      .game-stats{padding:10px 12px;gap:5px 12px;font-size:.82rem;border-radius:12px}
       .more-games{padding:16px 0 0}
       .more-games h3{font-size:1.15rem}
       .games-grid{gap:10px}
@@ -124,7 +126,10 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/">ILikeFish.Space</a>
+    <a class="brand" href="/" aria-label="ilikefish.space home">
+      <img src="/assets/img/ilikefish.space_no_bg_resize.png" alt="" width="34" height="34">
+      <span>ilikefish.space</span>
+    </a>
     <nav>
       <a href="/">Home</a>
       <a href="/games">Games</a>
@@ -166,32 +171,35 @@
           <span>Next</span>
         </button>
 
-        <button id="shareBtn" class="ctrl-btn" aria-label="Share">
+        <button id="shareBtn" class="ctrl-btn" aria-label="Share this game" title="Share this game">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v12"/></svg>
           <span>Share</span>
         </button>
 
-        <button id="semiFsBtn" class="ctrl-btn" aria-label="Semi fullscreen" aria-pressed="false">
+        <button id="semiFsBtn" class="ctrl-btn" aria-label="Semi fullscreen" title="Toggle semi-fullscreen" aria-pressed="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16v6"/><path d="M20 20H4v-6"/></svg>
           <span>Semi</span>
         </button>
 
-        <button id="fsBtn" class="ctrl-btn" aria-label="Toggle fullscreen">
+        <button id="fsBtn" class="ctrl-btn" aria-label="Toggle fullscreen" title="Toggle fullscreen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9V3h6"/><path d="M21 15v6h-6"/><path d="M3 15v6h6"/><path d="M21 9V3h-6"/></svg>
           <span>Fullscreen</span>
         </button>
 
-        <button id="openBtn" class="ctrl-btn" aria-label="Open in new tab">
+        <button id="openBtn" class="ctrl-btn" aria-label="Open game in a new tab" title="Open game in a new tab">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 21H3V3"/></svg>
           <span>Open</span>
         </button>
+
+        <button id="likeBtn" class="ctrl-btn thumb-icon-btn" aria-label="More games like this" title="More games like this">👍</button>
+        <button id="dislikeBtn" class="ctrl-btn thumb-icon-btn" aria-label="Fewer games like this" title="Fewer games like this">👎</button>
       </div>
     </div>
 
-    <div class="player-feedback" id="playerFeedback" hidden>
-      <span class="feedback-label">Tune my picks</span>
-      <button type="button" class="feedback-btn" data-player-thumb="up" aria-label="More games like this" aria-pressed="false">👍 More like this</button>
-      <button type="button" class="feedback-btn" data-player-thumb="down" aria-label="Fewer games like this" aria-pressed="false">👎 Less like this</button>
+    <div class="game-stats" id="gameStats" hidden>
+      <span id="gameStatStreak"></span>
+      <span id="gameStatTime"></span>
+      <span id="gameStatAvg"></span>
     </div>
 
     <section class="desc">
@@ -278,36 +286,71 @@
         const gameIconImg = document.getElementById('gameIconImg');
         const noGameSample = document.getElementById('noGameSample');
         const vp = document.getElementById('viewport');
-        const feedbackWrap = document.getElementById('playerFeedback');
-        const feedbackButtons = Array.from(document.querySelectorAll('[data-player-thumb]'));
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+        const gameStats = document.getElementById('gameStats');
+        const gameStatStreak = document.getElementById('gameStatStreak');
+        const gameStatTime = document.getElementById('gameStatTime');
+        const gameStatAvg = document.getElementById('gameStatAvg');
         const nextBtn = document.getElementById('nextBtn');
 
-        function paintPlayerFeedback(folder){
-          if (!feedbackWrap) return;
-          if (!folder) {
-            feedbackWrap.hidden = true;
-            return;
-          }
-          const value = window.ILF_RECS ? window.ILF_RECS.feedbackFor(folder) : 0;
-          feedbackWrap.hidden = false;
-          feedbackButtons.forEach(button => {
-            const wanted = button.getAttribute('data-player-thumb') === 'up' ? 1 : -1;
-            button.classList.toggle('is-on', value === wanted);
-            button.setAttribute('aria-pressed', String(value === wanted));
-          });
+        function formatDuration(seconds){
+          const minutes = Math.round((Number(seconds) || 0) / 60);
+          if (minutes < 1) return '<1m';
+          if (minutes < 60) return minutes + 'm';
+          const hours = Math.floor(minutes / 60);
+          const rest = minutes % 60;
+          return hours + 'h' + (rest ? ' ' + rest + 'm' : '');
         }
 
-        feedbackButtons.forEach(button => {
-          button.addEventListener('click', () => {
-            if (!currentFolder || !window.ILF_RECS) return;
-            const wanted = button.getAttribute('data-player-thumb') === 'up' ? 1 : -1;
-            const current = window.ILF_RECS.feedbackFor(currentFolder);
-            const next = current === wanted ? 0 : wanted;
-            window.ILF_RECS.recordFeedback(currentFolder, next);
-            paintPlayerFeedback(currentFolder);
-            showToast('Recommendations updated');
-          });
-        });
+        function paintPlayerThumbs(folder){
+          if (!likeBtn || !dislikeBtn) return;
+          const value = folder && window.ILF_RECS ? window.ILF_RECS.feedbackFor(folder) : 0;
+          likeBtn.disabled = !folder;
+          dislikeBtn.disabled = !folder;
+          likeBtn.classList.toggle('is-on', value === 1);
+          dislikeBtn.classList.toggle('is-on', value === -1);
+          likeBtn.setAttribute('aria-pressed', String(value === 1));
+          dislikeBtn.setAttribute('aria-pressed', String(value === -1));
+        }
+
+        function paintGameStats(folder){
+          if (!gameStats) return;
+          if (!folder || !window.ILF_RECS) {
+            gameStats.hidden = true;
+            return;
+          }
+          const stats = window.ILF_RECS.getGameStats(folder);
+          if (!stats) {
+            gameStats.hidden = true;
+            return;
+          }
+
+          let seconds = stats.seconds;
+          if (playSession && playSession.active && playSession.folder === folder) {
+            seconds += (Date.now() - playSession.started) / 1000;
+          }
+          const average = stats.plays ? seconds / stats.plays : 0;
+
+          gameStats.hidden = false;
+          gameStatStreak.textContent = stats.streak.count
+            ? '🔥 ' + stats.streak.count + '-day streak'
+            : '🔥 Start a streak';
+          gameStatTime.textContent = '⏱ ' + formatDuration(seconds) + ' played';
+          gameStatAvg.textContent = '~' + formatDuration(average) + ' avg session';
+        }
+
+        function setPlayerThumb(wanted){
+          if (!currentFolder || !window.ILF_RECS) return;
+          const current = window.ILF_RECS.feedbackFor(currentFolder);
+          const next = current === wanted ? 0 : wanted;
+          window.ILF_RECS.recordFeedback(currentFolder, next);
+          paintPlayerThumbs(currentFolder);
+          showToast('Recommendations updated');
+        }
+
+        if (likeBtn) likeBtn.addEventListener('click', () => setPlayerThumb(1));
+        if (dislikeBtn) dislikeBtn.addEventListener('click', () => setPlayerThumb(-1));
 
         if (nextBtn) {
           nextBtn.addEventListener('click', async () => {
@@ -336,8 +379,10 @@
           if (!playSession || !playSession.active) return;
           const seconds = (Date.now() - playSession.started) / 1000;
           if (seconds >= 3 && window.ILF_RECS) window.ILF_RECS.recordTime(playSession.folder, seconds);
+          const folder = playSession.folder;
           playSession.active = false;
           playSession.started = 0;
+          paintGameStats(folder);
         }
         function resumePlaySession(){
           if (!playSession || playSession.active || document.hidden) return;
@@ -358,6 +403,8 @@
               if (window.ILF_RECS) window.ILF_RECS.recordPlay(folder);
             }, { once: true });
           }
+          paintPlayerThumbs(folder);
+          paintGameStats(folder);
         }
         function endPlaySession(){
           pausePlaySession();
@@ -367,6 +414,9 @@
           if (document.hidden) pausePlaySession();
           else resumePlaySession();
         });
+        setInterval(() => {
+          if (currentFolder && playSession && playSession.active) paintGameStats(currentFolder);
+        }, 15000);
         window.addEventListener('pagehide', pausePlaySession);
         window.addEventListener('pageshow', event => {
           if (event.persisted) resumePlaySession();
@@ -681,7 +731,8 @@
 
           if (!folderName){
             endPlaySession();
-            paintPlayerFeedback(null);
+            paintPlayerThumbs(null);
+            paintGameStats(null);
             document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';
@@ -709,7 +760,8 @@
             if (iframe) iframe.style.display = 'block';
             document.body.classList.add('has-game');
             beginPlaySession(folderName, true);
-            paintPlayerFeedback(folderName);
+            paintPlayerThumbs(folderName);
+            paintGameStats(folderName);
             if (window.ILF_ADS && window.ILF_ADS.refresh) window.ILF_ADS.refresh();
 
             if (gameTitle) gameTitle.textContent = title;
@@ -743,7 +795,8 @@
           }catch(e){
             console.warn(e);
             endPlaySession();
-            paintPlayerFeedback(null);
+            paintPlayerThumbs(null);
+            paintGameStats(null);
             document.body.classList.remove('has-game');
             if (iframe) iframe.style.display = 'none';
             if (noGameSample) noGameSample.style.display = 'flex';

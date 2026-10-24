@@ -34,13 +34,6 @@
     'battlefishi': ['action', 'fish', 'arcade', 'enemies', 'levels', 'fast', 'challenge', 'touch']
   };
 
-  // Tags that describe the kind of game, used for the home stats summary.
-  var GENRE_TAGS = [
-    'arcade', 'puzzle', 'idle', 'tycoon', 'strategy', 'action',
-    'educational', 'racing', 'simulator', 'clicker', 'maze', 'memory',
-    'snake', 'tower-defense'
-  ];
-
   // Small bonus for direct sequels / sibling games.
   var SERIES = {
     'DiceRollIdleEmpires': 'dice-idle',
@@ -119,6 +112,8 @@
         plays: 0,
         seconds: 0,
         feedback: 0,
+        streak: 0,
+        lastPlayDay: null,
         firstPlayed: Date.now(),
         lastPlayed: 0
       };
@@ -146,57 +141,33 @@
     return { count: 0, playedToday: false };
   }
 
-  function getStats(games) {
+  function gameStreakFromState(state, folder) {
+    var game = state.games[folder];
+    var today = dayKey();
+    var count = game ? Math.max(0, Number(game.streak) || 0) : 0;
+    if (!game || !game.lastPlayDay) return { count: 0, playedToday: false };
+    if (game.lastPlayDay === today) return { count: count, playedToday: true };
+    if (game.lastPlayDay === dayKey(Date.now() - 86400000)) {
+      return { count: count, playedToday: false };
+    }
+    return { count: 0, playedToday: false };
+  }
+
+  function getGameStreak(folder) {
+    return gameStreakFromState(readState(), folder);
+  }
+
+  function getGameStats(folder) {
     var state = readState();
-    var catalog = (Array.isArray(games) && games.length) ? games : getCatalog();
-    var byFolder = {};
-    catalog.forEach(function (game) { byFolder[game.folder] = game; });
-
-    var totalSeconds = 0;
-    var totalPlays = 0;
-    var uniqueGames = 0;
-    var tagWeight = {};
-    var recent = [];
-
-    Object.keys(state.games).forEach(function (folder) {
-      var history = state.games[folder] || {};
-      var plays = Number(history.plays) || 0;
-      if (plays <= 0) return;
-
-      var seconds = Math.max(0, Number(history.seconds) || 0);
-      var game = byFolder[folder] || { folder: folder, name: folder, description: '' };
-      totalSeconds += seconds;
-      totalPlays += plays;
-      uniqueGames += 1;
-
-      getTags(game).forEach(function (tag) {
-        if (GENRE_TAGS.indexOf(tag) === -1) return;
-        tagWeight[tag] = (tagWeight[tag] || 0) + seconds + plays * 20;
-      });
-
-      recent.push({
-        folder: folder,
-        name: game.name || folder,
-        seconds: seconds,
-        plays: plays,
-        lastPlayed: Number(history.lastPlayed) || 0
-      });
-    });
-
-    recent.sort(function (a, b) { return b.lastPlayed - a.lastPlayed; });
-    var favoriteTag = null;
-    Object.keys(tagWeight).forEach(function (tag) {
-      if (!favoriteTag || tagWeight[tag] > tagWeight[favoriteTag]) favoriteTag = tag;
-    });
-
+    var history = state.games[folder];
+    if (!history) return null;
+    var plays = Number(history.plays) || 0;
+    var seconds = Math.max(0, Number(history.seconds) || 0);
     return {
-      streak: getStreak(),
-      totalSeconds: totalSeconds,
-      totalPlays: totalPlays,
-      uniqueGames: uniqueGames,
-      averageSeconds: totalPlays ? totalSeconds / totalPlays : 0,
-      favoriteTag: favoriteTag,
-      recent: recent.slice(0, 4)
+      plays: plays,
+      seconds: seconds,
+      averageSeconds: plays ? seconds / plays : 0,
+      streak: gameStreakFromState(state, folder)
     };
   }
 
@@ -215,6 +186,13 @@
         ? Math.max(1, Number(state.streak) || 0) + 1
         : 1;
       state.lastPlayDay = today;
+    }
+
+    if (game.lastPlayDay !== today) {
+      game.streak = game.lastPlayDay === dayKey(Date.now() - 86400000)
+        ? Math.max(1, Number(game.streak) || 0) + 1
+        : 1;
+      game.lastPlayDay = today;
     }
 
     state.recent = [folder].concat(state.recent.filter(function (item) {
@@ -548,7 +526,8 @@
     recordFeedback: recordFeedback,
     feedbackFor: feedbackFor,
     getStreak: getStreak,
-    getStats: getStats,
+    getGameStreak: getGameStreak,
+    getGameStats: getGameStats,
     getHistory: getHistory,
     clearHistory: clearHistory,
     saveCatalog: saveCatalog,

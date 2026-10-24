@@ -83,100 +83,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     observer.observe(row);
   }
 
-  function formatDuration(seconds) {
-    const minutes = Math.round((Number(seconds) || 0) / 60);
-    if (minutes < 1) return '<1m';
-    if (minutes < 60) return minutes + 'm';
-    const hours = Math.floor(minutes / 60);
-    const rest = minutes % 60;
-    return hours + 'h' + (rest ? ' ' + rest + 'm' : '');
-  }
-
-  function updatePlayStats() {
-    const row = document.getElementById('play-stats');
-    if (!row) return;
-
-    const stats = window.ILF_RECS ? window.ILF_RECS.getStats(games) : null;
-    if (!stats || !stats.totalPlays) {
-      row.hidden = true;
-      return;
-    }
-
-    row.hidden = false;
-    const streak = row.querySelector('[data-stat="streak"]');
-    const hours = row.querySelector('[data-stat="hours"]');
-    const average = row.querySelector('[data-stat="avg"]');
-    if (streak) streak.textContent = stats.streak.count
-      ? `🔥 ${stats.streak.count}-day streak`
-      : '🔥 Start a streak';
-    if (hours) hours.textContent = `⏱ ${formatDuration(stats.totalSeconds)} played`;
-    if (average) average.textContent = `~${formatDuration(stats.averageSeconds)} avg session`;
-  }
-
-  function fillStatsDialog(stats) {
-    const modal = document.getElementById('play-stats-modal');
-    if (!modal) return;
-
-    const set = (id, value) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
-    };
-
-    set('stat-streak', String(stats.streak.count || 0));
-    set('stat-hours', formatDuration(stats.totalSeconds));
-    set('stat-avg', formatDuration(stats.averageSeconds));
-    set('stat-games', String(stats.uniqueGames || 0));
-    set('stat-plays', String(stats.totalPlays || 0));
-
-    const favorite = document.getElementById('stat-favorite');
-    if (favorite) {
-      const label = stats.favoriteTag
-        ? stats.favoriteTag.charAt(0).toUpperCase() + stats.favoriteTag.slice(1)
-        : 'Not enough plays yet';
-      favorite.textContent = 'Favourite vibe: ' + label;
-    }
-
-    const recent = document.getElementById('stat-recent');
-    if (recent) {
-      recent.textContent = stats.recent.length
-        ? 'Recently played: ' + stats.recent.map(item => item.name).join(' · ')
-        : 'Play a game to start building stats.';
-    }
-  }
-
-  function openStatsDialog() {
-    const modal = document.getElementById('play-stats-modal');
-    if (!modal || !window.ILF_RECS) return;
-    fillStatsDialog(window.ILF_RECS.getStats(games));
-    modal.hidden = false;
-    document.body.style.overflow = 'hidden';
-    const close = document.getElementById('stats-close');
-    if (close) close.focus();
-  }
-
-  function closeStatsDialog() {
-    const modal = document.getElementById('play-stats-modal');
-    if (!modal) return;
-    modal.hidden = true;
-    document.body.style.overflow = '';
-    const row = document.getElementById('play-stats');
-    if (row) row.focus();
-  }
-
-  const statsRow = document.getElementById('play-stats');
-  const statsModal = document.getElementById('play-stats-modal');
-  const statsClose = document.getElementById('stats-close');
-  if (statsRow) statsRow.addEventListener('click', openStatsDialog);
-  if (statsClose) statsClose.addEventListener('click', closeStatsDialog);
-  if (statsModal) {
-    statsModal.addEventListener('click', event => {
-      if (event.target === statsModal) closeStatsDialog();
-    });
-  }
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && statsModal && !statsModal.hidden) closeStatsDialog();
-  });
-
   function renderFeatured() {
     if (!feat) return;
     feat.innerHTML = '';
@@ -201,7 +107,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     recHome.innerHTML = '';
     picked.forEach(game => recHome.append(renderGameCard(game)));
     initRowReveal(recHome);
-    updatePlayStats();
   }
 
   function applySearchFilter() {

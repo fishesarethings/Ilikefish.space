@@ -52,8 +52,8 @@
   <meta name="theme-color" content="#2196f3">
 
   <!-- Core CSS -->
-  <link rel="stylesheet" href="/assets/css/styles.css?v=23">
-  <link rel="stylesheet" href="/assets/css/ads.css?v=23">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=24">
+  <link rel="stylesheet" href="/assets/css/ads.css?v=24">
   <!-- Locomotive & AOS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
@@ -67,8 +67,8 @@
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
-  <script src="/assets/js/ads-config.js?v=23" defer></script>
-  <script src="/assets/js/ads.js?v=23" defer></script>
+  <script src="/assets/js/ads-config.js?v=24" defer></script>
+  <script src="/assets/js/ads.js?v=24" defer></script>
 
   <link rel="canonical" href="https://ilikefish.space/">
   <link rel="alternate" type="text/markdown" title="LLM-readable site summary" href="/llms.txt">
@@ -217,6 +217,10 @@
 
   <!-- Navigation -->
   <nav data-aos="fade-down">
+    <a class="nav-brand" href="/" aria-label="ilikefish.space home">
+      <img src="/assets/img/ilikefish.space_no_bg_resize.png" alt="" width="34" height="34">
+      <span>ilikefish.space</span>
+    </a>
     <ul>
       <li><a href="/">Home</a></li>
       <li><a href="/games">Games</a></li>
@@ -239,12 +243,6 @@
   <section class="section-interactive" data-scroll-section data-aos="fade-up" style="background-image:url('/assets/img/bg-games.jpg');">
     <h2 data-scroll data-scroll-speed="2">Recommended</h2>
     <div id="recommended-games" class="cards-container cards-row" aria-label="Recommended games"></div>
-    <button id="play-stats" class="play-stats" type="button" hidden aria-haspopup="dialog">
-      <span class="ps-streak" data-stat="streak"></span>
-      <span class="ps-meta" data-stat="hours"></span>
-      <span class="ps-meta" data-stat="avg"></span>
-      <span class="ps-more">Stats →</span>
-    </button>
   </section>
 
   <!-- Sponsored break between the two game lists -->
@@ -275,8 +273,8 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <script src="/assets/js/recommendations.js?v=23" defer></script>
-  <script src="/assets/js/games-list.js?v=23" defer></script>
+  <script src="/assets/js/recommendations.js?v=24" defer></script>
+  <script src="/assets/js/games-list.js?v=24" defer></script>
 
   <!-- COOKIE BANNER -->
   <div id="ilf-cookie-banner" class="cookie-banner" aria-live="polite" style="display:none;">
@@ -332,24 +330,6 @@
   <!-- bottom download notification -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
-
-  <!-- Local play stats -->
-  <div id="play-stats-modal" class="stats-modal" hidden>
-    <div class="stats-dialog" role="dialog" aria-modal="true" aria-labelledby="stats-title">
-      <button class="stats-close" id="stats-close" type="button" aria-label="Close play stats">×</button>
-      <h2 id="stats-title">Your play stats</h2>
-      <p class="stats-note">Stored only on this device.</p>
-      <div class="stats-grid">
-        <div><strong id="stat-streak">0</strong><span>day streak</span></div>
-        <div><strong id="stat-hours">0m</strong><span>play time</span></div>
-        <div><strong id="stat-avg">0m</strong><span>avg session</span></div>
-        <div><strong id="stat-games">0</strong><span>games played</span></div>
-        <div><strong id="stat-plays">0</strong><span>total plays</span></div>
-      </div>
-      <p id="stat-favorite" class="stats-favorite"></p>
-      <p id="stat-recent" class="stats-recent"></p>
-    </div>
-  </div>
 
   <!-- Footer -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
