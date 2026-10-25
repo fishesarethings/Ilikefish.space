@@ -4,7 +4,7 @@
 
 Canonical site: https://ilikefish.space/
 Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/Ilikefish.space/issues
-Last updated: 2026-10-24
+Last updated: 2026-10-25
 
 ## What the site offers
 
