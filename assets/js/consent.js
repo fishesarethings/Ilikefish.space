@@ -84,7 +84,7 @@
     hideBanner();
   }
 
-  function apply(consent, persist) {
+  function apply(consent, persist, delay) {
     state.analytics = !!consent.analytics;
     state.ads = !!consent.ads;
     state.saved = true;
@@ -92,9 +92,50 @@
     updateConsentMode(state.analytics, state.ads);
     if (state.analytics) loadAnalytics();
     if (state.ads) activateAds();
-    hideBanner();
     closePanel();
-    showPill(true);
+    if (delay) {
+      setTimeout(function () { hideBanner(); showPill(true); }, delay);
+    } else {
+      hideBanner();
+      showPill(true);
+    }
+  }
+
+  function celebrate(button) {
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || !button || typeof button.animate !== 'function') return 0;
+
+    var rect = button.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var emojis = ['\uD83D\uDC1F', '\uD83D\uDC20', '\uD83E\uDEE7', '\uD83D\uDC21', '\u2728'];
+
+    for (var i = 0; i < 14; i++) {
+      var part = document.createElement('span');
+      part.className = 'ilfc-particle';
+      part.setAttribute('aria-hidden', 'true');
+      part.textContent = emojis[i % emojis.length];
+      part.style.left = cx + 'px';
+      part.style.top = cy + 'px';
+      document.body.appendChild(part);
+
+      var dx = Math.round((Math.random() - 0.5) * 280);
+      var dy = Math.round(-80 - Math.random() * 170);
+      var rot = Math.round((Math.random() - 0.5) * 200);
+      var anim = part.animate([
+        { transform: 'translate(-50%, -50%) scale(.6)', opacity: 1 },
+        { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) rotate(' + rot + 'deg) scale(1.15)', opacity: 0 }
+      ], {
+        duration: 760 + Math.random() * 340,
+        easing: 'cubic-bezier(.22,.61,.36,1)',
+        fill: 'forwards'
+      });
+      anim.onfinish = (function (el) { return function () { el.remove(); }; })(part);
+    }
+
+    button.classList.add('is-pop');
+    setTimeout(function () { button.classList.remove('is-pop'); }, 460);
+    return 820;
   }
 
   function detectGoogleCmp() {
@@ -175,8 +216,10 @@
     toggleAnalytics = panel.querySelector('#ilf-toggle-analytics');
     toggleAds = panel.querySelector('#ilf-toggle-ads');
 
-    banner.querySelector('#ilf-accept-all').addEventListener('click', function () {
-      apply({ analytics: true, ads: true }, true);
+    banner.querySelector('#ilf-accept-all').addEventListener('click', function (event) {
+      // Record the choice immediately, then let the animation play.
+      var ms = celebrate(event.currentTarget);
+      apply({ analytics: true, ads: true }, true, ms);
     });
     banner.querySelector('#ilf-reject-all').addEventListener('click', function () {
       apply({ analytics: false, ads: false }, true);
