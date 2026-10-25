@@ -1,105 +1,282 @@
 /*
- * Consent banner + cookie settings panel, shared by every page that loads
- * analytics or ads. Colours match the main site banner.
+ * Consent banner + privacy choices panel, shared by every page that loads
+ * analytics or ads. Styling matches the site: white cards, soft shadows and
+ * the same blue as the Play buttons.
+ *
+ * All classes are prefixed with "ilfc-" and scoped to .ilf-consent-root so
+ * they can never collide with the site's own button/panel styles.
  */
+
+.ilf-consent-root {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- banner ---------- */
 
 .cookie-banner {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: 20px;
-  width: min(980px, calc(100% - 32px));
-  background: rgba(11, 15, 20, 0.98);
-  color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
-  padding: 18px;
+  width: min(880px, calc(100% - 28px));
+  background: rgba(255, 255, 255, 0.98);
+  color: #111827;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 18px 48px rgba(15, 23, 42, 0.22);
+  padding: 18px 20px;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   z-index: 9999;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 .cookie-banner[hidden] { display: none; }
 
-.cookie-banner .text { flex: 1; font-size: 0.95rem; line-height: 1.35; }
-.cookie-banner .text a { color: #78ffd6; }
-.cookie-banner .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-
-.btn-accept {
-  background: linear-gradient(90deg, #00c853, #007e33);
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+.ilf-consent-root .ilfc-icon {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #eaf3ff, #dbeafe);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
 }
 
-.btn-reject {
-  background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 10px 12px;
-  border-radius: 10px;
+.ilf-consent-root .ilfc-text {
+  flex: 1;
+  font-size: 0.94rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.ilf-consent-root .ilfc-text strong { color: #0f172a; }
+.ilf-consent-root .ilfc-text a { color: #0057d9; }
+
+.ilf-consent-root .ilfc-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+/* ---------- buttons ---------- */
+
+.ilf-consent-root .ilfc-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  padding: 10px 16px;
   cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: transform .12s ease, background .16s ease, border-color .16s ease;
+}
+
+.ilf-consent-root .ilfc-btn:hover { transform: translateY(-1px); }
+
+.ilf-consent-root .ilfc-accept {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(90deg, #007aff, #0057d9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(0, 87, 217, 0.28);
+}
+
+.ilf-consent-root .ilfc-reject {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid rgba(17, 24, 39, 0.14);
+}
+
+.ilf-consent-root .ilfc-reject:hover { background: #f6f8fb; }
+
+.ilf-consent-root .ilfc-manage {
+  background: transparent;
+  color: #0057d9;
+  border: 1px solid transparent;
+  padding: 10px 12px;
   font-weight: 600;
 }
 
-.btn-reject:hover { border-color: rgba(255, 255, 255, 0.55); }
+.ilf-consent-root .ilfc-manage:hover { background: #eef4ff; }
 
-.btn-settings {
-  background: transparent;
+.ilf-consent-root .ilfc-save {
+  border: 0;
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
+  background: linear-gradient(90deg, #007aff, #0057d9);
+  box-shadow: 0 8px 20px rgba(0, 87, 217, 0.24);
 }
+
+/* ---------- settings panel ---------- */
 
 .cookie-settings-panel {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
-  bottom: 96px;
-  width: min(760px, calc(100% - 32px));
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100% - 28px));
+  max-height: min(84vh, 720px);
+  overflow: auto;
   background: #fff;
-  color: #111;
-  border-radius: 12px;
-  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.32);
-  padding: 18px;
+  color: #111827;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+  padding: 22px;
   display: none;
   z-index: 10000;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
 .cookie-settings-panel[aria-hidden="false"] { display: block; }
-.cookie-settings-panel h3 { margin: 0 0 8px 0; }
-.cookie-settings-panel .muted { color: #667085; }
-.cookie-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 6px;
-  border-top: 1px solid #f2f4f6;
-}
-.cookie-row:first-of-type { border-top: none; }
-.toggle { display: inline-flex; align-items: center; gap: 8px; }
-.toggle input[type="checkbox"] { width: 18px; height: 18px; }
-.btn-primary {
-  background: #007aff;
-  color: #fff;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
+
+.ilf-consent-root .ilfc-title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-@media (max-width: 640px) {
-  .cookie-banner { flex-direction: column; align-items: flex-start; gap: 10px; bottom: 12px; padding: 12px; }
-  .cookie-settings-panel { bottom: 76px; padding: 12px; width: calc(100% - 32px); }
+.ilf-consent-root .ilfc-sub {
+  margin: 0 0 16px;
+  color: #5b6676;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.ilf-consent-root .ilfc-sub a { color: #0057d9; }
+
+.ilf-consent-root .ilfc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid #eef1f5;
+}
+
+.ilf-consent-root .ilfc-row:first-of-type { border-top: 0; }
+
+.ilf-consent-root .ilfc-name {
+  font-weight: 700;
+  font-size: .95rem;
+  margin-bottom: 2px;
+  color: #0f172a;
+}
+
+.ilf-consent-root .ilfc-why {
+  color: #5b6676;
+  font-size: .85rem;
+  line-height: 1.45;
+  max-width: 40ch;
+}
+
+.ilf-consent-root .ilfc-state {
+  color: #98a2b3;
+  font-size: .82rem;
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.ilf-consent-root .ilfc-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: #d7dde6;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+
+.ilf-consent-root .ilfc-switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.ilf-consent-root .ilfc-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  transition: left .18s ease;
+  pointer-events: none;
+}
+
+.ilf-consent-root .ilfc-switch input:checked ~ .ilfc-knob { left: 23px; }
+.ilf-consent-root .ilfc-switch:has(input:checked) { background: linear-gradient(90deg, #007aff, #0057d9); }
+
+.ilf-consent-root .ilfc-note {
+  margin: 16px 0 0;
+  font-size: .8rem;
+  color: #667085;
+  line-height: 1.5;
+  background: #f7f9fc;
+  border: 1px solid #eef1f5;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ilf-consent-root .ilfc-panel-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eef1f5;
+}
+
+/* ---------- small persistent privacy button ---------- */
+
+.privacy-pill {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  font-size: .78rem;
+  font-weight: 600;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  border-radius: 999px;
+  padding: 8px 12px;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.14);
+  cursor: pointer;
+}
+
+.privacy-pill[data-visible="1"] { display: inline-flex; }
+.privacy-pill:hover { color: #0057d9; }
+
+@media (max-width: 700px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    bottom: 12px;
+    padding: 16px;
+  }
+  .ilf-consent-root .ilfc-actions { justify-content: stretch; }
+  .ilf-consent-root .ilfc-actions .ilfc-btn { flex: 1 1 auto; text-align: center; }
+  .privacy-pill { bottom: 10px; left: 10px; }
 }
