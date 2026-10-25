@@ -31,6 +31,12 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://ilikefish.space/creators.html</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://ilikefish.space/privacy.html</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>yearly</changefreq>
@@ -43,111 +49,111 @@
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/pong/pong.html</loc>
+    <loc>https://ilikefish.space/games/pong/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/timestable-balloons/timestable-balloons.html</loc>
+    <loc>https://ilikefish.space/games/timestable-balloons/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/why-chicken-crossed/why-chicken-crossed.html</loc>
+    <loc>https://ilikefish.space/games/why-chicken-crossed/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/tetnis/tetnis.html</loc>
+    <loc>https://ilikefish.space/games/tetnis/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/lawnmower-simulator/lawnmower.html</loc>
+    <loc>https://ilikefish.space/games/lawnmower-simulator/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/Block-bang/block-bang.html</loc>
+    <loc>https://ilikefish.space/games/Block-bang/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/DiceRollIdleEmpires/DiceRollIdleEmpires.html</loc>
+    <loc>https://ilikefish.space/games/DiceRollIdleEmpires/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/gridbite/gridbite.html</loc>
+    <loc>https://ilikefish.space/games/gridbite/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/rotaze/rotaze.html</loc>
+    <loc>https://ilikefish.space/games/rotaze/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/Tower-Defense/Tower-defense.html</loc>
+    <loc>https://ilikefish.space/games/Tower-Defense/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html</loc>
+    <loc>https://ilikefish.space/games/DiceRollIdleEmpires2/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/fishclimbracing/fishclimbracing.html</loc>
+    <loc>https://ilikefish.space/games/fishclimbracing/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/minetycoon/minetycoon.html</loc>
+    <loc>https://ilikefish.space/games/minetycoon/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/emojimatch/emojimatch.html</loc>
+    <loc>https://ilikefish.space/games/emojimatch/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/fishyclicker/fishyclicker.html</loc>
+    <loc>https://ilikefish.space/games/fishyclicker/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/fishcore/fishcore.html</loc>
+    <loc>https://ilikefish.space/games/fishcore/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/fishtycoon/fishtycoon.html</loc>
+    <loc>https://ilikefish.space/games/fishtycoon/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ilikefish.space/games/battlefishi/battlefishi.html</loc>
+    <loc>https://ilikefish.space/games/battlefishi/</loc>
     <lastmod>2026-10-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
 </urlset>
