@@ -1,7 +1,10 @@
 /*
- * Small, consent-aware loader for the site's AdSense placements.
- * The ad containers are hidden until an ad is requested and filled, so an
- * unfilled or blocked request never leaves a blank box in the layout.
+ * Small loader for the site's AdSense placements.
+ *
+ * Consent is handled by assets/js/consent.js (and, inside the EEA/UK/CH, by
+ * Google's certified consent message). This file only renders the placements
+ * once it is told that ads are allowed, and hides a placement again if the
+ * request comes back unfilled so no empty box is left in the layout.
  */
 (function () {
   'use strict';
@@ -10,32 +13,7 @@
   if (!config.enabled) return;
 
   var CLIENT = config.client || 'ca-pub-9929753961924881';
-  var CONSENT_KEY = 'ilf_consent_v1';
-  var hasConsentBanner = !!document.getElementById('ilf-cookie-banner');
   var started = false;
-
-  function consentAllowsAds() {
-    if (!hasConsentBanner) return true;
-    try {
-      var saved = JSON.parse(localStorage.getItem(CONSENT_KEY) || 'null');
-      return !!(saved && saved.ads === true);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function ensureAdSense() {
-    var existing = document.querySelector('script[src*="adsbygoogle.js"]');
-    if (existing) return existing;
-
-    var script = document.createElement('script');
-    script.async = true;
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' +
-      encodeURIComponent(CLIENT);
-    script.crossOrigin = 'anonymous';
-    document.head.appendChild(script);
-    return script;
-  }
 
   function slotFor(key) {
     var perPlacement = config.slots && config.slots[key];
@@ -129,9 +107,9 @@
   }
 
   function start() {
-    if (started || !consentAllowsAds()) return;
+    if (started) return;
     started = true;
-    ensureAdSense();
+    // Google's tag is already in the page head; only the requests are gated.
     document.querySelectorAll('[data-ilf-ad]').forEach(prepare);
     window.addEventListener('scroll', checkVisible, { passive: true });
     window.addEventListener('resize', checkVisible, { passive: true });
@@ -147,11 +125,8 @@
     }
   };
 
-  if (!hasConsentBanner) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', start);
-    } else {
-      start();
-    }
-  }
+  window.addEventListener('ilf:consent', function (event) {
+    var detail = event.detail || {};
+    if (detail.ads || detail.googleCmp) start();
+  });
 })();

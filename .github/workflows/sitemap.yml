@@ -41,6 +41,18 @@ jobs:
             ['/terms.html', 'yearly', '0.3']
           ].forEach(([p, freq, prio]) => addUrl(BASE + p, freq, prio));
 
+          // Individual game pages so every playable title is crawlable.
+          try {
+            const idx = JSON.parse(fs.readFileSync('games/index.json', 'utf8'));
+            for (const folder of (idx.folders || [])) {
+              try {
+                const cfg = JSON.parse(fs.readFileSync(`games/${folder}/config.json`, 'utf8'));
+                const entry = cfg.entry || 'index.html';
+                addUrl(`${BASE}/games/${folder}/${entry}`, 'monthly', '0.5');
+              } catch (e) { /* skip games without config */ }
+            }
+          } catch (e) { /* no games index */ }
+
           const sitemap =
             `<?xml version="1.0" encoding="UTF-8"?>\n` +
             `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +

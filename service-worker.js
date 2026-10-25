@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v41';
+const CACHE_VERSION = 'v42';
 const ESSENTIALS_CACHE = `essentials-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const LOG_PREFIX = '[sw]';
@@ -6,9 +6,9 @@ const LOG_PREFIX = '[sw]';
 const ESSENTIALS = [
   '/', '/index.html', '/games/index.html', '/gamepack/index.html', '/offline.html', '/manifest.json',
   '/terms.html', '/privacy.html', '/about.html', '/contact.html',
-  '/assets/css/styles.css?v=41', '/assets/css/ads.css?v=41',
-  '/assets/js/games-list.js?v=41', '/assets/js/sw-register.js', '/assets/js/version-check.js',
-  '/assets/js/typing.js', '/assets/js/loco.js', '/assets/js/ads-config.js?v=41', '/assets/js/ads.js?v=41', '/assets/js/recommendations.js?v=41',
+  '/assets/css/styles.css?v=42', '/assets/css/ads.css?v=42', '/assets/css/consent.css?v=42',
+  '/assets/js/games-list.js?v=42', '/assets/js/sw-register.js', '/assets/js/version-check.js',
+  '/assets/js/typing.js', '/assets/js/loco.js', '/assets/js/ads-config.js?v=42', '/assets/js/ads.js?v=42', '/assets/js/consent.js?v=42', '/assets/js/recommendations.js?v=42',
   '/games/index.json', '/games/game_player.html'
 ];
 
