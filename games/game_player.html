@@ -6,8 +6,8 @@
   <title>Play a game — ILikeFish.Space</title>
   <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=42" />
-  <link rel="stylesheet" href="/assets/css/consent.css?v=42" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=43" />
+  <link rel="stylesheet" href="/assets/css/consent.css?v=43" />
   <!-- Consent Mode v2 defaults (see /assets/js/consent.js). -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -26,10 +26,10 @@
   <script async
     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
     crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=42" defer></script>
-  <script src="/assets/js/ads-config.js?v=42" defer></script>
-  <script src="/assets/js/ads.js?v=42" defer></script>
-  <script src="/assets/js/consent.js?v=42" defer></script>
+  <script src="/assets/js/recommendations.js?v=43" defer></script>
+  <script src="/assets/js/ads-config.js?v=43" defer></script>
+  <script src="/assets/js/ads.js?v=43" defer></script>
+  <script src="/assets/js/consent.js?v=43" defer></script>
   <style>
     :root{
       --bg:#f7f8fb;--surface:#fff;--ink:#111827;--muted:#667085;
@@ -59,6 +59,8 @@
     .game-bar .icon{width:52px;height:52px;border-radius:12px;background:#eef3f9;border:1px solid var(--line);overflow:hidden;flex-shrink:0}
     .game-bar .title{font-weight:800;font-size:1.02rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .game-bar .controls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .ctrl-btn[hidden]{display:none !important}
+    a.ctrl-btn{text-decoration:none}
     .ctrl-btn{background:#f7f9fc;border:1px solid var(--line);color:#344054;padding:9px 11px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:.88rem;touch-action:manipulation;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
     .ctrl-btn:hover{background:#eef4ff;border-color:#cfe0ff;color:var(--accent-dark)}
     .ctrl-btn:active{transform:scale(.97)}
@@ -225,6 +227,11 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 21H3V3"/></svg>
           <span>Open</span>
         </button>
+
+        <a id="gameGuideLink" class="ctrl-btn" href="/games/" hidden aria-label="Read the game guide" title="Game guide: controls, tips and FAQ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8"/><path d="M8 11h8"/></svg>
+          <span>Guide</span>
+        </a>
 
         <button id="likeBtn" class="ctrl-btn thumb-icon-btn" aria-label="More games like this" title="More games like this">👍</button>
         <button id="dislikeBtn" class="ctrl-btn thumb-icon-btn" aria-label="Fewer games like this" title="Fewer games like this">👎</button>
@@ -933,6 +940,8 @@
             if (vp) vp.classList.remove('no-game');
             if (iframe) iframe.style.display = 'block';
             document.body.classList.add('has-game');
+            var guide = document.getElementById('gameGuideLink');
+            if (guide) { guide.href = '/games/' + encodeURIComponent(folderName) + '/'; guide.hidden = false; }
             beginPlaySession(folderName, true);
             paintPlayerThumbs(folderName);
             paintGameStats(folderName);

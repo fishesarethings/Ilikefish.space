@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>For Game Creators – Submit a Game to ILikeFish.Space</title>
+  <meta name="description" content="Submit an HTML5 game to ILikeFish.Space, keep the rights to your work and earn a share of the ad revenue your game generates. No exclusivity, no lock-in.">
+  <link rel="canonical" href="https://ilikefish.space/creators.html">
+  <link rel="icon" href="/assets/img/ilikefish.space-500px.ico">
+
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin: 0; background: #f9f9fb; color: #111; line-height: 1.65; }
+    header { background: linear-gradient(90deg,#007aff,#0057d9); color: #fff; padding: 3rem 1rem 2rem; text-align: center; }
+    header h1 { margin: 0 0 0.5rem; font-size: 2rem; }
+    header p { margin: 0; font-size: 0.95rem; opacity: 0.9; }
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    section { background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); padding: 1.5rem 2rem; margin-bottom: 1.8rem; }
+    section h2 { margin-top: 0; font-size: 1.25rem; color: #007aff; }
+    section h3 { font-size: 1rem; margin: 1.2rem 0 .3rem; }
+    section ul, section ol { margin: 0.5rem 0 0 1.25rem; }
+    .muted { color: #5b6676; }
+    .badge { display:inline-block; background:#e7f1ff; color:#0b5cad; font-weight:700; font-size:.75rem; letter-spacing:.04em; text-transform:uppercase; border-radius:999px; padding:4px 12px; margin-bottom:10px; }
+    .yes, .no { list-style: none; margin-left: 0; padding-left: 1.4rem; position: relative; }
+    .yes::before { content:"✓"; position:absolute; left:0; color:#0a8f4a; font-weight:700; }
+    .no::before { content:"✕"; position:absolute; left:0; color:#c0392b; font-weight:700; }
+    a { color: #0057d9; }
+    footer { text-align: center; padding: 2rem 1rem 3rem; color: #666; font-size: 0.85rem; }
+    footer a { color:#0057d9; text-decoration:none; }
+    @media (max-width:600px){ header h1 { font-size: 1.6rem; } section { padding: 1.2rem 1.5rem; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>For Game Creators</h1>
+  <p>Put your HTML5 game in front of players, keep your rights, and share the ad revenue.</p>
+</header>
+
+<main>
+  <section>
+    <span class="badge">Open for submissions</span>
+    <h2>What this is</h2>
+    <p>ILikeFish.Space is a small, deliberately non-intrusive arcade: no accounts, no purchases, no ad-stuffed pages. We are looking for small HTML5 games — the kind of thing one or two people build for the love of it — and we are happy to share the advertising revenue a game brings in.</p>
+    <p>You keep the rights to your game. We get permission to host and display it. You can ask us to take it down at any time.</p>
+  </section>
+
+  <section>
+    <h2>What you get</h2>
+    <ul>
+      <li><strong>A share of the ad revenue your game earns.</strong> The exact split, the payout schedule and the minimum threshold are agreed in writing <em>before</em> your game goes live.</li>
+      <li><strong>A proper page for your game</strong> — its own URL, description, controls, tips and FAQ, not just an iframe on a list.</li>
+      <li><strong>Your name or studio credited</strong> on that page if you want it there, including a link back to your site.</li>
+      <li><strong>No exclusivity.</strong> Host it anywhere else you like.</li>
+      <li><strong>No lock-in.</strong> Remove the game whenever you want.</li>
+    </ul>
+    <p class="muted">Financial terms are handled privately between us — nothing about payouts, banking or earnings is ever published on this site.</p>
+  </section>
+
+  <section>
+    <h2>What we ask of you</h2>
+    <ul>
+      <li class="yes">You own the game, or have the rights to share it. Art, audio and code included.</li>
+      <li class="yes">It runs in a modern browser on desktop and, ideally, on a phone.</li>
+      <li class="yes">It works from a self-contained folder (an <code>index.html</code> or similar entry file plus assets).</li>
+      <li class="yes">It is family friendly — no gambling, no purchases, nothing that needs an age gate.</li>
+      <li class="yes">It saves progress locally rather than on a server, unless we agree otherwise first.</li>
+      <li class="no">No ads or trackers of your own baked into the game.</li>
+      <li class="no">No clone assets lifted from another game, and no trademarked names.</li>
+      <li class="no">No external payments, loot boxes or currency that costs real money.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>How the advertising works here</h2>
+    <p>This matters if you care about how your game is presented, and you should. Our rules are simple and fixed:</p>
+    <ul>
+      <li><strong>One ad box per page</strong>, always outside the play area, always labelled “Advertisement”.</li>
+      <li><strong>Nothing inside your game.</strong> No interstitials, no pop-unders, no banners over the canvas, no auto ads.</li>
+      <li>Ads collapse away when unfilled, so the layout does not leave empty boxes.</li>
+      <li>No ads on error, offline or policy pages.</li>
+    </ul>
+    <p>If we ever add in-game ads (Google's H5 Games Ads), it will be <strong>rewarded ads only</strong> — something the player chooses to watch for a bonus — with a hard cap of one per session, and only if you opt in. A player must always be able to keep playing with no ad at all.</p>
+  </section>
+
+  <section>
+    <h2>How to submit</h2>
+    <ol>
+      <li>Package your game in a folder with its entry file and assets.</li>
+      <li>Open an issue on the <a href="https://github.com/fishesarethings/Ilikefish.space/issues" target="_blank" rel="noopener noreferrer">GitHub repository</a> with the title “Game submission: &lt;name&gt;”, a short description, the controls, and how you would like to be credited. You can attach a ZIP there.</li>
+      <li>If you would rather not post it publicly, say so in the issue and we will sort out a private channel.</li>
+      <li>We will test it, check it fits the rules above, and publish it with its own page if it does.</li>
+      <li>Before it goes live we agree the revenue share in writing.</li>
+    </ol>
+    <p>Questions are welcome through the <a href="/contact.html">contact page</a>.</p>
+  </section>
+
+  <section>
+    <h2>Creator questions</h2>
+    <h3>How much can I earn?</h3>
+    <p>It genuinely depends on how many people play. A small arcade earns modest advertising revenue per visit, so honest expectations matter: this is pocket money for a hobby game, not a salary. The split is agreed before publishing, and we would rather you know that up front.</p>
+    <h3>When would I get paid?</h3>
+    <p>Advertising revenue is paid to us by Google with a delay and only above a threshold, so creator payouts follow that same lag. The exact schedule and minimum amount are part of the written agreement.</p>
+    <h3>Do you take ownership of my game?</h3>
+    <p>No. You grant permission to host and display it. You keep the copyright and you can request removal whenever you like.</p>
+    <h3>Will you put ads inside my game?</h3>
+    <p>Not without your explicit agreement, and even then only rewarded ads the player chooses to watch. Interstitials are off the table.</p>
+    <h3>Can I submit a game I made for another portal?</h3>
+    <p>Usually yes, as long as the other portal's terms do not forbid it and you hold the rights. We do not ask for exclusivity.</p>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2026 fishesarethings &mdash; public domain under the <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.</p>
+  <p><a href="/">Home</a> · <a href="/games/">All games</a> · <a href="/about.html">About</a> · <a href="/contact.html">Contact</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+</footer>
+
+</body>
+</html>

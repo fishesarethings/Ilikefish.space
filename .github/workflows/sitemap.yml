@@ -37,6 +37,7 @@ jobs:
             ['/gamepack/', 'monthly', '0.7'],
             ['/about.html', 'monthly', '0.6'],
             ['/contact.html', 'monthly', '0.6'],
+            ['/creators.html', 'monthly', '0.6'],
             ['/privacy.html', 'yearly', '0.3'],
             ['/terms.html', 'yearly', '0.3']
           ].forEach(([p, freq, prio]) => addUrl(BASE + p, freq, prio));
@@ -46,9 +47,7 @@ jobs:
             const idx = JSON.parse(fs.readFileSync('games/index.json', 'utf8'));
             for (const folder of (idx.folders || [])) {
               try {
-                const cfg = JSON.parse(fs.readFileSync(`games/${folder}/config.json`, 'utf8'));
-                const entry = cfg.entry || 'index.html';
-                addUrl(`${BASE}/games/${folder}/${entry}`, 'monthly', '0.5');
+                addUrl(`${BASE}/games/${folder}/`, 'monthly', '0.6');
               } catch (e) { /* skip games without config */ }
             }
           } catch (e) { /* no games index */ }

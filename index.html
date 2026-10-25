@@ -59,9 +59,9 @@
   <meta name="theme-color" content="#2196f3">
 
   <!-- Core CSS -->
-  <link rel="stylesheet" href="/assets/css/styles.css?v=42">
-  <link rel="stylesheet" href="/assets/css/ads.css?v=42">
-  <link rel="stylesheet" href="/assets/css/consent.css?v=42">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=43">
+  <link rel="stylesheet" href="/assets/css/ads.css?v=43">
+  <link rel="stylesheet" href="/assets/css/consent.css?v=43">
   <!-- Locomotive & AOS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/locomotive-scroll/dist/locomotive-scroll.css">
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
@@ -75,8 +75,8 @@
   <script src="/assets/js/sw-register.js" defer></script>
   <script src="/assets/js/typing.js" defer></script>
   <script src="/assets/js/version-check.js" defer></script>
-  <script src="/assets/js/ads-config.js?v=42" defer></script>
-  <script src="/assets/js/ads.js?v=42" defer></script>
+  <script src="/assets/js/ads-config.js?v=43" defer></script>
+  <script src="/assets/js/ads.js?v=43" defer></script>
 
   <link rel="canonical" href="https://ilikefish.space/">
   <link rel="alternate" type="text/markdown" title="LLM-readable site summary" href="/llms.txt">
@@ -225,12 +225,31 @@
     <div id="all-games" class="cards-container"></div>
   </section>
 
-  <script src="/assets/js/recommendations.js?v=42" defer></script>
-  <script src="/assets/js/games-list.js?v=42" defer></script>
+  <script src="/assets/js/recommendations.js?v=43" defer></script>
+  <script src="/assets/js/games-list.js?v=43" defer></script>
 
   <!-- bottom download notification -->
   <div id="download-progress"><div class="bar"></div></div>
   <div id="download-complete">Download complete!</div>
+
+  <!-- Indexable content: what the site is, how it works, common questions -->
+  <section class="home-content" data-scroll-section style="max-width:900px;margin:0 auto;padding:2rem 1.25rem 1rem;text-align:left;color:#334155">
+    <h2 style="font-size:1.35rem;margin:0 0 .5rem">What is ILikeFish.Space?</h2>
+    <p>ILikeFish.Space is a free browser game arcade: eighteen small HTML5 games that start straight away, with no account, no download and no adverts inside the games themselves. It is built for short sessions - a coffee break, a train ride, or the five minutes before dinner - and also for the sort of game you can leave running in a background tab while you get on with something else.</p>
+    <p>The catalogue mixes arcade, puzzle, idle/tycoon, strategy, action and educational games. If you are not sure where to start, <a href="/games/rotaze/">Rotaze</a> is the hardest puzzle here, <a href="/games/gridbite/">Gridbite</a> is the best two-player game, and <a href="/games/timestable-balloons/">Times Table Balloons</a> is the one to give a child. The <a href="/games/">games page</a> has a short guide, controls and tips for every title.</p>
+
+    <h2 style="font-size:1.35rem;margin:1.5rem 0 .5rem">How it works</h2>
+    <p>Everything runs locally in your browser. Your scores, streaks, unlocked customisations and play history are stored in your own browser storage and are never uploaded to a server. A local recommendation system uses that history to reorder the <em>Recommended</em> row for you; turn it off at any time by clearing your browser data for this site.</p>
+    <p>The site is a progressive web app. After your first visit the main pages and games are cached, so they keep working when the connection drops. Progress can be exported and imported from the home page if you want to move it between browsers.</p>
+
+    <h2 style="font-size:1.35rem;margin:1.5rem 0 .5rem">Common questions</h2>
+    <p><strong>Is it really free?</strong> Yes. There are no purchases, subscriptions, loot boxes or accounts. Advertising shown outside the game area is what keeps the domain running, and you can decline ad cookies from the consent banner or cookie settings.</p>
+    <p><strong>Do I need to install anything?</strong> No. Open a game and press play. You can optionally add the site to your home screen for an app-like window and offline play.</p>
+    <p><strong>Does it work on a phone?</strong> Most games do. Games with touch controls are marked, and titles that need a keyboard and mouse are hidden from the list on touch-only devices.</p>
+    <p><strong>Can I play offline?</strong> Yes, once the pages have loaded, both the arcade and the games are cached for offline use.</p>
+    <p><strong>I make games - can I get them on here?</strong> Yes. Head to the <a href="/creators.html">creator page</a>: submissions are open, you keep your rights, and we share the ad revenue a game earns. Nothing about payouts is ever published on the site.</p>
+    <p><strong>Something is broken or missing.</strong> Let us know through the <a href="/contact.html">contact page</a> - bug reports and game suggestions are welcome.</p>
+  </section>
 
   <!-- Footer -->
   <footer style="text-align:center;padding:1rem;color:#666;font-size:.8rem; position: relative;">
@@ -257,7 +276,7 @@
   </div>
 
   <!-- Shared consent manager (banner, consent mode, gated analytics/ads) -->
-  <script src="/assets/js/consent.js?v=42" defer></script>
+  <script src="/assets/js/consent.js?v=43" defer></script>
   <script>
     // Security: make sure every target="_blank" link is rel-protected.
     document.addEventListener('DOMContentLoaded', function () {
