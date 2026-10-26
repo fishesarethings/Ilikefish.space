@@ -5,7 +5,7 @@
   "entry": "Tower-defense.html",
   "featured": true,
   "featuredOrder": 2,
-  "description": "A game in which you defend an path from enemies with towers that you build, and keep going till the enimies take over.",
+  "description": "Tower Defense is a free browser strategy game: place towers along the path, upgrade them and stop every wave of enemies before they break through.",
   "touchInstructions": "Tap or click to play.",
   "controllerMapping": {
     "buttons": {},

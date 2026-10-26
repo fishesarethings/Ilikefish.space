@@ -3,7 +3,7 @@
   "folder": "pong",
   "icon": "icon.png",
   "entry": "pong.html",
-  "description": "A pong(y) game",
+  "description": "Pong is a free browser version of the arcade classic: rally the ball, angle your shots and beat the computer paddle. Works on desktop and mobile.",
   "touchInstructions": "Use the on-screen arrows to move your paddle.",
   "controllerMapping": {
     "axes": {

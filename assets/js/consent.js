@@ -22,6 +22,14 @@
 (function () {
   'use strict';
 
+  /*
+   * Embedded views: the player page can be dropped into another site with the
+   * Embed button. Consent must be collected by the top-level page, not inside a
+   * frame, and we do not want to request ads on pages we do not control, so an
+   * embedded copy gets no consent UI and no ad activation at all.
+   */
+  if (window.self !== window.top) return;
+
   var KEY = 'ilf_consent_v2';
   var GA_ID = 'G-ZV53VVVSK3';
   var GTM_ID = 'GTM-53BRKJPX';

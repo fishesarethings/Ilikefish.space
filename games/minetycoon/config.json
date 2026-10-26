@@ -1,8 +1,9 @@
 {
-  "name": "\u26cf\ufe0f Mine Tycoon \u26cf\ufe0f",
+  "name": "Mine Tycoon",
   "folder": "minetycoon",
   "icon": "icon.png",
   "entry": "minetycoon.html",
+  "description": "Mine Tycoon is a free idle mining game: dig for ore, buy better equipment and build a mining operation that keeps earning while you are away.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

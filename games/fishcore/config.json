@@ -5,7 +5,7 @@
   "entry": "fishcore.html",
   "featured": true,
   "featuredOrder": 6,
-  "description": "Go and push the fish to the limit!",
+  "description": "Fishcore: Data Dive is a free browser arcade game: steer the fish through a data-filled world, grab what you can and push as far as your reflexes allow.",
   "touchInstructions": "Move the fish with your finger.",
   "touch": true
 }

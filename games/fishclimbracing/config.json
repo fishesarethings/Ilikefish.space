@@ -1,9 +1,9 @@
 {
-  "name": "Fish Climb Racing \u2014 Swim Upstream",
+  "name": "Fish Climb Racing",
   "folder": "fishclimbracing",
   "icon": "icon.png",
   "entry": "fishclimbracing.html",
-  "description": "Go and play this new Fish Climb Racing, where you get to swim upstream!",
+  "description": "Fish Climb Racing is a free physics game: swim upstream against the current, keep your momentum and push for a new distance record.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

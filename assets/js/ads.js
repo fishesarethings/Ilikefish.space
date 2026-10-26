@@ -20,6 +20,9 @@
   var suspended = false;
 
   function allowed() {
+    // Never request ads inside someone else's frame: consent belongs to the
+    // top-level page, and our ads must not run on pages we do not control.
+    if (window.self !== window.top) return false;
     if (!window.ILF_CONSENT || typeof window.ILF_CONSENT.adsAllowed !== 'function') return false;
     return window.ILF_CONSENT.adsAllowed() === true;
   }

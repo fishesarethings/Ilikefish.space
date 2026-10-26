@@ -3,7 +3,7 @@
   "folder": "timestable-balloons",
   "icon": "icon.png",
   "entry": "timestable-balloons.html",
-  "description": "What's more fun the timestables? Nothing! Complete timetable questions and pop ballons, and get more timestables!",
+  "description": "Times Table Balloons is a free maths game for practising multiplication: answer the questions to pop balloons before they sink. Works on phone and desktop.",
   "touchInstructions": "Tap numbers to answer before the balloon hits the bottom.",
   "controllerMapping": {
     "axes": {},

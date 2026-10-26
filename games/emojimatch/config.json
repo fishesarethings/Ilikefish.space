@@ -3,7 +3,7 @@
   "folder": "emojimatch",
   "icon": "icon.png",
   "entry": "emojimatch.html",
-  "description": "Match the emojies to the topic!",
+  "description": "Emoji Match is a free browser quiz game: read the topic and pick the emoji that fits. Quick rounds for phone or desktop.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

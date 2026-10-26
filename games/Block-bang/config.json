@@ -3,7 +3,7 @@
   "folder": "Block-bang",
   "icon": "icon.png",
   "entry": "block-bang.html",
-  "description": "A very glitchy game where you match blocks and they explode",
+  "description": "Block Bang is a free browser matching game with a glitchy arcade feel: line up blocks, trigger explosions and clear the board in quick bursts.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

@@ -5,7 +5,7 @@
   "entry": "tetnis.html",
   "featured": true,
   "featuredOrder": 4,
-  "description": "A fun blocky game with sharp iron blocks!",
+  "description": "Tetnis is a free block-stacking puzzle with sharp iron pieces. Clear lines, chase combos and keep the stack from reaching the top.",
   "touchInstructions": "Tap or swipe to move and rotate.",
   "controllerMapping": {
     "buttons": {},

@@ -23,7 +23,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=pong
 - Direct game URL: https://ilikefish.space/games/pong/pong.html
 - Folder: pong
-- Description: A pong(y) game
+- Description: Pong is a free browser version of the arcade classic: rally the ball, angle your shots and beat the computer paddle. Works on desktop and mobile.
 - Tags: arcade, sports, tennis, 2-player, local-multiplayer, retro, fast, skill, keyboard, gamepad
 - Touch controls supported: no
 
@@ -32,8 +32,8 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=timestable-balloons
 - Direct game URL: https://ilikefish.space/games/timestable-balloons/timestable-balloons.html
 - Folder: timestable-balloons
-- Description: What's more fun the timestables? Nothing! Complete timetable questions and pop ballons, and get more timestables!
-- Tags: educational, math, kids, arcade, timed, quick-play, high-score, touch
+- Description: Times Table Balloons is a free maths game for practising multiplication: answer the questions to pop balloons before they sink. Works on phone and desktop.
+- Tags: educational, math, arcade, timed, quick-play, high-score, touch
 - Touch controls supported: yes
 
 ### Why on Earth Is the Chicken Crossing the Road
@@ -41,8 +41,8 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=why-chicken-crossed
 - Direct game URL: https://ilikefish.space/games/why-chicken-crossed/why-chicken-crossed.html
 - Folder: why-chicken-crossed
-- Description: Why on Earth is the chicken crossing the road! Good question, play to find out!
-- Tags: arcade, action, maze, runner, timing, kids, challenge, fast, touch, high-score
+- Description: Why on Earth Is the Chicken Crossing the Road is a free browser puzzle game: guide the chicken across busy roads, dodge traffic and swing a hammer.
+- Tags: arcade, action, maze, runner, timing, challenge, fast, touch, high-score
 - Touch controls supported: yes
 
 ### Tetnis
@@ -50,7 +50,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=tetnis
 - Direct game URL: https://ilikefish.space/games/tetnis/tetnis.html
 - Folder: tetnis
-- Description: A fun blocky game with sharp iron blocks!
+- Description: Tetnis is a free block-stacking puzzle with sharp iron pieces. Clear lines, chase combos and keep the stack from reaching the top.
 - Tags: puzzle, blocks, tetromino, arcade, retro, high-score, challenge, skill, touch
 - Touch controls supported: yes
 
@@ -59,7 +59,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=lawnmower-simulator
 - Direct game URL: https://ilikefish.space/games/lawnmower-simulator/lawnmower.html
 - Folder: lawnmower-simulator
-- Description: Ever wanted to mow grass 24/7! Well now you can with this lawnmowing simulator. Experience the fun, pleasure and joy of driving a lawnmower around and mowing grass. The more grass you mow the better!
+- Description: Lawn Mower Simulator is a free, relaxing browser game: drive a mower around, cut every patch of grass and earn coins for a tidy lawn.
 - Tags: simulator, chill, tycoon, open-ended, collect, upgrade, casual, keyboard, touch
 - Touch controls supported: yes
 
@@ -68,7 +68,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=Block-bang
 - Direct game URL: https://ilikefish.space/games/Block-bang/block-bang.html
 - Folder: Block-bang
-- Description: A very glitchy game where you match blocks and they explode
+- Description: Block Bang is a free browser matching game with a glitchy arcade feel: line up blocks, trigger explosions and clear the board in quick bursts.
 - Tags: puzzle, blocks, match, arcade, fast, challenge, casual, touch
 - Touch controls supported: yes
 
@@ -77,7 +77,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires
 - Direct game URL: https://ilikefish.space/games/DiceRollIdleEmpires/DiceRollIdleEmpires.html
 - Folder: DiceRollIdleEmpires
-- Description: This is a fun game in which you rolla a dice. What ever the number the dice lands on is the amount you make (NOTE: As you could beat the game by getting the infinity simbol, a sequel was made to make it take longer to finish it.
+- Description: Dice Roll Idle Empires is a free idle game: roll the dice, earn whatever you land on and reinvest your winnings into a growing empire.
 - Tags: idle, tycoon, dice, numbers, incremental, progression, chill, shop, upgrade, touch
 - Touch controls supported: yes
 
@@ -104,7 +104,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=Tower-Defense
 - Direct game URL: https://ilikefish.space/games/Tower-Defense/Tower-defense.html
 - Folder: Tower-Defense
-- Description: A game in which you defend an path from enemies with towers that you build, and keep going till the enimies take over.
+- Description: Tower Defense is a free browser strategy game: place towers along the path, upgrade them and stop every wave of enemies before they break through.
 - Tags: strategy, tower-defense, action, fantasy, waves, enemies, upgrade, challenge, touch, keyboard
 - Touch controls supported: yes
 
@@ -113,25 +113,25 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=DiceRollIdleEmpires2
 - Direct game URL: https://ilikefish.space/games/DiceRollIdleEmpires2/DiceRollIdleEmpires2.html
 - Folder: DiceRollIdleEmpires2
-- Description: This is the sequel for the orignal Dice Roll Idle Empires, a fun game in which you roll a dice and what ever number it lands on it the amount you make!
+- Description: Dice Roll Idle Empires 2 is the free sequel to the browser idle game: roll the dice, grow faster and unlock a deeper set of upgrades and milestones.
 - Tags: idle, tycoon, dice, numbers, incremental, progression, chill, sequel, shop, upgrade
 - Touch controls supported: yes
 
-### Fish Climb Racing — Swim Upstream
+### Fish Climb Racing
 
 - Player URL: https://ilikefish.space/games/game_player.html?folder=fishclimbracing
 - Direct game URL: https://ilikefish.space/games/fishclimbracing/fishclimbracing.html
 - Folder: fishclimbracing
-- Description: Go and play this new Fish Climb Racing, where you get to swim upstream!
+- Description: Fish Climb Racing is a free physics game: swim upstream against the current, keep your momentum and push for a new distance record.
 - Tags: racing, action, fish, arcade, endless, coins, shop, fast, skill, touch
 - Touch controls supported: yes
 
-### ⛏️ Mine Tycoon ⛏️
+### Mine Tycoon
 
 - Player URL: https://ilikefish.space/games/game_player.html?folder=minetycoon
 - Direct game URL: https://ilikefish.space/games/minetycoon/minetycoon.html
 - Folder: minetycoon
-- Description: 
+- Description: Mine Tycoon is a free idle mining game: dig for ore, buy better equipment and build a mining operation that keeps earning while you are away.
 - Tags: idle, tycoon, mining, clicker, incremental, progression, shop, upgrade, chill, touch
 - Touch controls supported: yes
 
@@ -140,8 +140,8 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=emojimatch
 - Direct game URL: https://ilikefish.space/games/emojimatch/emojimatch.html
 - Folder: emojimatch
-- Description: Match the emojies to the topic!
-- Tags: puzzle, memory, educational, kids, match, timer, chill, touch
+- Description: Emoji Match is a free browser quiz game: read the topic and pick the emoji that fits. Quick rounds for phone or desktop.
+- Tags: puzzle, memory, educational, match, timer, chill, touch
 - Touch controls supported: yes
 
 ### Fishy Clicker I
@@ -149,7 +149,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=fishyclicker
 - Direct game URL: https://ilikefish.space/games/fishyclicker/fishyclicker.html
 - Folder: fishyclicker
-- Description: Click the fishy :D
+- Description: Fishy Clicker I is a free idle clicker game: tap the fish to earn points, then buy upgrades that earn for you while you are away.
 - Tags: clicker, idle, fish, incremental, chill, casual, touch
 - Touch controls supported: yes
 
@@ -158,7 +158,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=fishcore
 - Direct game URL: https://ilikefish.space/games/fishcore/fishcore.html
 - Folder: fishcore
-- Description: Go and push the fish to the limit!
+- Description: Fishcore: Data Dive is a free browser arcade game: steer the fish through a data-filled world, grab what you can and push as far as your reflexes allow.
 - Tags: action, fish, arcade, fast, skill, challenge, enemies, upgrade, touch
 - Touch controls supported: yes
 
@@ -167,7 +167,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=fishtycoon
 - Direct game URL: https://ilikefish.space/games/fishtycoon/fishtycoon.html
 - Folder: fishtycoon
-- Description: Get fishing! Stop reading this description and get fishing and see how many fish you can get in this fish tycoon!
+- Description: Fish Tycoon is a free fishing idle game: catch fish, sell the catch and reinvest in better gear to grow a fishing business.
 - Tags: tycoon, idle, fish, management, progression, shop, upgrade, chill, casual, touch
 - Touch controls supported: yes
 
@@ -176,7 +176,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 - Player URL: https://ilikefish.space/games/game_player.html?folder=battlefishi
 - Direct game URL: https://ilikefish.space/games/battlefishi/battlefishi.html
 - Folder: battlefishi
-- Description: Battle the fish
+- Description: Fish Battle I is a free browser arena game: fight other fish, dodge incoming attacks and try to be the last one swimming.
 - Tags: action, fish, arcade, enemies, levels, fast, challenge, touch
 - Touch controls supported: yes
 
