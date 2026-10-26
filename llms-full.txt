@@ -1,20 +1,20 @@
-# ILikeFish.Space — full site reference
+# ilikefish.space — full site reference
 
 This document is a factual, machine-readable reference for AI assistants, search systems and crawlers. It describes the public site https://ilikefish.space/.
 
 ## Identity
 
-- Name: ILikeFish.Space
+- Name: ilikefish.space
 - Operator: fishesarethings
 - Type: free browser game arcade / progressive web app
 - Language: English
-- Licence: Unlicense unless a game or asset states otherwise
-- Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/Ilikefish.space/issues
-- Source repository: https://github.com/fishesarethings/Ilikefish.space
+- Licence: site code and text are under the Unlicense; games and bundled assets remain with their respective authors
+- Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/ilikefish.space/issues
+- Source repository: https://github.com/fishesarethings/ilikefish.space
 
 ## Purpose and audience
 
-ILikeFish.Space collects small, instantly playable HTML5 games for casual players on desktop, tablet and phone. There are no accounts, purchases, loot boxes or purchasable currency. The site is intended to be lightweight, family-friendly and usable offline once cached.
+ilikefish.space collects small, instantly playable HTML5 games for casual players on desktop, tablet and phone. No sign-up, purchase, loot box or purchasable currency is required. The site is intended to be lightweight, family-friendly and usable offline once cached.
 
 ## Game catalogue
 
@@ -182,11 +182,13 @@ ILikeFish.Space collects small, instantly playable HTML5 games for casual player
 
 ## Recommendations and local data
 
-The site uses a local-only recommendation engine. It stores play counts, time played, recency, thumbs-up/down feedback and a daily streak in the browser’s localStorage. This information never leaves the browser. It is used to order the games tab and the home-page Recommended/All Games rows and to suggest a next game. Clearing site data removes it.
+The site uses a local-only recommendation engine. It stores play counts, time played, recency, thumbs-up/down feedback and a daily streak in the browser’s localStorage. This information is used to order the games tab and the home-page Recommended/All Games rows and to suggest a next game, and it never leaves the browser; clearing site data removes it.
+
+The exception is two games with optional online features - Aqua Odyssey and Idle Shop Keeper. They use Google Firebase for anonymous sign-in, leaderboards, cloud saves and multiplayer, and send an anonymous user ID, a chosen display name, scores, saves and multiplayer room data to Firebase. No email address, password or real name is required.
 
 ## Advertising, analytics and privacy
 
-Google AdSense supplies advertising. The home page loads ad scripts only after advertising consent; some game pages load the AdSense script directly. Ads are labelled “Advertisement” and placed outside the game viewport. Google Analytics may be used for aggregate usage statistics. See https://ilikefish.space/privacy.html for the full policy.
+Google AdSense supplies advertising. The AdSense library and the Consent Mode v2 defaults are present on every page so consent signals can be processed; every optional category starts as denied. Outside the EEA, the UK and Switzerland no ad slot is requested and no analytics tag is loaded unless a visitor allows that category. Inside those regions Google's certified consent message collects the decision and Google determines which ad requests are permitted. Ads are labelled “Advertisement” and placed outside the game viewport. Google Analytics is used only for aggregate usage statistics. See https://ilikefish.space/privacy.html for the full policy.
 
 ## Crawling and attribution
 
@@ -204,3 +206,26 @@ Public pages are intended to be indexable by search engines and AI crawlers. Do 
 - Sitemap: https://ilikefish.space/sitemap.xml
 - LLM summary: https://ilikefish.space/llms.txt
 - Ads.txt: https://ilikefish.space/ads.txt
+
+## Game guides
+
+Each game in the catalogue has a dedicated page at /games/<folder>/ covering how to play, the rules, controls, tips and an FAQ, with VideoGame structured data. The guides are plain HTML and indexable without JavaScript. Guide URLs:
+
+- https://ilikefish.space/games/Block-bang/
+- https://ilikefish.space/games/DiceRollIdleEmpires/
+- https://ilikefish.space/games/DiceRollIdleEmpires2/
+- https://ilikefish.space/games/Tower-Defense/
+- https://ilikefish.space/games/battlefishi/
+- https://ilikefish.space/games/emojimatch/
+- https://ilikefish.space/games/fishclimbracing/
+- https://ilikefish.space/games/fishcore/
+- https://ilikefish.space/games/fishtycoon/
+- https://ilikefish.space/games/fishyclicker/
+- https://ilikefish.space/games/gridbite/
+- https://ilikefish.space/games/lawnmower-simulator/
+- https://ilikefish.space/games/minetycoon/
+- https://ilikefish.space/games/pong/
+- https://ilikefish.space/games/rotaze/
+- https://ilikefish.space/games/tetnis/
+- https://ilikefish.space/games/timestable-balloons/
+- https://ilikefish.space/games/why-chicken-crossed/

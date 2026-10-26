@@ -1,10 +1,13 @@
 /*
- * Small loader for the site's AdSense placements.
+ * AdSense placement loader for ilikefish.space.
  *
- * Consent is handled by assets/js/consent.js (and, inside the EEA/UK/CH, by
- * Google's certified consent message). This file only renders the placements
- * once it is told that ads are allowed, and hides a placement again if the
- * request comes back unfilled so no empty box is left in the layout.
+ * Consent lives in assets/js/consent.js (and, in the EEA/UK/CH, in Google's
+ * certified consent message). This file never decides anything on its own:
+ *
+ *  - it asks ILF_CONSENT.adsAllowed() immediately before *every* request,
+ *  - it stops requesting when a choice is withdrawn (suspend()),
+ *  - it hides a placement again if the request comes back unfilled, so an
+ *    unfilled or blocked slot never leaves an empty labelled box.
  */
 (function () {
   'use strict';
@@ -14,6 +17,12 @@
 
   var CLIENT = config.client || 'ca-pub-9929753961924881';
   var started = false;
+  var suspended = false;
+
+  function allowed() {
+    if (!window.ILF_CONSENT || typeof window.ILF_CONSENT.adsAllowed !== 'function') return false;
+    return window.ILF_CONSENT.adsAllowed() === true;
+  }
 
   function slotFor(key) {
     var perPlacement = config.slots && config.slots[key];
@@ -44,7 +53,7 @@
     }
 
     // If the script never responds (ad blocker, network failure), close the
-    // reserved space instead of leaving an empty labelled box.
+    // reserved space instead of leaving an empty box behind.
     setTimeout(function () {
       if (!hidden && !ins.getAttribute('data-ad-status')) {
         shell.classList.add('is-unfilled');
@@ -55,6 +64,11 @@
   }
 
   function requestAd(ins, shell) {
+    // Final gate: consent can be withdrawn after a shell was prepared.
+    if (suspended || !allowed()) {
+      shell.classList.add('is-unfilled');
+      return;
+    }
     if (ins.getAttribute('data-ilf-requested')) return;
     ins.setAttribute('data-ilf-requested', '1');
 
@@ -68,6 +82,7 @@
   }
 
   function requestIfVisible(shell) {
+    if (suspended || !allowed()) return;
     var ins = shell.querySelector('ins.adsbygoogle');
     if (!ins || ins.getAttribute('data-ilf-requested') || shell.classList.contains('is-unfilled')) return;
     var rect = shell.getBoundingClientRect();
@@ -103,11 +118,32 @@
     slotHost.appendChild(ins);
 
     shell.classList.add('is-active');
+
+    // IntersectionObserver copes with custom scroll containers (the home page
+    // moves its content with transforms), where a window scroll event may
+    // never fire. The scroll listener below stays as a fallback.
+    if (window.IntersectionObserver) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            requestIfVisible(entry.target);
+            io.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '300px 0px' });
+      io.observe(shell);
+    }
+
     requestIfVisible(shell);
   }
 
   function start() {
-    if (started) return;
+    suspended = false;
+    if (!allowed()) return;
+    if (started) {
+      checkVisible();
+      return;
+    }
     started = true;
     // Google's tag is already in the page head; only the requests are gated.
     document.querySelectorAll('[data-ilf-ad]').forEach(prepare);
@@ -116,10 +152,22 @@
     checkVisible();
   }
 
+  function suspend() {
+    suspended = true;
+    // Collapse anything we prepared but never requested.
+    document.querySelectorAll('[data-ilf-ad] ins.adsbygoogle').forEach(function (ins) {
+      if (!ins.getAttribute('data-ilf-requested')) {
+        var shell = ins.closest('[data-ilf-ad]');
+        if (shell) shell.classList.add('is-unfilled');
+      }
+    });
+  }
+
   window.ILF_ADS = {
     activate: start,
+    suspend: suspend,
     refresh: function () {
-      if (!started) return;
+      if (!started || suspended) return;
       document.querySelectorAll('[data-ilf-ad]').forEach(prepare);
       checkVisible();
     }
@@ -127,6 +175,7 @@
 
   window.addEventListener('ilf:consent', function (event) {
     var detail = event.detail || {};
-    if (detail.ads || detail.googleCmp) start();
+    if (detail.ads) start();
+    else suspend();
   });
 })();

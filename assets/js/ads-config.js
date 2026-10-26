@@ -1,5 +1,5 @@
 /*
- * ILikeFish.Space ad settings.
+ * ilikefish.space ad settings.
  *
  * The placements are already built into the pages. To use a specific display
  * ad unit, create one responsive display unit in AdSense and paste its 10-digit

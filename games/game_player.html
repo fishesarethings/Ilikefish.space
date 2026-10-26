@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Play a game — ILikeFish.Space</title>
-  <meta name="description" content="Play free HTML5 games in your browser on ILikeFish.Space. No account needed, with offline support and progress saved locally.">
+  <title>Play a game — ilikefish.space</title>
+  <meta name="description" content="Play free HTML5 games in your browser on ilikefish.space. No account needed, with offline support and progress saved locally.">
   <link rel="icon" href="/assets/img/ilikefish.space-500px.ico" />
-  <link rel="stylesheet" href="/assets/css/ads.css?v=45" />
-  <link rel="stylesheet" href="/assets/css/consent.css?v=45" />
+  <link rel="stylesheet" href="/assets/css/ads.css?v=46" />
+  <link rel="stylesheet" href="/assets/css/consent.css?v=46" />
   <!-- Consent Mode v2 defaults (see /assets/js/consent.js). -->
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -26,10 +26,10 @@
   <script async
     src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9929753961924881"
     crossorigin="anonymous"></script>
-  <script src="/assets/js/recommendations.js?v=45" defer></script>
-  <script src="/assets/js/ads-config.js?v=45" defer></script>
-  <script src="/assets/js/ads.js?v=45" defer></script>
-  <script src="/assets/js/consent.js?v=45" defer></script>
+  <script src="/assets/js/recommendations.js?v=46" defer></script>
+  <script src="/assets/js/ads-config.js?v=46" defer></script>
+  <script src="/assets/js/ads.js?v=46" defer></script>
+  <script src="/assets/js/consent.js?v=46" defer></script>
   <style>
     :root{
       --bg:#f7f8fb;--surface:#fff;--ink:#111827;--muted:#667085;
@@ -203,7 +203,7 @@
       <div class="icon" id="gameIcon"><img id="gameIconImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>
       <div class="title" id="gameTitle">(Game)</div>
       <div class="controls" id="headerControls">
-        <button id="nextBtn" class="ctrl-btn next-btn" aria-label="Play next recommended game" title="Play next recommended game">
+        <button id="nextBtn" class="ctrl-btn next-btn" aria-label="Play next game" title="Play next game">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4l10 8-10 8V4z"/><path d="M19 4v16"/></svg>
           <span>Next</span>
         </button>
@@ -232,6 +232,11 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M8 7h8"/><path d="M8 11h8"/></svg>
           <span>Guide</span>
         </a>
+
+        <button id="embedBtn" class="ctrl-btn" aria-label="Embed this game" title="Copy embed code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>
+          <span>Embed</span>
+        </button>
 
         <button id="likeBtn" class="ctrl-btn thumb-icon-btn" aria-label="More games like this" title="More games like this">👍</button>
         <button id="dislikeBtn" class="ctrl-btn thumb-icon-btn" aria-label="Fewer games like this" title="Fewer games like this">👎</button>
@@ -284,10 +289,9 @@
       <button id="check-update" class="btn-disabled" aria-label="Check for updates">🔄 Refresh</button>
     </p>
     <p>
-      Dedicated to the public domain under the
-      <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
+      Site code and text released under the <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>.<br>
 
-      © 2026 fishesarethings — No rights reserved.
+      © 2026 fishesarethings — games and bundled assets remain with their authors.
       <a href="/terms.html">Terms & Conditions</a> • <a href="/privacy.html">Privacy</a> • <a href="/about.html">About</a> • <a href="/contact.html">Contact</a> • <a href="/#cookie-settings">Cookie settings</a>
     </p>
   </footer>
@@ -741,6 +745,18 @@
             prompt('Copy this link', playerUrl);
           }catch(e){ console.warn('share failed', e); showToast('Share failed'); }
         });
+        if (window.gtag) { try { gtag('event','game_share',{ game: currentFolder || '' }); } catch(e){} }
+
+        const embedBtn = document.getElementById('embedBtn');
+        if (embedBtn) embedBtn.addEventListener('click', async () => {
+          const playerUrl = location.origin + location.pathname + (currentFolder ? '?folder=' + encodeURIComponent(currentFolder) : '');
+          const code = '<iframe src="' + playerUrl + '" width="800" height="600" frameborder="0" allowfullscreen></iframe>';
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(code); showToast('Embed code copied'); }
+            else { prompt('Copy this embed code', code); }
+            if (window.gtag) { try { gtag('event','game_embed',{ game: currentFolder || '' }); } catch(e){} }
+          } catch(e){ console.warn('embed failed', e); showToast('Embed failed'); }
+        });
 
         const semiBtn = document.getElementById('semiFsBtn');
         if (semiBtn) semiBtn.addEventListener('click', () => { const is = document.body.classList.toggle('semi-full'); semiBtn.setAttribute('aria-pressed', String(is)); showToast(is ? 'Semi fullscreen on' : 'Semi fullscreen off'); });
@@ -949,7 +965,7 @@
 
             if (gameTitle) gameTitle.textContent = title;
             if (descTitle) descTitle.textContent = title;
-            document.title = title + ' — ILikeFish.Space';
+            document.title = title + ' — ilikefish.space';
             const metaDescription = document.querySelector('meta[name="description"]');
             if (metaDescription) metaDescription.setAttribute('content', String(description).replace(/\s+/g, ' ').slice(0, 160));
             const touchHtml = touchInstr ? ('<br><small>' + escapeHtml(touchInstr) + '</small>') : '';
@@ -1009,6 +1025,26 @@
           }catch(e){}
         })();
       });
+    })();
+  </script>
+  <div id="embedFooter" style="display:none;text-align:center;padding:12px;font-family:system-ui,sans-serif;">
+    <a href="https://ilikefish.space/" target="_top" rel="noopener" style="font-weight:700;color:#0b5cad;text-decoration:none;">Play more games on ilikefish.space →</a>
+  </div>
+  <script>
+    (function () {
+      // Let the browser show its own in-browser install prompt; just log it.
+      window.addEventListener('beforeinstallprompt', function () {
+        if (window.gtag) { try { gtag('event','pwa_prompt_shown'); } catch(e){} }
+      });
+      window.addEventListener('appinstalled', function () {
+        if (window.gtag) { try { gtag('event','pwa_installed'); } catch(e){} }
+      });
+      // Show "Play more" footer only when this page is embedded in an iframe.
+      if (window.self !== window.top) {
+        var f = document.getElementById('embedFooter');
+        if (f) f.style.display = 'block';
+        if (window.gtag) { try { gtag('event','game_embed_view'); } catch(e){} }
+      }
     })();
   </script>
 </body>

@@ -1,19 +1,43 @@
-# ILikeFish.Space
+# ilikefish.space
 
-> ILikeFish.Space is a free, account-free browser game arcade. It hosts small HTML5 games that can be played instantly, many of which work offline after the site is loaded. The site is operated by fishesarethings and is released under the Unlicense unless a game says otherwise.
+> ilikefish.space is a free, account-free browser game arcade. It hosts small HTML5 games that can be played instantly, many of which work offline after the site is loaded. The site is operated by fishesarethings; its own code and text are released under the Unlicense, while games and bundled assets remain with their respective authors.
 
 Canonical site: https://ilikefish.space/
-Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/Ilikefish.space/issues
+Contact: https://ilikefish.space/contact.html · https://github.com/fishesarethings/ilikefish.space/issues
 Last updated: 2026-10-25
 
 ## What the site offers
 
 - 18 small browser games across arcade, puzzle, idle/tycoon, strategy, educational and casual categories.
-- No account, download or purchase is required to play.
+- No sign-up, download or purchase is required to play.
 - The site is a progressive web app with offline support for cached pages.
-- Game progress and preferences are stored locally in the browser.
+- Game progress and preferences are stored locally in the browser. The two games with optional online features (Aqua Odyssey and Idle Shop Keeper) send an anonymous Firebase ID, a chosen display name and game data to Google Firebase; see the privacy policy.
 - A local-only recommendation system ranks games from the visitor’s play history; no play history is sent to a server.
 - Advertising is provided by Google AdSense. Ads are labelled and kept outside the game area.
+
+
+## Game guides
+
+Every game has its own page with how to play, controls, rules, tips and an FAQ:
+
+- [Block-bang](https://ilikefish.space/games/Block-bang/)
+- [DiceRollIdleEmpires](https://ilikefish.space/games/DiceRollIdleEmpires/)
+- [DiceRollIdleEmpires2](https://ilikefish.space/games/DiceRollIdleEmpires2/)
+- [Tower-Defense](https://ilikefish.space/games/Tower-Defense/)
+- [battlefishi](https://ilikefish.space/games/battlefishi/)
+- [emojimatch](https://ilikefish.space/games/emojimatch/)
+- [fishclimbracing](https://ilikefish.space/games/fishclimbracing/)
+- [fishcore](https://ilikefish.space/games/fishcore/)
+- [fishtycoon](https://ilikefish.space/games/fishtycoon/)
+- [fishyclicker](https://ilikefish.space/games/fishyclicker/)
+- [gridbite](https://ilikefish.space/games/gridbite/)
+- [lawnmower-simulator](https://ilikefish.space/games/lawnmower-simulator/)
+- [minetycoon](https://ilikefish.space/games/minetycoon/)
+- [pong](https://ilikefish.space/games/pong/)
+- [rotaze](https://ilikefish.space/games/rotaze/)
+- [tetnis](https://ilikefish.space/games/tetnis/)
+- [timestable-balloons](https://ilikefish.space/games/timestable-balloons/)
+- [why-chicken-crossed](https://ilikefish.space/games/why-chicken-crossed/)
 
 ## Main pages
 

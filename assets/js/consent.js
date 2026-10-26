@@ -1,13 +1,21 @@
 /*
- * Shared consent manager for ILikeFish.Space.
+ * Shared consent manager for ilikefish.space.
  *
- *  - Google Consent Mode v2 is set to "denied" by default (inline, before any
- *    Google tag loads) and updated only after a choice is made.
- *  - Inside the EEA/UK/CH, Google's certified consent message (AdSense >
- *    Privacy & messaging) is the source of truth. When it is present this
- *    banner stays hidden and Google handles the ad/analytics consent state.
- *  - Elsewhere this banner is the consent UI, and a small "Privacy choices"
- *    button stays on the page so consent is as easy to withdraw as to give.
+ * Behaviour (and the reasoning, because this is the part that has to be right):
+ *
+ *  - Google Consent Mode v2 defaults are set to "denied" inline in each page
+ *    head, *before* any Google tag loads.
+ *  - Inside the EEA/UK/CH, Google's certified consent message is the authority.
+ *    We detect it by its callbacks actually firing - never by the mere presence
+ *    of window.googlefc, which says nothing about what the visitor chose.
+ *  - Ads are only ever requested when we hold an actual "yes":
+ *      outside the EEA: the visitor pressed Accept, or enabled Ad cookies in
+ *        the panel;
+ *      inside the EEA: the CMP reported consentStatus === true.
+ *    Declining means no ad request is made at all, and consent.js tells ads.js
+ *    to stop when a choice is withdrawn.
+ *  - Our own analytics tag is only loaded when analytics consent is known.
+ *    In the EEA that is left to Google's message and Consent Mode.
  *
  * Exposes window.ILF_CONSENT for other scripts.
  */
@@ -17,9 +25,18 @@
   var KEY = 'ilf_consent_v2';
   var GA_ID = 'G-ZV53VVVSK3';
   var GTM_ID = 'GTM-53BRKJPX';
+  var CMP_WAIT_MS = 6000;
 
-  var state = { analytics: false, ads: false, saved: false, googleCmp: false };
+  var state = {
+    analytics: false,     // our own opt-in (non-EEA)
+    ads: false,           // our own opt-in (non-EEA)
+    saved: false,         // visitor has chosen in our banner
+    cmpActive: false,     // Google's certified message is handling consent
+    cmpAdsConsent: null   // true / false / null while unknown
+  };
+
   var banner, panel, pill, toggleAnalytics, toggleAds;
+  var cmpCallbacksSeen = false;
 
   function gtag() {
     window.dataLayer = window.dataLayer || [];
@@ -60,26 +77,57 @@
     gtag('config', GA_ID, { anonymize_ip: true });
   }
 
-  function activateAds() {
-    if (window.ILF_ADS && window.ILF_ADS.activate) window.ILF_ADS.activate();
+  function announce() {
+    var allowed = adsAllowed();
+    if (window.ILF_ADS) {
+      if (allowed && window.ILF_ADS.activate) window.ILF_ADS.activate();
+      // Withdrawal has to stop future requests, not just hide the box.
+      if (!allowed && window.ILF_ADS.suspend) window.ILF_ADS.suspend();
+    }
     window.dispatchEvent(new CustomEvent('ilf:consent', {
-      detail: { analytics: state.analytics, ads: state.ads, googleCmp: state.googleCmp }
+      detail: {
+        analytics: analyticsAllowed(),
+        ads: allowed,
+        googleCmp: state.cmpActive
+      }
     }));
   }
 
-  function showPill(show) {
-    if (pill) pill.setAttribute('data-visible', show ? '1' : '0');
+  function adsAllowed() {
+    if (state.cmpActive) return state.cmpAdsConsent === true;
+    return state.ads === true;
   }
 
+  function analyticsAllowed() {
+    if (state.cmpActive) return false; // handled by Google's message + Consent Mode
+    return state.analytics === true;
+  }
+
+  function showPill(show) { if (pill) pill.setAttribute('data-visible', show ? '1' : '0'); }
   function hideBanner() { if (banner) banner.hidden = true; }
   function showBanner() { if (banner) banner.hidden = false; showPill(false); }
   function closePanel() { if (panel) panel.setAttribute('aria-hidden', 'true'); }
 
+  function openGoogleMessage() {
+    if (window.googlefc && typeof window.googlefc.showRevocationMessage === 'function') {
+      try { window.googlefc.showRevocationMessage(); return true; } catch (e) { /* ignore */ }
+    }
+    return false;
+  }
+
   function openPanel() {
     if (!panel) return;
     var saved = read() || {};
-    if (toggleAnalytics) toggleAnalytics.checked = !!saved.analytics;
-    if (toggleAds) toggleAds.checked = !!saved.ads;
+    if (toggleAnalytics) {
+      toggleAnalytics.checked = !!saved.analytics;
+      toggleAnalytics.disabled = state.cmpActive;
+    }
+    if (toggleAds) {
+      toggleAds.checked = !!saved.ads;
+      toggleAds.disabled = state.cmpActive;
+    }
+    var cmpNote = panel.querySelector('#ilf-cmp-note');
+    if (cmpNote) cmpNote.hidden = !state.cmpActive;
     panel.setAttribute('aria-hidden', 'false');
     hideBanner();
   }
@@ -91,7 +139,7 @@
     if (persist) write({ necessary: true, analytics: state.analytics, ads: state.ads, timestamp: Date.now() });
     updateConsentMode(state.analytics, state.ads);
     if (state.analytics) loadAnalytics();
-    if (state.ads) activateAds();
+    announce();
     closePanel();
     if (delay) {
       setTimeout(function () { hideBanner(); showPill(true); }, delay);
@@ -138,15 +186,42 @@
     return 820;
   }
 
-  function detectGoogleCmp() {
-    return new Promise(function (resolve) {
-      var tries = 0;
-      (function poll() {
-        if (window.googlefc) { resolve(true); return; }
-        if (++tries > 12) { resolve(false); return; }
-        setTimeout(poll, 250);
-      })();
+  /*
+   * Google's certified consent message (EEA/UK/CH).
+   * The queue has to exist before the message script loads, and the only
+   * trustworthy signal is a callback arriving - not window.googlefc existing.
+   */
+  function watchGoogleCmp(onEvent) {
+    window.googlefc = window.googlefc || {};
+    window.googlefc.callbackQueue = window.googlefc.callbackQueue || [];
+    if (typeof window.googlefc.callbackQueue.push !== 'function') return;
+
+    window.googlefc.callbackQueue.push({
+      CONSENT_DATA_READY: function () {
+        cmpCallbacksSeen = true;
+        onEvent();
+      }
     });
+    window.googlefc.callbackQueue.push({
+      ADS_CONSENT_DATA: function (data) {
+        cmpCallbacksSeen = true;
+        var status = data && typeof data.consentStatus === 'boolean' ? data.consentStatus : null;
+        onEvent(status);
+      }
+    });
+  }
+
+  function enterCmpMode(status) {
+    var first = !state.cmpActive;
+    state.cmpActive = true;
+    if (typeof status === 'boolean') state.cmpAdsConsent = status;
+    hideBanner();
+    showPill(true);
+    // Google's certified message updates Consent Mode itself for this visitor.
+    // Pushing our own values here would overwrite its decision (for example
+    // flipping an analytics grant back to denied), so we deliberately do not.
+    announce();
+    if (first) closePanel();
   }
 
   function buildUi() {
@@ -186,16 +261,17 @@
       '</div>' +
       '<div class="ilfc-row">' +
       '<div><div class="ilfc-name">Analytics</div><div class="ilfc-why">Anonymous Google Analytics so we can see which ' +
-      'games get played and what is broken.</div></div>' +
+      'games get played and what is broken. Leave it off and no analytics script is loaded at all.</div></div>' +
       '<label class="ilfc-switch"><input id="ilf-toggle-analytics" type="checkbox" aria-label="Allow analytics"><span class="ilfc-knob"></span></label>' +
       '</div>' +
       '<div class="ilfc-row">' +
-      '<div><div class="ilfc-name">Ad cookies</div><div class="ilfc-why">Lets Google show relevant ads in the labelled ' +
-      'boxes outside the game area. Say no and ads may still appear, but they will not be personalised.</div></div>' +
+      '<div><div class="ilfc-name">Ad cookies</div><div class="ilfc-why">Allows Google to show ads in the labelled ' +
+      'boxes outside the game area. Leave it off and we make no ad requests - the games work exactly ' +
+      'the same. (In the EEA, the UK and Switzerland Google\u2019s message below decides instead.)</div></div>' +
       '<label class="ilfc-switch"><input id="ilf-toggle-ads" type="checkbox" aria-label="Allow ad cookies"><span class="ilfc-knob"></span></label>' +
       '</div>' +
       '<p class="ilfc-note">Visitors in the EEA, the UK and Switzerland see Google\'s own certified consent message ' +
-      'instead, because advertising consent in those regions is handled by Google rather than by this banner.</p>' +
+      'instead. In those regions Google decides whether an ad may be requested, and this banner stays out of the way.</p>' +
       '<div class="ilfc-panel-actions">' +
       '<button id="ilf-cancel-settings" class="ilfc-btn ilfc-reject" type="button">Cancel</button>' +
       '<button id="ilf-save-settings" class="ilfc-btn ilfc-save" type="button">Save choices</button>' +
@@ -217,7 +293,6 @@
     toggleAds = panel.querySelector('#ilf-toggle-ads');
 
     banner.querySelector('#ilf-accept-all').addEventListener('click', function (event) {
-      // Record the choice immediately, then let the animation play.
       var ms = celebrate(event.currentTarget);
       apply({ analytics: true, ads: true }, true, ms);
     });
@@ -231,10 +306,9 @@
     });
     panel.querySelector('#ilf-cancel-settings').addEventListener('click', function () {
       closePanel();
-      showPill(state.saved || state.googleCmp);
+      showPill(state.saved || state.cmpActive);
     });
 
-    // Any link pointing at #cookie-settings (footers, policy pages) opens the panel.
     document.addEventListener('click', function (event) {
       var target = event.target;
       var link = target && target.closest ? target.closest('a[href$="#cookie-settings"], #cookie-settings-link') : null;
@@ -244,32 +318,71 @@
     });
   }
 
+  /*
+   * Best-effort check for the regions where Google's certified message applies.
+   * Timezone is not proof of location, so it is only used to decide whether to
+   * wait briefly for Google's message. If we guess wrong, Google's callbacks
+   * still take over and hide our banner.
+   */
+  function likelyEea() {
+    try {
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      return /^Europe\//.test(tz) ||
+        tz === 'Atlantic/Canary' || tz === 'Atlantic/Madeira' || tz === 'Atlantic/Azores' ||
+        tz === 'America/Guadeloupe' || tz === 'America/Martinique' || tz === 'America/Cayenne' ||
+        tz === 'Indian/Reunion' || tz === 'Indian/Mayotte';
+    } catch (e) {
+      return false;
+    }
+  }
+
   function boot() {
     buildUi();
+
+    // Any footer or policy link to /#cookie-settings should open the panel,
+    // including when the link navigates to this page from somewhere else.
+    function openFromHash() {
+      if (location.hash === '#cookie-settings') {
+        openPanel();
+        showPill(true);
+      }
+    }
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+
+    watchGoogleCmp(function (status) {
+      enterCmpMode(status);
+    });
 
     var saved = read();
     if (saved) apply(saved, false);
 
-    detectGoogleCmp().then(function (hasCmp) {
-      state.googleCmp = hasCmp;
-      if (hasCmp) {
-        // Google's certified CMP owns consent for EEA/UK/CH visitors.
-        hideBanner();
-        state.analytics = true;
-        state.ads = true;
-        loadAnalytics();
-        activateAds();
-        showPill(true);
-        return;
-      }
-      if (!saved) showBanner();
-    });
+    // Google's message only loads inside the EEA, the UK and Switzerland, and
+    // it arrives a moment after the AdSense tag. In those regions we give it
+    // first refusal so two consent interfaces never appear together. Elsewhere
+    // there is nothing to wait for, so the banner appears straight away.
+    function maybeShowBanner() {
+      if (!saved && !cmpCallbacksSeen) showBanner();
+    }
+
+    if (likelyEea()) {
+      setTimeout(maybeShowBanner, CMP_WAIT_MS);
+    } else {
+      maybeShowBanner();
+    }
   }
 
   window.ILF_CONSENT = {
-    get: function () { return { analytics: state.analytics, ads: state.ads, googleCmp: state.googleCmp }; },
-    adsAllowed: function () { return state.ads || state.googleCmp; },
-    analyticsAllowed: function () { return state.analytics || state.googleCmp; },
+    get: function () {
+      return {
+        analytics: analyticsAllowed(),
+        ads: adsAllowed(),
+        googleCmp: state.cmpActive,
+        cmpAdsConsent: state.cmpAdsConsent
+      };
+    },
+    adsAllowed: adsAllowed,
+    analyticsAllowed: analyticsAllowed,
     openSettings: openPanel
   };
 
