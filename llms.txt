@@ -11,7 +11,7 @@ Last updated: 2026-10-25
 - 18 small browser games across arcade, puzzle, idle/tycoon, strategy, educational and casual categories.
 - No sign-up, download or purchase is required to play.
 - The site is a progressive web app with offline support for cached pages.
-- Game progress and preferences are stored locally in the browser. The two games with optional online features (Aqua Odyssey and Idle Shop Keeper) send an anonymous Firebase ID, a chosen display name and game data to Google Firebase; see the privacy policy.
+- Game progress and preferences are stored locally in the browser. Games that offer optional online features send an anonymous Firebase ID, a chosen display name and game data to Google Firebase only when one of those features is used; see the privacy policy.
 - A local-only recommendation system ranks games from the visitor’s play history; no play history is sent to a server.
 - Advertising is provided by Google AdSense. Ads are labelled and kept outside the game area.
 

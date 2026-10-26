@@ -184,7 +184,7 @@ ilikefish.space collects small, instantly playable HTML5 games for casual player
 
 The site uses a local-only recommendation engine. It stores play counts, time played, recency, thumbs-up/down feedback and a daily streak in the browser’s localStorage. This information is used to order the games tab and the home-page Recommended/All Games rows and to suggest a next game, and it never leaves the browser; clearing site data removes it.
 
-The exception is two games with optional online features - Aqua Odyssey and Idle Shop Keeper. They use Google Firebase for anonymous sign-in, leaderboards, cloud saves and multiplayer, and send an anonymous user ID, a chosen display name, scores, saves and multiplayer room data to Firebase. No email address, password or real name is required.
+The exception is the games that offer optional online features. They use Google Firebase for anonymous sign-in, leaderboards, cloud saves and multiplayer, and send an anonymous user ID, a chosen display name, scores, saves and multiplayer room data to Firebase, but only when one of those features is used. No email address, password or real name is required.
 
 ## Advertising, analytics and privacy
 
