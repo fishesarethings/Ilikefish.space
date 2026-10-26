@@ -272,6 +272,7 @@
       '</div>' +
       '<p class="ilfc-note">Visitors in the EEA, the UK and Switzerland see Google\'s own certified consent message ' +
       'instead. In those regions Google decides whether an ad may be requested, and this banner stays out of the way.</p>' +
+      '<p class="ilfc-note" id="ilf-cmp-note" hidden>Your region uses Google\u2019s certified consent message, so these switches are managed there. Choose <em>Save choices</em> to reopen that message and change your answer.</p>' +
       '<div class="ilfc-panel-actions">' +
       '<button id="ilf-cancel-settings" class="ilfc-btn ilfc-reject" type="button">Cancel</button>' +
       '<button id="ilf-save-settings" class="ilfc-btn ilfc-save" type="button">Save choices</button>' +
@@ -302,6 +303,12 @@
     banner.querySelector('#ilf-open-settings').addEventListener('click', openPanel);
     pill.addEventListener('click', openPanel);
     panel.querySelector('#ilf-save-settings').addEventListener('click', function () {
+      if (state.cmpActive) {
+        closePanel();
+        showPill(true);
+        openGoogleMessage();
+        return;
+      }
       apply({ analytics: !!(toggleAnalytics && toggleAnalytics.checked), ads: !!(toggleAds && toggleAds.checked) }, true);
     });
     panel.querySelector('#ilf-cancel-settings').addEventListener('click', function () {
