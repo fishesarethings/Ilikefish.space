@@ -3,7 +3,7 @@
   "folder": "minetycoon",
   "icon": "icon.png",
   "entry": "minetycoon.html",
-  "description": "Mine Tycoon is a free idle mining game: dig for ore, buy better equipment and build a mining operation that keeps earning while you are away.",
+  "description": "Mine Tycoon is a free idle mining game: build tunnels, hire workers, run carts to the lift and grow a mining operation.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

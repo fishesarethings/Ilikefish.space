@@ -192,7 +192,7 @@
 
     function init() {
       state = {
-        x: W/2, y: 0, speed: 3,
+        x: W/2, y: LANE, speed: 3,
         score: 0,
         high: +localStorage.getItem('high') || 0,
         cars: [], pUps: [], keys: {},
@@ -205,6 +205,7 @@
       ui.high.textContent  = 'High: ' + state.high;
       ui.pUpIcon.classList.add('hidden');
       ui.touchPad.classList.add('hidden');
+      ui.gameO.classList.add('hidden');
       ui.mode.value = 'keyboard';
       paused = false;
       ui.arrows.forEach(a => a.classList.remove('active'));
@@ -412,7 +413,7 @@
       if (state.keys['d']||state.keys['ArrowRight']) state.x += state.speed;
       state.x = Math.max(0, Math.min(W, state.x));
 
-      const sc = Math.max(0, Math.floor(state.y / LANE));
+      const sc = Math.max(0, Math.floor((state.y - LANE) / LANE));
       if (sc > state.score) {
         state.score = sc;
         ui.score.textContent = 'Score: ' + sc;

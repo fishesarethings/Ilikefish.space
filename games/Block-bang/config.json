@@ -3,7 +3,7 @@
   "folder": "Block-bang",
   "icon": "icon.png",
   "entry": "block-bang.html",
-  "description": "Block Bang is a free browser matching game with a glitchy arcade feel: line up blocks, trigger explosions and clear the board in quick bursts.",
+  "description": "Block Bang is a free block-fitting puzzle: drag shapes onto an 8x8 grid, complete rows and columns to clear them, and keep the board from filling up.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

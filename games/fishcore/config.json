@@ -5,7 +5,7 @@
   "entry": "fishcore.html",
   "featured": true,
   "featuredOrder": 6,
-  "description": "Fishcore: Data Dive is a free browser arcade game: steer the fish through a data-filled world, grab what you can and push as far as your reflexes allow.",
+  "description": "Fishcore: Data Dive is a free arcade swimmer: collect data, dodge corrupted programs, fight bosses and upgrade your fish between runs.",
   "touchInstructions": "Move the fish with your finger.",
   "touch": true
 }

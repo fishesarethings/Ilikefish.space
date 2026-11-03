@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Offline play, local saves and what leaves your browser | ilikefish.space</title>
+  <meta name="description" content="How the progressive web app caches games for offline play, where your progress is stored, and which optional features send data to Google Firebase.">
+  <link rel="canonical" href="https://ilikefish.space/notes/offline-play-and-local-saves.html">
+  <link rel="icon" href="/assets/img/ilikefish.space-500px.ico">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://ilikefish.space/notes/offline-play-and-local-saves.html">
+  <meta property="og:title" content="Offline play, local saves and what leaves your browser | ilikefish.space">
+  <meta property="og:description" content="How the progressive web app caches games for offline play, where your progress is stored, and which optional features send data to Google Firebase.">
+  <meta property="og:site_name" content="ilikefish.space">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Offline play, local saves and what leaves your browser | ilikefish.space">
+  <meta name="twitter:description" content="How the progressive web app caches games for offline play, where your progress is stored, and which optional features send data to Google Firebase.">
+  <style>
+    :root { --ink:#111827; --muted:#5b6676; --line:rgba(17,24,39,.1); --accent:#007aff; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); background:#f7f8fb; line-height:1.7; }
+    nav { position:sticky; top:0; z-index:20; display:flex; justify-content:center; gap:22px; padding:14px 20px; background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%); border-bottom:1px solid var(--line); box-shadow:0 6px 20px rgba(15,23,42,.06); }
+    nav a { color:#475467; text-decoration:none; font-weight:600; font-size:.95rem; }
+    nav a:hover { color:var(--accent); }
+    main { max-width:760px; margin:0 auto; padding:34px 20px 56px; }
+    h1 { font-size:clamp(1.7rem,4vw,2.4rem); line-height:1.2; margin:.2rem 0 .6rem; }
+    .meta { color:var(--muted); font-size:.9rem; margin:0 0 26px; }
+    h2 { font-size:1.25rem; margin:2rem 0 .5rem; }
+    p, li { color:#1f2937; }
+    ul { padding-left:1.25rem; }
+    li { margin-bottom:.45rem; }
+    a { color:#0b5cad; }
+    .lede { font-size:1.08rem; color:#334155; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 22px; margin:18px 0; }
+    .card h2 { margin-top:0; }
+    footer { text-align:center; color:var(--muted); font-size:.85rem; padding:26px 20px 40px; border-top:1px solid var(--line); }
+    footer a { color:#0b5cad; }
+  </style>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Article","headline":"Offline play, local saves and what leaves your browser","description":"How the progressive web app caches games for offline play, where your progress is stored, and which optional features send data to Google Firebase.","datePublished":"2026-11-04","dateModified":"2026-11-04","mainEntityOfPage":"https://ilikefish.space/notes/offline-play-and-local-saves.html","author":{"@type":"Organization","name":"fishesarethings"},"publisher":{"@type":"Organization","name":"ilikefish.space","url":"https://ilikefish.space/"}}
+  </script>
+</head>
+<body>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/games/">All games</a>
+    <a href="/notes/">Notes</a>
+    <a href="/about.html">About</a>
+  </nav>
+<main>
+<h1>Offline play, local saves and what leaves your browser</h1>
+<p class="meta">Notes &middot; 4 November 2026</p>
+
+<p class="lede">Most of what happens on ilikefish.space happens in your browser. There is no account, no profile and no server-side save. That is good for privacy, but it means you should know where your progress actually lives.</p>
+
+<h2>What the service worker caches</h2>
+<p>The site is a progressive web app. On your first visit, a service worker stores the main pages, the game catalogue and the files needed by the games you open. On later visits those pages can load from the cache instead of the network.</p>
+<p>That is why a game can keep working on a train with no signal. It is also why a stale page can appear after an update: the cache has to be refreshed. The site version in the footer and the refresh button exist for that reason.</p>
+
+<h2>Where progress lives</h2>
+<p>Game progress, settings and recommendation history are stored in your browser's local storage or IndexedDB. They are not sent to us. Clearing your browser data for the site removes them.</p>
+<p>Some games keep a high score, some keep a whole save file, and some keep nothing at all. The game page usually says which. If a game matters to you, export a backup before clearing anything.</p>
+
+<h2>Export and import</h2>
+<p>The home page has an export button that writes your local storage and IndexedDB data to a JSON file, and an import button that reads it back. It is a blunt instrument, but it is enough to move progress between browsers or to keep a copy before a clean-up.</p>
+
+<h2>The optional online features</h2>
+<p>A few games offer optional online features such as leaderboards, cloud saves or multiplayer. Those features use Google Firebase. When you use one, the game creates an anonymous Firebase user ID and may store a display name you choose, scores, saves and room data. No email address, password or real name is required.</p>
+<p>Those features are optional. A game only uses Firebase when you use one of them, and the game itself shows when it does. The <a href="/privacy.html">Privacy Policy</a> has the full detail.</p>
+
+<h2>What leaves your browser</h2>
+<ul>
+  <li><strong>Advertising and analytics:</strong> only after you consent, and only through the consent setup described on the privacy page.</li>
+  <li><strong>Optional online game features:</strong> only when you use them, as above.</li>
+  <li><strong>Normal web requests:</strong> the page and its files are requested from the host, as on any website.</li>
+</ul>
+<p>Nothing else is sent. There is no account to delete because there is no account.</p>
+
+</main>
+  <footer>
+    <p>&copy; 2026 fishesarethings &mdash; site text under the <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>. Games and assets remain with their authors.</p>
+    <p><a href="/">Home</a> &middot; <a href="/games/">All games</a> &middot; <a href="/notes/">Notes</a> &middot; <a href="/about.html">About</a> &middot; <a href="/contact.html">Contact</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/#cookie-settings">Cookie settings</a></p>
+  </footer>
+</body>
+</html>

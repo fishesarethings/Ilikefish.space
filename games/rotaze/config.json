@@ -5,7 +5,7 @@
   "entry": "rotaze.html",
   "featured": true,
   "featuredOrder": 1,
-  "description": "Difficult but fun rotating maze game. Fun and a good challenge!",
+  "description": "Rotaze is a free rotating-maze puzzle game: steer through a maze that spins as you move, reach the flag and beat the timer.",
   "touchInstructions": "Tap to play.",
   "touch": true
 }

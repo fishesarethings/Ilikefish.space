@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>How a small browser game gets made here | ilikefish.space</title>
+  <meta name="description" content="A short look at how the games on ilikefish.space are built, tested and packaged: plain HTML, CSS and JavaScript, one folder per game, and no build step.">
+  <link rel="canonical" href="https://ilikefish.space/notes/how-the-games-are-made.html">
+  <link rel="icon" href="/assets/img/ilikefish.space-500px.ico">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://ilikefish.space/notes/how-the-games-are-made.html">
+  <meta property="og:title" content="How a small browser game gets made here | ilikefish.space">
+  <meta property="og:description" content="A short look at how the games on ilikefish.space are built, tested and packaged: plain HTML, CSS and JavaScript, one folder per game, and no build step.">
+  <meta property="og:site_name" content="ilikefish.space">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="How a small browser game gets made here | ilikefish.space">
+  <meta name="twitter:description" content="A short look at how the games on ilikefish.space are built, tested and packaged: plain HTML, CSS and JavaScript, one folder per game, and no build step.">
+  <style>
+    :root { --ink:#111827; --muted:#5b6676; --line:rgba(17,24,39,.1); --accent:#007aff; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--ink); background:#f7f8fb; line-height:1.7; }
+    nav { position:sticky; top:0; z-index:20; display:flex; justify-content:center; gap:22px; padding:14px 20px; background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%); border-bottom:1px solid var(--line); box-shadow:0 6px 20px rgba(15,23,42,.06); }
+    nav a { color:#475467; text-decoration:none; font-weight:600; font-size:.95rem; }
+    nav a:hover { color:var(--accent); }
+    main { max-width:760px; margin:0 auto; padding:34px 20px 56px; }
+    h1 { font-size:clamp(1.7rem,4vw,2.4rem); line-height:1.2; margin:.2rem 0 .6rem; }
+    .meta { color:var(--muted); font-size:.9rem; margin:0 0 26px; }
+    h2 { font-size:1.25rem; margin:2rem 0 .5rem; }
+    p, li { color:#1f2937; }
+    ul { padding-left:1.25rem; }
+    li { margin-bottom:.45rem; }
+    a { color:#0b5cad; }
+    .lede { font-size:1.08rem; color:#334155; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 22px; margin:18px 0; }
+    .card h2 { margin-top:0; }
+    footer { text-align:center; color:var(--muted); font-size:.85rem; padding:26px 20px 40px; border-top:1px solid var(--line); }
+    footer a { color:#0b5cad; }
+  </style>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"Article","headline":"How a small browser game gets made here","description":"A short look at how the games on ilikefish.space are built, tested and packaged: plain HTML, CSS and JavaScript, one folder per game, and no build step.","datePublished":"2026-11-04","dateModified":"2026-11-04","mainEntityOfPage":"https://ilikefish.space/notes/how-the-games-are-made.html","author":{"@type":"Organization","name":"fishesarethings"},"publisher":{"@type":"Organization","name":"ilikefish.space","url":"https://ilikefish.space/"}}
+  </script>
+</head>
+<body>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/games/">All games</a>
+    <a href="/notes/">Notes</a>
+    <a href="/about.html">About</a>
+  </nav>
+<main>
+<h1>How a small browser game gets made here</h1>
+<p class="meta">Notes &middot; 4 November 2026</p>
+
+<p class="lede">Most of the games here are small on purpose. A single mechanic, one screen, a session that fits into a coffee break. That constraint is what makes them quick to load, easy to learn and cheap to keep running.</p>
+
+<h2>Start with one mechanic</h2>
+<p>A game usually begins with a sentence rather than a design document. <em>Swim upstream and shoot obstacles.</em> <em>Drag blocks onto a grid until a line clears.</em> <em>Roll a die, buy a machine that rolls it for you.</em> If the sentence is clear, the first playable version is close.</p>
+<p>The temptation is always to add a second idea too early. A shop, a boss, a stamina bar. Those things are easier to add once the core loop is already fun, and much harder to judge while the loop is still moving.</p>
+
+<h2>A folder, not a framework</h2>
+<p>Every game lives in its own folder under <code>/games/</code>. The folder holds the entry page, a <code>config.json</code> with the name, description and icon, and whatever assets the game needs. The entry page is plain HTML, CSS and JavaScript. There is no build step and no bundler: open the file in a browser and it runs.</p>
+<p>That choice keeps the site portable. A game can be copied out of the repository, opened on a laptop and still work. It also keeps the pages small, which matters more on a phone than on a desktop.</p>
+
+<h2>Test on the thing people actually use</h2>
+<p>A game that plays well with a mouse can be miserable with a thumb. Every game is checked at a phone-sized viewport, and any game that needs a keyboard is either given on-screen controls or marked as desktop-only in the catalogue. The controls are written down on each game page, because a game that does not explain its controls is a game most people will close.</p>
+<p>The other test is the boring one: reload it, resize the window, open it twice, clear the cache. Most of the bugs that survive to release are not gameplay bugs; they are layout and storage bugs.</p>
+
+<h2>What gets left out</h2>
+<p>There are no accounts, no purchases, no loot boxes and no virtual currency that costs money. Progress is stored in the browser. That removes a large amount of complexity from both the game and the page around it.</p>
+<p>Unfinished games do not go into the catalogue. A prototype can sit in a folder for months, but it only gets a page, a description and a place in the sitemap when it is actually playable from start to finish.</p>
+
+<h2>The Game Maker</h2>
+<p>The <a href="/gamepack/">Game Maker</a> is the same idea turned into a tool. It lets you assemble a small game package in the browser: name, slug, description, icon, entry page and any extra files. The output is a folder that can be dropped into a site like this one. It is not a full engine, and it is not trying to be.</p>
+
+<h2>Why small is the point</h2>
+<p>A small game can be finished. That sounds unambitious, but finishing is the hard part. A game that is finished can be tested, described, linked and kept working. A game that is almost finished is a folder nobody can play.</p>
+<p>If you make small browser games and want one hosted here, the <a href="/creators.html">creator page</a> explains how submissions work.</p>
+
+</main>
+  <footer>
+    <p>&copy; 2026 fishesarethings &mdash; site text under the <a href="https://unlicense.org/" target="_blank" rel="noopener noreferrer">Unlicense</a>. Games and assets remain with their authors.</p>
+    <p><a href="/">Home</a> &middot; <a href="/games/">All games</a> &middot; <a href="/notes/">Notes</a> &middot; <a href="/about.html">About</a> &middot; <a href="/contact.html">Contact</a> &middot; <a href="/privacy.html">Privacy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/#cookie-settings">Cookie settings</a></p>
+  </footer>
+</body>
+</html>

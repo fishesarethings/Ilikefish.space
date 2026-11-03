@@ -5,7 +5,7 @@
   "entry": "lawnmower.html",
   "featured": true,
   "featuredOrder": 3,
-  "description": "Lawn Mower Simulator is a free, relaxing browser game: drive a mower around, cut every patch of grass and earn coins for a tidy lawn.",
+  "description": "Lawn Mower Simulator is a free relaxing game: drive the mower, cut every patch of grass and spend the coins on upgrades.",
   "touchInstructions": "Use arrow keys or WASD to move; mow grass for coins.",
   "touch": true
 }
