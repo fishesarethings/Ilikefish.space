@@ -1,6 +1,6 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register("/service-worker.js?v=53")
+    navigator.serviceWorker.register("/service-worker.js?v=54")
       .then(reg => {
         console.log('SW registered:', reg.scope);
         const triggerPrefetch = () => {
